@@ -261,6 +261,57 @@ def track_email_open(tracking_token):
                                 VALUES (%s, 'Lead', 'Status Change', %s);
                             ''', (lead_id, f"Lead status promoted to 'Engaged 🔥' (Customer viewed email {open_count}x). Prioritized for sales follow-up."))
 
+                # Also track standalone Executive PendingOutbox emails by tracking_token (BUG-163)
+                cur.execute('''
+                    UPDATE "PendingOutbox"
+                    SET status = CASE WHEN status IN ('SENT', 'DISPATCHED', 'PENDING') THEN 'OPENED' ELSE status END
+                    WHERE tracking_token = %s
+                    RETURNING id, recipient, subject, recipient_id;
+                ''', (tracking_token,))
+                po_row = cur.fetchone()
+                if po_row:
+                    po_id = po_row['id'] if isinstance(po_row, dict) else po_row[0]
+                    po_recip = po_row['recipient'] if isinstance(po_row, dict) else po_row[1]
+                    po_subj = po_row['subject'] if isinstance(po_row, dict) else po_row[2]
+                    po_lead_id = po_row['recipient_id'] if isinstance(po_row, dict) else po_row[3]
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, outcome, description, created_by_name)
+                        VALUES (%s, 'Lead', 'Email Opened', 'Opened', %s, 'Telemetry Pixel');
+                    ''', (po_lead_id or 0, f"Executive Outbox #{po_id} opened by {po_recip} ({po_subj})"))
+                    if po_lead_id:
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET status = 'Engaged',
+                                priority_level = 'High',
+                                engaged_at = COALESCE(engaged_at, CURRENT_TIMESTAMP),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s AND (status IN ('New', 'NEW', 'In Campaign', 'Contacted') OR status IS NULL);
+                        ''', (po_lead_id,))
+                    try:
+                        import os, requests as _req
+                        tg_tok = os.environ.get('TELEGRAM_BOT_TOKEN')
+                        ceo_cid = os.environ.get('TELEGRAM_CHAT_ID', '8564340073').split(',')[0].strip()
+                        if tg_tok and ceo_cid:
+                            _req.post(
+                                f"https://api.telegram.org/bot{tg_tok}/sendMessage",
+                                json={
+                                    "chat_id": int(ceo_cid),
+                                    "text": (
+                                        f"👀 *EMAIL OPENED CONFIRMATION*\n"
+                                        f"━━━━━━━━━━━━━━━━━━━━━\n"
+                                        f"• *Outbox Record:* `#{po_id}`\n"
+                                        f"• *Opened By:* `{po_recip}`\n"
+                                        f"• *Subject:* {po_subj}\n"
+                                        f"• *Status:* `OPENED` (Verified by 1x1 Telemetry Pixel)"
+                                    ),
+                                    "parse_mode": "Markdown",
+                                    "disable_web_page_preview": True,
+                                },
+                                timeout=4,
+                            )
+                    except Exception:
+                        pass
+
                 conn.commit()
         except Exception as e:
             if conn:

@@ -255,13 +255,66 @@ def merge_comma_list(existing_csv: Optional[str], new_csv: Optional[str]) -> str
     return ", ".join(merged)
 
 
+_INVALID_EIN_CAMPUS_PREFIXES = {
+    "00", "07", "08", "09", "17", "18", "19", "28", "29", "49", "69", "70", "78", "79", "89",
+}
+
+_DUMMY_NINE_DIGIT_TINS = {
+    "000000000",
+    "111111111",
+    "222222222",
+    "333333333",
+    "444444444",
+    "555555555",
+    "666666666",
+    "777777777",
+    "888888888",
+    "999999999",
+    "123456789",
+    "987654321",
+    "123451234",
+}
+
+
+def resolve_tax_id_mode(
+    raw_tin: Optional[str],
+    tax_classification: Optional[str] = "LLC",
+    tax_id_mode: Optional[str] = None,
+) -> str:
+    """
+    Determines whether a Federal Tax ID should be formatted and validated as
+    'ssn' (XXX-XX-XXXX) or 'ein' (XX-XXXXXXX).
+    Priority:
+    1. Explicit tax_id_mode ('ssn' | 'ein')
+    2. Explicit dash pattern in raw_tin (XXX-XX-XXXX / ***-**-XXXX vs XX-XXXXXXX / **-***XXXX)
+    3. Tax classification ('Individual / Sole Proprietor' -> 'ssn', otherwise 'ein')
+    """
+    explicit = str(tax_id_mode or "").strip().lower()
+    if explicit in ("ssn", "itin", "ssn_itin"):
+        return "ssn"
+    if explicit == "ein":
+        return "ein"
+
+    s = str(raw_tin or "").strip()
+    if re.match(r"^[0-9*•]{3}-[0-9*•]{2}-", s):
+        return "ssn"
+    if re.match(r"^[0-9*•]{2}-[0-9*•]{3,7}$", s):
+        return "ein"
+
+    tc_low = str(tax_classification or "").lower()
+    if "individual" in tc_low or "sole" in tc_low:
+        return "ssn"
+    return "ein"
+
+
 def clean_ein_or_ssn(
     raw_tin: Optional[str],
     tax_classification: Optional[str] = "LLC",
+    tax_id_mode: Optional[str] = None,
 ) -> Optional[str]:
     """
     Formats a 9-digit Federal Tax ID into canonical EIN (XX-XXXXXXX) or
-    SSN (XXX-XX-XXXX) format based on tax classification or explicit dash pattern,
+    SSN (XXX-XX-XXXX) format based on explicit mode, dash pattern, or tax classification,
     while preserving server-masked values (**-***0455 / ***-**-9012).
     """
     if not raw_tin:
@@ -275,17 +328,91 @@ def clean_ein_or_ssn(
     if not digits:
         return None
     digits = digits[:9]
-    tc_low = str(tax_classification or "").lower()
-    is_ssn_mode = (
-        "individual" in tc_low
-        or "sole" in tc_low
-        or bool(re.match(r"^\d{3}-\d{2}-", s))
-    )
+    mode = resolve_tax_id_mode(s, tax_classification=tax_classification, tax_id_mode=tax_id_mode)
     if len(digits) == 9:
-        if is_ssn_mode:
+        if mode == "ssn":
             return f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
         return f"{digits[:2]}-{digits[2:]}"
     return s
+
+
+def validate_federal_tax_id(
+    raw_tin: Optional[str],
+    tax_id_mode: Optional[str] = None,
+    tax_classification: Optional[str] = "LLC",
+    allow_masked_existing: bool = True,
+) -> tuple[bool, str, str]:
+    """
+    Validates a 9-digit Federal Tax ID (EIN or SSN/ITIN) against IRS Publication 1586 /
+    CP2100 B-Notice and SSA formatting rules.
+    Returns (is_valid, formatted_tin_or_error_message, resolved_mode).
+    """
+    s = str(raw_tin or "").strip()
+    mode = resolve_tax_id_mode(s, tax_classification=tax_classification, tax_id_mode=tax_id_mode)
+
+    if not s:
+        return (
+            False,
+            "Please enter your 9-digit Federal Tax ID (EIN or SSN).",
+            mode,
+        )
+
+    # Allow preserving an already-masked TIN on file when returning to update other fields
+    if allow_masked_existing and ("*" in s or "•" in s):
+        tail_digits = re.sub(r"\D", "", s)
+        if len(tail_digits) == 4:
+            return (True, s, mode)
+        return (
+            False,
+            "Please click 'Change Tax ID' and enter all 9 digits of your EIN or SSN.",
+            mode,
+        )
+
+    digits = re.sub(r"\D", "", s)
+    if len(digits) != 9:
+        expected_fmt = "XXX-XX-XXXX" if mode == "ssn" else "XX-XXXXXXX"
+        return (
+            False,
+            f"Federal Tax ID must contain all 9 digits ({expected_fmt}). You entered {len(digits)} digit(s).",
+            mode,
+        )
+
+    if digits in _DUMMY_NINE_DIGIT_TINS:
+        return (
+            False,
+            "Please enter a valid IRS-issued 9-digit Tax ID (test or sequential numbers like 123-45-6789 are not permitted).",
+            mode,
+        )
+
+    if mode == "ssn":
+        area = digits[:3]
+        group = digits[3:5]
+        serial = digits[5:]
+        if area in ("000", "666") or group == "00" or serial == "0000":
+            return (
+                False,
+                "Invalid Social Security / ITIN number format. Area (first 3 digits) cannot be 000 or 666, and middle/last segments cannot be all zeros.",
+                mode,
+            )
+        formatted = f"{area}-{group}-{serial}"
+        return (True, formatted, "ssn")
+
+    # EIN validation
+    prefix = digits[:2]
+    if prefix in _INVALID_EIN_CAMPUS_PREFIXES:
+        return (
+            False,
+            f"Invalid IRS Employer Identification Number (EIN) prefix '{prefix}'. If you are entering a personal Social Security Number, click 'SSN / ITIN (XXX-XX-XXXX)' above.",
+            mode,
+        )
+    if digits[2:] == "0000000":
+        return (
+            False,
+            "Invalid Employer Identification Number (EIN). The last 7 digits cannot be all zeros.",
+            mode,
+        )
+    formatted = f"{digits[:2]}-{digits[2:]}"
+    return (True, formatted, "ein")
 
 
 def clean_ssn(raw_ssn: Optional[str]) -> Optional[str]:

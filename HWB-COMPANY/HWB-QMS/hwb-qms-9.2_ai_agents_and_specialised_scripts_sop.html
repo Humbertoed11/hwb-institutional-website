@@ -6,7 +6,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning &amp; Control)</span></div>
     </div>
@@ -22,11 +22,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>AI Agents &amp; Specialized Automation Scripts SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.2</td></tr>
-                <tr><td><strong>Version</strong></td><td>4.1.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Effective Date</strong></td><td>10/05/2026</td></tr>
+                <tr><td><strong>Effective Date</strong></td><td>10/29/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT / Artificial Intelligence Department</td></tr>
                 <tr><td><strong>ISO Standard</strong></td><td>ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.1 &amp; Clause 7.1.3 (Infrastructure)</td></tr>
             </tbody>
@@ -132,6 +132,12 @@
                     <td>Peter's host backup sentinel; executes automated binary PostgreSQL dumps, archives .env states, and enforces the 500MB log surge limit.</td>
                 </tr>
                 <tr>
+                    <td><strong>core/ai_employee/engine.py</strong></td>
+                    <td>Web App &amp; Worker Singleton</td>
+                    <td>24/7 Real-Time &amp; Scheduled</td>
+                    <td>24/7 Enterprise AI Employee Engine (<code>BUG-163</code>). Provides persistent Working Memory (<code>"AIEmployeeWorkingMemory"</code>), Standing Orders (<code>"AIEmployeeStandingOrders"</code>), Pre-Change Snapshot &amp; 1-Tap Rollback Ledger (<code>"AIEmployeeChangeLedger"</code>), FinOps Budget Circuit Breaker (<code>"AIEmployeeBudgetLedger"</code>: $0.50/day, $15.00/mo), 60s Heartbeat Telemetry (<code>"AIEmployeeHeartbeat"</code>), Read-Only SQL Analyst, and Deterministic Citation Firewall.</td>
+                </tr>
+                <tr>
                     <td><strong>sigma_sync.py</strong></td>
                     <td>Web App &amp; Worker</td>
                     <td>Session Close &amp; Pulse</td>
@@ -155,6 +161,7 @@
                 </ul>
             </li>
             <li><strong>Enterprise Context Resolver &amp; Anti-Narrowing Governance (ARCH-014):</strong> The Telegram listener and interactive assistant daemons must enforce Poka-Yoke anti-narrowing controls. Unconstrained <code>ILIKE</code> full-text matching against jobsite notes fields is strictly prohibited to prevent general business queries from binding to dense historical records (e.g. Bid #39). All inquiries must filter against the 120+ enterprise stop-word catalog, detect broad semantic phrases (<em>"our cost"</em>, <em>"system to be used"</em>, <em>"receive payments"</em>, <em>"website capabilities"</em>), fall back to <code>GENERAL_OPERATIONAL_CONTEXT</code>, and enforce Rule 7 prompt governance across all 4 core service lines.</li>
+            <li><strong>24/7 Enterprise AI Employee Governance, Pre-Change Rollback Ledger &amp; FinOps Circuit Breaker (<code>BUG-163</code>):</strong> All autonomous and executive-directed mutations executed via <code>@Georgebytesbot</code> or <code>/api/v1/ai-employee/*</code> must first snapshot every affected database row's <code>before_state</code> into <code>"AIEmployeeChangeLedger"</code> and stage a Change-Set (<code>#CS-&lt;id&gt;</code>) with 1-tap Telegram inline buttons (<code>[✅ Apply #CS-&lt;id&gt;]</code> / <code>[↩️ Rollback #CS-&lt;id&gt;]</code>). Outbound Telegram messages enforce <code>link_preview_options: {"is_disabled": True}</code> to prevent third-party preview cards from obscuring reports. Every AI response is verified by the Deterministic Citation Firewall against live PostgreSQL IDs, and daily/monthly API spend is enforced by <code>"AIEmployeeBudgetLedger"</code> (<code>$0.50/day</code> and <code>$15.00/month</code> hard ceiling with zero-cost SQL fallback).</li>
         </ol>
 
         <h2>5.0 Verification (Zero-Defect Check)</h2>
@@ -176,6 +183,12 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.2.0</td>
+                    <td style="text-align: left;">10/29/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed the 24/7 Enterprise AI Employee Architecture (BUG-163 / core/ai_employee/engine.py &amp; blueprints/ai_employee_api.py) with 5 PostgreSQL governance tables (AIEmployeeWorkingMemory, AIEmployeeStandingOrders, AIEmployeeChangeLedger, AIEmployeeBudgetLedger, AIEmployeeHeartbeat), Department Specialist Tools, Read-Only SQL Analyst, Deterministic Citation Firewall, FinOps Circuit Breaker ($0.50/day, $15.00/mo), link-preview suppression, and 1-command rollback script (scripts/rollback_ai_employee_upgrade.sh). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.1.0</td>
                     <td style="text-align: left;">10/05/2026</td>

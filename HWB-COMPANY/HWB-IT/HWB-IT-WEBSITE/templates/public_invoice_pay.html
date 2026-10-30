@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice.invoice_number }} | HWB Cleaning Services LLC Online Billing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --brand: #2563eb;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-500: #64748b;
+            --slate-700: #334155;
+            --slate-900: #0f172a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f1f5f9;
+            color: var(--slate-900);
+            padding: 2rem 1rem;
+        }
+        .pay-shell {
+            max-width: 960px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        .pay-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        .status-paid { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-open { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .inv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+            font-size: 0.85rem;
+        }
+        .inv-table th {
+            text-align: left;
+            padding: 0.65rem 0.5rem;
+            border-bottom: 2px solid var(--slate-200);
+            color: var(--slate-500);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .inv-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--slate-100);
+            font-weight: 600;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.88rem;
+            color: var(--slate-700);
+        }
+        .summary-row.total {
+            border-top: 2px solid var(--slate-200);
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--slate-900);
+        }
+        .method-box {
+            border: 1.5px solid var(--slate-200);
+            border-radius: 0.75rem;
+            padding: 0.85rem 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: block;
+        }
+        .method-box:hover { border-color: var(--brand); background: #f8fafc; }
+        .form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--slate-700);
+            margin-bottom: 0.3rem;
+        }
+        .form-input {
+            width: 100%;
+            height: 40px;
+            padding: 0 0.85rem;
+            border: 1px solid var(--slate-300);
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 0.9rem;
+        }
+        .btn-pay {
+            width: 100%;
+            height: 44px;
+            background: #059669;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-pay:hover { background: #047857; }
+        @media (max-width: 768px) {
+            .pay-shell { grid-template-columns: 1fr; }
+            .pay-card { padding: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <main class="pay-shell">
+        <!-- Left Column: Itemized Commercial Invoice -->
+        <section class="pay-card" aria-label="Commercial Cleaning Invoice Details">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--slate-200); padding-bottom: 1.25rem;">
+                <div>
+                    <div style="font-size: 1.15rem; font-weight: 900; color: var(--slate-900);">HWB Cleaning Services LLC</div>
+                    <div style="font-size: 0.78rem; color: var(--slate-500); margin-top: 0.2rem;">
+                        P.O. Box 38465, Dallas, TX 75238 &bull; (214)-586-0257<br>
+                        Federal Tax ID (FEIN): 82-4377459 &bull; Texas Sales Tax Permit: 32005785756
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    {% if invoice.status == 'Paid' %}
+                    <span class="status-pill status-paid"><i class="fas fa-check-circle"></i> Paid in Full</span>
+                    {% else %}
+                    <span class="status-pill status-open"><i class="fas fa-file-invoice-dollar"></i> {{ invoice.status }}</span>
+                    {% endif %}
+                    <div style="font-size: 1.1rem; font-weight: 900; margin-top: 0.45rem;">{{ invoice.invoice_number }}</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; font-size: 0.84rem;">
+                <div>
+                    <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500);">Billed To</div>
+                    <div style="font-weight: 800; font-size: 0.95rem; margin-top: 0.2rem;">{{ invoice.client_name }}</div>
+                    {% if invoice.facility_address %}
+                    <div style="color: var(--slate-500); margin-top: 0.15rem;">{{ invoice.facility_address }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500);">Billing Summary</div>
+                    <div style="margin-top: 0.2rem;"><strong>Service Type:</strong> {{ invoice.billing_mode }}</div>
+                    <div><strong>Issue Date:</strong> {{ invoice.issue_date }}</div>
+                    <div><strong>Due Date:</strong> {{ invoice.due_date }} ({{ invoice.payment_terms }})</div>
+                </div>
+            </div>
+
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Service Description</th>
+                        <th style="text-align: right;">Qty</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.line_items %}
+                    <tr>
+                        <td data-label="Service Description">{{ item.description }}</td>
+                        <td data-label="Qty" style="text-align: right;">{{ item.qty }}</td>
+                        <td data-label="Amount" style="text-align: right;">${{ "{:,.2f}".format((item.line_total_cents or 0) / 100.0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td data-label="Service Description">{{ invoice.billing_mode }} — Commercial Cleaning Services</td>
+                        <td data-label="Qty" style="text-align: right;">1</td>
+                        <td data-label="Amount" style="text-align: right;">{{ invoice.subtotal_formatted }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div style="max-width: 360px; margin-left: auto;">
+                <div class="summary-row">
+                    <span>Service Subtotal</span>
+                    <strong>{{ invoice.subtotal_formatted }}</strong>
+                </div>
+                {% if invoice.is_tax_exempt %}
+                <div class="summary-row" style="color: #059669;">
+                    <span>Texas Sales Tax (Exempt Cert {{ invoice.tax_exempt_cert_number or 'Verified' }})</span>
+                    <strong>$0.00</strong>
+                </div>
+                {% else %}
+                <div class="summary-row">
+                    <span>Texas Sales Tax (8.25% — 6.25% State + 2.00% Local)</span>
+                    <strong>{{ invoice.tax_formatted }}</strong>
+                </div>
+                {% endif %}
+                <div class="summary-row">
+                    <span>Total Invoice Amount</span>
+                    <strong>{{ invoice.total_formatted }}</strong>
+                </div>
+                {% if invoice.retainage_cents and invoice.retainage_cents > 0 %}
+                <div class="summary-row" style="color: #b45309;">
+                    <span>Less Construction Retainage Held ({{ invoice.retainage_pct }}%)</span>
+                    <strong>-{{ invoice.retainage_formatted }}</strong>
+                </div>
+                {% endif %}
+                {% if invoice.amount_paid_cents and invoice.amount_paid_cents > 0 %}
+                <div class="summary-row" style="color: #059669;">
+                    <span>Amount Paid to Date</span>
+                    <strong>-{{ invoice.amount_paid_formatted }}</strong>
+                </div>
+                {% endif %}
+                <div class="summary-row total">
+                    <span>Current Balance Due</span>
+                    <span style="color: {% if invoice.status == 'Paid' %}#059669{% else %}#2563eb{% endif %};">{{ invoice.balance_due_formatted }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Column: Online Stripe ACH / Card Payment Checkout -->
+        <section class="pay-card" aria-label="Online Payment Checkout">
+            {% if invoice.status == 'Paid' %}
+            <div style="text-align: center; padding: 1.5rem 0;">
+                <div style="width: 56px; height: 56px; border-radius: 50%; background: #ecfdf5; color: #059669; display: inline-flex; align-items: center; justify-content: center; font-size: 1.65rem; margin-bottom: 1rem;">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h2 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 900;">Payment Complete</h2>
+                <p style="color: var(--slate-500); font-size: 0.88rem; margin: 0 0 1.25rem 0;">
+                    Invoice <strong>{{ invoice.invoice_number }}</strong> has been paid in full ({{ invoice.amount_paid_formatted }}).
+                </p>
+                <button type="button" onclick="window.print()" class="btn-pay" style="background: var(--brand);">
+                    <i class="fas fa-print"></i> Print Payment Receipt
+                </button>
+            </div>
+            {% else %}
+            <h2 style="margin: 0 0 0.35rem 0; font-size: 1.15rem; font-weight: 900;">Pay Online via Stripe</h2>
+            <p style="margin: 0 0 1.25rem 0; font-size: 0.82rem; color: var(--slate-500);">
+                Select your preferred payment method below to settle <strong>{{ invoice.balance_due_formatted }}</strong>.
+            </p>
+
+            <form id="public-invoice-pay-form" onsubmit="submitPublicInvoicePayment(event)">
+                <fieldset style="border: none; padding: 0; margin: 0 0 1rem 0;">
+                    <legend class="form-label" style="margin-bottom: 0.5rem;">Select Payment Method</legend>
+                    <label for="pm-ach" class="method-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>
+                                <input type="radio" id="pm-ach" name="payment_method" value="us_bank_account" checked>
+                                <strong style="font-size: 0.88rem; margin-left: 0.35rem;">ACH Bank Transfer (Recommended)</strong>
+                            </span>
+                            <span style="font-size: 0.72rem; font-weight: 800; background: #ecfdf5; color: #065f46; padding: 0.2rem 0.5rem; border-radius: 4px;">Fast Commercial Settlement</span>
+                        </div>
+                        <div style="font-size: 0.76rem; color: var(--slate-500); margin-top: 0.25rem; padding-left: 1.4rem;">
+                            Direct business checking transfer via Stripe Financial Connections.
+                        </div>
+                    </label>
+
+                    <label for="pm-card" class="method-box">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>
+                                <input type="radio" id="pm-card" name="payment_method" value="card">
+                                <strong style="font-size: 0.88rem; margin-left: 0.35rem;">Commercial Credit or Debit Card</strong>
+                            </span>
+                            <span style="font-size: 0.72rem; font-weight: 700; color: var(--slate-500);">Visa / MC / Amex</span>
+                        </div>
+                    </label>
+                </fieldset>
+
+                <label for="payer-name-input" class="form-label">Authorized Signer Full Name</label>
+                <input type="text" id="payer-name-input" name="payer_name" class="form-input" required placeholder="Enter full name of authorized payer">
+
+                <label for="payer-email-input" class="form-label">Receipt Email Address</label>
+                <input type="email" id="payer-email-input" name="payer_email" class="form-input" value="{{ invoice.client_email or '' }}" required placeholder="accounting@company.com">
+
+                <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.85rem; margin-bottom: 1.15rem;">
+                    <label for="ach-consent-checkbox" style="display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.78rem; line-height: 1.45; color: var(--slate-700); cursor: pointer;">
+                        <input type="checkbox" id="ach-consent-checkbox" name="ach_authorization_consent" value="1" required style="margin-top: 0.2rem;">
+                        <span>
+                            I authorize HWB Cleaning Services LLC to debit the selected account for <strong>{{ invoice.balance_due_formatted }}</strong> in settlement of Invoice <strong>{{ invoice.invoice_number }}</strong>, and I agree to the <a href="/terms" target="_blank" style="color: var(--brand);">Terms of Service</a> and <a href="/privacy-policy" target="_blank" style="color: var(--brand);">Privacy Policy</a>.
+                        </span>
+                    </label>
+                </div>
+
+                <div id="pay-feedback" style="display: none; margin-bottom: 0.85rem; padding: 0.75rem; border-radius: 6px; font-size: 0.82rem; font-weight: 700;"></div>
+
+                <button type="submit" id="btn-submit-invoice-pay" class="btn-pay">
+                    <i class="fas fa-lock"></i> Authorize &amp; Pay {{ invoice.balance_due_formatted }}
+                </button>
+            </form>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+        async function submitPublicInvoicePayment(evt) {
+            evt.preventDefault();
+            const btn = document.getElementById('btn-submit-invoice-pay');
+            const fb = document.getElementById('pay-feedback');
+            const consent = document.getElementById('ach-consent-checkbox');
+            if (!consent || !consent.checked) {
+                if (fb) {
+                    fb.style.display = 'block';
+                    fb.style.background = '#fef2f2';
+                    fb.style.color = '#991b1b';
+                    fb.innerText = 'Please check the payment authorization box to continue.';
+                }
+                return;
+            }
+            const methodEl = document.querySelector('input[name="payment_method"]:checked');
+            const payerName = document.getElementById('payer-name-input').value.trim();
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Processing Payment...';
+            }
+            try {
+                const res = await fetch(window.location.pathname + '/complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        payment_method: methodEl ? methodEl.value : 'us_bank_account',
+                        payer_name: payerName,
+                        ach_authorization_consent: true
+                    })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    if (fb) {
+                        fb.style.display = 'block';
+                        fb.style.background = '#fef2f2';
+                        fb.style.color = '#991b1b';
+                        fb.innerText = data.message || 'Unable to process payment.';
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerText = 'Authorize & Pay {{ invoice.balance_due_formatted }}';
+                    }
+                }
+            } catch (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Authorize & Pay {{ invoice.balance_due_formatted }}';
+                }
+            }
+        }
+    </script>
+</body>
+</html>

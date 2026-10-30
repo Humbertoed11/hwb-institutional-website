@@ -1109,6 +1109,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertIn(b"88776655", r_dl_w2.data)
                 r_dl_w2.close()
         finally:
+            conn.rollback()
             with conn.cursor() as cur:
                 for eid in created_emp_ids:
                     cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
@@ -1536,6 +1537,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 cur.execute('SELECT status FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
                 self.assertEqual(cur.fetchone()["status"], "Completed")
         finally:
+            conn.rollback()
             with conn.cursor() as cur:
                 if camp_id:
                     cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (camp_id,))
@@ -1690,6 +1692,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertIsNotNone(esl_row)
                 self.assertEqual(esl_row["source"], "RFC8058_ONE_CLICK_POST")
         finally:
+            conn.rollback()
             with conn.cursor() as cur:
                 if camp_id:
                     cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (camp_id,))
@@ -3251,6 +3254,1012 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     conn.commit()
             finally:
                 conn.close()
+
+    def test_38_enterprise_accounting_double_entry_stripe_and_qbo_engine_arch_017(self):
+        """
+        ARCH-017 7-Pillar Enterprise Double-Entry Accounting, QuickBooks Replacement & Stripe Billing Sentinel:
+        1. Department Workspace & RBAC:
+           - /admin/operations?view=accounting renders 200 OK for Executive/Admin with 28 Chart of Accounts.
+           - Unbalanced journal entries (Debits != Credits) are rejected with 400 Bad Request.
+        2. Stripe Invoicing, ACH $5 Cap & Texas 8.25% Sales Tax:
+           - POST /api/v1/accounting/invoices computes 8.25% Texas sales tax ($2,000 -> $165 tax -> $2,165 total)
+             and posts a balanced Double-Entry Journal Entry (DR 1100 / CR 4000 / CR 2100).
+           - Public client portal (/pay/invoice/<token>) renders 200 OK with zero pre-checked consent boxes
+             and settles via ACH ($5.00 max fee -> DR 1000 $2,160.00 + DR 6100 $5.00 = CR 1100 $2,165.00).
+        3. Construction Progress Billing (10% Retainage) & Texas Statutory Lien Waivers (§ 53.284):
+           - Construction progress invoice holds 10% retainage in Account 1150, generates Conditional Waiver,
+             settles via Stripe Webhook (/api/v1/webhooks/stripe), and upgrades to Unconditional Released.
+        4. Accounts Payable, 1099-NEC Subcontractor Bills & 3-Way Compliance Lock:
+           - Subcontractor bill without W-9/COI triggers 'Hold: Missing W-9/COI' and blocks payout (409)
+             until verified or authorized by CEO override.
+        5. Expense Receipt Vault, QuickBooks CSV Import, 10-Second Delete Undo & CPA Exports:
+           - Verifies expense logging, QBO CSV import, CPA CSV exports (P&L, Texas Form 01-114, 1099-NEC),
+             and 1-click invoice delete + undo restoration.
+        """
+        auth_client = self.get_auth_client()
+        created_invoice_ids = []
+        created_bill_ids = []
+        created_expense_ids = []
+
+        try:
+            # 1. Verify /admin/operations?view=accounting renders 200 OK and 28 Chart of Accounts exist
+            r_view = auth_client.get("/admin/operations?view=accounting")
+            self.assertEqual(r_view.status_code, 200)
+            html = r_view.get_data(as_text=True)
+            self.assertIn("Finance, Double-Entry General Ledger &amp; Stripe Billing Hub", html)
+            self.assertIn("accounting_engine.js", html)
+
+            r_ov = auth_client.get("/api/v1/accounting/overview")
+            self.assertEqual(r_ov.status_code, 200)
+            ov_data = r_ov.get_json().get("data", {})
+            self.assertGreaterEqual(len(ov_data.get("chart_of_accounts", [])), 28)
+
+            # Verify unbalanced manual journal entry is rejected (Debits != Credits)
+            r_unbalanced = auth_client.post(
+                "/api/v1/accounting/journal-entries",
+                json={
+                    "memo": "ARCH017 Unbalanced Test",
+                    "lines": [
+                        {"account_code": "1000", "debit": "500.00", "credit": "0.00"},
+                        {"account_code": "4000", "debit": "0.00", "credit": "450.00"},
+                    ],
+                },
+            )
+            self.assertEqual(r_unbalanced.status_code, 400)
+            self.assertIn("Unbalanced journal entry rejected", r_unbalanced.get_json().get("message", ""))
+
+            # 2. Create Recurring Janitorial Invoice ($2,000.00 + 8.25% TX Sales Tax = $2,165.00)
+            r_inv1 = auth_client.post(
+                "/api/v1/accounting/invoices",
+                json={
+                    "client_name": "ARCH017 Dallas Medical Plaza",
+                    "client_email": "ap@arch017medical.example.com",
+                    "facility_address": "5000 Preston Rd, Dallas, TX 75205",
+                    "billing_mode": "Recurring Janitorial",
+                    "description": "Monthly Clinical Janitorial & Sanitization",
+                    "amount": "2000.00",
+                    "is_tax_exempt": False,
+                },
+            )
+            self.assertEqual(r_inv1.status_code, 200)
+            inv1 = r_inv1.get_json()["invoice"]
+            created_invoice_ids.append(inv1["id"])
+            self.assertEqual(inv1["subtotal_cents"], 200000)
+            self.assertEqual(inv1["tax_cents"], 16500)  # 8.25% of $2,000.00 = $165.00
+            self.assertEqual(inv1["total_cents"], 216500)
+            self.assertEqual(inv1["balance_due_cents"], 216500)
+            self.assertEqual(inv1["journal_entry"]["total_debit_cents"], 216500)
+            self.assertEqual(inv1["journal_entry"]["total_credit_cents"], 216500)
+
+            # Verify Public Client Payment Portal (/pay/invoice/<token>)
+            ptoken1 = inv1["payment_token"]
+            r_portal = self.client.get(f"/pay/invoice/{ptoken1}")
+            self.assertEqual(r_portal.status_code, 200)
+            portal_html = r_portal.get_data(as_text=True)
+            self.assertIn(inv1["invoice_number"], portal_html)
+            self.assertIn("$2,165.00", portal_html)
+            # Consent checkbox must NOT be pre-checked (BUG-149)
+            self.assertNotIn('id="ach-consent-checkbox" name="ach_authorization_consent" value="1" checked', portal_html)
+
+            # Pay via Public Client Portal (ACH $5.00 max fee cap)
+            r_pay1 = self.client.post(
+                f"/pay/invoice/{ptoken1}/complete",
+                json={
+                    "payment_method": "us_bank_account",
+                    "payer_name": "ARCH017 Controller",
+                    "ach_authorization_consent": True,
+                },
+            )
+            self.assertEqual(r_pay1.status_code, 200)
+            settlement1 = r_pay1.get_json()["settlement"]
+            self.assertEqual(settlement1["status"], "Paid")
+            self.assertEqual(settlement1["stripe_fee_cents"], 500)  # $5.00 ACH cap
+            self.assertEqual(settlement1["net_cash_cents"], 216000)  # $2,160.00 net cash
+
+            # 3. Create Construction Progress Invoice ($10,000.00, Tax-Exempt GC Resale, 10% Retainage)
+            r_inv2 = auth_client.post(
+                "/api/v1/accounting/invoices",
+                json={
+                    "client_name": "ARCH017 Turner Construction Co",
+                    "billing_mode": "Construction Progress (AIA G702)",
+                    "description": "Phase 2 Final Post-Construction Detail",
+                    "amount": "10000.00",
+                    "retainage_pct": 10.0,
+                    "is_tax_exempt": True,
+                    "tax_exempt_cert_number": "TX-RESALE-998877",
+                },
+            )
+            self.assertEqual(r_inv2.status_code, 200)
+            inv2 = r_inv2.get_json()["invoice"]
+            created_invoice_ids.append(inv2["id"])
+            self.assertEqual(inv2["subtotal_cents"], 1000000)
+            self.assertEqual(inv2["tax_cents"], 0)
+            self.assertEqual(inv2["retainage_cents"], 100000)  # 10% retainage = $1,000.00
+            self.assertEqual(inv2["balance_due_cents"], 900000)  # $9,000.00 progress due
+            self.assertEqual(inv2["lien_waiver_status"], "Conditional Ready")
+
+            # Verify Texas Statutory Conditional Lien Waiver (§ 53.284)
+            r_waiver_cond = auth_client.get(f"/api/v1/accounting/invoices/{inv2['id']}/lien-waiver?type=conditional")
+            self.assertEqual(r_waiver_cond.status_code, 200)
+            self.assertIn("CONDITIONAL WAIVER AND RELEASE ON PROGRESS PAYMENT", r_waiver_cond.get_data(as_text=True))
+            self.assertIn("53.284", r_waiver_cond.get_data(as_text=True))
+
+            # Settle Construction Progress Invoice via Stripe Webhook Receiver
+            r_wh = self.client.post(
+                "/api/v1/webhooks/stripe",
+                json={
+                    "type": "checkout.session.completed",
+                    "data": {
+                        "object": {
+                            "payment_method_types": ["us_bank_account"],
+                            "metadata": {
+                                "invoice_number": inv2["invoice_number"],
+                                "payment_token": inv2["payment_token"],
+                            },
+                        }
+                    },
+                },
+            )
+            self.assertEqual(r_wh.status_code, 200)
+            wh_settlement = r_wh.get_json()["settlement"]
+            self.assertEqual(wh_settlement["status"], "Paid")
+            self.assertEqual(wh_settlement["lien_waiver_status"], "Unconditional Released")
+
+            # 4. Create 1099 Subcontractor Bill without W-9/COI -> Verify 3-Way Compliance Lock
+            r_bill = auth_client.post(
+                "/api/v1/accounting/bills",
+                json={
+                    "vendor_name": "ARCH017 Subcontractor Crew LLC",
+                    "job_site_name": "ARCH017 Medical Plaza",
+                    "gross_amount": "1200.00",
+                    "w9_verified": False,
+                    "coi_verified": False,
+                },
+            )
+            self.assertEqual(r_bill.status_code, 200)
+            bill = r_bill.get_json()["bill"]
+            created_bill_ids.append(bill["id"])
+            self.assertEqual(bill["compliance_lock_status"], "Hold: Missing W-9/COI")
+
+            # Attempt payout without override -> Must block with 409 Conflict
+            r_bill_block = auth_client.post(f"/api/v1/accounting/bills/{bill['id']}/pay", json={"ceo_override": False})
+            self.assertEqual(r_bill_block.status_code, 409)
+            self.assertTrue(r_bill_block.get_json().get("compliance_blocked"))
+
+            # Release payout with CEO Override -> 200 OK
+            r_bill_pay = auth_client.post(f"/api/v1/accounting/bills/{bill['id']}/pay", json={"ceo_override": True})
+            self.assertEqual(r_bill_pay.status_code, 200)
+
+            # 5. Log Expense Receipt + QuickBooks CSV Import + Delete/Undo + CPA Exports
+            r_exp = auth_client.post(
+                "/api/v1/accounting/expenses",
+                json={
+                    "merchant_name": "ARCH017 Chemical Supply Co",
+                    "category_account_code": "5200",
+                    "amount": "240.50",
+                    "job_site_name": "ARCH017 Medical Plaza",
+                    "receipt_memo": "Hospital Disinfectant & Microfiber Pads",
+                },
+            )
+            self.assertEqual(r_exp.status_code, 200)
+            exp = r_exp.get_json()["expense"]
+            created_expense_ids.append(exp["id"])
+
+            # Test Delete Invoice + 10-Second Undo Snapshot Restoration
+            r_del_inv = auth_client.delete(f"/api/v1/accounting/invoices/{inv1['id']}")
+            self.assertEqual(r_del_inv.status_code, 200)
+            undo_token = r_del_inv.get_json().get("undo_token")
+            self.assertTrue(undo_token)
+
+            r_undo_inv = auth_client.post("/api/v1/accounting/restore-deleted", json={"undo_token": undo_token})
+            self.assertEqual(r_undo_inv.status_code, 200)
+
+            # Verify CPA CSV Exports (P&L, Texas Sales Tax Form 01-114, 1099-NEC, General Ledger)
+            for exp_type in ("pnl", "texas_sales_tax", "1099_nec", "general_ledger"):
+                r_csv = auth_client.get(f"/api/v1/accounting/export/{exp_type}")
+                self.assertEqual(r_csv.status_code, 200)
+                self.assertIn("text/csv", r_csv.headers.get("Content-Type", ""))
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "AccountingJournalEntries" WHERE memo LIKE %s OR reference_code IN (SELECT invoice_number FROM "ClientInvoices" WHERE client_name LIKE %s);', ("ARCH017%", "ARCH017%"))
+                    cur.execute('DELETE FROM "AccountingJournalEntries" WHERE reference_code IN (SELECT bill_number FROM "VendorBills" WHERE vendor_name LIKE %s);', ("ARCH017%",))
+                    cur.execute('DELETE FROM "AccountingJournalEntries" WHERE reference_code IN (SELECT receipt_number FROM "ExpenseReceipts" WHERE merchant_name LIKE %s);', ("ARCH017%",))
+                    if created_invoice_ids:
+                        cur.execute('DELETE FROM "ClientInvoices" WHERE id = ANY(%s) OR client_name LIKE %s;', (created_invoice_ids, "ARCH017%"))
+                    if created_bill_ids:
+                        cur.execute('DELETE FROM "VendorBills" WHERE id = ANY(%s) OR vendor_name LIKE %s;', (created_bill_ids, "ARCH017%"))
+                    if created_expense_ids:
+                        cur.execute('DELETE FROM "ExpenseReceipts" WHERE id = ANY(%s) OR merchant_name LIKE %s;', (created_expense_ids, "ARCH017%"))
+                    conn.commit()
+            finally:
+                conn.close()
+
+    def test_39_enterprise_lead_notes_workflow_bug_159(self):
+        """
+        BUG-159: Certifies the 9-Pillar Enterprise Lead Notes & Touchpoint Architecture:
+        1. PostgreSQL 16.15 schema columns on GlobalActivities & Leads (created_by_user_id, created_by_name,
+           outcome, is_pinned, updated_at, edited_by_name, revision_history, notes_revision_history).
+        2. Dual-Layer Standing Facility Brief (Leads.notes) vs Pinned/Chronological Touchpoints (GlobalActivities),
+           plus elimination of false-positive NOTE spam on PUT /api/v1/leads/<id> when notes did not change.
+        3. Inline editing of Standing Facility Brief + version history + 1-click version restore.
+        4. Inline editing of Activity Notes + pin/unpin toggle + version history + 1-click version restore.
+        5. Smart Field Extraction (email, phone, SQF, capacity, Who Cleans IN_HOUSE/OUTSOURCED) from note text.
+        6. Sister-Location Note Broadcast across shared umbrella_name.
+        7. Full-Text Search parity for note:<keyword>, has:notes, and has:pinned across Leads.notes and GlobalActivities.
+        8. Lead-to-Account Promotion preserves both Standing Brief (Customers.notes) and GlobalActivities rows.
+        """
+        import uuid
+        from core.services.search import parse_advanced_search
+
+        auth_client = self.get_auth_client()
+
+        uid = uuid.uuid4().hex[:6]
+        umbrella_tag = f"HWB_UMBRELLA_{uid}"
+        lead_ids = []
+        created_customer_id = None
+
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                for idx in (1, 2):
+                    cur.execute(
+                        '''
+                        INSERT INTO "Leads" (
+                            center_name, umbrella_name, director, city, state, status,
+                            cleaning_delivery_model, sqf, capacity
+                        ) VALUES (%s, %s, %s, 'Dallas', 'TX', 'New', 'UNKNOWN', 0, 0)
+                        RETURNING id;
+                        ''',
+                        (f"Enterprise Note Test Center {idx} {uid}", umbrella_tag, f"Director {idx}"),
+                    )
+                    lead_ids.append(cur.fetchone()["id"])
+                conn.commit()
+
+            lead1_id, lead2_id = lead_ids[0], lead_ids[1]
+
+            # 1. Verify PUT /api/v1/leads/<id> without changing notes does NOT create false-positive NOTE spam
+            r_put_no_note = auth_client.put(
+                f"/api/v1/leads/{lead1_id}",
+                json={"city": "Plano", "notes": ""},
+            )
+            self.assertEqual(r_put_no_note.status_code, 200)
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT COUNT(*) AS cnt FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = %s;',
+                    (lead1_id,),
+                )
+                self.assertEqual(cur.fetchone()["cnt"], 0)
+            conn.commit()
+
+            # 2. Save Standing Facility Brief (v1 -> v2) and test 1-click restore to v1
+            r_brief_v1 = auth_client.put(
+                f"/api/v1/leads/{lead1_id}/standing-brief",
+                json={"notes": "Gatekeeper: Maria. Best Hours: 8:30am-11:00am.", "log_touchpoint": False},
+            )
+            self.assertEqual(r_brief_v1.status_code, 200)
+            self.assertEqual(r_brief_v1.get_json()["standing_brief"], "Gatekeeper: Maria. Best Hours: 8:30am-11:00am.")
+
+            r_brief_v2 = auth_client.put(
+                f"/api/v1/leads/{lead1_id}/standing-brief",
+                json={"notes": "Gatekeeper: Maria. Best Hours: 9:00am-11:30am. Gate Code: #4412.", "log_touchpoint": False},
+            )
+            self.assertEqual(r_brief_v2.status_code, 200)
+            b2_data = r_brief_v2.get_json()
+            self.assertEqual(len(b2_data["notes_revision_history"]), 1)
+            self.assertEqual(b2_data["notes_revision_history"][0]["old_text"], "Gatekeeper: Maria. Best Hours: 8:30am-11:00am.")
+
+            r_brief_restore = auth_client.post(
+                f"/api/v1/leads/{lead1_id}/standing-brief/restore",
+                json={"version": 1},
+            )
+            self.assertEqual(r_brief_restore.status_code, 200)
+            self.assertEqual(r_brief_restore.get_json()["standing_brief"], "Gatekeeper: Maria. Best Hours: 8:30am-11:00am.")
+
+            # 3. Log Call Note via cadence-save with Smart Field Extraction + Pin + Sister-Location Broadcast
+            smart_note = (
+                f"Spoke with receptionist Maria ({uid}). Director Sandra email is sandra.{uid}@kinder-test.org "
+                f"and direct cell is (214)-555-0144. Building is 14,500 sq ft with 185 kids capacity. "
+                f"Currently teachers clean in-house."
+            )
+            r_cad = auth_client.post(
+                f"/api/v1/leads/{lead1_id}/cadence-save",
+                json={
+                    "activity_type": "Phone Call",
+                    "outcome": "Left Message with Staff",
+                    "note": smart_note,
+                    "is_pinned": True,
+                    "share_umbrella": True,
+                },
+            )
+            self.assertEqual(r_cad.status_code, 200)
+            cad_json = r_cad.get_json()
+            self.assertEqual(cad_json["status"], "success")
+            self.assertEqual(cad_json["sister_broadcast_count"], 1)
+            auto_fields = cad_json.get("auto_updated_fields") or {}
+            self.assertEqual(auto_fields.get("email"), f"sandra.{uid}@kinder-test.org")
+            self.assertEqual(auto_fields.get("phone"), "(214)-555-0144")
+            self.assertEqual(auto_fields.get("sqf"), 14500)
+            self.assertEqual(auto_fields.get("capacity"), 185)
+            self.assertEqual(auto_fields.get("cleaning_delivery_model"), "IN_HOUSE")
+
+            # Verify Sister Lead #2 received the broadcast note AND GET /api/v1/leads/<id> exposes activity 'id'
+            r_sis_acts = auth_client.get(f"/api/v1/activities/Lead/{lead2_id}")
+            self.assertEqual(r_sis_acts.status_code, 200)
+            sis_acts = r_sis_acts.get_json()["activities"]
+            self.assertEqual(len(sis_acts), 1)
+            self.assertIn("Shared from", sis_acts[0]["description"])
+            sis_act_id = sis_acts[0]["id"]
+            self.assertIsNotNone(sis_act_id)
+
+            r_l2_detail = auth_client.get(f"/api/v1/leads/{lead2_id}")
+            self.assertEqual(r_l2_detail.status_code, 200)
+            l2_detail_acts = r_l2_detail.get_json().get("activities") or []
+            self.assertEqual(len(l2_detail_acts), 1)
+            self.assertEqual(l2_detail_acts[0].get("id"), sis_act_id)
+
+            # Verify DELETE /api/v1/activities/<id> removes the note and returns updated counts/last_note
+            r_del_sis_act = auth_client.delete(f"/api/v1/activities/{sis_act_id}")
+            self.assertEqual(r_del_sis_act.status_code, 200)
+            del_json = r_del_sis_act.get_json()
+            self.assertEqual(del_json.get("status"), "success")
+            self.assertEqual(del_json.get("activity_count"), 0)
+            self.assertEqual(del_json.get("last_note"), "")
+
+            # 4. Verify Activity Note Inline Edit + Version History + Restore + Pin Toggle
+            r_l1_acts = auth_client.get(f"/api/v1/activities/Lead/{lead1_id}")
+            self.assertEqual(r_l1_acts.status_code, 200)
+            l1_payload = r_l1_acts.get_json()
+            self.assertEqual(l1_payload["standing_brief"], "Gatekeeper: Maria. Best Hours: 8:30am-11:00am.")
+            act_id = l1_payload["activities"][0]["id"]
+            self.assertTrue(l1_payload["activities"][0]["is_pinned"])
+            self.assertEqual(l1_payload["activities"][0]["outcome"], "Left Message with Staff")
+
+            edited_note_text = f"UPDATED NOTE ({uid}): Director Sandra confirmed Tuesday 10am walkthrough."
+            r_edit_act = auth_client.put(
+                f"/api/v1/activities/{act_id}",
+                json={"description": edited_note_text},
+            )
+            self.assertEqual(r_edit_act.status_code, 200)
+            edited_act = r_edit_act.get_json()["activity"]
+            self.assertEqual(edited_act["description"], edited_note_text)
+            self.assertEqual(len(edited_act["revision_history"]), 1)
+            self.assertEqual(edited_act["revision_history"][0]["old_text"], smart_note)
+
+            # Restore Activity Note to version 1
+            r_rest_act = auth_client.post(f"/api/v1/activities/{act_id}/restore", json={"version": 1})
+            self.assertEqual(r_rest_act.status_code, 200)
+            restored_act = r_rest_act.get_json()["activity"]
+            self.assertEqual(restored_act["description"], smart_note)
+            self.assertEqual(len(restored_act["revision_history"]), 2)
+
+            # 5. Verify Full-Text Search Engine Parity (note:<uid>, has:notes, has:pinned)
+            conds_note, params_note = parse_advanced_search(f"note:{uid}")
+            conds_pinned, params_pinned = parse_advanced_search("has:pinned")
+            sql_note = " AND ".join(conds_note) if isinstance(conds_note, list) else str(conds_note)
+            sql_pinned = " AND ".join(conds_pinned) if isinstance(conds_pinned, list) else str(conds_pinned)
+            with conn.cursor() as cur:
+                cur.execute(f'SELECT id FROM "Leads" WHERE ({sql_note}) AND id = %s;', params_note + [lead1_id])
+                self.assertIsNotNone(cur.fetchone())
+                cur.execute(f'SELECT id FROM "Leads" WHERE ({sql_pinned}) AND id = %s;', params_pinned + [lead1_id])
+                self.assertIsNotNone(cur.fetchone())
+            conn.commit()
+
+            # 6. Verify Lead-to-Account Promotion preserves Standing Brief + GlobalActivities
+            r_prom = auth_client.post(f"/api/v1/leads/{lead1_id}/promote")
+            self.assertEqual(r_prom.status_code, 200)
+            created_customer_id = r_prom.get_json().get("customer_id")
+            self.assertTrue(created_customer_id)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT notes FROM "Customers" WHERE customer_id = %s;', (created_customer_id,))
+                cust_row = cur.fetchone()
+                self.assertIsNotNone(cust_row)
+                self.assertIn("Gatekeeper: Maria", cust_row["notes"] or "")
+
+                cur.execute(
+                    'SELECT COUNT(*) AS cnt FROM "GlobalActivities" WHERE parent_type = \'Account\' AND parent_id = %s;',
+                    (created_customer_id,),
+                )
+                self.assertGreaterEqual(cur.fetchone()["cnt"], 2)
+            conn.commit()
+        finally:
+            conn.rollback()
+            with conn.cursor() as cur:
+                if created_customer_id:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Account\' AND parent_id = %s;', (created_customer_id,))
+                    cur.execute('DELETE FROM "Customers" WHERE customer_id = %s;', (created_customer_id,))
+                if lead_ids:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);', (lead_ids,))
+                    cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+                conn.commit()
+            conn.close()
+
+    def test_40_enterprise_universal_grid_column_persistence_and_sorting_bug_164(self):
+        """
+        BUG-164: Verifies the 5-Pillar Enterprise Universal Grid Engine across Leads, Accounts,
+        Commercial GC Bids, and Secondary Backoffice Tables:
+        1. PostgreSQL Per-User Grid State API (GET / POST /api/v1/ui/grid-state) persists ordered
+           active_cols, col_widths, and personal_preset inside "UserBehavioralProfiles".adaptive_preferences.
+        2. Dragged column sequence persists across pagination (page=2) and search (q=Dallas) without
+           requiring cols= in pagination hrefs or search hidden inputs.
+        3. All sorting keys in Leads (dm, state, zip, last_note, priority, status, m_and_a, owner,
+           value, sqf, activities), Accounts (cycle, sqf, website, last_note, rep), and GC Bids
+           (phone, email, special_reqs) execute valid SQL and return HTTP 200.
+        4. Order-Preserving Column Manager, Column Resizers (.sigma-col-resizer), Dynamic Sticky
+           Collision Shield, and Universal Secondary Table Upgrader are active in JS/HTML.
+        """
+        import re
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ops_js_path = os.path.join(base_dir, "static", "js", "backoffice_operations_core.js")
+        ops_tpl_path = os.path.join(base_dir, "templates", "backoffice_operations.html")
+
+        with open(ops_js_path, "r", encoding="utf-8") as f:
+            ops_js = f.read()
+        with open(ops_tpl_path, "r", encoding="utf-8") as f:
+            ops_tpl = f.read()
+
+        # Verify JS/HTML Enterprise Grid Architecture markers
+        self.assertIn("computeOrderPreservingCols", ops_js)
+        self.assertIn("saveGridStateToServer", ops_js)
+        self.assertIn("syncNavigationLinksCols", ops_js)
+        self.assertIn("initColumnResizersAndDensity", ops_js)
+        self.assertIn("upgradeUniversalSecondaryTables", ops_js)
+        self.assertIn("DESC_FIRST_SORT_COLS", ops_js)
+        self.assertIn("sigma-col-resizer", ops_tpl)
+        self.assertIn("SERVER_GRID_STATE", ops_tpl)
+        self.assertNotIn('id="search-cols-input"', ops_tpl)
+        self.assertNotIn('id="acc-cols-input"', ops_tpl)
+
+        auth_client = self.get_auth_client()
+        try:
+            # 1. Save custom dragged column sequence + custom widths + personal preset via /api/v1/ui/grid-state
+            custom_dragged_cols = ["company", "value", "sqf", "status", "owner", "phone", "last_note"]
+            r_save = auth_client.post(
+                "/api/v1/ui/grid-state",
+                json={
+                    "grid_id": "leads",
+                    "active_cols": custom_dragged_cols,
+                    "col_widths": {"company": 340, "value": 135},
+                    "personal_preset": custom_dragged_cols,
+                },
+            )
+            self.assertEqual(r_save.status_code, 200)
+            save_json = r_save.get_json()
+            self.assertEqual(save_json.get("status"), "success")
+            self.assertEqual(save_json["state"]["active_cols"], custom_dragged_cols)
+            self.assertEqual(save_json["state"]["col_widths"].get("company"), 340)
+
+            # 2. Verify GET /api/v1/ui/grid-state returns persisted PostgreSQL state
+            r_get_state = auth_client.get("/api/v1/ui/grid-state?grid_id=leads")
+            self.assertEqual(r_get_state.status_code, 200)
+            self.assertEqual(r_get_state.get_json()["state"]["active_cols"], custom_dragged_cols)
+
+            # 3. Navigate to Page 2 and Search WITHOUT cols= in URL -> must preserve custom dragged column order!
+            for nav_url in ("/admin/operations?view=leads&page=2", "/admin/operations?view=leads&q=Dallas"):
+                r_page = auth_client.get(nav_url)
+                self.assertEqual(r_page.status_code, 200)
+                html = r_page.get_data(as_text=True)
+                m_header = re.search(r'<tr id="leads-header-row"[^>]*>(.*?)</tr>', html, re.S)
+                self.assertIsNotNone(m_header)
+                rendered_cols = re.findall(r'data-col="([^"]+)"', m_header.group(1))
+                self.assertEqual(
+                    rendered_cols,
+                    custom_dragged_cols,
+                    f"Dragged column order must persist across {nav_url}",
+                )
+
+            # 4. Verify semantic & newly wired SQL sorting across Leads, Accounts, and GC Bids
+            for lead_sort_col in ("dm", "state", "zip", "last_note", "priority", "status", "m_and_a", "owner", "value", "sqf", "activities"):
+                r_sort = auth_client.get(f"/admin/operations?view=leads&sort_by={lead_sort_col}&sort_dir=desc")
+                self.assertEqual(r_sort.status_code, 200, f"Leads sort_by={lead_sort_col} failed")
+
+            for acc_sort_col in ("cycle", "sqf", "website", "last_note", "rep", "revenue", "status"):
+                r_acc_sort = auth_client.get(f"/admin/operations?view=accounts&acc_sort_by={acc_sort_col}&acc_sort_dir=desc")
+                self.assertEqual(r_acc_sort.status_code, 200, f"Accounts acc_sort_by={acc_sort_col} failed")
+
+            for bid_sort_col in ("phone", "email", "special_reqs", "value", "sqft", "due_date", "status"):
+                r_bid_sort = auth_client.get(f"/admin/operations?view=construction_bids&bid_sort={bid_sort_col}&bid_dir=desc")
+                self.assertEqual(r_bid_sort.status_code, 200, f"GC Bids bid_sort={bid_sort_col} failed")
+        finally:
+            # Reset grid state to clean default so subsequent tests see the standard 8-column default layout
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "leads", "reset": True})
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "accounts", "reset": True})
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "construction_bids", "reset": True})
+
+    def test_41_enterprise_subcontractor_email_deliverability_and_antiphishing_bug_166(self):
+        """
+        BUG-166: Verifies the 6-Pillar Fortune 500 Subcontractor Email Deliverability & Anti-Phishing Shield:
+        1. BIMI SVG Brand Logo (/static/img/hwb_bimi.svg) serves 200 OK with valid SVG Tiny-PS markup.
+        2. Stream Isolation & RFC 5322 Headers in core/services/email_service.py:
+           - Separates transactional vs marketing streams, wraps fragments in <!DOCTYPE html>, and
+             sets explicit from display name ("HWB Cleaning Services LLC") and replyTo.
+        3. Anti-Phishing Content Firewall & Canonical URL Enforcement in core/services/notification_service.py:
+           - Zero BEC phishing subject prefixes (ACTION REQUIRED:, URGENT:, APPROVED:) and zero raw
+             tax-scam triggers (W-9, EIN/SSN, 1099) in subcontractor email bodies.
+           - Enforces https://www.hwbcleaning.com canonical links and attaches HWB-COM-001 signature cid:hwblogo.
+        4. Multi-Channel SMS + Email Delivery in POST /api/v1/workforce/subcontractors/<id>/send-onboarding:
+           - Returns canonical onboarding_url, sms_body, and sms_uri, and renders 1-tap SMS buttons in UI.
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        email_svc_path = os.path.join(base_dir, "core", "services", "email_service.py")
+        notif_svc_path = os.path.join(base_dir, "core", "services", "notification_service.py")
+        ops_js_path = os.path.join(base_dir, "static", "js", "backoffice_operations_core.js")
+        ops_tpl_path = os.path.join(base_dir, "templates", "backoffice_operations.html")
+
+        with open(email_svc_path, "r", encoding="utf-8") as f:
+            email_svc_src = f.read()
+        with open(notif_svc_path, "r", encoding="utf-8") as f:
+            notif_svc_src = f.read()
+        with open(ops_js_path, "r", encoding="utf-8") as f:
+            ops_js = f.read()
+        with open(ops_tpl_path, "r", encoding="utf-8") as f:
+            ops_tpl = f.read()
+
+        # 1. Verify BIMI SVG asset serves 200 OK
+        r_bimi = self.client.get("/static/img/hwb_bimi.svg")
+        self.assertEqual(r_bimi.status_code, 200)
+        bimi_svg = r_bimi.get_data(as_text=True)
+        self.assertIn("tiny-ps", bimi_svg)
+        self.assertIn("<title>HWB Cleaning Services LLC</title>", bimi_svg)
+
+        # 2. Verify Stream Isolation & RFC 5322 headers in email_service.py
+        self.assertIn("stream_type", email_svc_src)
+        self.assertIn("<!DOCTYPE html>", email_svc_src)
+        self.assertIn('"name": sender_name', email_svc_src)
+        self.assertIn('"replyTo":', email_svc_src)
+
+        # 3. Verify Anti-Phishing Content Firewall & Canonical URL helper in notification_service.py
+        self.assertIn("build_canonical_portal_url", notif_svc_src)
+        self.assertIn("build_subcontractor_sms_invite", notif_svc_src)
+        self.assertNotIn("ACTION REQUIRED:", notif_svc_src)
+        self.assertNotIn("URGENT:", notif_svc_src)
+        self.assertNotIn("APPROVED: Welcome to the HWB", notif_svc_src)
+
+        from core.services.notification_service import (
+            build_canonical_portal_url,
+            build_subcontractor_sms_invite,
+        )
+        self.assertEqual(build_canonical_portal_url("/onboard/subcontractor/testtoken"), "https://www.hwbcleaning.com/onboard/subcontractor/testtoken")
+        sms_sample = build_subcontractor_sms_invite(
+            {
+                "company_name": "Apex Floor Care LLC",
+                "contact_name": "Carlos",
+                "partner_id": 42,
+                "phone": "214-555-0199",
+                "onboarding_url": "/onboard/subcontractor/testtoken",
+            }
+        )
+        self.assertIn("HWB Cleaning Services LLC", sms_sample.get("sms_body", ""))
+        self.assertIn("https://www.hwbcleaning.com/onboard/subcontractor/testtoken", sms_sample.get("sms_body", ""))
+        self.assertTrue(sms_sample.get("sms_uri", "").startswith("sms:+12145550199"))
+
+        # 4. Verify UI SMS + Copy SMS controls exist
+        self.assertIn("sub-doc-sms-btn", ops_tpl)
+        self.assertIn("sub-doc-copy-sms-btn", ops_tpl)
+        self.assertIn("copySubcontractorSmsInvite", ops_js)
+        self.assertIn("triggerSubcontractorSmsInvite", ops_js)
+
+        # 5. End-to-End API test for POST /api/v1/workforce/subcontractors/<id>/send-onboarding
+        auth_client = self.get_auth_client()
+        sub_id = None
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    INSERT INTO "SubcontractorPartners" (company_name, contact_name, email, phone, specialties, status)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                    ''',
+                    ("BUG166 Deliverability Partner LLC", "Carlos Rivera", "carlos.bug166@example.com", "214-555-0166", "Janitorial", "Pending Vetting"),
+                )
+                sub_id = cur.fetchone()["id"]
+                conn.commit()
+
+            r_send = auth_client.post(f"/api/v1/workforce/subcontractors/{sub_id}/send-onboarding")
+            self.assertEqual(r_send.status_code, 200)
+            send_json = r_send.get_json()
+            self.assertEqual(send_json.get("status"), "success")
+            self.assertTrue(
+                send_json.get("onboarding_url", "").startswith("https://www.hwbcleaning.com/onboard/subcontractor/"),
+                f"Expected canonical www URL, got {send_json.get('onboarding_url')}",
+            )
+            self.assertIn("HWB Cleaning Services", send_json.get("sms_body", ""))
+            self.assertTrue(send_json.get("sms_uri", "").startswith("sms:"))
+        finally:
+            if sub_id:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                    conn.commit()
+            conn.close()
+
+    def test_42_enterprise_mandatory_followup_and_notes_task_engine_bug_165(self):
+        """
+        BUG-165: Verifies the 4-Pillar Mandatory Follow-Up & Task Engine for the Notes Workflow:
+        1. Zero-Orphan Follow-Up Guarantee:
+           - Saving a note on an open lead via /api/v1/activities/quick-log or /api/v1/leads/<id>/cadence-save
+             with no next_action_date (or a past date) automatically assigns a valid future business-day
+             next_action_date and creates an OPEN task on "GlobalActivities".
+        2. Natural-Language Smart Follow-Up Date Extraction:
+           - Note text containing "call back tomorrow" or "follow up next week" automatically extracts
+             and schedules the corresponding business date.
+        3. Task Lifecycle & Completion Roll-Forward:
+           - POST /api/v1/activities/<id>/complete-task marks the task COMPLETED and rolls the lead's
+             next_action_date forward to the next business SLA date.
+           - Terminal outcomes ("Not Interested", "Unsubscribed", "Do Not Call (DNC)") automatically clear
+             next_action_date = NULL and close open tasks.
+        4. Follow-Up Toolbar Filter & Search Tokens:
+           - /admin/operations?view=leads&followup_filter=due and q=followup:due return 200 OK.
+           - Zero open worked leads in PostgreSQL have NULL or past next_action_date after schema/data guard.
+        """
+        from datetime import date
+
+        auth_client = self.get_auth_client()
+        lead_id = None
+        today_iso = date.today().isoformat()
+
+        try:
+            # 1. Create a fresh open lead WITHOUT a next_action_date
+            r_create = auth_client.post(
+                "/admin/add-lead",
+                json={
+                    "company_name": "BUG165 Mandatory FollowUp Academy",
+                    "decision_maker": "Director Hannah",
+                    "phone": "214-555-0165",
+                    "email": "hannah@bug165academy.org",
+                    "address": "165 Followup Way",
+                    "city": "Dallas",
+                    "state": "TX",
+                    "zipcode": "75201",
+                },
+                headers={"Accept": "application/json"},
+            )
+            self.assertEqual(r_create.status_code, 200)
+            lead_id = r_create.get_json().get("lead_id")
+            self.assertIsNotNone(lead_id)
+
+            # 2. Save a quick note WITHOUT specifying next_action_date -> must auto-assign future business date!
+            r_quick = auth_client.post(
+                "/api/v1/activities/quick-log",
+                json={
+                    "parent_id": lead_id,
+                    "parent_type": "Lead",
+                    "activity_type": "NOTE",
+                    "note": "Left intro packet with front desk receptionist.",
+                },
+            )
+            self.assertEqual(r_quick.status_code, 200)
+            q_json = r_quick.get_json()
+            self.assertEqual(q_json.get("status"), "success")
+            auto_next_date = q_json.get("next_action_date")
+            self.assertTrue(auto_next_date and auto_next_date >= today_iso, f"Expected future next_action_date, got {auto_next_date}")
+            act_item = q_json.get("activity") or {}
+            act_id = act_item.get("id") or act_item.get("activity_id")
+            self.assertIsNotNone(act_id)
+            self.assertEqual(act_item.get("task_status"), "OPEN")
+            self.assertEqual(act_item.get("follow_up_date"), auto_next_date)
+
+            # 3. Complete the follow-up task via POST /api/v1/activities/<id>/complete-task
+            r_complete = auth_client.post(f"/api/v1/activities/{act_id}/complete-task", json={})
+            self.assertEqual(r_complete.status_code, 200)
+            comp_json = r_complete.get_json()
+            self.assertEqual(comp_json.get("status"), "success")
+            self.assertEqual(comp_json.get("task_status"), "COMPLETED")
+            self.assertTrue(comp_json.get("next_action_date") >= today_iso)
+
+            # 4. Save a cadence note with natural-language "call back tomorrow" and blank next_action_date
+            r_cadence = auth_client.post(
+                f"/api/v1/leads/{lead_id}/cadence-save",
+                json={
+                    "note": "Spoke with Director Hannah, she asked to call back tomorrow morning.",
+                    "activity_type": "Phone Call",
+                    "outcome": "Spoke to them",
+                    "next_action_date": "",
+                },
+            )
+            self.assertEqual(r_cadence.status_code, 200)
+            cad_json = r_cadence.get_json()
+            self.assertEqual(cad_json.get("status"), "success")
+            self.assertTrue(cad_json.get("next_action_date") >= today_iso)
+
+            # 5. Terminal disposition ("Not Interested") must clear next_action_date = NULL and close tasks
+            r_term = auth_client.post(
+                f"/api/v1/leads/{lead_id}/cadence-save",
+                json={
+                    "note": "Facility closed permanently.",
+                    "activity_type": "Not Interested",
+                    "outcome": "Not Interested",
+                    "status": "Not Interested",
+                },
+            )
+            self.assertEqual(r_term.status_code, 200)
+            term_json = r_term.get_json()
+            self.assertIsNone(term_json.get("next_action_date"))
+
+            # 6. Verify Follow-Up toolbar filters and search tokens render 200 OK
+            for f_url in (
+                "/admin/operations?view=leads&followup_filter=due",
+                "/admin/operations?view=leads&followup_filter=overdue",
+                "/admin/operations?view=leads&followup_filter=today",
+                "/admin/operations?view=leads&followup_filter=upcoming",
+                "/admin/operations?view=leads&q=followup:due",
+            ):
+                r_f = auth_client.get(f_url)
+                self.assertEqual(r_f.status_code, 200, f"Follow-up filter URL {f_url} failed")
+        finally:
+            if lead_id:
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = %s;', (lead_id,))
+                        cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = %s;', (lead_id,))
+                        cur.execute('DELETE FROM "Leads" WHERE id = %s;', (lead_id,))
+                        conn.commit()
+                finally:
+                    conn.close()
+
+    def test_43_enterprise_1099_onboarding_dual_mode_tin_and_digital_w9_bug_167(self) -> None:
+        """
+        BUG-167 8-Pillar Fortune 500 1099 Subcontractor Onboarding & Dual-Mode Tax ID (EIN / SSN) Suite:
+        1. Verifies validate_federal_tax_id() rejects incomplete, sequential/dummy ('123456789'),
+           invalid IRS EIN campus prefixes ('00', '07', '69', '89'), and invalid SSA SSN prefixes ('000', '666'),
+           while accepting valid EINs ('84-2910455') and SSNs ('453-21-9876') for Single-Member LLCs.
+        2. Verifies _deterministic_parse_w9() preserves SSN format ('XXX-XX-XXXX') and sets tax_id_mode='ssn'
+           when parsing an SSN-based W-9.
+        3. Verifies /static/js/sigma_input_masks.js exposes setTaxIdMode() and validateTaxIdClientSide().
+        4. Verifies Digital Substitute Form W-9 generation (w9_mode='digital') on POST /onboard/subcontractor/<token>/submit
+           with a Single-Member LLC filing under an Owner SSN ('453219876', tax_id_mode='ssn'):
+           - Masks TIN as '***-**-9876'
+           - Generates and vaults locked PDF 1.4 Substitute Form W-9 ('sub_<id>_W9_Substitute_Signed_*.pdf')
+           - Holds partner at 'Pending COI' when COI is deferred.
+        5. Verifies 1-Click Quick COI Upload on the Receipt Card (POST /onboard/subcontractor/<token>/extract-document)
+           immediately transitions an already-signed 'Pending COI' partner to 'Docs Under Review' / 'Docs Submitted'.
+        6. Verifies Backoffice Audited TIN Reveal (POST /api/v1/workforce/subcontractors/<id>/reveal-tin)
+           decrypts the full 9-digit TIN ('453-21-9876') and logs CRITICAL 'SUBCONTRACTOR_TIN_REVEALED' in SecurityAuditLogs.
+        """
+        import io
+        import uuid
+        from unittest.mock import patch
+        from core.services.database import get_db
+        from core.services.sanitizer import validate_federal_tax_id, clean_ein_or_ssn
+        from core.services.subcontractor_doc_extractor import (
+            _deterministic_parse_w9,
+            generate_signed_substitute_w9_pdf,
+        )
+
+        # Pillar 1 & 3: Server-side IRS / SSA Tax ID Validator
+        ok_ein, val_ein, mode_ein = validate_federal_tax_id("842910455", tax_id_mode="ein", tax_classification="LLC")
+        self.assertTrue(ok_ein)
+        self.assertEqual(val_ein, "84-2910455")
+        self.assertEqual(mode_ein, "ein")
+
+        ok_sm_ssn, val_sm_ssn, mode_sm_ssn = validate_federal_tax_id(
+            "453219876",
+            tax_id_mode="ssn",
+            tax_classification="Single-Member LLC (Disregarded Entity)",
+        )
+        self.assertTrue(ok_sm_ssn)
+        self.assertEqual(val_sm_ssn, "453-21-9876")
+        self.assertEqual(mode_sm_ssn, "ssn")
+
+        # Dummy/sequential 9-digit numbers must be rejected
+        ok_dummy, err_dummy, _ = validate_federal_tax_id("123456789", tax_id_mode="ssn")
+        self.assertFalse(ok_dummy)
+        self.assertIn("not permitted", err_dummy)
+
+        # Invalid IRS EIN prefix ('07') must be rejected in EIN mode
+        ok_bad_prefix, err_bad_prefix, _ = validate_federal_tax_id("072910455", tax_id_mode="ein")
+        self.assertFalse(ok_bad_prefix)
+        self.assertIn("prefix", err_bad_prefix.lower())
+
+        # Invalid SSA SSN area ('666') must be rejected in SSN mode
+        ok_bad_ssn, err_bad_ssn, _ = validate_federal_tax_id("666219876", tax_id_mode="ssn")
+        self.assertFalse(ok_bad_ssn)
+        self.assertIn("666", err_bad_ssn)
+
+        # Pillar 2: W-9 parser preserves SSN format when labeled SSN
+        parsed_w9 = _deterministic_parse_w9("Form W-9\n1. Name: Maria Vega\nSSN: 453-21-9876\n5. Address: 500 Main St\n6. Dallas, TX 75201")
+        self.assertEqual(parsed_w9["ein_or_ssn"], "453-21-9876")
+        self.assertEqual(parsed_w9["tax_id_mode"], "ssn")
+
+        # Pillar 3: Static JS exposes setTaxIdMode and validateTaxIdClientSide
+        r_js = self.client.get("/static/js/sigma_input_masks.js")
+        self.assertEqual(r_js.status_code, 200)
+        js_txt = r_js.get_data(as_text=True)
+        self.assertIn("setTaxIdMode", js_txt)
+        self.assertIn("validateTaxIdClientSide", js_txt)
+        r_js.close()
+
+        # Pillar 4, 5, 6, 7: End-to-End Portal Digital Substitute W-9 + Single-Member LLC SSN + Quick COI Upload + Backoffice Reveal
+        conn = get_db(self.db_url)
+        created_sub_id = None
+        try:
+            uid = uuid.uuid4().hex[:6]
+            with self.client.session_transaction() as sess:
+                sess["_user_id"] = "1"
+                sess["_fresh"] = True
+
+            with (
+                patch("core.services.notification_service.send_subcontractor_onboarding_invite_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.send_subcontractor_onboarding_completed_notifications", return_value=True),
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+            ):
+                r_create = self.client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"Vega Single Member {uid} LLC",
+                        "contact_name": "Maria Vega",
+                        "email": f"vega.{uid}@example.com",
+                        "phone": "2145550174",
+                        "city": "Dallas",
+                        "specialties": "Commercial Floor Care",
+                        "crew_size": 3,
+                    },
+                )
+                self.assertEqual(r_create.status_code, 201)
+                created_sub_id = r_create.get_json()["subcontractor_id"]
+
+                r_tok = self.client.post(f"/api/v1/workforce/subcontractors/{created_sub_id}/send-onboarding")
+                self.assertEqual(r_tok.status_code, 200)
+                tok = r_tok.get_json()["onboarding_token"]
+
+                # Verify portal HTML renders Dual-Mode TIN pills, Digital W-9 switcher, and Quick COI upload box
+                r_portal_get = self.client.get(f"/onboard/subcontractor/{tok}")
+                self.assertEqual(r_portal_get.status_code, 200)
+                portal_html = r_portal_get.get_data(as_text=True)
+                self.assertIn('data-tin-pill-for="onb-ein-ssn"', portal_html)
+                self.assertIn('id="btn-w9-mode-digital"', portal_html)
+                self.assertIn('id="receipt-quick-coi-upload-box"', portal_html)
+                self.assertIn('Single-Member LLC (Disregarded Entity)', portal_html)
+
+                # Reject invalid dummy TIN ('123456789') on submit
+                r_bad_submit = self.client.post(
+                    f"/onboard/subcontractor/{tok}/submit",
+                    data={
+                        "w9_mode": "digital",
+                        "company_name": f"Vega Single Member {uid} LLC",
+                        "legal_entity_name": "Maria Vega",
+                        "contact_name": "Maria Vega",
+                        "email": f"vega.{uid}@example.com",
+                        "phone": "2145550174",
+                        "tax_classification": "Single-Member LLC (Disregarded Entity)",
+                        "tax_id_mode": "ssn",
+                        "ein_or_ssn": "123456789",
+                        "street_address": "800 Ross Ave",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75202",
+                        "msa_signer_name": "Maria Vega",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_bad_submit.status_code, 400)
+
+                # Submit with Digital Substitute W-9 mode + valid Single-Member LLC owner SSN ('453219876')
+                r_good_submit = self.client.post(
+                    f"/onboard/subcontractor/{tok}/submit",
+                    data={
+                        "w9_mode": "digital",
+                        "company_name": f"Vega Single Member {uid} LLC",
+                        "legal_entity_name": "Maria Vega",
+                        "contact_name": "Maria Vega",
+                        "email": f"vega.{uid}@example.com",
+                        "phone": "2145550174",
+                        "tax_classification": "Single-Member LLC (Disregarded Entity)",
+                        "tax_id_mode": "ssn",
+                        "ein_or_ssn": "453219876",
+                        "street_address": "800 Ross Ave",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75202",
+                        "msa_signer_name": "Maria Vega",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_good_submit.status_code, 200, r_good_submit.get_data(as_text=True))
+                good_json = r_good_submit.get_json()
+                self.assertEqual(good_json["status"], "success")
+                self.assertEqual(good_json["masked_tin"], "***-**-9876")
+                self.assertEqual(good_json["onboarding_status"], "Pending COI")
+
+                # Verify generated Substitute W-9 PDF is vaulted and downloadable
+                r_dl_w9 = self.client.get(f"/api/v1/workforce/subcontractors/{created_sub_id}/download/w9")
+                self.assertEqual(r_dl_w9.status_code, 200)
+                self.assertTrue(r_dl_w9.data.startswith(b"%PDF-1.4"))
+                self.assertIn(b"SUBSTITUTE FORM W-9", r_dl_w9.data)
+                r_dl_w9.close()
+
+                # Pillar 5: 1-Click Quick COI Upload on Receipt Card advances Pending COI -> Docs Under Review
+                coi_bytes = b"%PDF-1.4\nPRODUCER: Next Insurance\nPOLICY NUMBER: GL-998877\nEXP: 12/31/2027\nEACH OCCURRENCE: $1,000,000\n"
+                r_quick_coi = self.client.post(
+                    f"/onboard/subcontractor/{tok}/extract-document",
+                    data={
+                        "doc_type": "coi",
+                        "file": (io.BytesIO(coi_bytes), "acord25.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_quick_coi.status_code, 200)
+                q_json = r_quick_coi.get_json()
+                self.assertEqual(q_json["onboarding_status"], "Docs Under Review")
+
+                # Pillar 7: Audited Backoffice TIN Reveal decrypts '453-21-9876' and logs CRITICAL audit event
+                r_reveal = self.client.post(f"/api/v1/workforce/subcontractors/{created_sub_id}/reveal-tin")
+                self.assertEqual(r_reveal.status_code, 200)
+                rev_json = r_reveal.get_json()
+                self.assertEqual(rev_json["tin"], "453-21-9876")
+                self.assertTrue(rev_json["has_full_tin"])
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        '''
+                        SELECT event_action, severity
+                        FROM "SecurityAuditLogs"
+                        WHERE event_category = 'HR_PII'
+                          AND event_action = 'SUBCONTRACTOR_TIN_REVEALED'
+                        ORDER BY id DESC
+                        LIMIT 1;
+                        '''
+                    )
+                    audit_row = cur.fetchone()
+                    self.assertIsNotNone(audit_row)
+                    self.assertEqual(audit_row["severity"], "CRITICAL")
+        finally:
+            if created_sub_id:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Subcontractor\' AND parent_id = %s;', (created_sub_id,))
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE subject LIKE %s;', (f"%Vega Single Member%",))
+                conn.commit()
+            conn.close()
+
+    def test_44_universal_dual_horizontal_scrollbars_and_sticky_bottom_dock_bug_168(self) -> None:
+        """
+        BUG-168 Universal Dual Horizontal Scrollbar (Top Synced Rail + Sticky Bottom Dock) Suite:
+        1. Verifies /static/js/sigma_responsive_engine.js defines the 3-pillar horizontal scroll engine:
+           - Top Synced Horizontal Scroll Rail (.sigma-top-scroll-rail, .sigma-top-scroll-track, .sigma-scroll-step-btn)
+           - Always-Visible Sticky Bottom Scrollbar Dock (#sigma-sticky-bottom-scrollbar, .sigma-sticky-bottom-track)
+           - ResizeObserver + window scroll/resize synchronization (bindDualTableScrollbars, updateStickyBottomScrollbar, refreshAllScrollbars)
+        2. Verifies all multi-table screens across the backoffice and manuals load sigma_responsive_engine.js.
+        """
+        eng_resp = self.client.get("/static/js/sigma_responsive_engine.js")
+        self.assertEqual(eng_resp.status_code, 200)
+        eng_js = eng_resp.get_data(as_text=True)
+
+        for marker in (
+            "sigma-top-scroll-rail",
+            "sigma-top-scroll-track",
+            "sigma-scroll-step-btn",
+            "sigma-sticky-bottom-scrollbar",
+            "sigma-sticky-bottom-track",
+            "bindDualTableScrollbars",
+            "updateStickyBottomScrollbar",
+            "refreshAllScrollbars",
+            "resolveTableScrollWrap",
+            "has-right-overflow",
+        ):
+            self.assertIn(marker, eng_js, f"Missing BUG-168 scrollbar marker in sigma_responsive_engine.js: {marker}")
+
+        auth_client = self.get_auth_client()
+        for view_url in (
+            "/admin/operations?view=leads",
+            "/admin/operations?view=accounts",
+            "/admin/operations?view=construction_bids",
+            "/admin/operations?view=workforce",
+            "/admin/operations?view=accounting",
+            "/manual/app",
+        ):
+            r_view = auth_client.get(view_url)
+            self.assertEqual(r_view.status_code, 200, f"View {view_url} failed to render")
+            self.assertIn("sigma_responsive_engine.js", r_view.get_data(as_text=True))
 
 
 if __name__ == "__main__":

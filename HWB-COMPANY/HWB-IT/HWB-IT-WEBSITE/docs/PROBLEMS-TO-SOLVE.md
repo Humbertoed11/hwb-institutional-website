@@ -138,6 +138,16 @@ Responsibility: George (Architect)
 | 10/26/2026 | BUG-152 | Post-Exploitation & Root-Access Security Audit Findings: Hardcoded Plaintext Transition Password Lists in `auth.py`/`partner.py`, Unauthenticated `/portal/bosanna/magic-login` Bypass, Case-Insensitive `.lower()` Password Check, Plaintext `HR_VAULT_DIR` Disk Cache Duplicating Encrypted Vault Files, Root `uid=0` Container Execution, Shared `SECRET_KEY` Fallback in `core/security.py`, Hardcoded Deployment Script Tokens, & Delayed Session Revocation in `load_user()`. | **RESOLVED** | CRITICAL |
 | 10/26/2026 | BUG-153 | Cloudflare Edge Security & Performance Audit Findings: Missing `spf.protection.outlook.com` in SPF TXT, Missing DNS CAA Records, Uncached `/services/*` & `/locations/*` HTML (`DYNAMIC` `273ms` vs `HIT` `46ms`), Missing Apex-to-WWW 301 Redirect, & Disabled Smart Tiered Cache / Early Hints / 0-RTT / HSTS Preload / Hotlink Protection / DNSSEC. | **RESOLVED** | HIGH |
 | 10/26/2026 | BUG-154 | Commercial Leads Search Bar Returning `0` Results on Assigned Sales Rep Names (`beabe wiley`), Entity Collision Between Rep Names & Texas Cities/Streets (`Beabe Wiley` vs `Wylie, TX` / `Wiley Post Rd`), Missing Dedicated `owner_id` Toolbar Filter, & Missing Faceted Typeahead Autocomplete. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-155 | "Save Lead Changes" (`PUT /api/v1/leads/<id>`) Throwing `HTTP 500` on Live Azure Due to Missing `website` & `student_enrollment` Columns on `"Leads"` in `schema_engine.py`, Plus Unreturned Connection in `/api/v1/leads/search-suggest`. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-156 | 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-157 | Enterprise Lead Status Lifecycle (`New`, `In Campaign`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`), Separate `🧹 Who Cleans` (`cleaning_delivery_model`) Column, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization, & Calling Workstation Upgrade. | **RESOLVED** | HIGH |
+| 10/26/2026 | BUG-158 | 5-Part Enterprise Lead Protection, Placeholder/Internal Email Hygiene (`000000000@oooo` / `hwbcleaning11@gmail.com` Overwrite Prevention), Automatic Unassigned Lead Owner Attribution, Default Sort by Most Recently Added/Worked (`GREATEST(updated_at, input_date)`), `📅 Worked Today` Filter, & PITR/Heap Forensic Recovery. | **RESOLVED** | CRITICAL |
+| 10/26/2026 | BUG-159 | Calling Workstation `🧹 Who Cleans Right Now` Button Unresponsiveness Due to Stale Browser/Cloudflare Static JS Cache (`?v=v5.5.0`) & Low-Contrast Active State — Remediated via Automatic SHA-256 Content-Fingerprint Cache Busting (`?f=<hash>`), High-Contrast Segmented Radio Group (`✓` Checkmark + Solid Fill), & Smart Call-Script Auto-Switch. | **RESOLVED** | HIGH |
+| 10/26/2026 | ARCH-016 | Enterprise High-Conversion Lead Funnel Architecture (Benchmarked Against `mattchristou.com` / *Big League Clean* & `hyperstacking.com`): Positioning HWB as a Technology-Driven Commercial Cleaning Operator ("Old Broken Janitorial Way vs. HWB Automated Standard", Interactive Live Shift & No-Show Prevention Walkthrough, GC 24-Hour Video Bid Turnaround, & Zero-Distraction Campaign Funnel Route). | **STAGED FOR FUTURE ASSESSMENT** | STRATEGIC |
+| 10/26/2026 | BUG-160 | 5-Layer Enterprise Button, Gear Menu, & Delete Lifecycle Architecture — Fixed 25-Second Confirmation Button Freeze (`#btn-decision-confirm` & 24 AJAX Forms in `sigma_button_lock.js`), Replaced Destructive `syncOperationalData` JSON Table Rebuild with `DOMParser` Server-HTML Swap, Fixed Foreign-Key Delete Crashes (`"LeadStageHistory"`, `"Contacts"`, `"CampaignRecipients"`, `"PendingOutbox"`), & Added Snapshot `[↩ Undo]` Restore (`POST /api/v1/crm/restore-deleted`). | **RESOLVED** | CRITICAL |
+| 10/27/2026 | BUG-161 | 9-Pillar Enterprise Lead Notes & Touchpoint Architecture — Standing Facility Brief (`"Leads".notes` with Revision History), Pinned Touchpoints (`"GlobalActivities".is_pinned`), 1-Click Inline Note Editing & Version Restore across All 4 Surfaces, Smart Field Auto-Extraction, 6 Speed-Chips, Sister-Location Broadcast (`share_umbrella`), Full-Text Search Parity (`note:`, `has:notes`, `has:pinned`), & 1-Command Rollback Snapshot (`scripts/rollback_lead_notes_workflow.sh`). | **RESOLVED** | HIGH |
+| 10/27/2026 | BUG-162 | Note & Lead Deletion UI Persistence Defect — `GET /api/v1/leads/<id>` Missing `activity_id -> id` Mapping on `"GlobalActivities"`, `DELETE /api/v1/activities/<id>` Leaving Deleted Note Text in `"Leads".notes` & `#lead-last-note-<id>`, `deleteLead()` Auto-Advancing Open Modal to Next Test Lead Instead of Closing, & Leftover Test Rows After Per-Request DDL Lock Contention. | **RESOLVED** | CRITICAL |
+| 10/29/2026 | BUG-163 | 24/7 Enterprise AI Employee Architecture, Stateful Working Desk (`"AIEmployeeWorkingMemory"`), Permanent Corporate Umbrella Standing Orders (`"AIEmployeeStandingOrders"`), Transactional `BEFORE/AFTER` Rollback Change-Set Ledger (`"AIEmployeeChangeLedger"`), Hard FinOps Circuit Breaker (`$0.50/day`, `$15.00/mo` in `"AIEmployeeBudgetLedger"`), 60-Second Self-Healing Heartbeat (`"AIEmployeeHeartbeat"`), & Deterministic Citation Firewall. | **RESOLVED** | HIGH |
 
 
 ## BUG-122: App Manual Static Routing Deficit (Lacks Automatic Active Workspace Detection & Deep-Link Chapter Navigation)
@@ -3034,6 +3044,194 @@ Record ownership (`owner_id`) and geographic/building search (`q`) are cleanly d
    - Added `test_33_lead_update_save_schema_parity_and_pool_hygiene_bug_155` (`33/33` PASS).
 **Preventative:**
 Every column referenced in `PUT`/`PATCH /api/v1/leads/<id>` is enforced both in `database/schema_engine.py` at boot and by the self-healing guard in `blueprints/crm_api.py`, verified continuously by `test_33` in `scripts/test_web_performance_rack_14.py`.
+
+
+## BUG-156: 3-Workflow Enterprise Lead Intake, Universal Address/State Hygiene (`TX` vs `tx`/`Texas`/`Tejas`), Standard `Lead Owner` Column Out of the Box, & Bulk Owner/Round-Robin Assignment Architecture Across All Forms
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156` in `scripts/test_web_performance_rack_14.py` `34/34` passing)
+**Symptoms:**
+1. **Workflow A (`Lead Owner` Hidden Behind Optional Column Picker):** `Lead Owner` (`owner`) was omitted from `default_cols_leads` (`company,status,sqf,value,priority,activities`) and standard view presets (`Calling Sprint`, `Building Facts`, `Big Chains`, `Large Centers`, `Executive`), requiring operators to open `Columns` and manually check `Lead Owner` before seeing who owned a record.
+2. **Workflow B (Bulk Owner Assignment Buried in Sub-Menu & Limited to Single Page):** Bulk owner assignment in `#leads-bulk-controls` was tucked inside a secondary dropdown without cross-page selection memory (`sessionStorage`), `"Select All Matching Filter"` support, Round-Robin multi-rep split, overwrite protection (`only_unassigned`), workload preview, or 1-click undo.
+3. **Workflow C (Missing `website` & `address_line_2` on Add Lead + Free-Text State Input Drift):**
+   - `#modal-add-lead` lacked an Official Website input (`website`) and Address Line 2 (`address_line_2` for Suite / Bldg / Unit), and required `email` even when a commercial prospect only had a phone number and website.
+   - Free-text `<input name="state">` fields across forms allowed operators and external visitors to type `"TX"`, `"tx"`, `"Texas"`, or `"Tejas"`, fragmenting state filters and SQL grouping.
+**Solution:**
+1. **Workflow A — Permanent Standard `Lead Owner` Column & 1-Click Avatar Badge (`blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Updated `default_cols_leads = 'company,status,owner,sqf,value,priority,activities'` and added an automatic session upgrade in `blueprints/operations.py` plus preset inclusion in `setLeadPreset()` so `Lead Owner` is permanently visible out of the box across all sessions and presets.
+   - Replaced raw `<select>` dropdowns in the `Lead Owner` cell with a high-contrast **Owner Avatar Badge** (`.sigma-owner-badge-btn`: `[BW] Beabe Wiley` or `[+ Assign]`) paired with a 1-click floating **Assign Rep Popover** (`#quick-owner-popover`).
+2. **Workflow B — Enterprise Bulk Owner & Round-Robin Assignment (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`, `blueprints/crm_api.py`):**
+   - Placed a primary **`👤 Assign Owner`** button at the front of `#leads-bulk-controls` (and **`👤 Assign Rep`** in `#acc-bulk-controls`).
+   - Added cross-page selection persistence (`sessionStorage: sigma_selected_lead_ids_v1`), a **"Select All `N` Matching Leads"** banner (`select_all_matching: true`), and `#modal-bulk-assign-owner` supporting **Single-Rep Assignment** OR **Even Round-Robin Split** (`owner_ids`), **Overwrite Protection** (`only_unassigned`), **Optional Next Call Date**, **Live Workload Preview** (`50 → 75 (+25)`), and **1-Click Undo** (`undo_assign_owner`).
+3. **Workflow C — Universal 5-Pillar Form, Website, Address Line 2, & 3-Layer USPS State Enforcement (`core/services/sanitizer.py`, `database/schema_engine.py`, `static/js/sigma_input_masks.js`, `templates/backoffice_operations.html`, `blueprints/operations.py`, `blueprints/crm_api.py`):**
+   - Added `address_line_2 VARCHAR(100)` to `"Leads"` and `"Customers"` in `database/schema_engine.py`, plus `clean_state()`, `clean_website()`, and `split_address_lines()` (USPS Pub 28 secondary unit extractor) in `core/services/sanitizer.py`.
+   - Enforced 3-Layer USPS 2-Letter State Codes (`TX — Texas` default) across **all forms** via: (1) standardized `<select name="state">` in HTML templates, (2) global `upgradeStateInputToSelect()` + smart `.value` property descriptor in `/static/js/sigma_input_masks.js`, and (3) `clean_state()` + PostgreSQL `BEFORE INSERT OR UPDATE` triggers (`trg_leads_normalize_state`, `trg_customers_normalize_state`).
+   - Added bidirectional Texas ZIP $\leftrightarrow$ City/County auto-fill, email-to-website domain inference, `↗ Verify Link` button, live pre-save duplicate detection (`GET /api/v1/leads/check-duplicate`), and async `submitAddLeadForm(event)`.
+**Preventative:**
+Verified continuously on every build by `test_34_enterprise_lead_intake_universal_state_address_and_bulk_owner_bug_156` in `scripts/test_web_performance_rack_14.py` (`34/34` PASS).
+
+
+## BUG-157: Enterprise Lead Status vs. `🧹 Who Cleans` Separation, Stage-Date History Tracking (`"LeadStageHistory"`), Record Activities Reorganization & Commercial Lead Calling Workstation Stage-Protection
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157` in `scripts/test_web_performance_rack_14.py` `35/35` passing)
+**Symptoms:**
+1. **Conflated `Status` vs. `Who Cleans` & Legacy Status Labels:**
+   - Legacy status options `'Trained'` and `'Lost'` needed to be replaced with plain-English `'Walkthrough Completed'` and `'Not Interested'`, and stop statuses (`'Not Interested'`, `'Unsubscribed'`, `'Do Not Call (DNC)'`) needed uniform Red (`#fee2e2` / `#991b1b`) visual warning styling.
+   - Facility cleaning setup (`🏠 In-House Cleaning` vs. `🤝 Contract Cleaning`) is a building attribute that remains true across every sales stage, whereas `Status` tracks where the lead is in the sales process. Putting both in one dropdown forced reps to overwrite one to record the other.
+   - Upgrading a lead to an active Client Account needed to remove the record from the active Leads table (`COALESCE(is_converted, FALSE) = FALSE`) and move it into Clients (`#view-accounts`).
+2. **Missing Stage-Date History Tracking:**
+   - `"Leads"` only stored a single `updated_at` timestamp, losing the dates when a lead was set to `New`, moved to `In Email Outreach`, `Engaged`, `Contacted`, `Qualified`, `Walkthrough Completed`, `Upgraded to Account`, or `Not Interested`/`Unsubscribed`/`DNC`.
+3. **Disconnected "Record Activities" Form (`#lead-pane-activities`) & Calling Workstation Stage Downgrades:**
+   - `#lead-pane-activities` had an orphaned "Quick Profile Update" contact box with no Save button and `saveVisitRequest` bypassed `/api/v1/leads/<id>/cadence-save`.
+   - In the Commercial Lead Calling Workstation (`#modal-lead-cadence`), clicking `Voicemail` or `Gatekeeper` sent `status: 'Contacted'`, which could falsely mark a `New` lead as `Contacted` or downgrade an `Engaged`/`Qualified` lead back to `Contacted`.
+**Solution:**
+1. **Separation of `Status` (Col #2) and `🧹 Who Cleans` (`cleaning_model` — Col #3) (`blueprints/operations.py`, `templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Updated `default_cols_leads = 'company,status,cleaning_model,owner,sqf,value,priority,activities'` so `Status`, `🧹 Who Cleans` (`⚪ Unknown`, `🏠 In-House Cleaning`, `🤝 Contract Cleaning`), and `Lead Owner` appear side-by-side by default.
+   - Replaced `'Trained'` with `'📋 Walkthrough Completed'`, replaced `'Lost'` with `'🛑 Not Interested'`, styled all 3 stop statuses (`Not Interested`, `Unsubscribed`, `Do Not Call (DNC)`) in Red (`#fee2e2` / `#991b1b`), and wired `✅ Upgrade to Client Account ➔` (`UPGRADE_TO_ACCOUNT`) to `promoteLead()` with `AND COALESCE(is_converted, FALSE) = FALSE` across all Leads queries and counts.
+2. **Stage-Date History Ledger (`"LeadStageHistory"`) & Milestone Columns (`database/schema_engine.py`, `blueprints/crm_api.py`):**
+   - Added `"LeadStageHistory"` and milestone date columns (`status_changed_at`, `outreach_started_at`, `engaged_at`, `contacted_at`, `qualified_at`, `walkthrough_completed_at`, `converted_at`, `converted_to_customer_id`, `disqualified_at`, `disqualified_reason`) on `"Leads"`.
+   - Added `#lead-stage-date-tracker` and `#lead-stage-history-summary` inside `#modal-lead-command` displaying the exact date each stage was reached and days in current stage.
+3. **Unified Record Activities Form & Calling Workstation Upgrade (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`, `blueprints/crm_api.py`):**
+   - Reorganized `#lead-pane-activities` so contact corrections, `Lead Stage`, `🧹 Who Cleans`, `Next Follow-Up Date`, and `Schedule Building Walkthrough` save cleanly via `/api/v1/leads/<id>/cadence-save`.
+   - Added a 1-click `🧹 Who Cleans Right Now` bar (`setCadenceCleaningModel`) in `#modal-lead-cadence` and enforced stage-protection rules so `Left Voicemail` / `Left Message w/ Staff` / `No Answer` never downgrade `Engaged`, `Qualified`, or `Walkthrough Completed` leads or falsely mark `New` leads as `Contacted`.
+**Preventative:**
+Verified continuously on every build by `test_35_enterprise_lead_status_who_cleans_stage_dates_and_calling_workstation_bug_157` in `scripts/test_web_performance_rack_14.py` (`35/35` PASS).
+
+
+## BUG-158 & BUG-159: Enterprise Lead Protection, Placeholder Email Hygiene, `📅 Worked Today` Attribution, Automatic SHA-256 Static Asset Fingerprinting & Calling Workstation `🧹 Who Cleans Right Now` Upgrade
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_36_enterprise_lead_protection_placeholder_email_hygiene_and_worked_today_bug_158` in `scripts/test_web_performance_rack_14.py` `36/36` passing)
+**Symptoms:**
+1. Leads entered or worked by Mirna Rondinella (`user_id=3`) appeared missing from the top of the Lead View or had `owner_id = NULL`, and typing placeholder emails (`000000000@oooo` or `hwbcleaning11@gmail.com`) triggered a silent email-collision overwrite of `ID=1004659`.
+2. Clicking the `🧹 Who Cleans Right Now` pills (`⚪ Unknown`, `🏠 In-House Cleaning`, `🤝 Contract Cleaning`) in the Commercial Lead Calling Workstation (`#modal-lead-cadence`) showed no visual selection on live `www.hwbcleaning.com` because browsers and Cloudflare Edge served a cached pre-`BUG-157` copy of `backoffice_operations_core.js?v=v5.5.0`.
+**Solution:**
+1. **Placeholder & Internal Email Sanitization (`core/services/sanitizer.py`) + Silent Overwrite Prevention (`blueprints/operations.py`):**
+   - Upgraded `clean_email()` to strip placeholder emails (`000000000@oooo`, `none@none.com`, `na@na.com`) and internal company emails (`hwbcleaning11@gmail.com`, `@hwbcleaning.com`) to `None`.
+   - Hardened `add_manual_lead` so a new lead with a different company name never silently overwrites an existing lead, and stores a full `profile_snapshot` in `"LeadStageHistory"`.
+2. **Default Sort by Most Recently Added/Worked + `📅 Worked Today` Filter + Automatic Unassigned Lead Attribution (`blueprints/operations.py`, `blueprints/crm_api.py`, `database/schema_engine.py`):**
+   - Updated the default Lead View sort to `GREATEST(COALESCE(TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS'), ''), COALESCE(input_date::text, '')) DESC, id DESC`, added the `📅 Worked Today` (`worked_today=true`) filter pill, and auto-assigned `owner_id = current_user.id` whenever a team member adds or works an unassigned lead.
+3. **Automatic Content-Hash Static Asset Fingerprinting (`main_app.py`) & High-Contrast Calling Workstation Pills (`templates/backoffice_operations.html`, `static/js/backoffice_operations_core.js`):**
+   - Added `@app.url_defaults` (`inject_static_asset_fingerprint`) in `main_app.py` to automatically append `?f=<8-char-sha256>` to all `/static/...` URLs based on file contents on disk.
+   - Upgraded `setCadenceCleaningModel()` to apply an instant high-contrast active fill (`✓ ⚪ Unknown` in Slate `#334155`, `✓ 🏠 In-House Cleaning` in Amber `#d97706`, `✓ 🤝 Contract Cleaning` in Teal `#0891b2`), synchronize the Lead Details modal and table row, and automatically switch the Call Script box to `🧹 "Have cleaner"` (`obj-cleaner`) when `In-House` or `Contract Cleaning` is clicked.
+
+
+## ARCH-016: Enterprise High-Conversion Commercial Cleaning Lead Funnel Architecture (Benchmarked Against `mattchristou.com` / *Big League Clean* & `hyperstacking.com`)
+**Detected / Staged:** 10/26/2026
+**Status:** **STAGED FOR FUTURE ASSESSMENT** (Strategic Plan Table)
+**Executive Discovery:**
+CEO Humberto Dominguez identified that Matt Christou operates a **two-page funnel ecosystem**:
+1. **`mattchristou.com` (*Big League Clean* Funnel):** Sells commercial cleaning and post-construction final cleaning to Property Managers, Facility Directors, and General Contractors by proving *Big League Clean* is **"a software-driven company that cleans buildings"**—using their custom internal operating platform as the ultimate proof that crews will never no-show and issues are caught before the client ever notices.
+2. **`hyperstacking.com` (Software Funnel):** Sells that internal operating concept to other cleaning business owners.
+
+**7 Core Funnel Conversion Pillars Staged on the HWB Plan Table (`ARCH-016`):**
+1. **The "Technology-Driven Commercial Cleaning Operator" Positioning Hook:**
+   - Frame HWB Cleaning Services not as a traditional janitorial vendor running on clipboards and crossed fingers, but as **Texas's most accountable, system-driven commercial cleaning company**—where every shift, checklist, supply restock, and walkthrough is tracked on HWB's own in-house platform (`www.hwbcleaning.com`).
+2. **"Most Cleaning Companies (Crossed Fingers) vs. HWB Cleaning Services" Visual Contrast Block:**
+   - **Left Column (`✕ Most Cleaning Companies`):** Clipboards and manual check-ins; no idea what happened at your building last night; you have to call them to find out if the crew showed; surprise $2,500 invoices for floor waxing; one manager buried under 80 accounts.
+   - **Right Column (`✓ HWB Cleaning Services`):** GPS & time-stamped shift check-ins; photo-verified nightly room checklists; backup crew dispatched automatically within 15 minutes of a missed clock-in window; twice-a-year floor stripping/waxing & carpet cleaning included in one flat monthly price; direct executive accountability.
+3. **Two High-Ticket Specialty Tracks Above the Fold (Recurring Janitorial + Post-Construction GC Final Clean):**
+   - **Track 1 — Nightly Recurring Janitorial (Childcare, Medical, Schools, Offices, Dealerships):** Dedicated account oversight, every visit documented, flat monthly pricing with floor & carpet care included.
+   - **Track 2 — Post-Construction Final Cleaning for General Contractors (`10,000+ SF`):** Rough clean, final clean, and touch-up before punch-list walk. Includes a **"Send a Walkthrough Video or Blueprints → Same-Day Price & 24-Hour Proposal"** fast-lane intake for GCs facing compressed turnover schedules.
+4. **Interactive "How Our System Protects Your Building Tonight" Live Showcase:**
+   - Visitors click through two real automated workflows running inside HWB's platform:
+     - **Workflow 1 — The No-Show Eliminator:** Watches every shift clock-in window -> alerts backup crew automatically if a punch is missed -> notifies field supervisor -> zero client calls about a missed night.
+     - **Workflow 2 — The Facility Quality Watchdog:** Tracks nightly room checklists, restroom sanitization, paper/soap restock, and inspection scores -> flags any drift before the Facility Director ever has to send an email.
+5. **Continuous Social Proof & Industry Credentials Ribbon:**
+   - Scrolling verified client & superintendent testimonials paired with empirical credentials (`$2M Commercial General Liability`, `0.00 Safety Incident Rate`, `OSHA 1910.1200 Compliant`, `SAM.gov / HUB / Construction Bid Ready`).
+6. **Founder Authority Section (Humberto Dominguez, CEO):**
+   - Plain-spoken, proactive operator message explaining why HWB built its own operations and estimating platform in-house so Facility Directors and Project Superintendents never have to babysit a cleaning crew again.
+7. **Zero-Distraction Campaign Funnel Route (`/why-hwb` or `/commercial-cleaning-audit`) + `/get-quote` Integration:**
+   - Dedicated single-goal funnel landing page for all outbound Email Campaigns (`#view-marketing`), LinkedIn outreach, and Calling Workstation follow-ups that feeds leads directly into `#view-leads` with instant Telegram and Outlook notifications.
+
+
+## BUG-160: 5-Layer Enterprise Button, Gear Menu (`⚙️`), & Delete Lifecycle Architecture (Elimination of 25-Second Button Freeze, Destructive Table Rebuilds, & Foreign-Key Delete Crashes + Snapshot `[↩ Undo]` Restore)
+**Detected:** 10/26/2026
+**Status:** **RESOLVED** (10/26/2026 — Verified by `test_37_enterprise_delete_gear_and_button_lock_lifecycle_bug_160` in `scripts/test_web_performance_rack_14.py` `37/37` passing & `scripts/yamamoto_bid_test_suite.py` `9/9` Grade A+)
+**Symptoms:**
+1. After deleting one lead via the Gear menu (`⚙️ -> Delete Lead`), attempting to delete a second lead froze the confirmation modal (`#btn-decision-confirm` stuck on `"Deleting..."` with `disabled=true`) for 25 seconds.
+2. Submitting any of the 24 in-page AJAX `<form onsubmit="...; return false;">` forms (`saveLeadUpdate`, `logLeadActivity`, `saveVisitRequest`, `addLeadContact`, `addToScope`, etc.) locked the submit button in `"Saving..."` for 25 seconds because `sigma_button_lock.js` intercepted the `submit` event in capture phase (`true`) before `e.preventDefault()` ran.
+3. After any single/bulk delete or modal save, `syncOperationalData()` (`?format=json` + `buildLeadRow()` / `buildAccountRow()`) overwrote all 50 table rows with simplified HTML that stripped out interactive `<select>` dropdowns (`Status`, `🧹 Who Cleans`, `Priority`, `Assigned Rep`), dropped 9 custom columns, and re-exposed `Delete` buttons to `Sales` users until a manual page refresh.
+4. Deleting any Lead that had a row in `"LeadStageHistory"` (`ON DELETE RESTRICT`), `"Contacts"`, or `"CampaignRecipients"` / `"PendingOutbox"` threw a PostgreSQL Foreign-Key Constraint `500` error, which was swallowed silently by `deleteLead()`.
+**Solution:**
+1. **Layer 1 — Network-Aware Fetch Auto-Unlock Engine (`static/js/sigma_button_lock.js`):**
+   - Wrapped `window.fetch` to track `activeFetchCount` and `pendingAjaxButtons`, switched the form `submit` listener to bubble phase (`false`) with `e.defaultPrevented` detection so in-page AJAX forms unlock automatically within `60ms` of `fetch` completion (or `65ms` for purely local forms like `addToScope`), and removed the duplicate `#btn-decision-confirm` 25-second click lock.
+2. **Layer 2 — Unified Async `showDecision()` & Interactive `[↩ Undo]` Toast (`templates/backoffice_base.html` & `static/js/backoffice_operations_core.js`):**
+   - Upgraded `showDecision(options)` across both files to reset `#btn-decision-confirm` on open, `await options.onConfirm(confirmBtn)` inside `try / catch / finally`, and guarantee `restoreButton(confirmBtn)` + `closeModal('modal-decision')` inside `finally`.
+   - Upgraded `showToast(message, type, actionOptions)` with an interactive `[↩ Undo]` button wired to `restoreDeletedCrmRecord(restoreToken)`, and replaced raw browser `confirm()` in `deleteUserScript()`.
+3. **Layer 3 — Zero-Destruction Server-HTML Table Sync (`syncOperationalData`) & Instant `0ms` Row Removal (`static/js/backoffice_operations_core.js`):**
+   - Replaced the destructive JSON `buildLeadRow()` / `buildAccountRow()` rebuild inside `syncOperationalData()` with a `DOMParser` HTML swap of `#table-leads tbody` and `#table-accounts tbody` so 100% of server-rendered `<select>` dropdowns, role permissions, and all 30 columns remain intact.
+   - Added `removeTableRowsAndSyncCounts(entityType, idsArray)` so single and bulk deletes remove `<tr>` rows and update tab counts in `0ms` without touching the remaining rows.
+4. **Layer 4 — Gear Menu (`⚙️`) Auto-Close, Smart Form Focus, `handleActivityResultChange`, & In-Place DNC Select (`static/js/backoffice_operations_core.js` & `templates/backoffice_operations.html`):**
+   - Updated `toggleRowMenu()` to close `.isc-row-menu` immediately when any menu item is clicked; added smart scroll/focus/highlight for `Add Note` (`#lead-activity-desc` / `#activity-desc`) and `Request Visit` (`#visit-date` / `#visit-date-acc`); added `Request Visit` to the Client Accounts Gear menu; fixed `handleActivityResultChange('Spoke to them')` to select `'Contacted'`; and updated `markLeadDNCFromModal()` to update `.sticky-2 select` in-place.
+5. **Layer 5 — Backend Atomic Foreign-Key Cleanup, Snapshot Backup, & `POST /api/v1/crm/restore-deleted` (`blueprints/crm_api.py`):**
+   - Added `_create_delete_snapshot()`, `_delete_leads_atomic()`, `_delete_accounts_atomic()`, and `POST /api/v1/crm/restore-deleted` across Lead, Account, Applicant, and Subcontractor delete endpoints so deletes clean up all child tables in FK-safe order, invalidate operations caches, and return a `restore_token` for 1-click `[↩ Undo]` recovery.
+
+
+## BUG-161: 9-Pillar Enterprise Lead Notes & Touchpoint Architecture (Standing Facility Brief, Pinned Notes, 1-Click Inline Editing, Version History & Restore, Smart Field Extraction, Speed-Chips, Sister-Location Broadcast, & Search Parity)
+**Detected:** 10/27/2026
+**Status:** **RESOLVED** (10/27/2026 — Verified by `test_39_enterprise_lead_notes_workflow_bug_159` in `scripts/test_web_performance_rack_14.py` `39/39` passing & 1-Command Rollback Snapshot preserved at `scripts/rollback_lead_notes_workflow.sh`)
+**Symptoms:**
+1. `"GlobalActivities"` lacked `created_by_user_id`, `created_by_name`, `outcome`, `is_pinned`, `updated_at`, `edited_by_name`, and `revision_history JSONB`, causing call outcomes to be glued into raw description strings (`[Result: ...]`) with no author attribution, pinning, or edit history.
+2. `"Leads".notes` (Standing Facility Brief) and `"GlobalActivities"` (Chronological Call & Touchpoint Stream) were disconnected: saving any lead field via `PUT /api/v1/leads/<id>` inserted a duplicate `NOTE` row even when `notes` had not changed, while `Lead Overview` and the `2-Minute Calling Console` did not surface `"Leads".notes` or pinned notes.
+3. Neither the Standing Facility Brief nor individual Activity Notes could be edited inline or restored to an earlier version, and `parse_advanced_search()` only searched `"Leads".notes` (`note:`) while ignoring `"GlobalActivities".description`.
+**Root Cause:**
+1. Legacy `"GlobalActivities"` table schema stored only flat `activity_type` and `description` columns without author tracking, pin flags, outcome separation, or JSONB revision history.
+2. `PUT /api/v1/leads/<id>` unconditionally inserted a `NOTE` activity whenever `notes` was non-empty rather than comparing against the existing database value.
+3. `parse_advanced_search()` in `core/services/search.py` queried only `notes ILIKE %s` on `"Leads"` without checking `"GlobalActivities".description` via `EXISTS`.
+**Solution:**
+1. **Pillar 1 — PostgreSQL 16.15 Schema Upgrade (`database/schema_engine.py` & `blueprints/crm_api.py`):**
+   - Added `created_by_user_id`, `created_by_name`, `outcome`, `is_pinned`, `updated_at`, `edited_by_name`, and `revision_history JSONB` to `"GlobalActivities"`, plus `notes_updated_at`, `notes_updated_by`, and `notes_revision_history JSONB` to `"Leads"`, with indexes `idx_global_activities_pinned` and `idx_global_activities_desc_trgm`.
+2. **Pillar 2 — Dual-Layer Note Separation & Zero False-Positive `NOTE` Spam (`blueprints/crm_api.py` & `blueprints/operations.py`):**
+   - Separated the **Standing Facility Brief** (`"Leads".notes`) from the **Pinned + Chronological Activity Stream** (`"GlobalActivities"`), prioritized pinned notes in table rollups (`pinned_count`, `last_note`), and fixed `PUT /api/v1/leads/<id>` so a `GlobalActivities` row is only logged when `notes` or `next_action_date` actually changes.
+3. **Pillars 3 & 4 — 1-Click Inline Editing, Pinning, & Version History Restore (`PUT/PATCH/DELETE /api/v1/activities/<id>`, `POST /api/v1/activities/<id>/restore`, `PUT /api/v1/leads/<id>/standing-brief`, `POST /api/v1/leads/<id>/standing-brief/restore`):**
+   - Enabled 1-click inline editing, pin/unpin toggling, and full version history (`revision_history JSONB`) with 1-click `[↩ Restore]` across the Table Hover Popover (`#sigma-hover-card-popover`), Lead Overview Tab (`#lead-overview-notes-card`), Stage & Call History Timeline (`#lead-list-timeline`), and 2-Minute Calling Console (`#modal-lead-cadence`).
+4. **Pillars 5, 6, & 7 — Smart Note Field Extractor, 1-Click Speed-Chips, & Sister-Location Broadcast (`extract_smart_lead_fields_from_note`, `insertNoteSpeedChip`, `share_umbrella`):**
+   - Added automatic extraction of email, phone, square footage, capacity, stated budget, and Who Cleans (`IN_HOUSE` vs. `OUTSOURCED`) from note text, 6 commercial cleaning speed-chips (`Gatekeeper`, `Best Hours`, `Vendor`, `In-House`, `Renews`, `Gate Code`), and 1-click sister-location note broadcasting across shared `umbrella_name`.
+5. **Pillars 8 & 9 — End-to-End Pipeline Handoff & Full-Text Search Parity (`core/services/search.py` & `api_lead_promote`):**
+   - Updated `parse_advanced_search()` so `note:<keyword>`, `notes:<keyword>`, `has:notes`, and `has:pinned` search across both `"Leads".notes` and `"GlobalActivities".description`, and updated `POST /api/v1/leads/<id>/promote` to copy both `"Leads".notes` and all `"GlobalActivities"` history into the newly promoted Client Account.
+6. **1-Command Pre-Change Rollback Guarantee (`scripts/rollback_lead_notes_workflow.sh`):**
+   - Stored byte-for-byte pre-change code and SQL snapshots in `.snapshots/pre_lead_notes_v550/` with an executable rollback script `bash scripts/rollback_lead_notes_workflow.sh`.
+
+
+## BUG-162: Note & Lead Deletion UI Persistence Defect (`GET /api/v1/leads/<id>` Missing `activity_id -> id` Mapping, `DELETE /api/v1/activities/<id>` Leaving Deleted Text in `"Leads".notes` & `#lead-last-note-<id>`, `deleteLead()` Auto-Advancing Modal to Next Row, & Per-Request DDL Lock Contention)
+**Detected:** 10/27/2026
+**Status:** **RESOLVED** (10/27/2026 — Verified by `test_37_enterprise_delete_gear_and_button_lock_lifecycle_bug_160` & `test_39_enterprise_lead_notes_workflow_bug_159` in `scripts/test_web_performance_rack_14.py`)
+**Symptoms:**
+1. When deleting test leads or activity notes, the confirmation toast (`"Activity note deleted."` or `"Lead #... deleted."`) appeared, yet the note or test lead remained visible on screen intact.
+2. Two earlier interrupted test runs had left 4 identical test leads (`Enterprise Note Test Center 1/2 ...`) at the top of `"Leads"`.
+**Root Cause:**
+1. **Per-Request DDL Lock Contention During Test Runs:** `_ensure_lead_notes_enterprise_columns(cur)` initially ran `ALTER TABLE "Leads" ...` and `ALTER TABLE "GlobalActivities" ...` on every request without a per-worker guard, causing lock contention with an open test cursor and aborting two test runs before their `finally:` cleanup block could delete the test rows (`#84579`, `#84580`, `#84583`, `#84584`).
+2. **Modal Auto-Advance on `deleteLead()`:** When `#modal-lead-command` was open and the operator clicked `Delete`, `deleteLead()` did not close the modal; instead, it called `openLeadCommand(ids[nextIdx], 'overview')`, which immediately loaded the next identical `Enterprise Note Test Center` row and its note into the open modal.
+3. **Missing `id` Key on `GET /api/v1/leads/<id>` Activities:** `"GlobalActivities"` uses `activity_id` as its primary key. While `GET /api/v1/activities/Lead/<id>` normalized `'id': r.get('activity_id')`, `GET /api/v1/leads/<id>` called `serialize_row(a)` where `a.id` was `undefined`, breaking `#tl-act-node-${a.id}` DOM targeting and `deleteLeadActivityItem(${a.id})` calls.
+4. **Stale `"Leads".notes` & `#lead-last-note-<id>` After Note Deletion:** `deleteLeadActivityItem()` passed `null` for `latestNoteText` to `updateLeadRowNoteIndicators()`, which skipped updating `#lead-last-note-<id>` in the table row, and `DELETE /api/v1/activities/<id>` did not clear `"Leads".notes` when it held a copy of the deleted note text.
+**Solution:**
+1. Added process-level `_LEAD_NOTES_COLUMNS_ENSURED` guard in `blueprints/crm_api.py` and `conn.rollback()` before `finally:` cleanup in `test_39`, and purged all leftover `Enterprise Note Test Center` rows from `"Leads"` and `"GlobalActivities"`.
+2. Updated `serialize_row()` in `blueprints/crm_api.py` so every serialized `"GlobalActivities"` row always includes both `id` and `activity_id`, and updated all JS activity renderers (`renderHoverCardItems`, `renderLeadOverviewNotesCard`, `renderLeadTimelineList`, `renderLeadCadenceHistory`) to resolve `const actId = a.id || a.activity_id;` with 1-click Delete (`🗑️`) buttons across all 4 surfaces.
+3. Updated `DELETE /api/v1/activities/<id>` in `blueprints/crm_api.py` to synchronize `"Leads".notes` when the deleted note matches the standing brief and return live `activity_count`, `pinned_count`, and `last_note`.
+4. Updated `deleteLeadActivityItem()` in `static/js/backoffice_operations_core.js` for `0ms` optimistic DOM removal across `#tl-act-node-`, `#hover-act-item-`, `#cadence-act-item-`, and `#overview-pin-item-` plus immediate `#lead-last-note-<id>` clearing (`--`), and updated `deleteLead()` to close `#modal-lead-command` immediately and run `syncOperationalData({ silent: true })`.
+**Preventative:**
+1. Always map `id: activity_id` inside `serialize_row()` whenever `"GlobalActivities"` records are serialized, and enforce `conn.rollback()` before `finally:` cleanup in all database integration tests so failed assertions never leave test rows behind.
+
+
+## BUG-163: 24/7 Enterprise AI Employee Architecture, Stateful Working Desk, Transactional Rollback Change-Set Ledger, FinOps Circuit Breaker & Deterministic Citation Firewall
+**Detected:** 10/29/2026
+**Status:** **RESOLVED** (10/29/2026 — Verified by 5-Part Enterprise AI Employee Test Suite & 1-Command Rollback Script at `scripts/rollback_ai_employee_upgrade.sh`)
+**Symptoms:**
+1. On `10/28/2026`, when the CEO asked `@Georgebytesbot` about `a_toolsx` (a platform-level Telegram Sponsored Message), Mirna Rondinella's call floor activity and permanently closed daycares, Cadence Education's operating sub-brands in `"Leads"`, and multi-turn LinkedIn/image analysis, the legacy conversational fallback in `scripts/telegram_listener.py` behaved like a stateless chatbot—roleplaying a fictional *"10-day security audit"*, failing to query `"Leads"` / `"GlobalActivities"`, and forgetting multi-turn instructions sent 45 seconds earlier.
+2. `send_telegram_message()` and `edit_telegram_message()` did not set `link_preview_options: {"is_disabled": True}`, allowing external URLs to render third-party preview banners.
+**Root Cause:**
+1. `handle_text_conversation()` in `scripts/telegram_listener.py` routed non-slash text prompts directly to an open-ended Gemini prompt without deterministic database tools for corporate umbrellas, staff call audits, or security diagnostics, and without a Citation Firewall blocking unverified claims.
+2. `handle_photo_message()` unconditionally treated every uploaded photo as a jobsite building walkthrough (`"ConstructionBids"`), ignoring prior instructions when the CEO uploaded company screenshots for database comparison.
+**Solution:**
+1. **Engineered the 24/7 Enterprise AI Employee Core (`core/ai_employee/engine.py` & `blueprints/ai_employee_api.py`):**
+   - Created 5 PostgreSQL governance tables: `"AIEmployeeWorkingMemory"` (stateful multi-turn working desk), `"AIEmployeeStandingOrders"` (permanent corporate umbrella & brand playbooks), `"AIEmployeeChangeLedger"` (reversible `BEFORE/AFTER` JSONB snapshots with 1-tap `aiemp_apply_<id>` and `aiemp_undo_<id>` rollback), `"AIEmployeeBudgetLedger"` (hard FinOps circuit breaker capped at `$0.50/day` and `$15.00/month`), and `"AIEmployeeHeartbeat"` (60-second 24/7 self-healing liveness pulse).
+   - Wired Department Specialist tools (`tool_audit_corporate_umbrella`, `tool_audit_staff_calls_and_closed_leads`, `tool_security_and_ad_diagnostic`, `tool_employee_status_and_budget`, `execute_safe_readonly_sql`, and `analyze_company_image_against_database`) plus the Deterministic Citation Firewall (`apply_citation_firewall`).
+2. **Upgraded `scripts/telegram_listener.py` & `worker_launcher.py`:**
+   - Enforced `link_preview_options: {"is_disabled": True}` on all outgoing messages, integrated `get_ai_employee()` into text, photo, callback, and 5:30 PM weekday call-floor wrap-up workflows, and added a 1-command rollback script (`scripts/rollback_ai_employee_upgrade.sh`).
+
+
+
+
+
 
 
 

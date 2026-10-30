@@ -36,7 +36,11 @@ from dateutil import parser as dt_parser
 
 # Configuration
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+from core.ai_employee import get_ai_employee
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -577,7 +581,12 @@ def send_telegram_message(chat_id, text, reply_markup=None, parse_mode="Markdown
 
         for i, chunk in enumerate(chunks):
             chunk_markup = reply_markup if i == len(chunks) - 1 else None
-            payload = {"chat_id": chat_id, "text": chunk}
+            payload = {
+                "chat_id": chat_id,
+                "text": chunk,
+                "disable_web_page_preview": True,
+                "link_preview_options": {"is_disabled": True},
+            }
             if parse_mode:
                 payload["parse_mode"] = parse_mode
             if chunk_markup:
@@ -591,7 +600,12 @@ def send_telegram_message(chat_id, text, reply_markup=None, parse_mode="Markdown
                 print(f"[TELEGRAM] Error sending chunk: {e}", flush=True)
         return
 
-    payload = {"chat_id": chat_id, "text": text}
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "disable_web_page_preview": True,
+        "link_preview_options": {"is_disabled": True},
+    }
     if parse_mode:
         payload["parse_mode"] = parse_mode
     if reply_markup:
@@ -607,7 +621,13 @@ def send_telegram_message(chat_id, text, reply_markup=None, parse_mode="Markdown
 def edit_telegram_message(chat_id, message_id, text, reply_markup=None, parse_mode="Markdown"):
     """Updates an existing message in-place for seamless slider/recalculation UX."""
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageText"
-    payload = {"chat_id": chat_id, "message_id": message_id, "text": text}
+    payload = {
+        "chat_id": chat_id,
+        "message_id": message_id,
+        "text": text,
+        "disable_web_page_preview": True,
+        "link_preview_options": {"is_disabled": True},
+    }
     if parse_mode:
         payload["parse_mode"] = parse_mode
     if reply_markup:
@@ -1016,8 +1036,14 @@ def dispatch_graph_email(record_id):
     try:
         conn = get_db_connection()
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT id, recipient, subject, body FROM \"PendingOutbox\" WHERE id = %s;", (record_id,))
+            cur.execute("SELECT id, recipient, subject, body, tracking_token FROM \"PendingOutbox\" WHERE id = %s;", (record_id,))
             item = cur.fetchone()
+            if item and not item.get("tracking_token"):
+                import uuid
+                new_tok = uuid.uuid4().hex
+                cur.execute("UPDATE \"PendingOutbox\" SET tracking_token = %s WHERE id = %s;", (new_tok, record_id))
+                conn.commit()
+                item["tracking_token"] = new_tok
 
         if not item:
             return False, "Record not found"
@@ -1043,6 +1069,25 @@ def dispatch_graph_email(record_id):
                     print(f"[DISPATCH RESOLVER] Auto-resolved '{item['recipient']}' to '{recipient_addr}'", flush=True)
                 else:
                     return False, f"Invalid recipient: '{item['recipient']}' is not a valid email address and could not be resolved to a registered user."
+
+        # Use official HWB-COM-001 transmit_email with inline cid:hwblogo support when HTML/signature is present
+        try:
+            from core.services.email_service import transmit_email
+            body_content = item["body"] or ""
+            has_sig = "cid:hwblogo" in body_content
+            ok_tx, tx_msg = transmit_email(
+                recipient=recipient_addr,
+                subject=item["subject"],
+                body_html=body_content.replace("\n", "<br>") if "<" not in body_content else body_content,
+                attach_signature=not has_sig,
+                officer="humberto",
+                tracking_token=item.get("tracking_token"),
+                request_read_receipt=True,
+            )
+            if ok_tx:
+                return True, f"Dispatched via Microsoft Graph (HWB-COM-001) to {recipient_addr}"
+        except Exception as tx_err:
+            print(f"[DISPATCH] Fallback to raw Graph sendMail: {tx_err}", flush=True)
 
         endpoint = f"https://graph.microsoft.com/v1.0/users/{USER_EMAIL}/sendMail"
         headers = {
@@ -2184,18 +2229,64 @@ def analyze_text_with_gemini(text, chat_id):
     return f"⚠️ {err or 'Error communicating with Gemini'}", None
 
 def handle_text_conversation(text, chat_id):
-    """Frontier 7: Two-Way Real-Time Conversational AI with George."""
+    """Frontier 7: 24/7 Enterprise AI Employee Chief-of-Staff & Verified Tool Dispatcher."""
     # 0. Fast-path Prompt-Injection Guardrail (OWASP LLM01 - SO-COM-001-DIR-04)
     is_safe, refusal_msg = validate_prompt_safety(text, chat_id=chat_id)
     if not is_safe:
         send_telegram_message(chat_id, refusal_msg)
         return
 
+    # 0.5 Enterprise 24/7 AI Employee Chief-of-Staff Dispatcher (BUG-163)
+    try:
+        emp = get_ai_employee()
+        handled, emp_reply, emp_markup = emp.handle_executive_directive(text, chat_id)
+        if handled and emp_reply:
+            safe_emp_reply = emp.apply_citation_firewall(emp_reply)
+            timestamp_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+            doc_id = f"telegram-convo-{timestamp_str}"
+            try:
+                conn = get_db_connection()
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        INSERT INTO sigma_kb (doc_id, content, metadata)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (doc_id) DO UPDATE SET content = EXCLUDED.content, metadata = EXCLUDED.metadata;
+                        """,
+                        (
+                            doc_id,
+                            f"USER: {text}\nGEORGE: {safe_emp_reply}",
+                            Json({"source": "AI Employee Verified Tool", "chat_id": chat_id, "timestamp": datetime.now().isoformat()}),
+                        ),
+                    )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+            send_telegram_message(chat_id, safe_emp_reply, reply_markup=emp_markup or get_main_menu_keyboard(chat_id))
+            return
+
+        # FinOps Circuit Breaker Check before calling paid LLM
+        budget_ok, budget_info = emp.check_finops_budget()
+        if not budget_ok:
+            send_telegram_message(
+                chat_id,
+                f"🛡️ *FinOps Circuit Breaker Active*\nDaily cap (${budget_info.get('daily_cap_usd', 0.50):.2f}) reached. Deterministic SQL tools remain 100% active (`$0.00`).",
+                reply_markup=get_main_menu_keyboard(chat_id),
+            )
+            return
+    except Exception as emp_err:
+        print(f"[AI EMPLOYEE] Dispatcher note: {emp_err}", flush=True)
+
     send_telegram_chat_action(chat_id, "typing")
     gemini_reply, err = analyze_text_with_gemini(text, chat_id)
     if err or not gemini_reply:
         send_telegram_message(chat_id, f"⚠️ Error: {err or 'Empty response'}")
         return
+    try:
+        gemini_reply = get_ai_employee().apply_citation_firewall(gemini_reply)
+    except Exception:
+        pass
 
     # Parse JSON intent if present
     json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', gemini_reply)
@@ -3332,12 +3423,11 @@ def handle_voice_message(voice_obj, chat_id):
         send_telegram_message(chat_id, f"⚠️ Voice ingestion error: {e}")
 
 def handle_photo_message(photo_list, chat_id, caption=""):
-    """Frontier 4: Multimodal Blueprint & Jobsite Photo Computer Vision."""
+    """Frontier 4: Multimodal Blueprint, Company Screenshot & Jobsite Photo Computer Vision."""
     best_photo = photo_list[-1]
     file_id = best_photo.get("file_id")
 
     send_telegram_chat_action(chat_id, "typing")
-    send_telegram_message(chat_id, "📷 *Analyzing Jobsite Photo with Gemini 2.5 Flash Vision*...")
     try:
         get_file_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getFile"
         res = session.get(get_file_url, params={"file_id": file_id}, timeout=15)
@@ -3349,6 +3439,20 @@ def handle_photo_message(photo_list, chat_id, caption=""):
         download_url = f"https://api.telegram.org/file/bot{TELEGRAM_BOT_TOKEN}/{file_path}"
         img_res = session.get(download_url, timeout=30)
         img_bytes = img_res.content
+
+        # Check if Working Desk is in Company Screenshot -> Database Compare Mode (BUG-163)
+        try:
+            emp = get_ai_employee()
+            handled_co, co_msg, co_markup = emp.analyze_company_image_against_database(
+                img_bytes, caption or "", chat_id
+            )
+            if handled_co and co_msg:
+                send_telegram_message(chat_id, co_msg, reply_markup=co_markup)
+                return
+        except Exception as co_err:
+            print(f"[AI EMPLOYEE] Company photo check note: {co_err}", flush=True)
+
+        send_telegram_message(chat_id, "📷 *Analyzing Jobsite Photo with Gemini 2.5 Flash Vision*...")
 
         # Extract building tag from caption if present
         bldg_tag = "general"
@@ -4303,6 +4407,33 @@ def process_callback_query(callback_query):
         kw = data.replace("search_email_", "")
         answer_callback_query(query_id, f"Searching emails for '{kw}'...")
         handle_text_conversation(f"Check my emails for {kw}", chat_id)
+    elif data.startswith("aiemp_apply_"):
+        cs_id = int(data.replace("aiemp_apply_", ""))
+        answer_callback_query(query_id, f"Applying Change-Set #CS-{cs_id}...")
+        emp = get_ai_employee()
+        ok, res_msg, undo_markup = emp.apply_changeset(cs_id, chat_id)
+        send_telegram_message(chat_id, res_msg, reply_markup=undo_markup)
+    elif data.startswith("aiemp_undo_"):
+        cs_id = int(data.replace("aiemp_undo_", ""))
+        answer_callback_query(query_id, f"Rolling back Change-Set #CS-{cs_id}...")
+        emp = get_ai_employee()
+        ok, res_msg, _ = emp.rollback_changeset(cs_id, chat_id)
+        send_telegram_message(chat_id, res_msg)
+    elif data == "aiemp_status":
+        answer_callback_query(query_id, "Checking 24/7 AI Employee status...")
+        emp = get_ai_employee()
+        msg, markup = emp.tool_employee_status_and_budget(chat_id)
+        send_telegram_message(chat_id, msg, reply_markup=markup)
+    elif data == "aiemp_cadence_audit":
+        answer_callback_query(query_id, "Running Cadence Education audit...")
+        emp = get_ai_employee()
+        msg, markup = emp.tool_audit_corporate_umbrella("Cadence Education", chat_id)
+        send_telegram_message(chat_id, msg, reply_markup=markup)
+    elif data == "aiemp_call_audit":
+        answer_callback_query(query_id, "Running Mirna Call Floor audit...")
+        emp = get_ai_employee()
+        msg, markup = emp.tool_audit_staff_calls_and_closed_leads("Mirna Rondinella", chat_id)
+        send_telegram_message(chat_id, msg, reply_markup=markup)
     else:
         answer_callback_query(query_id, "Acknowledged")
 
@@ -4534,6 +4665,7 @@ def autonomous_deal_capture_loop():
     print("[AUTONOMOUS MONITOR] 15-Minute Deal-Capture Thread Initialized.", flush=True)
     last_notified_outbox_ids = set()
     last_briefing_date = None
+    last_eod_wrap_date = None
 
     while True:
         try:
@@ -4545,6 +4677,17 @@ def autonomous_deal_capture_loop():
                 last_briefing_date = today_str
                 print("[AUTONOMOUS MONITOR] Triggering 7:00 AM Daily Executive Briefing...", flush=True)
                 handle_cmd_briefing(ALLOWED_CHAT_ID)
+
+            # 5:30 PM Weekday Call-Floor & Closed-Daycare Wrap-Up (BUG-163)
+            if now.weekday() < 5 and now.hour == 17 and 25 <= now.minute <= 45 and last_eod_wrap_date != today_str:
+                last_eod_wrap_date = today_str
+                print("[AUTONOMOUS MONITOR] Triggering 5:30 PM Call-Floor Wrap-Up...", flush=True)
+                try:
+                    emp = get_ai_employee()
+                    eod_msg, eod_markup = emp.tool_audit_staff_calls_and_closed_leads("Mirna Rondinella", ALLOWED_CHAT_ID)
+                    send_telegram_message(ALLOWED_CHAT_ID, f"🕠 *5:30 PM Daily Call-Floor Wrap-Up*\n{eod_msg}", reply_markup=eod_markup)
+                except Exception as eod_err:
+                    print(f"[AUTONOMOUS MONITOR] EOD wrap warning: {eod_err}", flush=True)
 
             # 1. Check for Pending Outbox Approvals
             conn = get_db_connection()
@@ -4666,9 +4809,24 @@ def safe_process_update(update: dict):
         tb = traceback.format_exc()
         print(f"[TELEGRAM WORKER EXCEPTION]: {exc}\n{tb}", flush=True)
 
+def ai_employee_heartbeat_loop():
+    """60-second 24/7 liveness pulse into PostgreSQL AIEmployeeHeartbeat ($0.00 token cost)."""
+    print("[AI EMPLOYEE] 24/7 Heartbeat Pulse Thread Initialized (60s interval).", flush=True)
+    emp = get_ai_employee()
+    while True:
+        try:
+            emp.record_heartbeat("hwb_24x7_ai_employee", {"daemon": "telegram_listener", "mode": "24x7_ENTERPRISE"})
+        except Exception as hb_err:
+            print(f"[AI EMPLOYEE] Heartbeat warning: {hb_err}", flush=True)
+        time.sleep(60)
+
+
 def poll_updates():
     offset = None
-    print("[TELEGRAM] Starting SigmaFidelity™ Executive Command Node v3.1 (Enterprise Concurrency Engine)...", flush=True)
+    print("[TELEGRAM] Starting SigmaFidelity™ 24/7 Enterprise AI Employee Node v4.0...", flush=True)
+
+    hb_thread = threading.Thread(target=ai_employee_heartbeat_loop, daemon=True)
+    hb_thread.start()
 
     monitor_thread = threading.Thread(target=autonomous_deal_capture_loop, daemon=True)
     monitor_thread.start()

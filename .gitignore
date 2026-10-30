@@ -29,6 +29,7 @@ transcript*
 # Local Backups & Large Archives
 backups/
 .backups/
+.snapshots/
 *.dump
 *.tar.gz
 *.sql

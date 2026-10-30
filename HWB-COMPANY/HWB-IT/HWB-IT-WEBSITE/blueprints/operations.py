@@ -44,6 +44,7 @@ operations_bp = Blueprint('operations', __name__)
 VIEW_AUTHORIZATION_MAP = {
     'leads': 'leads',
     'accounts': 'accounts',
+    'accounting': 'accounting',
     'construction_bids': 'bids',
     'general_contractors': 'bids',
     'institutional_bids': 'bids',
@@ -63,6 +64,132 @@ _SIDEBAR_COUNTS_CACHE = {}
 _SIDEBAR_COUNTS_TTL = 30.0
 _SYSTEM_USERS_CACHE = {"data": None, "timestamp": 0.0}
 _SYSTEM_USERS_TTL = 60.0
+_GRID_STATE_CACHE = {}
+_GRID_STATE_TTL = 120.0
+
+DEFAULT_COLS_MAP = {
+    'leads': 'company,status,cleaning_model,owner,sqf,value,priority,activities',
+    'accounts': 'company,city,phone,revenue,rep,activities',
+    'construction_bids': 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions',
+    'gc_bids': 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions',
+}
+
+ANCHOR_COL_MAP = {
+    'leads': 'company',
+    'accounts': 'company',
+    'construction_bids': 'project',
+    'gc_bids': 'project',
+}
+
+
+def _normalize_grid_id(view_or_grid: str) -> str:
+    g = (view_or_grid or 'leads').strip().lower()
+    if g in ('gc_bids', 'bids', 'table-construction-bids'):
+        return 'construction_bids'
+    if g in ('table-leads',):
+        return 'leads'
+    if g in ('table-accounts',):
+        return 'accounts'
+    return g
+
+
+def _get_user_grid_state(conn, user_id, grid_id: str) -> dict:
+    """Fetches per-user grid state (active_cols, col_widths, personal_preset, sort_by, sort_dir) from PostgreSQL UserBehavioralProfiles with fast cache."""
+    if not user_id:
+        return {}
+    norm_grid = _normalize_grid_id(grid_id)
+    cache_key = f"{user_id}:{norm_grid}"
+    now_ts = time.time()
+    with _OPS_CACHE_LOCK:
+        cached = _GRID_STATE_CACHE.get(cache_key)
+        if cached and (now_ts - cached["timestamp"]) < _GRID_STATE_TTL:
+            return dict(cached["data"])
+    state = {}
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT adaptive_preferences FROM "UserBehavioralProfiles" WHERE user_id = %s;', (int(user_id),))
+            row = cur.fetchone()
+            if row:
+                prefs = row['adaptive_preferences'] if isinstance(row, dict) else row[0]
+                if isinstance(prefs, str):
+                    try:
+                        prefs = json.loads(prefs)
+                    except Exception:
+                        prefs = {}
+                if isinstance(prefs, dict):
+                    grid_states = prefs.get('grid_states') or {}
+                    if isinstance(grid_states, dict) and isinstance(grid_states.get(norm_grid), dict):
+                        state = dict(grid_states[norm_grid])
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+    with _OPS_CACHE_LOCK:
+        _GRID_STATE_CACHE[cache_key] = {"data": dict(state), "timestamp": now_ts}
+    return state
+
+
+def _save_user_grid_state(conn, user_id, username: str, full_name: str, user_role: str, grid_id: str, patch: dict) -> dict:
+    """Atomically upserts per-user grid state inside UserBehavioralProfiles.adaptive_preferences->'grid_states'."""
+    if not user_id:
+        return {}
+    norm_grid = _normalize_grid_id(grid_id)
+    current = _get_user_grid_state(conn, user_id, norm_grid)
+    merged = dict(current)
+    for k, v in (patch or {}).items():
+        if v is None:
+            merged.pop(k, None)
+        else:
+            merged[k] = v
+    merged['updated_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT adaptive_preferences FROM "UserBehavioralProfiles" WHERE user_id = %s;', (int(user_id),))
+            row = cur.fetchone()
+            prefs = {}
+            if row:
+                raw_p = row['adaptive_preferences'] if isinstance(row, dict) else row[0]
+                if isinstance(raw_p, str):
+                    try:
+                        prefs = json.loads(raw_p)
+                    except Exception:
+                        prefs = {}
+                elif isinstance(raw_p, dict):
+                    prefs = dict(raw_p)
+            grid_states = dict(prefs.get('grid_states') or {})
+            grid_states[norm_grid] = merged
+            prefs['grid_states'] = grid_states
+            if row:
+                cur.execute(
+                    '''
+                    UPDATE "UserBehavioralProfiles"
+                    SET adaptive_preferences = %s::jsonb,
+                        last_active_at = CURRENT_TIMESTAMP
+                    WHERE user_id = %s;
+                    ''',
+                    (json.dumps(prefs), int(user_id)),
+                )
+            else:
+                cur.execute(
+                    '''
+                    INSERT INTO "UserBehavioralProfiles"
+                        (user_id, chat_id, username, full_name, user_role, total_interactions, adaptive_preferences, last_active_at)
+                    VALUES (%s, %s, %s, %s, %s, 1, %s::jsonb, CURRENT_TIMESTAMP);
+                    ''',
+                    (int(user_id), int(user_id), username or 'operator', full_name or username or 'Operator', user_role or 'Operator', json.dumps(prefs)),
+                )
+        conn.commit()
+    except Exception as err:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        current_app.logger.warning(f"[GRID STATE] Save warning for user {user_id} grid {norm_grid}: {err}")
+    cache_key = f"{user_id}:{norm_grid}"
+    with _OPS_CACHE_LOCK:
+        _GRID_STATE_CACHE[cache_key] = {"data": dict(merged), "timestamp": time.time()}
+    return merged
 
 
 def _get_active_system_users(conn) -> list:
@@ -127,6 +254,7 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
         "campaign_ready_count": 0,
         "in_campaign_count": 0,
         "opened_leads_count": 0,
+        "followup_due_count": 0,
         "bids_count": 0,
         "inst_bids_count": 0,
         "gov_programs_count": 6,
@@ -153,7 +281,15 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
                     SELECT
                         COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
                         COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND is_duplicate = TRUE) AS dup_cnt,
-                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt,
+                        COUNT(*) FILTER (
+                            WHERE COALESCE(is_converted, FALSE) = FALSE
+                              AND COALESCE(is_commercial, TRUE) = TRUE
+                              AND COALESCE(is_duplicate, FALSE) = FALSE
+                              AND COALESCE(status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')
+                              AND NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL
+                              AND BTRIM(next_action_date) <= TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD')
+                        ) AS followup_cnt
                     FROM "Leads"
                     WHERE owner_id = %s;
                 ''', (user_id,))
@@ -162,7 +298,15 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
                     SELECT
                         COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE AND COALESCE(status, '') != 'ARCHIVED') AS active_leads,
                         COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND is_duplicate = TRUE) AS dup_cnt,
-                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt
+                        COUNT(*) FILTER (WHERE COALESCE(is_converted, FALSE) = FALSE AND COALESCE(campaign_ready, FALSE) = TRUE AND COALESCE(is_commercial, TRUE) = TRUE AND COALESCE(is_duplicate, FALSE) = FALSE) AS cr_cnt,
+                        COUNT(*) FILTER (
+                            WHERE COALESCE(is_converted, FALSE) = FALSE
+                              AND COALESCE(is_commercial, TRUE) = TRUE
+                              AND COALESCE(is_duplicate, FALSE) = FALSE
+                              AND COALESCE(status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')
+                              AND NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL
+                              AND BTRIM(next_action_date) <= TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD')
+                        ) AS followup_cnt
                     FROM "Leads";
                 ''')
             l_row = cur.fetchone()
@@ -170,6 +314,7 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
                 counts["leads_count"] = l_row[0] or 0
                 counts["dup_count"] = l_row[1] or 0
                 counts["campaign_ready_count"] = l_row[2] or 0
+                counts["followup_due_count"] = (l_row[3] if len(l_row) > 3 else 0) or 0
 
             try:
                 if is_sales:
@@ -287,6 +432,8 @@ def admin_operations():
     sort_by = request.args.get('sort')
     sort_dir = request.args.get('dir', '').upper()
     campaign_filter = request.args.get('campaign_filter', '').strip()
+    followup_filter = request.args.get('followup_filter', '').strip().lower()
+    today_iso = datetime.date.today().strftime('%Y-%m-%d')
     is_json_export = (
         request.args.get('format') == 'json'
         or (request.headers.get('X-Requested-With') == 'XMLHttpRequest' and request.accept_mimetypes.best == 'application/json')
@@ -299,6 +446,7 @@ def admin_operations():
     in_campaign_count = 0
     opened_leads_count = 0
     campaign_ready_count = 0
+    followup_due_count = 0
     lib = {'area': [], 'task': [], 'item': []}
     applicants, subcontractors = [], []
     applicants_count, subcontractors_count = 0, 0
@@ -317,79 +465,87 @@ def admin_operations():
     employees, employees_count, active_employees_count = [], 0, 0
     active_technicians = []
     total_weekly_labor_hours, total_biweekly_payroll = 0.0, 0.0
+    accounting_data = {}
 
-    # --- Dynamic Column Architecture (BUG-156 & BUG-157: 'status', 'cleaning_model', and 'owner' are permanent standard columns on Leads) ---
-    default_cols_leads = 'company,status,cleaning_model,owner,sqf,value,priority,activities'
-    default_cols_accounts = 'company,city,phone,revenue,rep,activities'
-    default_cols_bids = 'project,status,due_date,created,sqf,value,scope,estimator,phone,owner,actions'
+    # --- Dynamic Column Architecture (BUG-156, BUG-157 & BUG-164: PostgreSQL Per-User Grid State + Session Persistence) ---
+    default_cols_leads = DEFAULT_COLS_MAP['leads']
+    default_cols_accounts = DEFAULT_COLS_MAP['accounts']
+    default_cols_bids = DEFAULT_COLS_MAP['construction_bids']
 
     if active_view == 'leads':
         session_key = 'leads_custom_cols'
+        grid_key = 'leads'
         default_cols = default_cols_leads
         anchor_col = 'company'
     elif active_view == 'accounts':
         session_key = 'accounts_custom_cols'
+        grid_key = 'accounts'
         default_cols = default_cols_accounts
         anchor_col = 'company'
-    elif active_view == 'construction_bids':
+    elif active_view in ('construction_bids', 'gc_bids'):
         session_key = 'bids_custom_cols'
+        grid_key = 'construction_bids'
         default_cols = default_cols_bids
         anchor_col = 'project'
     else:
         session_key = 'leads_custom_cols'
+        grid_key = active_view or 'leads'
         default_cols = default_cols_leads
         anchor_col = 'company'
-
-    if 'cols' in request.args:
-        active_cols_str = request.args.get('cols')
-        if active_cols_str in ('default', 'reset', ''):
-            session.pop(session_key, None)
-            active_cols_str = default_cols
-        else:
-            session[session_key] = active_cols_str
-    else:
-        active_cols_str = session.get(session_key) or default_cols
-
-    active_cols = [c.strip() for c in active_cols_str.split(',') if c.strip() and c.strip() != 'on']
-    if anchor_col not in active_cols:
-        active_cols.insert(0, anchor_col)
-    if active_view == 'leads':
-        updated_session_cols = False
-        if 'cols' not in request.args and 'cleaning_model' not in active_cols:
-            insert_cm_idx = (active_cols.index('status') + 1) if 'status' in active_cols else 1
-            active_cols.insert(insert_cm_idx, 'cleaning_model')
-            updated_session_cols = True
-        if 'owner' not in active_cols:
-            if 'cleaning_model' in active_cols:
-                insert_idx = active_cols.index('cleaning_model') + 1
-            elif 'status' in active_cols:
-                insert_idx = active_cols.index('status') + 1
-            else:
-                insert_idx = 1
-            active_cols.insert(insert_idx, 'owner')
-            updated_session_cols = True
-        if updated_session_cols:
-            session[session_key] = ','.join(active_cols)
 
     per_page = 50
     offset = (page - 1) * per_page
 
     default_lead_sort_expr = "GREATEST(COALESCE(TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS'), ''), COALESCE(input_date::text, ''))"
+    priority_sort_expr = (
+        "CASE priority_level "
+        "WHEN 'Needs Call Now' THEN 1 WHEN 'CRITICAL' THEN 1 "
+        "WHEN 'High' THEN 2 WHEN 'HIGH' THEN 2 "
+        "WHEN 'Follow up soon' THEN 3 WHEN 'STANDARD' THEN 3 "
+        "WHEN 'Normal' THEN 4 "
+        "WHEN 'Low' THEN 5 WHEN 'LOW' THEN 5 "
+        "ELSE 6 END"
+    )
+    status_sort_expr = (
+        "CASE status "
+        "WHEN 'Engaged' THEN 1 "
+        "WHEN 'Walkthrough Completed' THEN 2 "
+        "WHEN 'Qualified' THEN 3 "
+        "WHEN 'Contacted' THEN 4 "
+        "WHEN 'In Campaign' THEN 5 "
+        "WHEN 'New' THEN 6 "
+        "WHEN 'Not Interested' THEN 7 "
+        "WHEN 'Unsubscribed' THEN 8 "
+        "WHEN 'Do Not Call (DNC)' THEN 9 "
+        "ELSE 10 END"
+    )
+    tier_sort_expr = (
+        "CASE acquisition_tier "
+        "WHEN 'Tier 1 - Mega Institutional' THEN 1 "
+        "WHEN 'Tier 2 - Regional Commercial' THEN 2 "
+        "WHEN 'Tier 3 - Add-on Commercial' THEN 3 "
+        "WHEN 'Corporate / Multi-Site Chain' THEN 4 "
+        "ELSE 5 END"
+    )
+    owner_sort_expr = "(SELECT COALESCE(u_sort.full_name, u_sort.username, 'ZZZZ') FROM \"Users\" u_sort WHERE u_sort.id = owner_id)"
     leads_sort_map = {
         'company': 'center_name', 'industry': 'industry', 'input_date': 'input_date',
         'date': default_lead_sort_expr, 'recent': default_lead_sort_expr,
         'updated': 'COALESCE(updated_at, timestamp)',
-        'status': 'status', 'phone': 'phone', 'email': 'email', 'city': 'city',
-        'zipcode': 'zipcode', 'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
-        'priority': 'priority_level', 'facility': 'facility_type', 'contact': 'decision_maker',
+        'status': status_sort_expr, 'phone': 'phone', 'email': 'email', 'city': 'city',
+        'state': 'state', 'zip': 'zipcode', 'zipcode': 'zipcode',
+        'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
+        'priority': priority_sort_expr, 'facility': 'facility_type', 'building': 'facility_type',
+        'dm': 'decision_maker', 'contact': 'decision_maker',
         'address': 'address', 'job_title': 'job_title', 'source': 'lead_source',
         'frequency': 'traffic_cycle', 'interest': 'service_interest',
-        'next_action': 'next_action_date', 'owner': 'owner_id',
+        'next_action': 'next_action_date', 'owner': owner_sort_expr,
         'activities': 'COALESCE(ga.activity_count, 0)',
         'last_contact': 'ga.last_contact',
+        'last_note': "COALESCE(ga.last_note, NULLIF(BTRIM(notes), ''))",
         'umbrella': 'umbrella_name',
         'cleaning_model': 'cleaning_delivery_model',
-        'm_and_a': 'acquisition_tier',
+        'm_and_a': tier_sort_expr,
         'ownership': 'ownership_type',
         'commercial': 'is_commercial'
     }
@@ -399,11 +555,14 @@ def admin_operations():
         'address': 'company_address', 'contact': 'contact_person_name',
         'facility': 'facility_type', 'building': 'facility_type', 'industry': 'industry',
         'zip': 'zip', 'state': 'state', 'quote': 'quote_number',
-        'period': 'contract_period', 'frequency': 'frequency',
+        'period': 'contract_period', 'cycle': 'contract_period', 'frequency': 'frequency',
         'start_date': 'start_date', 'terms': 'payment_terms',
-        'rep': 'c.assigned_rep_id', 'owner': 'c.assigned_rep_id',
+        'sqf': 'cleanable_sqft', 'website': 'website',
+        'rep': '(SELECT COALESCE(u_s.full_name, u_s.username, \'ZZZZ\') FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
+        'owner': '(SELECT COALESCE(u_s.full_name, u_s.username, \'ZZZZ\') FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
         'activities': 'COALESCE(ga.activity_count, 0)',
         'last_contact': 'ga.last_contact',
+        'last_note': 'ga.last_note',
         'umbrella': 'c.umbrella_name',
         'cleaning_model': 'c.cleaning_delivery_model'
     }
@@ -435,7 +594,7 @@ def admin_operations():
         a_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
         l_sort, l_dir = 'input_date', 'DESC'
         b_sort, b_dir = 'cb.bid_due_date', 'ASC'
-    elif active_view == 'construction_bids':
+    elif active_view in ('construction_bids', 'gc_bids'):
         b_sort = bids_sort_map.get(sort_by, 'cb.bid_due_date')
         b_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
         l_sort, l_dir = 'input_date', 'DESC'
@@ -452,9 +611,68 @@ def admin_operations():
         b_sort, b_dir = 'cb.bid_due_date', 'ASC'
 
     conn = get_db(current_app.config['DATABASE_URL'])
+    user_grid_state = {}
     try:
-        # 0. CACHED SIDEBAR COUNTS (30s TTL) & SYSTEM USERS (60s TTL)
+        # 0. CACHED SIDEBAR COUNTS (30s TTL), SYSTEM USERS (60s TTL) & PER-USER GRID STATE (120s TTL)
+        user_id_val = getattr(current_user, 'id', None)
         user_role = getattr(current_user, 'role', '')
+        user_grid_state = _get_user_grid_state(conn, user_id_val, grid_key)
+
+        if 'cols' in request.args:
+            raw_req_cols = (request.args.get('cols') or '').strip()
+            if raw_req_cols in ('default', 'reset', ''):
+                session.pop(session_key, None)
+                active_cols_str = default_cols
+                _save_user_grid_state(
+                    conn, user_id_val, getattr(current_user, 'username', ''),
+                    getattr(current_user, 'full_name', ''), user_role, grid_key,
+                    {'active_cols': [c.strip() for c in default_cols.split(',') if c.strip()], 'custom_configured': False}
+                )
+            else:
+                active_cols_str = raw_req_cols
+                session[session_key] = active_cols_str
+                _save_user_grid_state(
+                    conn, user_id_val, getattr(current_user, 'username', ''),
+                    getattr(current_user, 'full_name', ''), user_role, grid_key,
+                    {'active_cols': [c.strip() for c in active_cols_str.split(',') if c.strip()], 'custom_configured': True}
+                )
+        else:
+            db_saved_cols = user_grid_state.get('active_cols')
+            sess_saved_cols = session.get(session_key)
+            if db_saved_cols:
+                active_cols_str = ','.join(str(x) for x in db_saved_cols) if isinstance(db_saved_cols, list) else str(db_saved_cols)
+                session[session_key] = active_cols_str
+            elif sess_saved_cols:
+                active_cols_str = ','.join(str(x) for x in sess_saved_cols) if isinstance(sess_saved_cols, list) else str(sess_saved_cols)
+            else:
+                active_cols_str = default_cols
+
+        seen_cols = set()
+        active_cols = []
+        for c in active_cols_str.split(','):
+            c_clean = c.strip()
+            if c_clean and c_clean != 'on' and c_clean not in seen_cols:
+                seen_cols.add(c_clean)
+                active_cols.append(c_clean)
+        if anchor_col not in active_cols:
+            active_cols.insert(0, anchor_col)
+
+        is_custom_configured = bool(user_grid_state.get('custom_configured')) or ('cols' in request.args and request.args.get('cols') not in ('default', 'reset', ''))
+        if active_view == 'leads' and not is_custom_configured:
+            if 'cleaning_model' not in active_cols:
+                insert_cm_idx = (active_cols.index('status') + 1) if 'status' in active_cols else 1
+                active_cols.insert(insert_cm_idx, 'cleaning_model')
+            if 'owner' not in active_cols:
+                if 'cleaning_model' in active_cols:
+                    insert_idx = active_cols.index('cleaning_model') + 1
+                elif 'status' in active_cols:
+                    insert_idx = active_cols.index('status') + 1
+                else:
+                    insert_idx = 1
+                active_cols.insert(insert_idx, 'owner')
+
+        active_cols_str = ','.join(active_cols)
+        session[session_key] = active_cols_str
         sb_counts = _get_operations_sidebar_counts(conn, getattr(current_user, 'id', None), user_role)
         portfolio_total = sb_counts["portfolio_total"]
         leads_count = sb_counts["leads_count"]
@@ -462,6 +680,7 @@ def admin_operations():
         campaign_ready_count = sb_counts["campaign_ready_count"]
         in_campaign_count = sb_counts["in_campaign_count"]
         opened_leads_count = sb_counts["opened_leads_count"]
+        followup_due_count = sb_counts.get("followup_due_count", 0)
         bids_count = sb_counts["bids_count"]
         inst_bids_count = sb_counts["inst_bids_count"]
         gov_programs_count = sb_counts["gov_programs_count"]
@@ -475,7 +694,7 @@ def admin_operations():
         system_users = _get_active_system_users(conn)
 
         # 1. FETCH ACCOUNTS (CQRS Active-View Gated + Set-Based LEFT JOIN)
-        if active_view in ('accounts', 'monitor', 'dispatch', 'workforce') or is_json_export:
+        if active_view in ('accounts', 'monitor', 'dispatch', 'workforce', 'accounting') or is_json_export:
             try:
                 with conn.cursor() as cur:
                     is_sales_account_scope = (user_role == 'Sales')
@@ -529,6 +748,12 @@ def admin_operations():
         if active_view == 'leads' or is_json_export:
             try:
                 with conn.cursor() as cur:
+                    try:
+                        from blueprints.crm_api import _ensure_lead_notes_enterprise_columns
+                        _ensure_lead_notes_enterprise_columns(cur)
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
                     lead_where_clauses = []
                     lead_params = []
                     is_sales_lead_scope = (user_role == 'Sales')
@@ -587,7 +812,7 @@ def admin_operations():
                         )
 
                     if active_only:
-                        lead_where_clauses.append("EXISTS (SELECT 1 FROM \"GlobalActivities\" ga_f WHERE ga_f.parent_id = l.id AND ga_f.parent_type = 'Lead')")
+                        lead_where_clauses.append("(NULLIF(BTRIM(COALESCE(l.notes, '')), '') IS NOT NULL OR EXISTS (SELECT 1 FROM \"GlobalActivities\" ga_f WHERE ga_f.parent_id = l.id AND ga_f.parent_type = 'Lead'))")
 
                     if campaign_filter == 'campaign_ready' and active_view == 'leads':
                         lead_where_clauses.append("COALESCE(l.campaign_ready, FALSE) = TRUE")
@@ -598,6 +823,27 @@ def admin_operations():
                     elif campaign_filter == 'no_campaign' and active_view == 'leads':
                         lead_where_clauses.append("(NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) AND (l.status IS NULL OR l.status != 'In Campaign'))")
 
+                    if followup_filter and active_view == 'leads':
+                        lead_where_clauses.append("COALESCE(l.status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')")
+                        if followup_filter == 'overdue':
+                            lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
+                            if not sort_by:
+                                l_sort, l_dir = 'next_action_date', 'ASC'
+                        elif followup_filter == 'today':
+                            lead_where_clauses.append("BTRIM(COALESCE(l.next_action_date, '')) = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
+                            if not sort_by:
+                                l_sort, l_dir = 'next_action_date', 'ASC'
+                        elif followup_filter == 'due':
+                            lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) <= TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD')")
+                            if not sort_by:
+                                l_sort, l_dir = 'next_action_date', 'ASC'
+                        elif followup_filter in ('upcoming', 'scheduled', 'week'):
+                            lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) >= TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
+                            if not sort_by:
+                                l_sort, l_dir = 'next_action_date', 'ASC'
+                        elif followup_filter in ('none', 'missing'):
+                            lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NULL")
+
                     if search_q and active_view == 'leads':
                         s_clauses, s_params = parse_advanced_search(search_q, 'leads')
                         lead_where_clauses.extend(s_clauses)
@@ -606,20 +852,22 @@ def admin_operations():
                     lead_where_str = ("WHERE " + " AND ".join(lead_where_clauses)) if lead_where_clauses else ""
 
                     # Only run filtered COUNT(*) if non-default filters are active; otherwise use 30s cached leads_count
-                    has_custom_lead_filters = bool(search_q or owner_filter or duplicates_only or include_archived or m_and_a_filter or worked_today or active_only or campaign_filter)
+                    has_custom_lead_filters = bool(search_q or owner_filter or duplicates_only or include_archived or m_and_a_filter or worked_today or active_only or campaign_filter or followup_filter)
                     if has_custom_lead_filters:
                         cur.execute(f'SELECT COUNT(*) FROM "Leads" l {lead_where_str}', tuple(lead_params))
                         leads_count = cur.fetchone()[0]
 
                     id_tie_dir = 'DESC' if l_dir == 'DESC' else 'ASC'
                     # Set-based CTE: paginate 50 leads first, then LEFT JOIN GlobalActivities & CampaignRecipients only for those 50 IDs
-                    if sort_by in ('activities', 'last_contact'):
+                    if sort_by in ('activities', 'last_contact', 'last_note'):
+                        outer_l_sort = "pl.last_note" if sort_by == 'last_note' else l_sort.replace('ga.', 'pl.')
                         lead_sql = f'''
                             WITH ga_all AS (
                                 SELECT parent_id,
                                        COUNT(*) AS activity_count,
+                                       COUNT(*) FILTER (WHERE COALESCE(is_pinned, FALSE) = TRUE) AS pinned_count,
                                        MAX(timestamp) AS last_contact,
-                                       (ARRAY_AGG(description ORDER BY timestamp DESC))[1] AS last_note
+                                       (ARRAY_AGG(CASE WHEN COALESCE(is_pinned, FALSE) THEN '📌 ' || description ELSE description END ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC))[1] AS last_note
                                 FROM "GlobalActivities"
                                 WHERE parent_type = 'Lead'
                                 GROUP BY parent_id
@@ -627,8 +875,9 @@ def admin_operations():
                             paged_leads AS (
                                 SELECT l.*,
                                        COALESCE(ga.activity_count, 0) AS activity_count,
+                                       COALESCE(ga.pinned_count, 0) AS pinned_count,
                                        ga.last_contact,
-                                       ga.last_note
+                                       COALESCE(ga.last_note, NULLIF(BTRIM(l.notes), '')) AS last_note
                                 FROM "Leads" l
                                 LEFT JOIN ga_all ga ON ga.parent_id = l.id
                                 {lead_where_str}
@@ -647,7 +896,7 @@ def admin_operations():
                             SELECT pl.*, cr_latest.campaign_info
                             FROM paged_leads pl
                             LEFT JOIN cr_latest ON cr_latest.lead_id = pl.id
-                            ORDER BY {l_sort.replace('ga.', 'pl.')} {l_dir} NULLS LAST, pl.id {id_tie_dir};
+                            ORDER BY {outer_l_sort} {l_dir} NULLS LAST, pl.id {id_tie_dir};
                         '''
                     else:
                         lead_sql = f'''
@@ -661,8 +910,9 @@ def admin_operations():
                             ga_agg AS (
                                 SELECT parent_id,
                                        COUNT(*) AS activity_count,
+                                       COUNT(*) FILTER (WHERE COALESCE(is_pinned, FALSE) = TRUE) AS pinned_count,
                                        MAX(timestamp) AS last_contact,
-                                       (ARRAY_AGG(description ORDER BY timestamp DESC))[1] AS last_note
+                                       (ARRAY_AGG(CASE WHEN COALESCE(is_pinned, FALSE) THEN '📌 ' || description ELSE description END ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC))[1] AS last_note
                                 FROM "GlobalActivities"
                                 WHERE parent_type = 'Lead'
                                   AND parent_id IN (SELECT id FROM paged_leads)
@@ -679,8 +929,9 @@ def admin_operations():
                             )
                             SELECT pl.*,
                                    COALESCE(ga.activity_count, 0) AS activity_count,
+                                   COALESCE(ga.pinned_count, 0) AS pinned_count,
                                    ga.last_contact,
-                                   ga.last_note,
+                                   COALESCE(ga.last_note, NULLIF(BTRIM(pl.notes), '')) AS last_note,
                                    cr_latest.campaign_info
                             FROM paged_leads pl
                             LEFT JOIN ga_agg ga ON ga.parent_id = pl.id
@@ -1174,6 +1425,21 @@ def admin_operations():
                 conn.rollback()
                 current_app.logger.warning(f"[OPERATIONS] GovernmentPrograms fetch warning: {prog_err}")
                 government_programs = []
+
+        # 8. FINANCE & ACCOUNTING DEPARTMENT (ARCH-017 Double-Entry Ledger, Stripe AR & 1099 AP)
+        if active_view == 'accounting':
+            try:
+                from database.schema_engine import ensure_enterprise_accounting_schema
+                from core.services.stripe_billing_service import compute_financial_dashboard_and_reports
+                ensure_enterprise_accounting_schema(conn)
+                accounting_data = compute_financial_dashboard_and_reports(conn)
+                with conn.cursor() as cur:
+                    cur.execute('SELECT * FROM "SubcontractorPartners" ORDER BY company_name ASC;')
+                    subcontractors = cur.fetchall()
+            except Exception as acc_dept_err:
+                conn.rollback()
+                current_app.logger.warning(f"[OPERATIONS] Accounting department fetch warning: {acc_dept_err}")
+                accounting_data = {}
     finally:
         if "conn" in locals() and conn:
             conn.close()
@@ -1333,6 +1599,7 @@ def admin_operations():
                          active_view=active_view, leads=leads, leads_count=leads_count, dup_count=dup_count,
                          in_campaign_count=in_campaign_count, opened_leads_count=opened_leads_count,
                          campaign_ready_count=campaign_ready_count,
+                         followup_due_count=followup_due_count, followup_filter=followup_filter, today_iso=today_iso,
 
                          campaign_filter=campaign_filter, worked_today=worked_today,
                          page=page, total_pages=total_pages, search_q=search_q,
@@ -1356,8 +1623,107 @@ def admin_operations():
                          safety_manuals=safety_manuals, safety_manuals_count=len(safety_manuals),
                          safety_jhas=safety_jhas, safety_incidents=safety_incidents,
                          job_positions=job_positions, it_telemetry=it_telemetry,
+                         accounting_data=accounting_data,
+                         user_grid_state=user_grid_state,
                          library=json.dumps(lib), scope_library=lib, activities=activities, system_users=system_users,
                          facility_types=FACILITY_TYPES, lead_sources=LEAD_SOURCES, priority_levels=PRIORITY_LEVELS)
+
+
+# --- Universal Per-User Grid State Persistence API (BUG-164) ---
+
+@operations_bp.route('/api/v1/ui/grid-state', methods=['GET', 'POST'], endpoint='api_ui_grid_state')
+@login_required
+def api_ui_grid_state():
+    """
+    Persists and retrieves per-user grid layout state (ordered columns, column widths,
+    personal presets, and sort preferences) across all 16 backoffice tables.
+    """
+    user_id_val = getattr(current_user, 'id', None)
+    user_role = getattr(current_user, 'role', '')
+    username = getattr(current_user, 'username', '')
+    full_name = getattr(current_user, 'full_name', '')
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        if request.method == 'GET':
+            grid_id = _normalize_grid_id(request.args.get('grid_id') or request.args.get('view') or 'leads')
+            state = _get_user_grid_state(conn, user_id_val, grid_id)
+            return jsonify({'status': 'success', 'grid_id': grid_id, 'state': state}), 200
+
+        payload = request.get_json(silent=True) or {}
+        grid_id = _normalize_grid_id(payload.get('grid_id') or payload.get('view') or 'leads')
+        session_map = {
+            'leads': 'leads_custom_cols',
+            'accounts': 'accounts_custom_cols',
+            'construction_bids': 'bids_custom_cols',
+        }
+        sess_key = session_map.get(grid_id)
+        anchor_col = ANCHOR_COL_MAP.get(grid_id)
+        default_cols = DEFAULT_COLS_MAP.get(grid_id, '')
+
+        patch = {}
+        if payload.get('reset') is True:
+            if sess_key:
+                session.pop(sess_key, None)
+            patch['active_cols'] = [c.strip() for c in default_cols.split(',') if c.strip()]
+            patch['custom_configured'] = False
+            patch['col_widths'] = {}
+        else:
+            if 'active_cols' in payload or 'cols' in payload:
+                raw_cols = payload.get('active_cols') if 'active_cols' in payload else payload.get('cols')
+                if isinstance(raw_cols, list):
+                    cols_list = [str(c).strip() for c in raw_cols if str(c).strip() and str(c).strip() != 'on']
+                else:
+                    cols_list = [c.strip() for c in str(raw_cols or '').split(',') if c.strip() and c.strip() != 'on']
+                deduped = []
+                seen = set()
+                for c in cols_list:
+                    if c not in seen:
+                        seen.add(c)
+                        deduped.append(c)
+                if anchor_col and anchor_col not in deduped:
+                    deduped.insert(0, anchor_col)
+                cols_str = ','.join(deduped)
+                patch['active_cols'] = deduped
+                patch['custom_configured'] = True
+                if sess_key:
+                    session[sess_key] = cols_str
+
+            if 'col_widths' in payload and isinstance(payload.get('col_widths'), dict):
+                current_st = _get_user_grid_state(conn, user_id_val, grid_id)
+                merged_w = dict(current_st.get('col_widths') or {})
+                for wk, wv in payload['col_widths'].items():
+                    if wv is None:
+                        merged_w.pop(str(wk), None)
+                    else:
+                        try:
+                            merged_w[str(wk)] = max(48, min(900, int(float(wv))))
+                        except Exception:
+                            pass
+                patch['col_widths'] = merged_w
+
+            if 'personal_preset' in payload:
+                preset_val = payload.get('personal_preset')
+                if isinstance(preset_val, list):
+                    patch['personal_preset'] = [str(x).strip() for x in preset_val if str(x).strip()]
+                elif isinstance(preset_val, str):
+                    patch['personal_preset'] = [x.strip() for x in preset_val.split(',') if x.strip()]
+
+            if 'sort_by' in payload:
+                patch['sort_by'] = str(payload.get('sort_by') or '').strip()
+            if 'sort_dir' in payload:
+                patch['sort_dir'] = str(payload.get('sort_dir') or '').strip().upper()
+
+        saved_state = _save_user_grid_state(conn, user_id_val, username, full_name, user_role, grid_id, patch)
+        return jsonify({
+            'status': 'success',
+            'grid_id': grid_id,
+            'state': saved_state,
+            'active_cols': saved_state.get('active_cols', default_cols),
+        }), 200
+    finally:
+        if conn:
+            conn.close()
 
 
 # --- Backoffice Commercial Capability Statement (HWB-CAP-001) ---

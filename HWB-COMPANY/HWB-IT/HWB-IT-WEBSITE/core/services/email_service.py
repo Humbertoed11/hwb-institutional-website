@@ -196,6 +196,10 @@ def transmit_email(*args, **kwargs):
         if attach_signature:
             body_html = f"{body_html}<br>{build_executive_signature_html(officer=officer, title=title, campaign_mode=campaign_mode)}"
 
+        stream_type = str(kwargs.get('stream_type') or ('marketing' if campaign_mode else 'transactional')).strip().lower()
+        sender_name = kwargs.get('sender_name') or ("HWB Cleaning Services LLC" if stream_type == 'transactional' else "Humberto Dominguez — HWB Cleaning Services")
+        reply_to_addr = kwargs.get('reply_to') or user_id
+
         attachments = list(extra_attachments)
         if "cid:hwblogo" in (body_html or ""):
             logo_bytes = get_official_logo_bytes()
@@ -209,22 +213,80 @@ def transmit_email(*args, **kwargs):
                     "isInline": True
                 })
 
+        tracking_token = kwargs.get('tracking_token', None)
+        request_read_receipt = kwargs.get('request_read_receipt', False)
+        bcc = kwargs.get('bcc', None)
+        # Only inject open-tracking pixels when tracking_token is explicitly provided (never auto-injected on transactional partner/client receipts)
+        if tracking_token and f"/pixel/{tracking_token}.gif" not in (body_html or "") and f"/open/{tracking_token}.gif" not in (body_html or ""):
+            pixel_tag = f'<img src="https://www.hwbcleaning.com/api/v1/telemetry/pixel/{tracking_token}.gif" alt="" width="1" height="1" style="display:none;width:1px;height:1px;border:0;" />'
+            body_html = f"{body_html or ''}{pixel_tag}"
+
+        # Ensure full <!DOCTYPE html> compliance structure for zero SpamAssassin MIME_HTML_ONLY / malformed-HTML penalty
+        raw_html = (body_html or "").strip()
+        if raw_html and not raw_html.lower().startswith("<!doctype") and "<html" not in raw_html.lower():
+            safe_title = re.sub(r'[<>"]', '', str(subject or "HWB Cleaning Services LLC"))
+            body_html = (
+                "<!DOCTYPE html>"
+                '<html lang="en"><head><meta charset="UTF-8">'
+                '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+                f"<title>{safe_title}</title></head>"
+                '<body style="margin:0;padding:16px;background-color:#f8fafc;color:#0f172a;'
+                "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\">"
+                f"{raw_html}</body></html>"
+            )
+
         email_data = {
             "message": {
                 "subject": subject,
+                "importance": "normal",
+                "from": {
+                    "emailAddress": {
+                        "name": sender_name,
+                        "address": user_id,
+                    }
+                },
+                "replyTo": [
+                    {
+                        "emailAddress": {
+                            "name": "HWB Cleaning Services LLC",
+                            "address": reply_to_addr,
+                        }
+                    }
+                ],
                 "body": {"contentType": "HTML", "content": body_html},
                 "toRecipients": to_recipients
-            }
+            },
+            "saveToSentItems": True
         }
-        rfc8058_headers = build_rfc8058_headers(body_html=body_html, campaign_mode=campaign_mode)
-        if rfc8058_headers:
-            email_data["message"]["internetMessageHeaders"] = rfc8058_headers
+        if bcc:
+            if isinstance(bcc, list):
+                bcc_list = [{"emailAddress": {"address": str(b).strip()}} for b in bcc if b and str(b).strip()]
+            else:
+                bcc_list = [{"emailAddress": {"address": str(b).strip()}} for b in str(bcc).split(',') if b and str(b).strip()]
+            if bcc_list:
+                email_data["message"]["bccRecipients"] = bcc_list
+        if request_read_receipt:
+            email_data["message"]["isDeliveryReceiptRequested"] = True
+            email_data["message"]["isReadReceiptRequested"] = True
+        if stream_type == 'marketing' or '/unsubscribe' in (body_html or ''):
+            rfc8058_headers = build_rfc8058_headers(body_html=body_html, campaign_mode=campaign_mode)
+            if rfc8058_headers:
+                email_data["message"]["internetMessageHeaders"] = rfc8058_headers
         if attachments:
             email_data["message"]["attachments"] = attachments
         
         endpoint = f"https://graph.microsoft.com/v1.0/users/{user_id}/sendMail"
         try:
             res = requests.post(endpoint, headers=headers, json=email_data)
+            if res.status_code == 400 and "InvalidInternetMessageHeader" in res.text and "internetMessageHeaders" in email_data["message"]:
+                email_data["message"]["internetMessageHeaders"] = [
+                    {
+                        "name": h["name"] if h["name"].lower().startswith("x-") else f"X-{h['name']}",
+                        "value": h["value"],
+                    }
+                    for h in email_data["message"]["internetMessageHeaders"]
+                ]
+                res = requests.post(endpoint, headers=headers, json=email_data)
             if res.status_code == 202:
                 print(f"[GRAPH] Email sent successfully to {recipient}", flush=True)
                 return True, "Success"

@@ -1829,6 +1829,9 @@ def subcontractor_onboarding_extract(token: str):
                 )
             else:
                 exp_val = extracted.get('coi_expiration_date') or None
+                already_signed = bool(partner.get('msa_signed'))
+                next_onb_status = 'Docs Under Review' if already_signed else (partner.get('onboarding_status') or 'Docs In Progress')
+                next_partner_status = 'Docs Submitted' if already_signed else (partner.get('status') or 'Pending Review')
                 cur.execute(
                     '''
                     UPDATE "SubcontractorPartners"
@@ -1839,6 +1842,8 @@ def subcontractor_onboarding_extract(token: str):
                         coi_coverage_amount = COALESCE(NULLIF(%s, ''), coi_coverage_amount),
                         coi_expiration_date = COALESCE(%s::date, coi_expiration_date),
                         coi_extracted_json = %s,
+                        onboarding_status = %s,
+                        status = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                     ''',
@@ -1849,6 +1854,8 @@ def subcontractor_onboarding_extract(token: str):
                         extracted.get('coi_coverage_amount') or '',
                         exp_val if exp_val else None,
                         json.dumps(extracted),
+                        next_onb_status,
+                        next_partner_status,
                         sub_id,
                     ),
                 )
@@ -1859,6 +1866,8 @@ def subcontractor_onboarding_extract(token: str):
                 'file_name': safe_name,
                 'extracted': extracted,
                 'vault_receipt': vault_receipt,
+                'onboarding_status': 'Docs Under Review' if (tag == 'COI' and partner.get('msa_signed')) else partner.get('onboarding_status'),
+                'coi_status': 'File Uploaded (Review)' if tag == 'COI' else partner.get('coi_status'),
                 'rate_limit_remaining': remaining_quota,
             })
     except Exception as err:
@@ -1889,6 +1898,7 @@ def subcontractor_onboarding_submit(token: str):
         clean_city,
         clean_zip,
         clean_ein_or_ssn,
+        validate_federal_tax_id,
     )
     from core.services.security_logger import extract_client_ip
     from database.schema_engine import ensure_subcontractor_onboarding_schema
@@ -1896,6 +1906,7 @@ def subcontractor_onboarding_submit(token: str):
         extract_subcontractor_document_metadata,
         generate_signed_msa_dwc83_certificate_html,
         generate_signed_msa_dwc83_certificate_pdf,
+        generate_signed_substitute_w9_pdf,
         compute_msa_signature_hash,
         encrypt_and_mask_subcontractor_tin,
         deposit_subcontractor_document_vault,
@@ -1971,20 +1982,45 @@ def subcontractor_onboarding_submit(token: str):
                         c_bytes, clean_cfn, doc_type='coi', partner_row=partner
                     )
 
-            if not w9_file_url:
+            w9_mode = (request.form.get('w9_mode') or 'upload').strip().lower()
+            if not w9_file_url and w9_mode != 'digital':
                 return jsonify({
                     'status': 'error',
-                    'message': 'Please upload your signed IRS Form W-9 in Step 1 before submitting.'
+                    'message': 'Please upload your signed IRS Form W-9 in Step 1 (or choose "Generate My Digital W-9 Automatically") before submitting.'
                 }), 400
 
             company_name = (request.form.get('company_name') or w9_ext_data.get('company_name') or partner.get('company_name') or '').strip()
             legal_entity_name = (request.form.get('legal_entity_name') or w9_ext_data.get('legal_entity_name') or partner.get('legal_entity_name') or partner.get('contact_name') or '').strip()
             tax_classification = (request.form.get('tax_classification') or w9_ext_data.get('tax_classification') or partner.get('tax_classification') or 'LLC').strip()
-            raw_ein_input = clean_ein_or_ssn(
-                request.form.get('ein_or_ssn') or w9_ext_data.get('ein_or_ssn') or partner.get('ein_or_ssn') or '',
-                tax_classification,
+            tax_id_mode = (request.form.get('tax_id_mode') or w9_ext_data.get('tax_id_mode') or '').strip().lower() or None
+
+            raw_tin_candidate = (
+                request.form.get('ein_or_ssn')
+                or w9_ext_data.get('ein_or_ssn')
+                or partner.get('ein_or_ssn')
+                or ''
+            ).strip()
+            tin_valid, tin_val_or_err, resolved_tin_mode = validate_federal_tax_id(
+                raw_tin_candidate,
+                tax_id_mode=tax_id_mode,
+                tax_classification=tax_classification,
+                allow_masked_existing=True,
             )
-            masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_ein_input)
+            if not tin_valid:
+                return jsonify({
+                    'status': 'error',
+                    'message': tin_val_or_err,
+                }), 400
+
+            raw_ein_input = clean_ein_or_ssn(
+                tin_val_or_err,
+                tax_classification=tax_classification,
+                tax_id_mode=resolved_tin_mode,
+            )
+            masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
+                raw_ein_input,
+                tax_id_mode=resolved_tin_mode,
+            )
             ein_or_ssn = masked_tin or raw_ein_input
             street_address = (request.form.get('street_address') or w9_ext_data.get('street_address') or partner.get('street_address') or '').strip()
             city = clean_city(request.form.get('city') or w9_ext_data.get('city') or partner.get('city') or '')
@@ -2042,6 +2078,30 @@ def subcontractor_onboarding_submit(token: str):
             sig_hash = compute_msa_signature_hash(
                 cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display
             )
+
+            # If contractor chose Digital Substitute W-9 mode and did not upload a PDF file, generate and vault it automatically
+            if not w9_file_url and w9_mode == 'digital':
+                w9_sub_pdf_bytes = generate_signed_substitute_w9_pdf(
+                    cert_context,
+                    msa_signer_name,
+                    msa_signer_title,
+                    signer_ip,
+                    signed_at_display,
+                    signature_hash=sig_hash,
+                )
+                w9_file_url = f"sub_{sub_id}_W9_Substitute_Signed_{ts_int}.pdf"
+                deposit_subcontractor_document_vault(
+                    conn=conn,
+                    subcontractor_id=sub_id,
+                    doc_type='w9',
+                    file_key=w9_file_url,
+                    original_filename=w9_file_url,
+                    raw_bytes=w9_sub_pdf_bytes,
+                    mime_type='application/pdf',
+                    uploaded_by=msa_signer_name or 'subcontractor_portal_digital_w9',
+                    uploaded_ip=signer_ip,
+                    vault_dir=vault_dir,
+                )
             cert_html = generate_signed_msa_dwc83_certificate_html(
                 cert_context, msa_signer_name, msa_signer_title, signer_ip, signed_at_display, signature_hash=sig_hash
             )

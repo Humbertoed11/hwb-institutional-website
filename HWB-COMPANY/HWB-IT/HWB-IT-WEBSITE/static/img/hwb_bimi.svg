@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<svg version="1.2" baseProfile="tiny-ps" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <title>HWB Cleaning Services LLC</title>
+  <rect width="200" height="200" fill="#0f172a"/>
+  <rect x="16" y="16" width="168" height="168" rx="24" ry="24" fill="#1e3a8a"/>
+  <path d="M36 72 H52 V96 H72 V72 H88 V128 H72 V110 H52 V128 H36 Z" fill="#ffffff"/>
+  <path d="M92 72 H106 L112 104 L119 72 H131 L138 104 L144 72 H158 L145 128 H132 L125 97 L118 128 H105 Z" fill="#38bdf8"/>
+  <path d="M52 144 H148 V152 H52 Z" fill="#38bdf8"/>
+</svg>

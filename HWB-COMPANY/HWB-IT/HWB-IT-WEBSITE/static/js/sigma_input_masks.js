@@ -25,8 +25,33 @@
         return val.indexOf("*") !== -1 || val.indexOf("•") !== -1;
     }
 
+    const INVALID_EIN_PREFIXES = {
+        "00": true, "07": true, "08": true, "09": true,
+        "17": true, "18": true, "19": true, "28": true,
+        "29": true, "49": true, "69": true, "70": true,
+        "78": true, "79": true, "89": true
+    };
+
+    const DUMMY_NINE_DIGIT_TINS = {
+        "000000000": true, "111111111": true, "222222222": true,
+        "333333333": true, "444444444": true, "555555555": true,
+        "666666666": true, "777777777": true, "888888888": true,
+        "999999999": true, "123456789": true, "987654321": true,
+        "123451234": true
+    };
+
     function detectTaxIdMode(inputEl, explicitTaxClassSelectId) {
         if (!inputEl) return "ein";
+        const rawVal = (inputEl.value || "").trim();
+        if (/^[0-9*•]{3}-[0-9*•]{2}-[0-9*•]{1,4}$/.test(rawVal)) {
+            inputEl.setAttribute("data-tax-mode", "ssn");
+            return "ssn";
+        }
+        if (/^[0-9*•]{2}-[0-9*•]{5,7}$/.test(rawVal)) {
+            inputEl.setAttribute("data-tax-mode", "ein");
+            return "ein";
+        }
+
         const attrMode = (inputEl.getAttribute("data-tax-mode") || "").toLowerCase();
         if (attrMode === "ssn") return "ssn";
         if (attrMode === "ein") return "ein";
@@ -46,21 +71,191 @@
         return "ein";
     }
 
+    function updateTaxModePillsUI(inputId, mode, badgeId) {
+        const isSsn = mode === "ssn";
+        const input = typeof inputId === "string" ? document.getElementById(inputId) : inputId;
+        const resolvedId = input ? input.id : String(inputId || "onb-ein-ssn");
+
+        const einBtn = document.querySelector('[data-tin-pill-for="' + resolvedId + '"][data-tin-mode="ein"]');
+        const ssnBtn = document.querySelector('[data-tin-pill-for="' + resolvedId + '"][data-tin-mode="ssn"]');
+        if (einBtn && ssnBtn) {
+            if (isSsn) {
+                ssnBtn.style.background = "#1d4ed8";
+                ssnBtn.style.color = "#ffffff";
+                ssnBtn.style.borderColor = "#1d4ed8";
+                ssnBtn.setAttribute("aria-pressed", "true");
+                einBtn.style.background = "#ffffff";
+                einBtn.style.color = "#475569";
+                einBtn.style.borderColor = "#cbd5e1";
+                einBtn.setAttribute("aria-pressed", "false");
+            } else {
+                einBtn.style.background = "#1d4ed8";
+                einBtn.style.color = "#ffffff";
+                einBtn.style.borderColor = "#1d4ed8";
+                einBtn.setAttribute("aria-pressed", "true");
+                ssnBtn.style.background = "#ffffff";
+                ssnBtn.style.color = "#475569";
+                ssnBtn.style.borderColor = "#cbd5e1";
+                ssnBtn.setAttribute("aria-pressed", "false");
+            }
+        }
+
+        const hiddenModeInput = document.getElementById(resolvedId + "-mode") || (resolvedId === "onb-ein-ssn" ? document.getElementById("onb-tax-id-mode") : null);
+        if (hiddenModeInput) {
+            hiddenModeInput.value = isSsn ? "ssn" : "ein";
+        }
+
+        const hintBadge = document.getElementById(badgeId || (resolvedId === "onb-ein-ssn" ? "onb-tax-id-format-badge" : resolvedId + "-format-badge"));
+        if (hintBadge) {
+            hintBadge.textContent = isSsn ? "Format: XXX-XX-XXXX (SSN)" : "Format: XX-XXXXXXX (EIN)";
+        }
+    }
+
+    /**
+     * Explicitly switches a Tax ID input between EIN (XX-XXXXXXX) and SSN/ITIN (XXX-XX-XXXX),
+     * reformatting any 9 digits currently in the input field in place.
+     */
+    function setTaxIdMode(inputIdOrEl, mode, badgeId) {
+        const input = typeof inputIdOrEl === "string" ? document.getElementById(inputIdOrEl) : resolveInput(inputIdOrEl);
+        if (!input) return;
+        const cleanMode = String(mode || "ein").toLowerCase() === "ssn" ? "ssn" : "ein";
+        input.setAttribute("data-tax-mode", cleanMode);
+        input.setAttribute("data-user-selected-mode", "true");
+        input.setAttribute("maxlength", cleanMode === "ssn" ? "11" : "10");
+        input.setAttribute(
+            "placeholder",
+            cleanMode === "ssn" ? "XXX-XX-XXXX (9-Digit SSN / ITIN)" : "XX-XXXXXXX (9-Digit EIN)"
+        );
+
+        updateTaxModePillsUI(input, cleanMode, badgeId);
+
+        if (input.value && !isVaultMaskedValue(input.value)) {
+            const rawDigits = input.value.replace(/\D/g, "").slice(0, 9);
+            input.value = rawDigits;
+            maskTaxIdInput(input);
+        }
+        validateTaxIdClientSide(input);
+    }
+
+    /**
+     * Validates a 9-digit Federal Tax ID against IRS EIN Campus Prefix rules and SSA SSN/ITIN rules.
+     */
+    function validateTaxIdClientSide(inputIdOrEl, feedbackId) {
+        const input = typeof inputIdOrEl === "string" ? document.getElementById(inputIdOrEl) : resolveInput(inputIdOrEl);
+        if (!input) return { valid: true, message: "" };
+        const fbEl = document.getElementById(feedbackId || (input.id + "-validation-msg")) ||
+            (input.id === "onb-ein-ssn" ? document.getElementById("onb-ein-validation-msg") : null);
+
+        const raw = (input.value || "").trim();
+        const mode = detectTaxIdMode(input);
+
+        if (!raw || isVaultMaskedValue(raw)) {
+            if (fbEl) {
+                fbEl.style.display = "none";
+                fbEl.textContent = "";
+            }
+            input.setCustomValidity("");
+            return { valid: true, message: "" };
+        }
+
+        const digits = raw.replace(/\D/g, "");
+        if (digits.length > 0 && digits.length < 9) {
+            const msg = "Enter all 9 digits (" + (mode === "ssn" ? "XXX-XX-XXXX" : "XX-XXXXXXX") + "). Currently " + digits.length + " of 9 digits.";
+            if (fbEl) {
+                fbEl.style.display = "block";
+                fbEl.style.color = "#b45309";
+                fbEl.textContent = msg;
+            }
+            input.setCustomValidity(msg);
+            return { valid: false, message: msg };
+        }
+
+        if (digits.length === 9) {
+            if (DUMMY_NINE_DIGIT_TINS[digits]) {
+                const msg = "Test or sequential numbers (such as 123-45-6789) are not valid IRS Taxpayer Identification Numbers.";
+                if (fbEl) {
+                    fbEl.style.display = "block";
+                    fbEl.style.color = "#dc2626";
+                    fbEl.textContent = msg;
+                }
+                input.setCustomValidity(msg);
+                return { valid: false, message: msg };
+            }
+            if (mode === "ssn") {
+                const area = digits.slice(0, 3);
+                const group = digits.slice(3, 5);
+                const serial = digits.slice(5, 9);
+                if (area === "000" || area === "666" || group === "00" || serial === "0000") {
+                    const msg = "Invalid SSN / ITIN format (cannot begin with 000 or 666 or contain all-zero segments).";
+                    if (fbEl) {
+                        fbEl.style.display = "block";
+                        fbEl.style.color = "#dc2626";
+                        fbEl.textContent = msg;
+                    }
+                    input.setCustomValidity(msg);
+                    return { valid: false, message: msg };
+                }
+            } else {
+                const prefix = digits.slice(0, 2);
+                if (INVALID_EIN_PREFIXES[prefix]) {
+                    const msg = "Prefix '" + prefix + "' is not a valid IRS EIN campus prefix. If entering a Social Security Number, click 'SSN / ITIN (XXX-XX-XXXX)' above.";
+                    if (fbEl) {
+                        fbEl.style.display = "block";
+                        fbEl.style.color = "#dc2626";
+                        fbEl.textContent = msg;
+                    }
+                    input.setCustomValidity(msg);
+                    return { valid: false, message: msg };
+                }
+                if (digits.slice(2) === "0000000") {
+                    const msg = "Invalid EIN: the last 7 digits cannot be all zeros.";
+                    if (fbEl) {
+                        fbEl.style.display = "block";
+                        fbEl.style.color = "#dc2626";
+                        fbEl.textContent = msg;
+                    }
+                    input.setCustomValidity(msg);
+                    return { valid: false, message: msg };
+                }
+            }
+
+            if (fbEl) {
+                fbEl.style.display = "block";
+                fbEl.style.color = "#15803d";
+                fbEl.textContent = "✓ Valid 9-digit " + (mode === "ssn" ? "SSN / ITIN (XXX-XX-XXXX)" : "IRS EIN (XX-XXXXXXX)") + " format verified.";
+            }
+            input.setCustomValidity("");
+            return { valid: true, message: "" };
+        }
+
+        input.setCustomValidity("");
+        return { valid: true, message: "" };
+    }
+
     /**
      * Adaptive Federal Tax ID Mask:
      *  - Business Entities (LLC, S-Corp, C-Corp, Partnership): XX-XXXXXXX (maxlength 10)
-     *  - Individual / Sole Proprietor: XXX-XX-XXXX (maxlength 11)
+     *  - Individual / Sole Proprietor or SSN pill selected: XXX-XX-XXXX (maxlength 11)
      *  - Preserves server-masked tokens (**-***0455 / ***-**-9012) until user edits
      */
     function maskTaxIdInput(elOrEvent, taxClassSelectId) {
         const input = resolveInput(elOrEvent);
         if (!input) return;
 
+        const raw = input.value || "";
+        // Auto-detect pasted XXX-XX-XXXX vs XX-XXXXXXX
+        if (/^\d{3}-\d{2}-\d{4}$/.test(raw.trim())) {
+            input.setAttribute("data-tax-mode", "ssn");
+            updateTaxModePillsUI(input, "ssn");
+        } else if (/^\d{2}-\d{7}$/.test(raw.trim())) {
+            input.setAttribute("data-tax-mode", "ein");
+            updateTaxModePillsUI(input, "ein");
+        }
+
         const mode = detectTaxIdMode(input, taxClassSelectId);
         input.setAttribute("inputmode", "numeric");
         input.setAttribute("maxlength", mode === "ssn" ? "11" : "10");
 
-        const raw = input.value || "";
         if (isVaultMaskedValue(raw)) {
             const digitsAfterMask = raw.replace(/[*•\-\s]/g, "");
             if (digitsAfterMask.length <= 4) {
@@ -71,6 +266,7 @@
         let digits = raw.replace(/\D/g, "").slice(0, 9);
         if (!digits) {
             input.value = "";
+            validateTaxIdClientSide(input);
             return;
         }
 
@@ -89,11 +285,12 @@
                 input.value = digits.slice(0, 2) + "-" + digits.slice(2, 9);
             }
         }
+        validateTaxIdClientSide(input);
     }
 
     /**
-     * Synchronizes the Tax ID field placeholder, format badge, and current digits
-     * whenever the user switches the Federal Tax Classification dropdown.
+     * Synchronizes the Tax ID field placeholder, format badge, pill toggle, and W-9 Line 1/2
+     * helper labels whenever the user switches the Federal Tax Classification dropdown.
      */
     function syncTaxClassificationMask(selectElOrId, targetInputId) {
         const sel =
@@ -104,15 +301,48 @@
         if (!input) return;
 
         const tcVal = sel && sel.value ? sel.value.toLowerCase() : "llc";
-        const isSsn = tcVal.indexOf("individual") !== -1 || tcVal.indexOf("sole") !== -1;
+        const isSoleProp = tcVal.indexOf("individual") !== -1 || tcVal.indexOf("sole") !== -1;
+        const isSingleMemberLlc = tcVal.indexOf("single-member") !== -1 || tcVal.indexOf("disregarded") !== -1;
 
-        input.setAttribute("data-tax-mode", isSsn ? "ssn" : "ein");
-        input.setAttribute("maxlength", isSsn ? "11" : "10");
-        input.setAttribute("placeholder", isSsn ? "XXX-XX-XXXX (9-Digit SSN)" : "XX-XXXXXXX (9-Digit EIN)");
+        // If Single-Member LLC and user already clicked SSN pill, keep their choice; otherwise set default
+        let targetMode = isSoleProp ? "ssn" : "ein";
+        if (isSingleMemberLlc && input.getAttribute("data-user-selected-mode") === "true") {
+            targetMode = input.getAttribute("data-tax-mode") === "ssn" ? "ssn" : "ein";
+        }
 
-        const hintBadge = document.getElementById("onb-tax-id-format-badge");
-        if (hintBadge) {
-            hintBadge.textContent = isSsn ? "Format: XXX-XX-XXXX (SSN)" : "Format: XX-XXXXXXX (EIN)";
+        input.setAttribute("data-tax-mode", targetMode);
+        input.setAttribute("maxlength", targetMode === "ssn" ? "11" : "10");
+        input.setAttribute(
+            "placeholder",
+            targetMode === "ssn" ? "XXX-XX-XXXX (9-Digit SSN / ITIN)" : "XX-XXXXXXX (9-Digit EIN)"
+        );
+
+        updateTaxModePillsUI(input, targetMode);
+
+        // Update dynamic W-9 Line 1 / Line 2 labels and Single-Member LLC guidance banner if present
+        const legalLabel = document.getElementById("onb-legal-entity-label");
+        const legalHint = document.getElementById("onb-legal-entity-hint");
+        const smLlcBanner = document.getElementById("onb-single-member-llc-tip");
+        if (legalLabel) {
+            if (isSoleProp) {
+                legalLabel.textContent = "Individual / Owner Full Legal Name (W-9 Line 1) *";
+            } else if (isSingleMemberLlc) {
+                legalLabel.textContent = "Owner or Registered Entity Legal Name (W-9 Line 1) *";
+            } else {
+                legalLabel.textContent = "Registered Legal Entity Name (W-9 Line 1) *";
+            }
+        }
+        if (legalHint) {
+            if (isSoleProp) {
+                legalHint.textContent = "Enter your personal legal name exactly as shown on your tax return. Put your DBA / trade name in Business Name on the left.";
+            } else if (isSingleMemberLlc) {
+                legalHint.textContent = "Single-Member LLC: Enter the LLC's EIN (XX-XXXXXXX), or click 'SSN / ITIN' above if filing under the owner's personal Social Security Number.";
+            } else {
+                legalHint.textContent = "Must match Line 1 of your IRS Form W-9 for 1099-NEC filing.";
+            }
+        }
+        if (smLlcBanner) {
+            smLlcBanner.style.display = isSingleMemberLlc ? "block" : "none";
         }
 
         if (input.value && !isVaultMaskedValue(input.value)) {
@@ -938,6 +1168,8 @@
 
     window.SigmaInputMaskEngine = {
         maskTaxIdInput: maskTaxIdInput,
+        setTaxIdMode: setTaxIdMode,
+        validateTaxIdClientSide: validateTaxIdClientSide,
         syncTaxClassificationMask: syncTaxClassificationMask,
         maskEINInput: maskEINInput,
         maskSSNInput: maskSSNInput,
@@ -954,6 +1186,8 @@
     };
 
     window.maskTaxIdInput = maskTaxIdInput;
+    window.setTaxIdMode = setTaxIdMode;
+    window.validateTaxIdClientSide = validateTaxIdClientSide;
     window.syncTaxClassificationMask = syncTaxClassificationMask;
     window.maskEINInput = maskEINInput;
     if (typeof window.maskSSNInput !== "function") {

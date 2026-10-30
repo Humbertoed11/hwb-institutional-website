@@ -42,6 +42,8 @@ def serialize_row(row):
     if not row:
         return None
     d = dict(row)
+    if 'activity_id' in d and 'id' not in d:
+        d['id'] = d['activity_id']
     for k, v in d.items():
         if isinstance(v, (datetime.date, datetime.datetime)):
             d[k] = v.isoformat()
@@ -874,6 +876,288 @@ def _build_lead_stage_milestones(lead_row: dict, stage_history: list) -> dict:
     }
 
 
+_LEAD_NOTES_COLUMNS_ENSURED = False
+
+
+def _ensure_lead_notes_enterprise_columns(cur) -> None:
+    """Ensures GlobalActivities and Leads have the 9-Pillar Enterprise Notes & Mandatory Follow-Up Task columns (runs once per worker)."""
+    global _LEAD_NOTES_COLUMNS_ENSURED
+    if _LEAD_NOTES_COLUMNS_ENSURED:
+        return
+    cur.execute('''
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER;
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(120);
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS outcome VARCHAR(80);
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS edited_by_name VARCHAR(120);
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS revision_history JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS follow_up_date VARCHAR(20);
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS follow_up_action VARCHAR(80);
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS task_status VARCHAR(20) DEFAULT 'OPEN';
+        ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_at TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_by VARCHAR(120);
+        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_revision_history JSONB DEFAULT '[]'::jsonb;
+    ''')
+    # Backfill open worked leads that have logged notes/touchpoints or active stages but missing/past next_action_date (BUG-165)
+    try:
+        next_bday_1 = compute_next_business_day_iso(1)
+        next_bday_2 = compute_next_business_day_iso(2)
+        next_bday_3 = compute_next_business_day_iso(3)
+        today_iso = datetime.date.today().strftime('%Y-%m-%d')
+        # 1. Clear next_action_date on terminal stages
+        cur.execute('''
+            UPDATE "Leads"
+            SET next_action_date = NULL
+            WHERE status IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')
+              AND next_action_date IS NOT NULL;
+        ''')
+        # 2. Backfill open worked leads (with notes, GlobalActivities, or active stage) whose next_action_date is NULL or in the past
+        cur.execute('''
+            UPDATE "Leads" l
+            SET next_action_date = CASE
+                WHEN l.status IN ('Walkthrough Completed', 'Qualified', 'Engaged') THEN %s
+                WHEN l.status = 'Contacted' THEN %s
+                ELSE %s
+            END
+            WHERE COALESCE(l.is_converted, FALSE) = FALSE
+              AND COALESCE(l.is_duplicate, FALSE) = FALSE
+              AND COALESCE(l.status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')
+              AND (
+                  NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NULL
+                  OR BTRIM(l.next_action_date) < %s
+              )
+              AND (
+                  l.status IN ('In Campaign', 'Engaged', 'Contacted', 'Qualified', 'Walkthrough Completed')
+                  OR NULLIF(BTRIM(COALESCE(l.notes, '')), '') IS NOT NULL
+                  OR EXISTS (
+                      SELECT 1 FROM "GlobalActivities" ga
+                      WHERE ga.parent_type = 'Lead' AND ga.parent_id = l.id
+                  )
+              );
+        ''', (next_bday_1, next_bday_2, next_bday_3, today_iso))
+    except Exception:
+        pass
+    _LEAD_NOTES_COLUMNS_ENSURED = True
+
+
+def compute_next_business_day_iso(offset_business_days: int = 3, base_date: datetime.date = None) -> str:
+    """Calculates a future Mon-Fri business date (YYYY-MM-DD) skipping Saturdays and Sundays."""
+    d = base_date or datetime.date.today()
+    days_to_add = max(0, int(offset_business_days))
+    if days_to_add == 0:
+        if d.weekday() == 5:
+            d += datetime.timedelta(days=2)
+        elif d.weekday() == 6:
+            d += datetime.timedelta(days=1)
+        return d.strftime('%Y-%m-%d')
+    added = 0
+    while added < days_to_add:
+        d += datetime.timedelta(days=1)
+        if d.weekday() < 5:
+            added += 1
+    return d.strftime('%Y-%m-%d')
+
+
+def compute_mandatory_followup_date(
+    explicit_date: str = None,
+    note_text: str = None,
+    activity_type: str = None,
+    outcome: str = None,
+    status: str = None,
+    current_next_date: str = None,
+    preferred_date: str = None,
+) -> tuple:
+    """
+    4-Pillar Mandatory Follow-Up & Task Engine (BUG-165):
+    Returns (resolved_next_action_date, follow_up_action, task_status).
+    - Terminal statuses ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED') -> (None, None, 'CLOSED')
+    - Open statuses ('New', 'In Campaign', 'Engaged', 'Contacted', 'Qualified', 'Walkthrough Completed') ->
+      guarantees a valid today/future YYYY-MM-DD date and an explicit follow-up task label.
+    """
+    norm_status = str(status or 'New').strip()
+    norm_outcome = str(outcome or '').strip()
+    norm_type = str(activity_type or 'Note').strip()
+
+    if (
+        norm_status in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED')
+        or norm_outcome in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)')
+        or norm_type in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)')
+    ):
+        return None, None, 'CLOSED'
+
+    today_iso = datetime.date.today().strftime('%Y-%m-%d')
+
+    # Determine default follow-up action label
+    combined_sig = f"{norm_type} {norm_outcome} {note_text or ''}".lower()
+    if 'walkthrough' in combined_sig or 'visit' in combined_sig or norm_status == 'Walkthrough Completed':
+        action_label = 'Walkthrough Follow-Up'
+    elif 'quote' in combined_sig or 'proposal' in combined_sig or 'bid' in combined_sig or 'price' in combined_sig:
+        action_label = 'Proposal & Quote Check-In'
+    elif 'email' in combined_sig or 'info' in combined_sig or 'packet' in combined_sig or 'brochure' in combined_sig:
+        action_label = 'Send Info & Call Back'
+    else:
+        action_label = 'Follow-Up Call'
+
+    # 1. Explicit date supplied by caller (if today or in the future)
+    if explicit_date and str(explicit_date).strip():
+        cand = str(explicit_date).strip()[:10]
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', cand) and cand >= today_iso:
+            return cand, action_label, 'OPEN'
+
+    # 2. Walkthrough preferred date (if booking a walkthrough in the future)
+    if preferred_date and str(preferred_date).strip():
+        cand_pref = str(preferred_date).strip()[:10]
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', cand_pref) and cand_pref >= today_iso:
+            return cand_pref, 'Confirm Scheduled Walkthrough', 'OPEN'
+
+    # 3. Natural-language follow-up date extracted from note text
+    if note_text:
+        extracted = extract_smart_lead_fields_from_note(note_text)
+        ext_date = extracted.get('next_action_date')
+        if ext_date and ext_date >= today_iso:
+            return ext_date, extracted.get('follow_up_action') or action_label, 'OPEN'
+
+    # 4. Existing future next_action_date on the lead (only if caller didn't log a new call outcome requiring a fresh SLA)
+    if current_next_date and str(current_next_date).strip():
+        cand_curr = str(current_next_date).strip()[:10]
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', cand_curr) and cand_curr >= today_iso and not norm_outcome:
+            return cand_curr, action_label, 'OPEN'
+
+    # 5. Smart SLA Business-Day Fallback by Call/Note Outcome
+    sig = f"{norm_type} {norm_outcome}".lower()
+    if any(k in sig for k in ('no answer', 'busy', 'line busy', 'walkthrough completed', 'interested', 'walkthrough requested')):
+        offset_days = 1
+    elif any(k in sig for k in ('voicemail', 'left message', 'gatekeeper', 'receptionist')):
+        offset_days = 2
+    else:
+        offset_days = 3
+
+    return compute_next_business_day_iso(offset_days), action_label, 'OPEN'
+
+
+def extract_smart_lead_fields_from_note(note_text: str) -> dict:
+    """
+    Zero-Double-Entry Smart Note Extractor (BUG-159).
+    Detects emails, phone numbers, square footage, capacity, stated budget, and Who Cleans
+    from natural-language sales notes.
+    """
+    if not note_text or not str(note_text).strip():
+        return {}
+    text = str(note_text).strip()
+    extracted = {}
+
+    # 1. Email detection
+    m_email = re.search(r'\b([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b', text)
+    if m_email:
+        cand_email = clean_email(m_email.group(1))
+        if cand_email:
+            extracted['email'] = cand_email
+
+    # 2. Phone number detection
+    m_phone = re.search(r'(?<!\d)(\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4})(?!\d)', text)
+    if m_phone:
+        cand_phone = clean_phone(m_phone.group(1))
+        if cand_phone:
+            extracted['phone'] = cand_phone
+
+    # 3. Square Footage detection (e.g. "14,500 sqf", "14500 sf", "14,500 sq ft", "14.5k sf")
+    m_sqf_k = re.search(r'\b(\d+(?:\.\d+)?)\s*k\s*(?:sq\.?\s*ft\.?|sqft|sqf|sf)\b', text, re.I)
+    m_sqf = re.search(r'\b(\d{1,3}(?:,\d{3})+|\d{3,6})\s*(?:sq\.?\s*ft\.?|sqft|sqf|sf|square\s+feet)\b', text, re.I)
+    if m_sqf_k:
+        try:
+            extracted['sqf'] = int(round(float(m_sqf_k.group(1)) * 1000))
+        except Exception:
+            pass
+    elif m_sqf:
+        try:
+            extracted['sqf'] = int(m_sqf.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    # 4. Capacity / Enrollment detection (e.g. "185 kids", "185 children", "capacity 185")
+    m_cap = re.search(r'\b(?:capacity\s*(?:of|:)?\s*(\d{2,4})|(\d{2,4})\s*(?:kids|children|students|licensed\s+capacity))\b', text, re.I)
+    if m_cap:
+        try:
+            cap_str = m_cap.group(1) or m_cap.group(2)
+            extracted['capacity'] = int(cap_str)
+        except Exception:
+            pass
+
+    # 5. Stated Budget / Monthly Rate detection (e.g. "$2,850/mo", "$2850 per month", "$34,000/yr")
+    m_budget = re.search(r'(\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:/|\s*per\s*|\s*a\s*)?(?:mo|month|wk|week|yr|year)?)', text, re.I)
+    if m_budget:
+        raw_b = re.sub(r'\s+', ' ', m_budget.group(1)).strip()
+        if any(tok in raw_b.lower() for tok in ('/mo', 'month', '/yr', 'year', '/wk', 'week')) or 'budget' in text.lower() or 'paying' in text.lower() or 'rate' in text.lower():
+            extracted['budget_range'] = raw_b
+
+    # 6. Who Cleans (In-House vs Contract Cleaning)
+    lower_t = text.lower()
+    if any(k in lower_t for k in ('in-house', 'in house', 'own staff', 'internal staff', 'teachers clean', 'staff cleans')):
+        extracted['cleaning_delivery_model'] = 'IN_HOUSE'
+    elif any(k in lower_t for k in ('jan-pro', 'janpro', 'city wide', 'citywide', 'coverall', 'anago', 'stratus', 'servicemaster', 'joro', 'contract cleaning', 'contract crew', 'outside crew', 'outside company', 'outsourced', 'current vendor')):
+        extracted['cleaning_delivery_model'] = 'OUTSOURCED'
+
+    # 7. Natural-Language Follow-Up Date & Task Action Detection (BUG-165)
+    today_d = datetime.date.today()
+    followup_date = None
+    # Explicit MM/DD/YYYY or YYYY-MM-DD in note
+    m_iso_d = re.search(r'\b(202[6-9]-\d{2}-\d{2})\b', text)
+    m_us_d = re.search(r'\b(\d{1,2})/(\d{1,2})/(202[6-9])\b', text)
+    if m_iso_d:
+        followup_date = m_iso_d.group(1)
+    elif m_us_d:
+        try:
+            mm, dd, yyyy = int(m_us_d.group(1)), int(m_us_d.group(2)), int(m_us_d.group(3))
+            followup_date = datetime.date(yyyy, mm, dd).strftime('%Y-%m-%d')
+        except Exception:
+            pass
+    elif re.search(r'\btomorrow\b', lower_t):
+        followup_date = compute_next_business_day_iso(1, today_d)
+    elif re.search(r'\bnext\s+week\b', lower_t):
+        followup_date = compute_next_business_day_iso(5, today_d)
+    elif re.search(r'\bnext\s+month\b', lower_t):
+        followup_date = compute_next_business_day_iso(20, today_d)
+    else:
+        m_in_days = re.search(r'\bin\s+(\d{1,2})\s+(?:business\s+)?(day|days|week|weeks)\b', lower_t)
+        if m_in_days:
+            qty = int(m_in_days.group(1))
+            unit = m_in_days.group(2)
+            b_days = qty * 5 if 'week' in unit else qty
+            followup_date = compute_next_business_day_iso(min(b_days, 60), today_d)
+        else:
+            weekday_map = {
+                'monday': 0, 'mon': 0,
+                'tuesday': 1, 'tue': 1, 'tues': 1,
+                'wednesday': 2, 'wed': 2,
+                'thursday': 3, 'thu': 3, 'thur': 3, 'thurs': 3,
+                'friday': 4, 'fri': 4,
+            }
+            m_wd = re.search(
+                r'\b(?:call\s+back|follow[\s-]*up|try\s+again|reach\s+out|check\s+back|on|next|this)\s+(?:on\s+|next\s+|this\s+)?(monday|tuesday|wednesday|thursday|friday|mon|tues|tue|wed|thurs|thur|thu|fri)\b',
+                lower_t
+            )
+            if m_wd:
+                target_wd = weekday_map.get(m_wd.group(1))
+                if target_wd is not None:
+                    days_ahead = (target_wd - today_d.weekday() + 7) % 7
+                    if days_ahead == 0:
+                        days_ahead = 7
+                    followup_date = (today_d + datetime.timedelta(days=days_ahead)).strftime('%Y-%m-%d')
+
+    if followup_date:
+        extracted['next_action_date'] = followup_date
+        if any(w in lower_t for w in ('walkthrough', 'tour', 'site visit', 'visit')):
+            extracted['follow_up_action'] = 'Walkthrough Follow-Up'
+        elif any(w in lower_t for w in ('email', 'send', 'packet', 'brochure', 'quote', 'proposal')):
+            extracted['follow_up_action'] = 'Send Info & Call Back'
+        else:
+            extracted['follow_up_action'] = 'Follow-Up Call'
+
+    return extracted
+
+
 @crm_api_bp.route('/api/v1/leads/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
 @login_required
 def api_lead_hub(id):
@@ -891,8 +1175,20 @@ def api_lead_hub(id):
                     return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only view leads assigned to their profile.'}), 403
                 cur.execute('SELECT * FROM "Contacts" WHERE lead_id = %s', (id,))
                 contacts = cur.fetchall()
-                cur.execute('SELECT * FROM "GlobalActivities" WHERE parent_id = %s AND parent_type = %s ORDER BY timestamp DESC', (id, "Lead"))
+                cur.execute('''
+                    SELECT * FROM "GlobalActivities"
+                    WHERE parent_id = %s AND parent_type = %s
+                    ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC, activity_id DESC
+                ''', (id, "Lead"))
                 activities = cur.fetchall()
+                sister_count = 0
+                if lead.get('umbrella_name'):
+                    cur.execute(
+                        'SELECT COUNT(*) AS cnt FROM "Leads" WHERE umbrella_name = %s AND id != %s AND COALESCE(is_converted, FALSE) = FALSE;',
+                        (lead.get('umbrella_name'), id),
+                    )
+                    sc_row = cur.fetchone()
+                    sister_count = (sc_row['cnt'] if isinstance(sc_row, dict) else sc_row[0]) if sc_row else 0
                 cur.execute('''
                     SELECT cr.id as recipient_id, cr.campaign_id, mc.name as campaign_name, mc.campaign_code,
                            cr.status as campaign_status, cr.current_step, cr.open_count, cr.opened_at,
@@ -920,10 +1216,12 @@ def api_lead_hub(id):
                     conn.rollback()
 
                 serialized_lead = serialize_row(lead)
+                serialized_lead['sister_count'] = sister_count
                 stage_milestones = _build_lead_stage_milestones(lead, stage_history)
 
                 return jsonify({
                     'lead': serialized_lead,
+                    'sister_count': sister_count,
                     'contacts': [serialize_row(c) for c in contacts],
                     'activities': [serialize_row(a) for a in activities],
                     'campaigns': [serialize_row(c) for c in campaigns],
@@ -1087,11 +1385,60 @@ def api_lead_hub(id):
                         resolved_address = current_lead.get('address')
                         resolved_city = current_lead.get('city')
 
+                resolved_notes = resolve('notes', current_lead.get('notes'))
+                resolved_next_action = resolve('next_action_date', current_lead.get('next_action_date'))
+                old_notes_str = (current_lead.get('notes') or '').strip()
+                new_notes_str = (resolved_notes or '').strip()
+                notes_did_change = ('notes' in data) and (new_notes_str != old_notes_str)
+
+                _ensure_lead_notes_enterprise_columns(cur)
+
+                # Mandatory Follow-Up Rule on PUT/PATCH (BUG-165):
+                # 1. Terminal statuses clear next_action_date and close open GlobalActivities tasks.
+                # 2. Saving a new note on an open lead guarantees a valid today/future next_action_date.
+                if resolved_status in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED'):
+                    resolved_next_action = None
+                    cur.execute('''
+                        UPDATE "GlobalActivities"
+                        SET task_status = 'CLOSED', completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP)
+                        WHERE parent_type = 'Lead' AND parent_id = %s AND COALESCE(task_status, 'OPEN') = 'OPEN';
+                    ''', (id,))
+                elif notes_did_change and new_notes_str:
+                    resolved_next_action, _, _ = compute_mandatory_followup_date(
+                        explicit_date=data.get('next_action_date'),
+                        note_text=new_notes_str,
+                        activity_type='NOTE',
+                        outcome='',
+                        status=resolved_status,
+                        current_next_date=current_lead.get('next_action_date'),
+                    )
+
+                old_next_str = str(current_lead.get('next_action_date') or '')[:10]
+                new_next_str = str(resolved_next_action or '')[:10]
+                next_action_did_change = ('next_action_date' in data or notes_did_change) and (new_next_str != old_next_str) and bool(new_next_str)
+                notes_rev_list = current_lead.get('notes_revision_history')
+                if not isinstance(notes_rev_list, list):
+                    try:
+                        notes_rev_list = json.loads(notes_rev_list) if notes_rev_list else []
+                    except Exception:
+                        notes_rev_list = []
+                if notes_did_change and old_notes_str:
+                    notes_rev_list.append({
+                        'version': len(notes_rev_list) + 1,
+                        'edited_at': datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y %I:%M %p'),
+                        'edited_by': actor_name,
+                        'old_text': old_notes_str,
+                        'new_text': new_notes_str,
+                    })
+
                 cur.execute('''
                     UPDATE "Leads" SET 
                         center_name = %s, decision_maker = %s, job_title = %s, email = %s, phone = %s, 
                         address = %s, address_line_2 = %s, city = %s, state = %s, zipcode = %s, industry = %s, sqf = %s, 
                         status = %s, estimated_annual_value = %s, next_action_date = %s, notes = %s,
+                        notes_updated_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE notes_updated_at END,
+                        notes_updated_by = CASE WHEN %s THEN %s ELSE notes_updated_by END,
+                        notes_revision_history = %s::jsonb,
                         facility_type = %s, lead_source = %s, service_interest = %s, priority_level = %s, traffic_cycle = %s,
                         capacity = %s, umbrella_name = %s, cleaning_delivery_model = %s,
                         acquisition_tier = %s, ownership_type = %s, owner_id = %s,
@@ -1113,8 +1460,11 @@ def api_lead_hub(id):
                       clean_zip(resolve('zipcode', current_lead.get('zipcode'))) or resolve('zipcode', current_lead.get('zipcode')), 
                       resolve('industry', current_lead.get('industry')),
                       sqf_val, resolved_status, revenue_val, 
-                      resolve('next_action_date', current_lead.get('next_action_date')), 
-                      resolve('notes', current_lead.get('notes')),
+                      resolved_next_action, 
+                      resolved_notes,
+                      notes_did_change,
+                      notes_did_change, actor_name,
+                      json.dumps(notes_rev_list),
                       resolve('facility_type', current_lead.get('facility_type')), 
                       resolve('lead_source', current_lead.get('lead_source')), 
                       resolve('service_interest', current_lead.get('service_interest')), 
@@ -1141,9 +1491,9 @@ def api_lead_hub(id):
 
                 if 'owner_id' in data and owner_id_val != current_lead.get('owner_id'):
                     cur.execute('''
-                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                        VALUES (%s, 'Lead', 'OWNER_ASSIGNED', %s);
-                    ''', (id, f"Lead owner updated to user ID {owner_id_val or 'Unassigned'} by {actor_name}."))
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, created_by_user_id, created_by_name)
+                        VALUES (%s, 'Lead', 'OWNER_ASSIGNED', %s, %s, %s);
+                    ''', (id, f"Lead owner updated to user ID {owner_id_val or 'Unassigned'} by {actor_name}.", actor_id, actor_name))
 
                 if (
                     ('cleaning_delivery_model' in data or raw_status_in in ('In-House Cleaning', 'Contract Cleaning'))
@@ -1158,13 +1508,17 @@ def api_lead_hub(id):
                         WHERE umbrella_name = %s AND id != %s;
                     ''', (cleaning_model_val, eff_umbrella, id))
 
-                if 'next_action_date' in data or 'notes' in data:
-                    activity_type = 'SITE_VISIT' if 'VISIT SCHEDULED' in (data.get('notes') or '') else 'NOTE'
-                    description = data.get('notes') or "Lead profile note updated."
+                if notes_did_change and new_notes_str:
+                    activity_type = 'SITE_VISIT' if 'VISIT SCHEDULED' in new_notes_str else 'NOTE'
                     cur.execute('''
-                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                        VALUES (%s, %s, %s, %s)
-                    ''', (id, 'Lead', activity_type, description))
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, created_by_user_id, created_by_name)
+                        VALUES (%s, 'Lead', %s, %s, %s, %s)
+                    ''', (id, activity_type, f"Standing Facility Brief updated: {new_notes_str}", actor_id, actor_name))
+                elif next_action_did_change:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, created_by_user_id, created_by_name)
+                        VALUES (%s, 'Lead', 'FOLLOW_UP_SCHEDULED', %s, %s, %s)
+                    ''', (id, f"Follow-up date scheduled for {new_next_str} by {actor_name}.", actor_id, actor_name))
 
                 conn.commit()
                 try:
@@ -1214,6 +1568,7 @@ def api_lead_cadence_save(id):
             if getattr(current_user, 'role', '') == 'Sales' and current_lead.get('owner_id') != current_user.id:
                 return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only log call outcomes on leads assigned to their profile.'}), 403
 
+            _ensure_lead_notes_enterprise_columns(cur)
             dm = data.get('decision_maker') if 'decision_maker' in data else current_lead['decision_maker']
             title = data.get('job_title') if 'job_title' in data else current_lead['job_title']
             phone_raw = data.get('phone') if 'phone' in data else current_lead['phone']
@@ -1223,6 +1578,33 @@ def api_lead_cadence_save(id):
 
             note_text = (data.get('note') or '').strip()
             activity_type = data.get('activity_type') or 'Phone Call'
+            outcome_val = (data.get('outcome') or '').strip() or None
+            is_pinned_val = bool(data.get('is_pinned'))
+            share_umbrella = bool(data.get('share_umbrella'))
+
+            # Zero-Double-Entry Smart Note Extraction
+            extracted_fields = extract_smart_lead_fields_from_note(note_text) if note_text else {}
+            auto_apply = data.get('auto_apply_extracted', True)
+            applied_extracted = {}
+            if auto_apply and extracted_fields:
+                if extracted_fields.get('email') and not email:
+                    email = extracted_fields['email']
+                    applied_extracted['email'] = email
+                if extracted_fields.get('phone') and not phone:
+                    phone = extracted_fields['phone']
+                    applied_extracted['phone'] = phone
+                if extracted_fields.get('cleaning_delivery_model') and not data.get('cleaning_delivery_model') and (not current_lead.get('cleaning_delivery_model') or current_lead.get('cleaning_delivery_model') == 'UNKNOWN'):
+                    data['cleaning_delivery_model'] = extracted_fields['cleaning_delivery_model']
+                    applied_extracted['cleaning_delivery_model'] = extracted_fields['cleaning_delivery_model']
+                if extracted_fields.get('sqf') and not data.get('sqf') and not (current_lead.get('sqf') or 0):
+                    data['sqf'] = extracted_fields['sqf']
+                    applied_extracted['sqf'] = extracted_fields['sqf']
+                if extracted_fields.get('capacity') and not data.get('capacity') and not current_lead.get('capacity'):
+                    data['capacity'] = extracted_fields['capacity']
+                    applied_extracted['capacity'] = extracted_fields['capacity']
+                if extracted_fields.get('budget_range') and not data.get('budget_range') and not current_lead.get('budget_range'):
+                    data['budget_range'] = extracted_fields['budget_range']
+                    applied_extracted['budget_range'] = extracted_fields['budget_range']
 
             raw_status_in = data.get('status') if 'status' in data else None
             raw_model_in = data.get('cleaning_delivery_model') if 'cleaning_delivery_model' in data else None
@@ -1285,12 +1667,26 @@ def api_lead_cadence_save(id):
             elif curr_norm_status in ('Do Not Call (DNC)', 'Unsubscribed'):
                 is_dnc_val = False
 
-            raw_next_date = data.get('next_action_date')
-            next_date = raw_next_date if raw_next_date and str(raw_next_date).strip() != '' else current_lead['next_action_date']
-            
             # Walkthrough specific fields
             pref_date = data.get('preferred_date') or data.get('walkthrough_date') or current_lead['preferred_date']
             pref_time = data.get('preferred_time') or data.get('walkthrough_time') or current_lead['preferred_time']
+
+            # Mandatory Follow-Up & Task Engine (BUG-165):
+            # Guarantees a valid today/future business date for open leads and clears next_action_date on terminal stages.
+            raw_next_date = data.get('next_action_date')
+            explicit_followup_action = (data.get('follow_up_action') or '').strip()
+            next_date, auto_followup_action, task_status_val = compute_mandatory_followup_date(
+                explicit_date=raw_next_date,
+                note_text=note_text,
+                activity_type=activity_type,
+                outcome=outcome_val,
+                status=status,
+                current_next_date=current_lead.get('next_action_date'),
+                preferred_date=pref_date if activity_type == 'Walkthrough Booked' else None,
+            )
+            followup_action_val = explicit_followup_action or auto_followup_action
+            if next_date and not raw_next_date and extracted_fields.get('next_action_date') == next_date:
+                applied_extracted['next_action_date'] = next_date
 
             priority = data.get('priority_level') if 'priority_level' in data else current_lead['priority_level']
             sqf_val = current_lead.get('sqf') or 0
@@ -1313,6 +1709,14 @@ def api_lead_cadence_save(id):
             actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', None) or rep_name or conductor
 
             actor_id = getattr(current_user, 'id', None)
+            cap_update_val = current_lead.get('capacity')
+            if 'capacity' in data and data.get('capacity') not in (None, ''):
+                try:
+                    cap_update_val = int(data.get('capacity'))
+                except Exception:
+                    pass
+            budget_update_val = data.get('budget_range') if 'budget_range' in data else current_lead.get('budget_range')
+
             cur.execute('''
                 UPDATE "Leads" SET 
                     decision_maker = %s,
@@ -1325,6 +1729,8 @@ def api_lead_cadence_save(id):
                     campaign_ready = %s,
                     email_hygiene_status = %s,
                     sqf = %s,
+                    capacity = %s,
+                    budget_range = %s,
                     estimated_annual_value = %s,
                     next_action_date = %s,
                     preferred_date = %s,
@@ -1337,7 +1743,7 @@ def api_lead_cadence_save(id):
             ''', (
                 dm, title, phone, email, status, cleaning_model_val,
                 is_dnc_val, campaign_ready_val, email_hygiene_val,
-                sqf_val, est_val, next_date, pref_date, pref_time, priority,
+                sqf_val, cap_update_val, budget_update_val, est_val, next_date, pref_date, pref_time, priority,
                 actor_name, actor_id, id
             ))
 
@@ -1404,6 +1810,10 @@ def api_lead_cadence_save(id):
                         subject_tag = f" [Conductor: {rep_name or 'Rep'}]" if is_rep_conductor else ""
                         subject = f"Facility Walkthrough & Scope Assessment - {center_name}{subject_tag}"
                         
+                        standing_brief_html = ""
+                        if (current_lead.get('notes') or '').strip():
+                            standing_brief_html = f'<div style="background: #fffbeb; border-left: 3px solid #d97706; padding: 8px 12px; margin: 12px 0;"><strong>Standing Facility Brief:</strong> {current_lead.get("notes")}</div>'
+
                         body_html = f"""
                         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1e293b; line-height: 1.5;">
                             <h2 style="color: #0f172a; margin-bottom: 12px; border-bottom: 2px solid #2563eb; padding-bottom: 6px;">Facility Walkthrough & Proposal Assessment</h2>
@@ -1415,6 +1825,7 @@ def api_lead_cadence_save(id):
                             <p><strong>Cleanable SF:</strong> {sqf_val:,} SF | <strong>Capacity:</strong> {cap_val} Children</p>
                             <p><strong>Walkthrough Conductor:</strong> {conductor_display}</p>
                             {f'<p><strong>Booking Sales Representative:</strong> {rep_name} ({rep_email})</p>' if (rep_email and not is_rep_conductor) else ''}
+                            {standing_brief_html}
                             {f'<div style="background: #f8fafc; border-left: 3px solid #2563eb; padding: 8px 12px; margin: 12px 0;"><strong>Caller Notes:</strong> {note_text}</div>' if note_text else ''}
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 16px 0;">
                             <p style="font-size: 12px; color: #64748b;"><em>Standard 10-15 minute walk: measure cleanable square footage, inspect restrooms, carpeted classrooms, entry glass, and custodial supply closet.</em></p>
@@ -1446,6 +1857,7 @@ def api_lead_cadence_save(id):
                 except Exception as cal_err:
                     calendar_message = f"Calendar integration error: {cal_err}"
 
+            shared_sister_count = 0
             if note_text or activity_type:
                 cal_suffix = " (Outlook Calendar Event Confirmed)" if calendar_created else ""
                 is_rep_cond = (conductor != 'Humberto Dominguez')
@@ -1454,10 +1866,43 @@ def api_lead_cadence_save(id):
                     log_desc = f"🎉 Walkthrough Booked for {pref_date} at {pref_time or '10:00 AM'} with {dm or 'Director'}{rep_tag}. {note_text}{cal_suffix}".strip()
                 else:
                     log_desc = f"{note_text}{cal_suffix}" if note_text else f"Call outcome: {activity_type}{cal_suffix}"
+                # Mark previous open follow-up tasks on this lead as COMPLETED/CLOSED
                 cur.execute('''
-                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                    VALUES (%s, 'Lead', %s, %s)
-                ''', (id, activity_type, log_desc))
+                    UPDATE "GlobalActivities"
+                    SET task_status = %s,
+                        completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP)
+                    WHERE parent_type = 'Lead'
+                      AND parent_id = %s
+                      AND COALESCE(task_status, 'OPEN') = 'OPEN';
+                ''', ('CLOSED' if task_status_val == 'CLOSED' else 'COMPLETED', id))
+                cur.execute('''
+                    INSERT INTO "GlobalActivities" (
+                        parent_id, parent_type, activity_type, outcome, description,
+                        is_pinned, created_by_user_id, created_by_name,
+                        follow_up_date, follow_up_action, task_status, completed_at
+                    )
+                    VALUES (%s, 'Lead', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                    id, activity_type, outcome_val, log_desc, is_pinned_val, actor_id, actor_name,
+                    next_date, followup_action_val, task_status_val,
+                    datetime.datetime.now(datetime.timezone.utc) if task_status_val == 'CLOSED' else None
+                ))
+
+                if share_umbrella and note_text and current_lead.get('umbrella_name'):
+                    umb = current_lead.get('umbrella_name')
+                    src_name = current_lead.get('center_name') or f"LD-#{id}"
+                    shared_desc = f"[🏢 Shared from {src_name}] {note_text}"
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (
+                            parent_id, parent_type, activity_type, outcome, description,
+                            is_pinned, created_by_user_id, created_by_name,
+                            follow_up_date, follow_up_action, task_status
+                        )
+                        SELECT id, 'Lead', %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        FROM "Leads"
+                        WHERE umbrella_name = %s AND id != %s AND COALESCE(is_converted, FALSE) = FALSE;
+                    ''', (activity_type, outcome_val, shared_desc, is_pinned_val, actor_id, actor_name, next_date, followup_action_val, task_status_val, umb, id))
+                    shared_sister_count = cur.rowcount or 0
 
             conn.commit()
             try:
@@ -1469,12 +1914,19 @@ def api_lead_cadence_save(id):
                 'status': 'success', 
                 'message': 'Call and activity details saved.',
                 'resolved_status': status,
+                'next_action_date': next_date,
+                'follow_up_action': followup_action_val,
+                'task_status': task_status_val,
                 'cleaning_delivery_model': cleaning_model_val,
                 'is_dnc': is_dnc_val,
                 'calendar_created': calendar_created,
                 'calendar_message': calendar_message,
                 'preferred_date': pref_date,
-                'preferred_time': pref_time
+                'preferred_time': pref_time,
+                'applied_extracted': applied_extracted,
+                'auto_updated_fields': applied_extracted,
+                'shared_sister_count': shared_sister_count,
+                'sister_broadcast_count': shared_sister_count,
             })
     except Exception as e:
         if 'conn' in locals() and conn: conn.rollback()
@@ -2348,6 +2800,8 @@ def api_lead_promote(id):
                     ''', (lead_company,))
                     existing_cust = cur.fetchone()
 
+                _ensure_lead_notes_enterprise_columns(cur)
+                lead_notes_val = (lead.get('notes') or '').strip() or None
                 if existing_cust:
                     new_acc_id = existing_cust['customer_id'] if isinstance(existing_cust, dict) else existing_cust[0]
                     cur.execute('''
@@ -2366,7 +2820,8 @@ def api_lead_promote(id):
                             annual_revenue = CASE WHEN %s > 0 THEN %s ELSE annual_revenue END,
                             status = 'Active',
                             assigned_rep_id = COALESCE(%s, assigned_rep_id),
-                            umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name)
+                            umbrella_name = COALESCE(NULLIF(%s, ''), umbrella_name),
+                            notes = COALESCE(NULLIF(%s, ''), notes)
                         WHERE customer_id = %s;
                     ''', (
                         contact_name, lead_email, lead['phone'], lead['address'],
@@ -2374,20 +2829,21 @@ def api_lead_promote(id):
                         lead.get('website'),
                         eff_sqf, eff_sqf, eff_traffic,
                         eff_rev, eff_rev,
-                        rep_id, lead.get('umbrella_name'), new_acc_id
+                        rep_id, lead.get('umbrella_name'), lead_notes_val, new_acc_id
                     ))
                     is_dup_cust = True
                 else:
                     cur.execute('''
-                        INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, address_line_2, city, state, zip, website, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s) RETURNING customer_id
+                        INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, address_line_2, city, state, zip, website, sqf, traffic_cycle, annual_revenue, status, assigned_rep_id, umbrella_name, cleaning_delivery_model, notes)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'Active', %s, %s, %s, %s) RETURNING customer_id
                     ''', (
                         lead['center_name'], contact_name, lead['email'], lead['phone'],
                         lead['address'] or 'PENDING_ENTRY', lead.get('address_line_2'),
                         lead['city'], clean_state(lead.get('state'), default='TX'), lead['zipcode'],
                         lead.get('website'), eff_sqf, eff_traffic,
                         eff_rev, rep_id, lead.get('umbrella_name'),
-                        lead.get('cleaning_delivery_model') or 'DIRECT_W2'
+                        lead.get('cleaning_delivery_model') or 'DIRECT_W2',
+                        lead_notes_val
                     ))
                     res_row = cur.fetchone()
                     new_acc_id = res_row['customer_id'] if isinstance(res_row, dict) else res_row[0]
@@ -2412,12 +2868,25 @@ def api_lead_promote(id):
                     )
                     VALUES (%s, 'status', %s, 'Upgraded to Account', %s, %s, 0, CURRENT_TIMESTAMP);
                 ''', (id, old_lead_status, actor_id, actor_name))
-                
-                cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s)', 
-                              (id, "Lead", "CONVERTED", f"Upgraded to Active Client Account ACC-{new_acc_id} by {actor_name} (Rep ID: {rep_id})."))
 
-                cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description) VALUES (%s, %s, %s, %s)', 
-                              (new_acc_id, "Account", "CONVERTED", f"Client Account {'updated from' if is_dup_cust else 'created from'} Lead #{id} by {actor_name} (Assigned Rep ID: {rep_id})."))
+                # Copy Lead GlobalActivities history to the newly created/linked Client Account
+                cur.execute('''
+                    INSERT INTO "GlobalActivities" (
+                        parent_id, parent_type, activity_type, outcome, description,
+                        is_pinned, created_by_user_id, created_by_name, timestamp, revision_history
+                    )
+                    SELECT %s, 'Account', activity_type, outcome, description,
+                           COALESCE(is_pinned, FALSE), created_by_user_id, created_by_name, timestamp, COALESCE(revision_history, '[]'::jsonb)
+                    FROM "GlobalActivities"
+                    WHERE parent_type = 'Lead' AND parent_id = %s
+                    ORDER BY timestamp ASC;
+                ''', (new_acc_id, id))
+                
+                cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, created_by_user_id, created_by_name) VALUES (%s, %s, %s, %s, %s, %s)', 
+                              (id, "Lead", "CONVERTED", f"Upgraded to Active Client Account ACC-{new_acc_id} by {actor_name} (Rep ID: {rep_id}).", actor_id, actor_name))
+
+                cur.execute('INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, created_by_user_id, created_by_name) VALUES (%s, %s, %s, %s, %s, %s)', 
+                              (new_acc_id, "Account", "CONVERTED", f"Client Account {'updated from' if is_dup_cust else 'created from'} Lead #{id} by {actor_name} (Assigned Rep ID: {rep_id}).", actor_id, actor_name))
                 
                 conn.commit()
                 try:
@@ -2468,7 +2937,43 @@ def api_lead_add_contact(id):
         if conn: conn.close()
 
 
-# --- Global Activities Endpoints ---
+# --- Global Activities & 9-Pillar Enterprise Lead Notes Endpoints (BUG-159) ---
+
+def _serialize_activity_item(r: dict) -> dict:
+    rev_hist = r.get('revision_history')
+    if not isinstance(rev_hist, list):
+        try:
+            rev_hist = json.loads(rev_hist) if rev_hist else []
+        except Exception:
+            rev_hist = []
+    ts_val = r.get('timestamp')
+    ts_str = ts_val.strftime('%m/%d/%Y %I:%M %p') if hasattr(ts_val, 'strftime') else (str(ts_val) if ts_val else '')
+    up_val = r.get('updated_at')
+    up_str = up_val.strftime('%m/%d/%Y %I:%M %p') if hasattr(up_val, 'strftime') else (str(up_val) if up_val else '')
+    comp_val = r.get('completed_at')
+    comp_str = comp_val.strftime('%m/%d/%Y %I:%M %p') if hasattr(comp_val, 'strftime') else (str(comp_val) if comp_val else '')
+    return {
+        'id': r.get('activity_id'),
+        'activity_id': r.get('activity_id'),
+        'parent_id': r.get('parent_id'),
+        'parent_type': r.get('parent_type'),
+        'type': r.get('activity_type') or 'Activity',
+        'activity_type': r.get('activity_type') or 'Activity',
+        'outcome': r.get('outcome') or '',
+        'description': r.get('description') or 'Touchpoint logged.',
+        'is_pinned': bool(r.get('is_pinned')),
+        'follow_up_date': r.get('follow_up_date') or '',
+        'follow_up_action': r.get('follow_up_action') or '',
+        'task_status': r.get('task_status') or 'OPEN',
+        'completed_at': comp_str,
+        'created_by_user_id': r.get('created_by_user_id'),
+        'created_by_name': r.get('created_by_name') or 'Humberto Dominguez',
+        'updated_at': up_str,
+        'edited_by_name': r.get('edited_by_name') or '',
+        'revision_history': rev_hist,
+        'timestamp': ts_str,
+    }
+
 
 @crm_api_bp.route('/api/v1/activities/<parent_type>/<int:parent_id>', methods=['GET'])
 @login_required
@@ -2476,54 +2981,314 @@ def get_recent_activities(parent_type, parent_id):
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
             ptype_lower = parent_type.lower()
+            standing_brief = ''
+            standing_brief_updated_at = ''
+            standing_brief_updated_by = ''
+            standing_brief_revisions = []
+            company_name = ''
+            umbrella_name = ''
+            sister_count = 0
+            next_action_date = ''
+            lead_status = ''
+
             if ptype_lower in ('lead', 'leads'):
+                ptype_canon = 'Lead'
                 cur.execute('''
-                    SELECT activity_type, description, timestamp 
-                    FROM "GlobalActivities" 
-                    WHERE parent_type = 'Lead' AND parent_id = %s
-                    ORDER BY timestamp DESC 
-                    LIMIT 10
+                    SELECT center_name, umbrella_name, notes, notes_updated_at, notes_updated_by,
+                           notes_revision_history, owner_id, next_action_date, status
+                    FROM "Leads" WHERE id = %s
                 ''', (parent_id,))
+                lead_row = cur.fetchone()
+                if lead_row:
+                    if getattr(current_user, 'role', '') == 'Sales' and lead_row.get('owner_id') != current_user.id:
+                        return jsonify({'status': 'error', 'message': 'Access restricted to assigned leads.'}), 403
+                    company_name = lead_row.get('center_name') or ''
+                    umbrella_name = lead_row.get('umbrella_name') or ''
+                    standing_brief = lead_row.get('notes') or ''
+                    next_action_date = str(lead_row.get('next_action_date') or '')[:10]
+                    lead_status = lead_row.get('status') or 'New'
+                    nu_at = lead_row.get('notes_updated_at')
+                    standing_brief_updated_at = nu_at.strftime('%m/%d/%Y %I:%M %p') if hasattr(nu_at, 'strftime') else (str(nu_at) if nu_at else '')
+                    standing_brief_updated_by = lead_row.get('notes_updated_by') or ''
+                    s_rev = lead_row.get('notes_revision_history')
+                    if isinstance(s_rev, list):
+                        standing_brief_revisions = s_rev
+                    else:
+                        try:
+                            standing_brief_revisions = json.loads(s_rev) if s_rev else []
+                        except Exception:
+                            standing_brief_revisions = []
+                    if umbrella_name:
+                        cur.execute(
+                            'SELECT COUNT(*) AS cnt FROM "Leads" WHERE umbrella_name = %s AND id != %s AND COALESCE(is_converted, FALSE) = FALSE;',
+                            (umbrella_name, parent_id),
+                        )
+                        sc = cur.fetchone()
+                        sister_count = (sc['cnt'] if isinstance(sc, dict) else sc[0]) if sc else 0
             elif ptype_lower in ('constructionbid', 'construction_bid', 'bid', 'gc_bid'):
-                cur.execute('''
-                    SELECT activity_type, description, timestamp 
-                    FROM "GlobalActivities" 
-                    WHERE parent_type = 'ConstructionBid' AND parent_id = %s
-                    ORDER BY timestamp DESC 
-                    LIMIT 10
-                ''', (parent_id,))
+                ptype_canon = 'ConstructionBid'
+                cur.execute('SELECT project_name, notes FROM "ConstructionBids" WHERE id = %s', (parent_id,))
+                b_row = cur.fetchone()
+                if b_row:
+                    company_name = b_row.get('project_name') or ''
+                    standing_brief = b_row.get('notes') or ''
             else:
-                cur.execute('''
-                    SELECT activity_type, description, timestamp 
-                    FROM "GlobalActivities" 
-                    WHERE parent_type = 'Account' AND parent_id = %s
-                    ORDER BY timestamp DESC 
-                    LIMIT 10
-                ''', (parent_id,))
+                ptype_canon = 'Account'
+                cur.execute('SELECT company_name, umbrella_name, notes FROM "Customers" WHERE customer_id = %s', (parent_id,))
+                c_row = cur.fetchone()
+                if c_row:
+                    company_name = c_row.get('company_name') or ''
+                    umbrella_name = c_row.get('umbrella_name') or ''
+                    standing_brief = c_row.get('notes') or ''
+
+            cur.execute('''
+                SELECT activity_id, parent_id, parent_type, activity_type, outcome, description,
+                       COALESCE(is_pinned, FALSE) AS is_pinned, created_by_user_id, created_by_name,
+                       updated_at, edited_by_name, COALESCE(revision_history, '[]'::jsonb) AS revision_history,
+                       follow_up_date, follow_up_action, COALESCE(task_status, 'OPEN') AS task_status, completed_at, timestamp
+                FROM "GlobalActivities"
+                WHERE parent_type = %s AND parent_id = %s
+                ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC, activity_id DESC
+                LIMIT 25
+            ''', (ptype_canon, parent_id))
             rows = cur.fetchall()
-            activities = []
-            for r in rows:
-                activities.append({
-                    'type': r['activity_type'] if r['activity_type'] else 'Activity',
-                    'description': r['description'] if r['description'] else 'Touchpoint logged.',
-                    'timestamp': r['timestamp'].strftime('%m/%d/%Y %I:%M %p') if r['timestamp'] else ''
-                })
-            return jsonify({'status': 'success', 'activities': activities})
+            activities = [_serialize_activity_item(r) for r in rows]
+
+            cur.execute('''
+                SELECT COUNT(*) AS total_cnt,
+                       COUNT(*) FILTER (WHERE COALESCE(is_pinned, FALSE) = TRUE) AS pin_cnt
+                FROM "GlobalActivities"
+                WHERE parent_type = %s AND parent_id = %s
+            ''', (ptype_canon, parent_id))
+            cnt_row = cur.fetchone()
+            total_cnt = (cnt_row['total_cnt'] if isinstance(cnt_row, dict) else cnt_row[0]) if cnt_row else len(activities)
+            pin_cnt = (cnt_row['pin_cnt'] if isinstance(cnt_row, dict) else cnt_row[1]) if cnt_row else 0
+
+            return jsonify({
+                'status': 'success',
+                'parent_type': ptype_canon,
+                'parent_id': parent_id,
+                'company_name': company_name,
+                'umbrella_name': umbrella_name,
+                'sister_count': sister_count,
+                'standing_brief': standing_brief,
+                'standing_brief_updated_at': standing_brief_updated_at,
+                'standing_brief_updated_by': standing_brief_updated_by,
+                'standing_brief_revisions': standing_brief_revisions,
+                'next_action_date': next_action_date,
+                'lead_status': lead_status,
+                'activity_count': total_cnt,
+                'pinned_count': pin_cnt,
+                'activities': activities,
+            })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if conn: conn.close()
 
 
-@crm_api_bp.route('/api/v1/activities/quick-log', methods=['POST'])
+@crm_api_bp.route('/api/v1/leads/extract-note-intel', methods=['POST'])
 @login_required
-def api_quick_log_activity():
-    data = request.get_json() or {}
-    parent_id = data.get('parent_id')
-    parent_type = data.get('parent_type', 'Lead')
-    note_text = data.get('note', '').strip()
-    activity_type = data.get('activity_type', 'Phone Call')
+def api_extract_note_intel():
+    """Live Zero-Double-Entry Smart Note Extractor preview endpoint."""
+    data = request.get_json(silent=True) or {}
+    note_text = (data.get('note') or data.get('description') or '').strip()
+    extracted = extract_smart_lead_fields_from_note(note_text)
+    return jsonify({'status': 'success', 'extracted': extracted})
+
+
+@crm_api_bp.route('/api/v1/leads/<int:id>/standing-brief', methods=['PUT', 'PATCH', 'POST'])
+@login_required
+def api_lead_update_standing_brief(id):
+    """Inline 1-click update for a Lead's Standing Facility Brief (Leads.notes) with revision history."""
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
+    data = request.get_json(silent=True) or {}
+    new_brief = (data.get('standing_brief') if 'standing_brief' in data else data.get('notes') or '').strip()
+    actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+    actor_id = getattr(current_user, 'id', None)
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('SELECT id, center_name, owner_id, status, next_action_date, notes, notes_revision_history FROM "Leads" WHERE id = %s', (id,))
+            lead = cur.fetchone()
+            if not lead:
+                return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+            if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
+                return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only edit leads assigned to their profile.'}), 403
+
+            old_brief = (lead.get('notes') or '').strip()
+            rev_list = lead.get('notes_revision_history')
+            if not isinstance(rev_list, list):
+                try:
+                    rev_list = json.loads(rev_list) if rev_list else []
+                except Exception:
+                    rev_list = []
+
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y %I:%M %p')
+            if old_brief != new_brief and old_brief:
+                rev_list.append({
+                    'version': len(rev_list) + 1,
+                    'edited_at': now_str,
+                    'edited_by': actor_name,
+                    'old_text': old_brief,
+                    'new_text': new_brief,
+                })
+
+            resolved_next_date = lead.get('next_action_date')
+            if new_brief or data.get('next_action_date') or data.get('log_touchpoint'):
+                resolved_next_date, _, _ = compute_mandatory_followup_date(
+                    explicit_date=data.get('next_action_date'),
+                    note_text=new_brief,
+                    activity_type='NOTE',
+                    outcome='',
+                    status=lead.get('status') or 'New',
+                    current_next_date=lead.get('next_action_date'),
+                )
+
+            cur.execute('''
+                UPDATE "Leads"
+                SET notes = %s,
+                    next_action_date = %s,
+                    notes_updated_at = CURRENT_TIMESTAMP,
+                    notes_updated_by = %s,
+                    notes_revision_history = %s::jsonb,
+                    last_contacted_by = COALESCE(%s, last_contacted_by),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (new_brief or None, resolved_next_date, actor_name, json.dumps(rev_list), actor_name, id))
+
+            log_security_event(
+                event_category='DATA_MODIFICATION',
+                event_action='LEAD_STANDING_BRIEF_UPDATED',
+                severity='INFO',
+                status_code=200,
+                details={
+                    'lead_id': id,
+                    'company': lead.get('center_name'),
+                    'edited_by': actor_name,
+                    'edited_by_id': actor_id,
+                    'old_brief': old_brief,
+                    'new_brief': new_brief,
+                }
+            )
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({
+                'status': 'success',
+                'lead_id': id,
+                'standing_brief': new_brief,
+                'standing_brief_updated_at': now_str,
+                'standing_brief_updated_by': actor_name,
+                'standing_brief_revisions': rev_list,
+                'notes_revision_history': rev_list,
+            })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/leads/<int:id>/standing-brief/restore', methods=['POST'])
+@login_required
+def api_lead_restore_standing_brief(id):
+    """Restores a previous version of a Lead's Standing Facility Brief from notes_revision_history."""
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
+    data = request.get_json(silent=True) or {}
+    target_version = data.get('version')
+    actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('SELECT id, owner_id, notes, notes_revision_history FROM "Leads" WHERE id = %s', (id,))
+            lead = cur.fetchone()
+            if not lead:
+                return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+            if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
+                return jsonify({'status': 'error', 'message': 'Access restricted to assigned leads.'}), 403
+
+            rev_list = lead.get('notes_revision_history')
+            if not isinstance(rev_list, list):
+                try:
+                    rev_list = json.loads(rev_list) if rev_list else []
+                except Exception:
+                    rev_list = []
+
+            restored_text = None
+            for rev in rev_list:
+                if str(rev.get('version')) == str(target_version):
+                    restored_text = rev.get('old_text')
+                    break
+            if restored_text is None and data.get('restore_text') is not None:
+                restored_text = str(data.get('restore_text'))
+            if restored_text is None:
+                return jsonify({'status': 'error', 'message': 'Requested version not found in revision history.'}), 404
+
+            old_brief = (lead.get('notes') or '').strip()
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y %I:%M %p')
+            rev_list.append({
+                'version': len(rev_list) + 1,
+                'edited_at': now_str,
+                'edited_by': f"{actor_name} (Restored v{target_version})",
+                'old_text': old_brief,
+                'new_text': restored_text,
+            })
+
+            cur.execute('''
+                UPDATE "Leads"
+                SET notes = %s,
+                    notes_updated_at = CURRENT_TIMESTAMP,
+                    notes_updated_by = %s,
+                    notes_revision_history = %s::jsonb,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            ''', (restored_text, actor_name, json.dumps(rev_list), id))
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({
+                'status': 'success',
+                'standing_brief': restored_text,
+                'standing_brief_updated_at': now_str,
+                'standing_brief_updated_by': actor_name,
+                'standing_brief_revisions': rev_list,
+                'notes_revision_history': rev_list,
+            })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/activities/quick-log', methods=['POST'])
+@crm_api_bp.route('/api/v1/leads/<int:lead_id_param>/notes', methods=['POST'])
+@login_required
+def api_quick_log_activity(lead_id_param=None):
+    data = request.get_json(silent=True) or {}
+    parent_id = lead_id_param or data.get('parent_id')
+    parent_type = 'Lead' if lead_id_param else data.get('parent_type', 'Lead')
+    note_text = (data.get('note') or data.get('description') or '').strip()
+    activity_type = data.get('activity_type') or ('Note' if lead_id_param else 'Phone Call')
+    outcome_val = (data.get('outcome') or '').strip() or None
+    is_pinned = bool(data.get('is_pinned'))
+    share_umbrella = bool(data.get('share_umbrella'))
+    auto_apply = data.get('auto_apply_extracted', True)
 
     if not parent_id or not note_text:
         return jsonify({'status': 'error', 'message': 'Missing parent ID or note'}), 400
@@ -2535,6 +3300,7 @@ def api_quick_log_activity():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
             ptype_lower = parent_type.lower()
             if ptype_lower == 'lead':
                 ptype = 'Lead'
@@ -2543,31 +3309,537 @@ def api_quick_log_activity():
             else:
                 ptype = 'Account'
 
-            cur.execute('''
-                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                VALUES (%s, %s, %s, %s)
-            ''', (parent_id, ptype, activity_type, note_text))
-            
             actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
             actor_id = getattr(current_user, 'id', None)
+            applied_extracted = {}
+            shared_sister_count = 0
+            resolved_next_date = None
+            followup_action_val = (data.get('follow_up_action') or '').strip() or 'Follow-Up Call'
+            task_status_val = 'OPEN'
+
+            if ptype == 'Lead':
+                cur.execute('SELECT * FROM "Leads" WHERE id = %s', (parent_id,))
+                lead_row = cur.fetchone()
+                if not lead_row:
+                    return jsonify({'status': 'error', 'message': 'Lead not found'}), 404
+                if getattr(current_user, 'role', '') == 'Sales' and lead_row.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only add notes to leads assigned to their profile.'}), 403
+
+                extracted = extract_smart_lead_fields_from_note(note_text)
+                resolved_next_date, auto_action, task_status_val = compute_mandatory_followup_date(
+                    explicit_date=data.get('next_action_date'),
+                    note_text=note_text,
+                    activity_type=activity_type,
+                    outcome=outcome_val,
+                    status=data.get('status') or lead_row.get('status') or 'New',
+                    current_next_date=lead_row.get('next_action_date'),
+                )
+                followup_action_val = (data.get('follow_up_action') or '').strip() or auto_action
+                if resolved_next_date and not data.get('next_action_date') and extracted.get('next_action_date') == resolved_next_date:
+                    applied_extracted['next_action_date'] = resolved_next_date
+
+                if auto_apply and extracted:
+                    set_clauses = []
+                    set_params = []
+                    if extracted.get('email') and not lead_row.get('email'):
+                        set_clauses.append("email = %s")
+                        set_params.append(extracted['email'])
+                        applied_extracted['email'] = extracted['email']
+                    if extracted.get('phone') and not lead_row.get('phone'):
+                        set_clauses.append("phone = %s")
+                        set_params.append(extracted['phone'])
+                        applied_extracted['phone'] = extracted['phone']
+                    if extracted.get('sqf') and not (lead_row.get('sqf') or 0):
+                        set_clauses.append("sqf = %s")
+                        set_params.append(extracted['sqf'])
+                        applied_extracted['sqf'] = extracted['sqf']
+                    if extracted.get('capacity') and not lead_row.get('capacity'):
+                        set_clauses.append("capacity = %s")
+                        set_params.append(extracted['capacity'])
+                        applied_extracted['capacity'] = extracted['capacity']
+                    if extracted.get('budget_range') and not lead_row.get('budget_range'):
+                        set_clauses.append("budget_range = %s")
+                        set_params.append(extracted['budget_range'])
+                        applied_extracted['budget_range'] = extracted['budget_range']
+                    if extracted.get('cleaning_delivery_model') and (not lead_row.get('cleaning_delivery_model') or lead_row.get('cleaning_delivery_model') == 'UNKNOWN'):
+                        set_clauses.append("cleaning_delivery_model = %s")
+                        set_params.append(extracted['cleaning_delivery_model'])
+                        applied_extracted['cleaning_delivery_model'] = extracted['cleaning_delivery_model']
+                    if set_clauses:
+                        set_params.append(parent_id)
+                        cur.execute(f'UPDATE "Leads" SET {", ".join(set_clauses)} WHERE id = %s', tuple(set_params))
+
+                # Mark prior open tasks on this lead as COMPLETED/CLOSED
+                cur.execute('''
+                    UPDATE "GlobalActivities"
+                    SET task_status = %s,
+                        completed_at = COALESCE(completed_at, CURRENT_TIMESTAMP)
+                    WHERE parent_type = 'Lead'
+                      AND parent_id = %s
+                      AND COALESCE(task_status, 'OPEN') = 'OPEN';
+                ''', ('CLOSED' if task_status_val == 'CLOSED' else 'COMPLETED', parent_id))
+            else:
+                resolved_next_date = (data.get('next_action_date') or '').strip() or compute_next_business_day_iso(3)
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (
+                    parent_id, parent_type, activity_type, outcome, description,
+                    is_pinned, created_by_user_id, created_by_name,
+                    follow_up_date, follow_up_action, task_status, completed_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING activity_id, parent_id, parent_type, activity_type, outcome, description,
+                          is_pinned, created_by_user_id, created_by_name, updated_at, edited_by_name,
+                          revision_history, follow_up_date, follow_up_action, task_status, completed_at, timestamp
+            ''', (
+                parent_id, ptype, activity_type, outcome_val, note_text, is_pinned, actor_id, actor_name,
+                resolved_next_date, followup_action_val, task_status_val,
+                datetime.datetime.now(datetime.timezone.utc) if task_status_val == 'CLOSED' else None
+            ))
+            inserted_row = cur.fetchone()
+            serialized_act = _serialize_activity_item(inserted_row) if inserted_row else None
+
             if ptype == 'Lead':
                 cur.execute(
-                    'UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP, last_contacted_by = %s, owner_id = COALESCE(owner_id, %s) WHERE id = %s',
-                    (actor_name, actor_id, parent_id),
+                    'UPDATE "Leads" SET next_action_date = %s, updated_at = CURRENT_TIMESTAMP, last_contacted_by = %s, owner_id = COALESCE(owner_id, %s) WHERE id = %s',
+                    (resolved_next_date, actor_name, actor_id, parent_id),
                 )
+                if share_umbrella and lead_row.get('umbrella_name'):
+                    umb = lead_row.get('umbrella_name')
+                    src_name = lead_row.get('center_name') or f"LD-#{parent_id}"
+                    shared_desc = f"[🏢 Shared from {src_name}] {note_text}"
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (
+                            parent_id, parent_type, activity_type, outcome, description,
+                            is_pinned, created_by_user_id, created_by_name,
+                            follow_up_date, follow_up_action, task_status
+                        )
+                        SELECT id, 'Lead', %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        FROM "Leads"
+                        WHERE umbrella_name = %s AND id != %s AND COALESCE(is_converted, FALSE) = FALSE;
+                    ''', (activity_type, outcome_val, shared_desc, is_pinned, actor_id, actor_name, resolved_next_date, followup_action_val, task_status_val, umb, parent_id))
+                    shared_sister_count = cur.rowcount or 0
             elif ptype == 'ConstructionBid':
                 cur.execute('UPDATE "ConstructionBids" SET updated_at = CURRENT_TIMESTAMP, last_contact_date = CURRENT_TIMESTAMP WHERE id = %s', (parent_id,))
             else:
                 cur.execute('UPDATE "Customers" SET updated_at = CURRENT_TIMESTAMP WHERE customer_id = %s', (parent_id,))
-                
+
+            cur.execute('''
+                SELECT COUNT(*) AS activity_count,
+                       COUNT(*) FILTER (WHERE COALESCE(is_pinned, FALSE) = TRUE) AS pinned_count,
+                       (ARRAY_AGG(CASE WHEN COALESCE(is_pinned, FALSE) THEN '📌 ' || description ELSE description END ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC))[1] AS last_note
+                FROM "GlobalActivities"
+                WHERE parent_type = %s AND parent_id = %s
+            ''', (ptype, parent_id))
+            agg_row = cur.fetchone()
+            act_count = (agg_row['activity_count'] if isinstance(agg_row, dict) else agg_row[0]) if agg_row else 1
+            pin_count = (agg_row['pinned_count'] if isinstance(agg_row, dict) else agg_row[1]) if agg_row else (1 if is_pinned else 0)
+            last_note_val = (agg_row['last_note'] if isinstance(agg_row, dict) else agg_row[2]) if agg_row else note_text
+
             conn.commit()
             try:
                 from blueprints.operations import invalidate_operations_caches
                 invalidate_operations_caches()
             except Exception:
                 pass
-            return jsonify({'status': 'success', 'message': 'Touchpoint logged.'})
+            return jsonify({
+                'status': 'success',
+                'message': 'Touchpoint logged.',
+                'activity': serialized_act,
+                'next_action_date': resolved_next_date,
+                'follow_up_action': followup_action_val,
+                'task_status': task_status_val,
+                'activity_count': act_count,
+                'pinned_count': pin_count,
+                'last_note': last_note_val,
+                'applied_extracted': applied_extracted,
+                'auto_updated_fields': applied_extracted,
+                'shared_sister_count': shared_sister_count,
+                'sister_broadcast_count': shared_sister_count,
+            })
     except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/activities/<int:activity_id>', methods=['PUT', 'PATCH', 'DELETE'])
+@login_required
+def api_manage_single_activity(activity_id):
+    """
+    Enterprise Note Lifecycle Endpoint (BUG-159):
+    - PUT / PATCH: Edit note text, action type, outcome, or pin/unpin with full revision_history JSONB & SecurityAuditLogs.
+    - DELETE: Executive/Admin/Manager note removal with audit trail.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('''
+                SELECT activity_id, parent_id, parent_type, activity_type, outcome, description,
+                       COALESCE(is_pinned, FALSE) AS is_pinned, created_by_user_id, created_by_name,
+                       updated_at, edited_by_name, COALESCE(revision_history, '[]'::jsonb) AS revision_history, timestamp
+                FROM "GlobalActivities"
+                WHERE activity_id = %s
+            ''', (activity_id,))
+            act = cur.fetchone()
+            if not act:
+                return jsonify({'status': 'error', 'message': 'Note / activity not found'}), 404
+
+            ptype = act.get('parent_type') or 'Lead'
+            pid = act.get('parent_id')
+            target_module = 'leads' if ptype == 'Lead' else 'accounts'
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            actor_id = getattr(current_user, 'id', None)
+
+            if ptype == 'Lead' and getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT owner_id FROM "Leads" WHERE id = %s', (pid,))
+                l_row = cur.fetchone()
+                if not l_row or l_row.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted: Sales representatives may only modify notes on leads assigned to their profile.'}), 403
+
+            if request.method == 'DELETE':
+                if getattr(current_user, 'role', '') == 'Sales':
+                    return jsonify({'status': 'error', 'message': 'Deleting historical call and activity notes is restricted for Sales personnel.'}), 403
+                if not current_user.has_permission(target_module, 'edit'):
+                    return log_and_abort_abac(target_module, 'edit')
+
+                cur.execute('DELETE FROM "GlobalActivities" WHERE activity_id = %s', (activity_id,))
+
+                act_count = 0
+                pin_count = 0
+                last_note_val = ''
+                standing_brief_val = ''
+
+                if pid:
+                    cur.execute('''
+                        SELECT COUNT(*) AS activity_count,
+                               COUNT(*) FILTER (WHERE COALESCE(is_pinned, FALSE) = TRUE) AS pinned_count,
+                               (ARRAY_AGG(CASE WHEN COALESCE(is_pinned, FALSE) THEN '📌 ' || description ELSE description END ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC, activity_id DESC))[1] AS last_note,
+                               (ARRAY_AGG(description ORDER BY COALESCE(is_pinned, FALSE) DESC, timestamp DESC, activity_id DESC) FILTER (
+                                   WHERE COALESCE(activity_type, '') NOT IN ('STAGE_CHANGE', 'CLEANING_SETUP_UPDATED', 'OWNER_ASSIGNED', 'LEAD_CREATED')
+                               ))[1] AS latest_user_note
+                        FROM "GlobalActivities"
+                        WHERE parent_type = %s AND parent_id = %s
+                    ''', (ptype, pid))
+                    agg_row = cur.fetchone()
+                    if agg_row:
+                        act_count = (agg_row['activity_count'] if isinstance(agg_row, dict) else agg_row[0]) or 0
+                        pin_count = (agg_row['pinned_count'] if isinstance(agg_row, dict) else agg_row[1]) or 0
+                        last_note_val = (agg_row['last_note'] if isinstance(agg_row, dict) else agg_row[2]) or ''
+                        latest_user_note = (agg_row['latest_user_note'] if isinstance(agg_row, dict) else agg_row[3]) or None
+                    else:
+                        latest_user_note = None
+
+                    if ptype == 'Lead':
+                        cur.execute('SELECT notes FROM "Leads" WHERE id = %s', (pid,))
+                        l_notes_row = cur.fetchone()
+                        curr_brief = ((l_notes_row['notes'] if isinstance(l_notes_row, dict) else l_notes_row[0]) if l_notes_row else '') or ''
+                        old_desc_clean = (act.get('description') or '').strip()
+                        if curr_brief.strip() and curr_brief.strip() == old_desc_clean:
+                            cur.execute('UPDATE "Leads" SET notes = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s', (latest_user_note, pid))
+                            standing_brief_val = latest_user_note or ''
+                        else:
+                            standing_brief_val = curr_brief
+                        if not last_note_val and standing_brief_val:
+                            last_note_val = standing_brief_val
+
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='ACTIVITY_NOTE_DELETED',
+                    severity='WARNING',
+                    status_code=200,
+                    details={
+                        'activity_id': activity_id,
+                        'parent_type': ptype,
+                        'parent_id': pid,
+                        'deleted_by': actor_name,
+                        'old_description': act.get('description'),
+                    }
+                )
+                conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'success',
+                    'deleted_activity_id': activity_id,
+                    'parent_id': pid,
+                    'parent_type': ptype,
+                    'activity_count': act_count,
+                    'pinned_count': pin_count,
+                    'last_note': last_note_val,
+                    'standing_brief': standing_brief_val,
+                })
+
+            # PUT or PATCH
+            if not current_user.has_permission(target_module, 'edit'):
+                return log_and_abort_abac(target_module, 'edit')
+
+            data = request.get_json(silent=True) or {}
+            old_desc = (act.get('description') or '').strip()
+            new_desc = (data.get('description') if 'description' in data else (data.get('note') if 'note' in data else old_desc)).strip()
+            if not new_desc:
+                return jsonify({'status': 'error', 'message': 'Note text cannot be empty.'}), 400
+
+            new_type = (data.get('activity_type') or act.get('activity_type') or 'Note').strip()
+            new_outcome = (data.get('outcome') if 'outcome' in data else (act.get('outcome') or '')).strip() or None
+            if data.get('toggle_pin'):
+                new_pinned = not bool(act.get('is_pinned'))
+            elif 'is_pinned' in data:
+                new_pinned = bool(data.get('is_pinned'))
+            else:
+                new_pinned = bool(act.get('is_pinned'))
+
+            rev_list = act.get('revision_history')
+            if not isinstance(rev_list, list):
+                try:
+                    rev_list = json.loads(rev_list) if rev_list else []
+                except Exception:
+                    rev_list = []
+
+            text_changed = (new_desc != old_desc) or (new_outcome != (act.get('outcome') or None)) or (new_type != (act.get('activity_type') or 'Note'))
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y %I:%M %p')
+            if text_changed:
+                rev_list.append({
+                    'version': len(rev_list) + 1,
+                    'edited_at': now_str,
+                    'edited_by': actor_name,
+                    'old_text': old_desc,
+                    'new_text': new_desc,
+                    'old_type': act.get('activity_type'),
+                    'new_type': new_type,
+                    'old_outcome': act.get('outcome') or '',
+                    'new_outcome': new_outcome or '',
+                })
+
+            cur.execute('''
+                UPDATE "GlobalActivities"
+                SET description = %s,
+                    activity_type = %s,
+                    outcome = %s,
+                    is_pinned = %s,
+                    updated_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE updated_at END,
+                    edited_by_name = CASE WHEN %s THEN %s ELSE edited_by_name END,
+                    revision_history = %s::jsonb
+                WHERE activity_id = %s
+                RETURNING activity_id, parent_id, parent_type, activity_type, outcome, description,
+                          is_pinned, created_by_user_id, created_by_name, updated_at, edited_by_name,
+                          revision_history, follow_up_date, follow_up_action, task_status, completed_at, timestamp
+            ''', (new_desc, new_type, new_outcome, new_pinned, text_changed, text_changed, actor_name, json.dumps(rev_list), activity_id))
+            updated_row = cur.fetchone()
+
+            log_security_event(
+                event_category='DATA_MODIFICATION',
+                event_action='ACTIVITY_NOTE_EDITED' if text_changed else 'ACTIVITY_NOTE_PIN_TOGGLED',
+                severity='INFO',
+                status_code=200,
+                details={
+                    'activity_id': activity_id,
+                    'parent_type': ptype,
+                    'parent_id': pid,
+                    'edited_by': actor_name,
+                    'is_pinned': new_pinned,
+                    'old_text': old_desc,
+                    'new_text': new_desc,
+                }
+            )
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({
+                'status': 'success',
+                'activity': _serialize_activity_item(updated_row),
+            })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/activities/<int:activity_id>/complete-task', methods=['POST'])
+@login_required
+def api_complete_or_reschedule_activity_task(activity_id):
+    """
+    1-Click Task Lifecycle Endpoint (BUG-165):
+    Marks a follow-up task on GlobalActivities as COMPLETED (or reschedules it to a new business date)
+    and synchronizes Leads.next_action_date so open leads always maintain a valid follow-up date.
+    """
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('''
+                SELECT activity_id, parent_id, parent_type, activity_type, outcome, description,
+                       follow_up_date, follow_up_action, COALESCE(task_status, 'OPEN') AS task_status
+                FROM "GlobalActivities"
+                WHERE activity_id = %s
+            ''', (activity_id,))
+            act = cur.fetchone()
+            if not act:
+                return jsonify({'status': 'error', 'message': 'Task / note not found'}), 404
+
+            ptype = act.get('parent_type') or 'Lead'
+            pid = act.get('parent_id')
+            target_module = 'leads' if ptype == 'Lead' else 'accounts'
+            if not current_user.has_permission(target_module, 'edit'):
+                return log_and_abort_abac(target_module, 'edit')
+
+            if ptype == 'Lead' and getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT owner_id FROM "Leads" WHERE id = %s', (pid,))
+                l_row = cur.fetchone()
+                if not l_row or l_row.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted to assigned leads.'}), 403
+
+            data = request.get_json(silent=True) or {}
+            reschedule_days = data.get('reschedule_days')
+            explicit_next_date = (data.get('next_action_date') or '').strip()
+            new_status = 'COMPLETED'
+            next_date = None
+
+            if reschedule_days is not None:
+                next_date = compute_next_business_day_iso(int(reschedule_days))
+                new_status = 'OPEN'
+            elif explicit_next_date:
+                next_date = explicit_next_date[:10]
+                new_status = str(data.get('task_status') or 'COMPLETED').upper()
+            elif ptype == 'Lead' and pid:
+                cur.execute('SELECT status, next_action_date FROM "Leads" WHERE id = %s', (pid,))
+                l_info = cur.fetchone()
+                l_status = (l_info.get('status') if l_info else 'New') or 'New'
+                if l_status not in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED'):
+                    next_date = compute_next_business_day_iso(3)
+
+            cur.execute('''
+                UPDATE "GlobalActivities"
+                SET task_status = %s,
+                    follow_up_date = COALESCE(%s, follow_up_date),
+                    completed_at = CASE WHEN %s IN ('COMPLETED', 'CLOSED') THEN CURRENT_TIMESTAMP ELSE NULL END
+                WHERE activity_id = %s
+                RETURNING activity_id, parent_id, parent_type, activity_type, outcome, description,
+                          is_pinned, created_by_user_id, created_by_name, updated_at, edited_by_name,
+                          revision_history, follow_up_date, follow_up_action, task_status, completed_at, timestamp
+            ''', (new_status, next_date, new_status, activity_id))
+            updated_row = cur.fetchone()
+
+            if ptype == 'Lead' and pid and next_date:
+                cur.execute(
+                    'UPDATE "Leads" SET next_action_date = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s',
+                    (next_date, pid),
+                )
+
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({
+                'status': 'success',
+                'activity': _serialize_activity_item(updated_row),
+                'next_action_date': next_date,
+                'task_status': new_status,
+            })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/activities/<int:activity_id>/restore', methods=['POST'])
+@login_required
+def api_restore_activity_version(activity_id):
+    """Restores a previous version of an edited GlobalActivities note in 1 click."""
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('''
+                SELECT activity_id, parent_id, parent_type, activity_type, outcome, description,
+                       COALESCE(is_pinned, FALSE) AS is_pinned, created_by_user_id, created_by_name,
+                       updated_at, edited_by_name, COALESCE(revision_history, '[]'::jsonb) AS revision_history, timestamp
+                FROM "GlobalActivities"
+                WHERE activity_id = %s
+            ''', (activity_id,))
+            act = cur.fetchone()
+            if not act:
+                return jsonify({'status': 'error', 'message': 'Note not found'}), 404
+
+            ptype = act.get('parent_type') or 'Lead'
+            pid = act.get('parent_id')
+            target_module = 'leads' if ptype == 'Lead' else 'accounts'
+            if not current_user.has_permission(target_module, 'edit'):
+                return log_and_abort_abac(target_module, 'edit')
+
+            if ptype == 'Lead' and getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT owner_id FROM "Leads" WHERE id = %s', (pid,))
+                l_row = cur.fetchone()
+                if not l_row or l_row.get('owner_id') != current_user.id:
+                    return jsonify({'status': 'error', 'message': 'Access restricted to assigned leads.'}), 403
+
+            data = request.get_json(silent=True) or {}
+            target_version = data.get('version')
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+
+            rev_list = act.get('revision_history')
+            if not isinstance(rev_list, list):
+                try:
+                    rev_list = json.loads(rev_list) if rev_list else []
+                except Exception:
+                    rev_list = []
+
+            restored_text = None
+            for rev in rev_list:
+                if str(rev.get('version')) == str(target_version):
+                    restored_text = rev.get('old_text')
+                    break
+            if restored_text is None and data.get('restore_text') is not None:
+                restored_text = str(data.get('restore_text'))
+            if not restored_text:
+                return jsonify({'status': 'error', 'message': 'Requested version not found in revision history.'}), 404
+
+            old_desc = (act.get('description') or '').strip()
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime('%m/%d/%Y %I:%M %p')
+            rev_list.append({
+                'version': len(rev_list) + 1,
+                'edited_at': now_str,
+                'edited_by': f"{actor_name} (Restored v{target_version})",
+                'old_text': old_desc,
+                'new_text': restored_text,
+            })
+
+            cur.execute('''
+                UPDATE "GlobalActivities"
+                SET description = %s,
+                    updated_at = CURRENT_TIMESTAMP,
+                    edited_by_name = %s,
+                    revision_history = %s::jsonb
+                WHERE activity_id = %s
+                RETURNING activity_id, parent_id, parent_type, activity_type, outcome, description,
+                          is_pinned, created_by_user_id, created_by_name, updated_at, edited_by_name,
+                          revision_history, timestamp
+            ''', (restored_text, actor_name, json.dumps(rev_list), activity_id))
+            updated_row = cur.fetchone()
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            return jsonify({
+                'status': 'success',
+                'activity': _serialize_activity_item(updated_row),
+            })
+    except Exception as e:
+        conn.rollback()
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if conn: conn.close()
@@ -2578,17 +3850,23 @@ def api_quick_log_activity():
 def api_activities():
     data = request.json or {}
     p_id, p_type, a_type, desc = data.get('parent_id'), data.get('parent_type'), data.get('activity_type'), data.get('description', '')
+    outcome_val = (data.get('outcome') or '').strip() or None
+    is_pinned = bool(data.get('is_pinned'))
+    actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+    actor_id = getattr(current_user, 'id', None)
     
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
             cur.execute('''
-                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                VALUES (%s, %s, %s, %s)
-            ''', (p_id, p_type, a_type, desc))
+                INSERT INTO "GlobalActivities" (
+                    parent_id, parent_type, activity_type, outcome, description,
+                    is_pinned, created_by_user_id, created_by_name
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (p_id, p_type, a_type, outcome_val, desc, is_pinned, actor_id, actor_name))
             if str(p_type or '').lower() == 'lead' and p_id:
-                actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
-                actor_id = getattr(current_user, 'id', None)
                 cur.execute(
                     'UPDATE "Leads" SET updated_at = CURRENT_TIMESTAMP, last_contacted_by = %s, owner_id = COALESCE(owner_id, %s) WHERE id = %s',
                     (actor_name, actor_id, p_id),
@@ -3080,7 +4358,7 @@ def api_workforce_apply():
                 cur.execute('''
                     SELECT * FROM "JobApplicants"
                     WHERE (
-                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
                         OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
                     )
                     ORDER BY created_at ASC, id ASC
@@ -3296,7 +4574,7 @@ def api_workforce_subcontractor():
             cur.execute('''
                 SELECT * FROM "SubcontractorPartners"
                 WHERE (
-                    (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                    (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
                     OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
                     OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
                 )
@@ -3439,7 +4717,7 @@ def api_workforce_subcontractor():
                     onboarding_invited_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END
                 WHERE id = %s;
             ''', (onboarding_token, auto_invite_active, new_id))
-            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{onboarding_token}"
+            onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
 
             # Stage official email alert in PendingOutbox
             cur.execute('''
@@ -3597,7 +4875,7 @@ def api_get_or_create_subcontractors():
                 cur.execute('''
                     SELECT id, company_name, created_at FROM "SubcontractorPartners"
                     WHERE (
-                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g') LIKE '%%' || %s)
+                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
                         OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
                         OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
                     )
@@ -3612,7 +4890,18 @@ def api_get_or_create_subcontractors():
                         'message': f"Trade Partner '{existing_sub['company_name']}' is already registered (SUB-#{int(existing_sub['id']):04d}). Please edit the existing record instead of adding a duplicate."
                     }), 409
 
-                ein_or_ssn = (data.get('ein_or_ssn') or '').strip()
+                from core.services.sanitizer import clean_ein_or_ssn
+                from core.services.subcontractor_doc_extractor import encrypt_and_mask_subcontractor_tin
+                raw_tin = clean_ein_or_ssn(
+                    data.get('ein_or_ssn') or '',
+                    tax_classification=data.get('tax_classification') or 'LLC',
+                    tax_id_mode=data.get('tax_id_mode'),
+                ) or ''
+                masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
+                    raw_tin,
+                    tax_id_mode=data.get('tax_id_mode'),
+                )
+                ein_or_ssn = masked_tin or raw_tin
                 city = clean_city(data.get('city') or '')
                 state = (data.get('state') or 'TX').strip()
                 coverage_counties = (data.get('coverage_counties') or 'Dallas, Tarrant, Collin, Denton').strip()
@@ -3628,18 +4917,21 @@ def api_get_or_create_subcontractors():
 
                 cur.execute('''
                     INSERT INTO "SubcontractorPartners" (
-                        company_name, ein_or_ssn, contact_name, phone, email,
+                        company_name, ein_or_ssn, w9_ein_last4, w9_tin_encrypted,
+                        contact_name, phone, email,
                         city, state, coverage_counties, crew_size, specialties,
                         hourly_rate_range, coi_status, coi_expiration_date,
                         w9_status, dwc83_signed, status, notes
                     ) VALUES (
-                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s
                     ) RETURNING id;
                 ''', (
-                    company_name, ein_or_ssn, contact_name, phone, email,
+                    company_name, ein_or_ssn, last4_tin or None, encrypted_tin,
+                    contact_name, phone, email,
                     city, state, coverage_counties, crew_size, specialties,
                     hourly_rate_range, coi_status, coi_expiration_date,
                     w9_status, dwc83_signed, status, notes
@@ -3740,11 +5032,24 @@ def api_manage_subcontractor(id):
                 if not current_sub:
                     return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
 
+                from core.services.sanitizer import clean_ein_or_ssn
+                from core.services.subcontractor_doc_extractor import encrypt_and_mask_subcontractor_tin
+
                 company_name = data.get('company_name', current_sub['company_name'])
                 contact_name = data.get('contact_name', current_sub['contact_name'])
                 phone = clean_phone(data.get('phone', current_sub['phone']))
                 email = data.get('email', current_sub['email'])
-                ein_or_ssn = data.get('ein_or_ssn', current_sub['ein_or_ssn'])
+                raw_incoming_tin = data.get('ein_or_ssn', current_sub['ein_or_ssn'])
+                cleaned_tin = clean_ein_or_ssn(
+                    raw_incoming_tin,
+                    tax_classification=data.get('tax_classification') or current_sub.get('tax_classification') or 'LLC',
+                    tax_id_mode=data.get('tax_id_mode'),
+                )
+                masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
+                    cleaned_tin or '',
+                    tax_id_mode=data.get('tax_id_mode'),
+                )
+                ein_or_ssn = masked_tin or cleaned_tin or current_sub['ein_or_ssn']
                 city = clean_city(data.get('city', current_sub['city']))
                 state = data.get('state', current_sub['state'])
                 coverage_counties = data.get('coverage_counties', current_sub['coverage_counties'])
@@ -3762,7 +5067,10 @@ def api_manage_subcontractor(id):
                 cur.execute('''
                     UPDATE "SubcontractorPartners" SET
                         company_name = %s, contact_name = %s, phone = %s, email = %s,
-                        ein_or_ssn = %s, city = %s, state = %s, coverage_counties = %s,
+                        ein_or_ssn = %s,
+                        w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
+                        w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                        city = %s, state = %s, coverage_counties = %s,
                         crew_size = %s, specialties = %s, hourly_rate_range = %s,
                         coi_status = %s, coi_expiration_date = %s, w9_status = %s,
                         dwc83_signed = %s, status = %s, notes = %s, rating = %s,
@@ -3770,15 +5078,88 @@ def api_manage_subcontractor(id):
                     WHERE id = %s;
                 ''', (
                     company_name, contact_name, phone, email,
-                    ein_or_ssn, city, state, coverage_counties,
+                    ein_or_ssn,
+                    last4_tin or '',
+                    encrypted_tin,
+                    city, state, coverage_counties,
                     crew_size, specialties, hourly_rate_range,
                     coi_status, coi_expiration_date, w9_status,
                     dwc83_signed, status, notes, rating, id
                 ))
                 conn.commit()
-                return jsonify({'status': 'success', 'id': id, 'message': 'Subcontractor profile updated successfully.'})
+                return jsonify({
+                    'status': 'success',
+                    'id': id,
+                    'masked_tin': ein_or_ssn,
+                    'message': 'Subcontractor profile updated successfully.'
+                })
     finally:
         if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/reveal-tin', methods=['POST'])
+@login_required
+def api_reveal_subcontractor_tin(id):
+    """
+    Decrypts and reveals the AES-256 Fernet encrypted 9-digit Federal Tax ID (EIN or SSN)
+    for an authorized Executive/Admin user, recording a CRITICAL PII_REVEAL audit event
+    in SecurityAuditLogs (SOC 2 Processing Integrity & Confidentiality parity with W-2 SSN reveal).
+    """
+    from core.services.security_logger import log_security_event, extract_client_ip
+    from core.services.subcontractor_doc_extractor import decrypt_subcontractor_tin
+
+    user_role = str(getattr(current_user, 'role', 'Executive') or 'Executive').strip().lower()
+    if user_role not in ('executive', 'admin', 'ceo', 'vp_finance', 'hr_admin'):
+        return jsonify({
+            'status': 'error',
+            'message': 'Executive or Finance authorization is required to reveal unmasked Taxpayer Identification Numbers.'
+        }), 403
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                '''
+                SELECT id, company_name, ein_or_ssn, w9_ein_last4, w9_tin_encrypted
+                FROM "SubcontractorPartners"
+                WHERE id = %s;
+                ''',
+                (id,),
+            )
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Subcontractor partner not found.'}), 404
+
+            unmasked_tin = decrypt_subcontractor_tin(
+                row.get('w9_tin_encrypted'),
+                fallback_tin=row.get('ein_or_ssn'),
+                last4=row.get('w9_ein_last4'),
+            )
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', None) or 'Executive'
+            log_security_event(
+                event_category='HR_PII',
+                event_action='SUBCONTRACTOR_TIN_REVEALED',
+                severity='CRITICAL',
+                user_id=getattr(current_user, 'id', 1),
+                username=actor_name,
+                ip_address=extract_client_ip(),
+                details={
+                    'subcontractor_id': id,
+                    'company_name': row.get('company_name'),
+                    'tin_last4': row.get('w9_ein_last4') or '',
+                    'has_encrypted_vault_tin': bool(row.get('w9_tin_encrypted')),
+                },
+            )
+            return jsonify({
+                'status': 'success',
+                'subcontractor_id': id,
+                'company_name': row.get('company_name'),
+                'tin': unmasked_tin,
+                'has_full_tin': bool(row.get('w9_tin_encrypted')),
+            })
+    finally:
+        if conn:
+            conn.close()
 
 
 @crm_api_bp.route('/api/v1/workforce/subcontractors/<int:id>/documents', methods=['POST'])
@@ -4045,7 +5426,7 @@ def api_send_subcontractor_onboarding(id):
             new_stage = new_stage_row['onboarding_status'] if isinstance(new_stage_row, dict) else new_stage_row[0]
             exp_ts = new_stage_row['onboarding_token_expires_at'] if isinstance(new_stage_row, dict) else new_stage_row[1]
 
-            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{tok}"
+            onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{tok}"
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
                 VALUES (%s, 'Subcontractor', '1099 Onboarding Link Sent', %s, CURRENT_TIMESTAMP);
@@ -4055,10 +5436,18 @@ def api_send_subcontractor_onboarding(id):
             ))
             conn.commit()
 
+            from core.services.notification_service import send_subcontractor_onboarding_invite_email, build_subcontractor_sms_invite
+            sms_pack = build_subcontractor_sms_invite({
+                'partner_id': id,
+                'company_name': sub.get('company_name'),
+                'contact_name': sub.get('contact_name'),
+                'phone': sub.get('phone'),
+                'onboarding_url': onboarding_url,
+            })
+
             email_ok = False
             email_detail = "No partner email on file — copy link below to text via SMS"
             if sub.get('email'):
-                from core.services.notification_service import send_subcontractor_onboarding_invite_email
                 email_ok, email_detail = send_subcontractor_onboarding_invite_email({
                     'partner_id': id,
                     'company_name': sub.get('company_name'),
@@ -4075,6 +5464,8 @@ def api_send_subcontractor_onboarding(id):
                 'onboarding_token': tok,
                 'onboarding_token_expires_at': exp_ts.isoformat() if hasattr(exp_ts, 'isoformat') else str(exp_ts or ''),
                 'onboarding_url': onboarding_url,
+                'sms_body': sms_pack.get('sms_body', ''),
+                'sms_uri': sms_pack.get('sms_uri', ''),
                 'onboarding_status': new_stage,
                 'email_sent': email_ok,
                 'email_detail': email_detail,

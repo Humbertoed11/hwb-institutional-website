@@ -8,7 +8,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">6.1</span></div>
     </div>
@@ -33,7 +33,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">6.0.0</td>
+<td style="text-align: left;">6.1.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -228,12 +228,25 @@ flowchart TD
             <li><strong>Layer 4 — Gear Menu (<code>⚙️</code>) Auto-Close &amp; Smart Form Focus:</strong> Clicking any item inside a row Gear menu (<code>.isc-row-menu</code>) closes the dropdown immediately, and selecting <code>Add Note</code> or <code>Request Visit</code> automatically scrolls to, highlights, and focuses the target input field (<code>#lead-activity-desc</code> / <code>#visit-date</code>).</li>
         </ul>
 
+        <h2>15.6 Universal Grid Engine, Dual Horizontal Scrollbars, &amp; Dual-Mode Tax ID Masking Standard (<code>BUG-164</code>, <code>BUG-167</code>, &amp; <code>BUG-168</code>)</h2>
+        <ul>
+            <li><strong>PostgreSQL Per-User Grid State &amp; Order-Preserving Column Manager (<code>BUG-164</code>):</strong> All backoffice data tables persist custom dragged column orders, column widths, and personal presets to PostgreSQL (<code>GET / POST /api/v1/ui/grid-state</code> in <code>"UserBehavioralProfiles"</code>), provide interactive column resizers (<code>.sigma-col-resizer</code>), and preserve dragged column positions when turning columns on or off.</li>
+            <li><strong>Universal Dual Horizontal Scrollbars (<code>BUG-168</code>):</strong> Whenever any data table's active columns extend past the right edge of the viewport, <code>/static/js/sigma_responsive_engine.js</code> automatically displays both a <strong>Top Synced Horizontal Scroll Rail</strong> (<code>.sigma-top-scroll-rail</code> with <code>⏮ / ◀ Left / Right ▶ / ⏭</code> quick-pan buttons) directly above the table header and an <strong>Always-Visible Sticky Bottom Scrollbar Dock</strong> (<code>#sigma-sticky-bottom-scrollbar</code>) docked to the bottom edge of the screen whenever the table's native bottom scrollbar is below the viewport fold.</li>
+            <li><strong>Dual-Mode Tax ID (<code>EIN</code> / <code>SSN</code>) Input Masking (<code>BUG-167</code>):</strong> Every Federal Tax ID input across the 1099 subcontractor portal and backoffice modals includes a 1-click <code>[EIN (XX-XXXXXXX) | SSN / ITIN (XXX-XX-XXXX)]</code> mode switcher (<code>setTaxIdMode</code> in <code>/static/js/sigma_input_masks.js</code>) paired with real-time IRS/SSA prefix validation (<code>validateTaxIdClientSide</code>).</li>
+        </ul>
+
         <h2>16.0 Revision History</h2>
         <table class="sigma-table">
             <thead>
                 <tr><th>Version</th><th>Date</th><th>Author</th><th>Description of Changes</th></tr>
             </thead>
             <tbody>
+                <tr>
+                    <td>6.1.0</td>
+                    <td>10/29/2026</td>
+                    <td>George (Systems Architect)</td>
+                    <td>Added Section 15.6 codifying the 5-Pillar Enterprise Universal Grid Engine (BUG-164), Dual-Mode Tax ID (EIN/SSN) Input Masking (BUG-167), and Universal Dual Horizontal Scrollbar Engine (BUG-168: Top Synced Horizontal Scroll Rail + Sticky Bottom Viewport Scrollbar Dock across all data tables). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>6.0.0</td>
                     <td>10/26/2026</td>

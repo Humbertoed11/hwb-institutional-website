@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.4</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.4.1 (General)</span></div>
     </div>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -43,7 +43,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">10/29/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -77,12 +77,20 @@ graph TD
 <ol>
 <li><strong>Selection:</strong> Evaluate suppliers based on Accuracy, Compliance (SDS), and Cycle Time.</li>
 <li><strong>Execution:</strong> Document all orders via formal PO specifying <strong>SigmaFidelity™ Grade</strong>.</li>
-<li><strong>Verification:</strong> Upon delivery, the Purchasing Lead verifies the shipment for "Poka-Yoke" compliance (intact labels and valid expiration).</li>
+<li><strong>Verification:</strong> Upon delivery, the Purchasing Lead verifies the shipment for built-in error-prevention compliance (intact labels and valid expiration).</li>
 </ol>
+<h2 id="45-subcontractor-onboarding-dual-mode-tax-id-and-deliverability">4.5 1099 Subcontractor Onboarding, Dual-Mode Tax ID (<code>EIN</code> / <code>SSN</code>), Digital Substitute Form W-9, &amp; Email Deliverability Standard (<code>BUG-166</code> &amp; <code>BUG-167</code>)</h2>
+<ul>
+<li><strong>Dual-Mode Tax ID Switcher &amp; Single-Member LLC Support (<code>BUG-167</code>):</strong> On the 1099 Subcontractor Onboarding Portal (<code>/onboard/subcontractor/&lt;token&gt;</code>) and backoffice subcontractor modals, operators and trade partners can switch between <strong>EIN (<code>XX-XXXXXXX</code>)</strong> and <strong>SSN / ITIN (<code>XXX-XX-XXXX</code>)</strong> with a single click. Single-Member LLCs (Disregarded Entities) may register using either a company EIN or the owner's SSN per IRS Form W-9 instructions.</li>
+<li><strong>Real-Time IRS / SSA Validation &amp; Digital Substitute Form W-9 PDF Generator:</strong> All 9-digit Tax IDs are validated against official IRS EIN campus prefixes and SSA SSN rules (<code>validate_federal_tax_id</code>) before AES-256 Fernet encryption. Trade partners without a pre-signed W-9 PDF file on their phone may select <strong>Generate Digital W-9 Automatically</strong> (<code>w9_mode='digital'</code>), which captures IRS Part II certification under penalties of perjury (26 CFR &sect; 31.3406(h)-3) and generates a locked PDF 1.4 Substitute Form W-9 in PostgreSQL <code>"SubcontractorDocuments"</code>.</li>
+<li><strong>1-Click Receipt COI Upload &amp; Audited Backoffice TIN Reveal:</strong> Returning contractors in <code>Pending COI</code> status can upload their ACORD 25 Certificate of Insurance directly from the confirmation receipt card to advance immediately to <code>Docs Under Review</code>. Executive and Admin users can unmask encrypted TINs for 30 seconds via <code>POST /api/v1/workforce/subcontractors/&lt;id&gt;/reveal-tin</code> (logged as <code>CRITICAL</code> <code>SUBCONTRACTOR_TIN_REVEALED</code> in <code>"SecurityAuditLogs"</code>).</li>
+<li><strong>Authenticated Email &amp; 1-Tap SMS Onboarding Delivery (<code>BUG-166</code>):</strong> Outbound subcontractor portal invitations and receipts are signed with Cloudflare Microsoft 365 DKIM (<code>selector1</code> / <code>selector2</code>), BIMI (<code>default._bimi.hwbcleaning.com</code>), and DMARC quarantine enforcement (<code>p=quarantine</code>), use canonical <code>https://www.hwbcleaning.com</code> CTA buttons, and include a 1-tap SMS invite option in the backoffice.</li>
+</ul>
 <h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
 <li>Supplier On-Time Delivery (OTD) &gt;98%.</li>
 <li>Zero unverified chemicals found at client sites.</li>
+<li>100% of active 1099 subcontractor partners have an encrypted W-9 (uploaded or digitally generated Substitute W-9), executed Master Subcontractor Agreement, and Texas DWC-83 election on file.</li>
 </ul>
 <hr />
 <h2 id="60-revision-history">6.0 Revision History</h2>
@@ -96,6 +104,12 @@ graph TD
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">10/29/2026</td>
+<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Added Section 4.5 codifying the 8-Pillar 1099 Subcontractor Onboarding Dual-Mode Tax ID (EIN/SSN) &amp; Digital IRS Substitute Form W-9 Architecture (BUG-167) and the 6-Pillar Subcontractor Email Deliverability &amp; Anti-Phishing Standard (BUG-166). Approved by Humberto Dominguez, CEO.</td>
+</tr>
 <tr>
 <td style="text-align: left;">2.0.0</td>
 <td style="text-align: left;">05/21/2026</td>

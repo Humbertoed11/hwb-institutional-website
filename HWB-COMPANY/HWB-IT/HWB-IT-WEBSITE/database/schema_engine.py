@@ -378,6 +378,38 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 FOR EACH ROW
                 EXECUTE FUNCTION fn_normalize_usps_state_and_website();
 
+                -- BUG-159: 9-Pillar Enterprise Lead Notes & Touchpoint Architecture
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER;
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(120);
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS outcome VARCHAR(80);
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS edited_by_name VARCHAR(120);
+                ALTER TABLE "GlobalActivities" ADD COLUMN IF NOT EXISTS revision_history JSONB DEFAULT '[]'::jsonb;
+
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_by VARCHAR(120);
+                ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_revision_history JSONB DEFAULT '[]'::jsonb;
+
+                CREATE INDEX IF NOT EXISTS idx_global_activities_pinned
+                    ON "GlobalActivities" (parent_type, parent_id, is_pinned DESC, "timestamp" DESC);
+
+                DO $$
+                BEGIN
+                    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+                    CREATE INDEX IF NOT EXISTS idx_global_activities_desc_trgm
+                        ON "GlobalActivities" USING gin (description gin_trgm_ops);
+                EXCEPTION WHEN OTHERS THEN
+                    NULL;
+                END $$;
+
+                UPDATE "GlobalActivities" ga
+                SET created_by_name = COALESCE(NULLIF(BTRIM(l.last_contacted_by), ''), 'Humberto Dominguez')
+                FROM "Leads" l
+                WHERE ga.parent_type = 'Lead'
+                  AND ga.parent_id = l.id
+                  AND (ga.created_by_name IS NULL OR BTRIM(ga.created_by_name) = '');
+
                 -- WorkOrders Parity
                 CREATE TABLE IF NOT EXISTS "WorkOrders" (
                     work_order_id SERIAL PRIMARY KEY,
@@ -612,10 +644,10 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ON "SubcontractorPartners" (onboarding_token)
                 WHERE onboarding_token IS NOT NULL;
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_phone_digits
-                ON "SubcontractorPartners" ((REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')))
-                WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')) = 10;
+                ON "SubcontractorPartners" ((REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g')))
+                WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g')) = 10;
                 CREATE INDEX IF NOT EXISTS idx_jobapplicants_phone_digits
-                ON "JobApplicants" ((REGEXP_REPLACE(COALESCE(phone, ''), '\D', '', 'g')));
+                ON "JobApplicants" ((REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g')));
 
                 -- Employees Table Parity
                 CREATE TABLE IF NOT EXISTS "Employees" (
@@ -1253,6 +1285,35 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                             adb_conn.close()
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 050 sync skipped: {adb_err}", flush=True)
+
+            # Migration 051: ARCH-017 7-Pillar Enterprise Double-Entry Accounting, QuickBooks Replacement & Stripe Billing Engine
+            if "051_enterprise_accounting_and_stripe_billing_engine_arch_017" not in applied:
+                print("[MIGRATION] Applying 051_enterprise_accounting_and_stripe_billing_engine_arch_017...", flush=True)
+                ensure_enterprise_accounting_schema(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '051_enterprise_accounting_and_stripe_billing_engine_arch_017',
+                        'ARCH-017 7-Pillar Enterprise Double-Entry General Ledger, QuickBooks Replacement, Texas 8.25% Sales Tax, Stripe Billing, and Statutory Lien Waiver Engine'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("051_enterprise_accounting_and_stripe_billing_engine_arch_017")
+                print("[MIGRATION] 051_enterprise_accounting_and_stripe_billing_engine_arch_017 successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            ensure_enterprise_accounting_schema(adb_conn)
+                            print("[MIGRATION] 051 synchronized to sibling Azure database sigmajan-adb.", flush=True)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 051 sync skipped: {adb_err}", flush=True)
 
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
@@ -2537,6 +2598,229 @@ def sync_bug_141_142_error_ledgers(conn: Any) -> dict:
 
     conn.commit()
     return receipt
+
+
+def ensure_enterprise_accounting_schema(conn: Any) -> dict:
+    """
+    ARCH-017 7-Pillar Enterprise Double-Entry Accounting, QuickBooks Replacement & Stripe Billing Schema.
+    Creates and verifies:
+      1. "AccountingChartOfAccounts" (28-account Commercial Cleaning & Construction Chart of Accounts)
+      2. "AccountingJournalEntries" (Immutable Double-Entry Header with CHECK(total_debit_cents = total_credit_cents))
+      3. "AccountingJournalLines" (Double-Entry Debit & Credit Ledger Lines)
+      4. "ClientInvoices" (Recurring Janitorial, Construction Progress AIA G702/G703, Texas 8.25% Sales Tax & Stripe Links)
+      5. "VendorBills" (1099-NEC Subcontractor Payouts, Supplier Bills & 3-Way W-9/COI Compliance Lock)
+      6. "ExpenseReceipts" (Receipt Vault, Bank Expense Categorization & Per-Building Job Costing)
+    """
+    summary = {"tables_verified": 6, "accounts_seeded": 0}
+    with conn.cursor() as cur:
+        # 1. AccountingChartOfAccounts
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "AccountingChartOfAccounts" (
+                id SERIAL PRIMARY KEY,
+                account_code VARCHAR(20) UNIQUE NOT NULL,
+                account_name VARCHAR(180) NOT NULL,
+                account_type VARCHAR(40) NOT NULL,
+                normal_balance VARCHAR(10) NOT NULL DEFAULT 'Debit',
+                tax_line_mapping VARCHAR(120),
+                qbo_account_type VARCHAR(80),
+                description TEXT,
+                is_system_account BOOLEAN DEFAULT TRUE,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # 2. AccountingJournalEntries (Double-Entry Header)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "AccountingJournalEntries" (
+                id SERIAL PRIMARY KEY,
+                entry_number VARCHAR(40) UNIQUE NOT NULL,
+                entry_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                source_module VARCHAR(40) NOT NULL DEFAULT 'Manual',
+                source_id INTEGER,
+                reference_code VARCHAR(100),
+                memo TEXT NOT NULL,
+                total_debit_cents BIGINT NOT NULL DEFAULT 0,
+                total_credit_cents BIGINT NOT NULL DEFAULT 0,
+                status VARCHAR(25) NOT NULL DEFAULT 'Posted',
+                entry_sha256 VARCHAR(64),
+                created_by VARCHAR(100) DEFAULT 'Maria Bolanos (VP of Finance)',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT chk_journal_double_entry_balanced CHECK (total_debit_cents = total_credit_cents AND total_debit_cents >= 0)
+            );
+        """)
+
+        # 3. AccountingJournalLines (Double-Entry Legs)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "AccountingJournalLines" (
+                id SERIAL PRIMARY KEY,
+                journal_entry_id INTEGER NOT NULL REFERENCES "AccountingJournalEntries"(id) ON DELETE CASCADE,
+                account_code VARCHAR(20) NOT NULL,
+                account_name VARCHAR(180) NOT NULL,
+                debit_cents BIGINT NOT NULL DEFAULT 0,
+                credit_cents BIGINT NOT NULL DEFAULT 0,
+                customer_id INTEGER,
+                subcontractor_id INTEGER,
+                construction_bid_id INTEGER,
+                line_memo TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT chk_journal_line_non_negative CHECK (debit_cents >= 0 AND credit_cents >= 0)
+            );
+        """)
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_acc_journal_lines_entry ON "AccountingJournalLines" (journal_entry_id);')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_acc_journal_lines_account ON "AccountingJournalLines" (account_code);')
+
+        # 4. ClientInvoices (Stripe AR, Recurring Janitorial, GC Progress Billing & Texas 8.25% Tax)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "ClientInvoices" (
+                id SERIAL PRIMARY KEY,
+                invoice_number VARCHAR(40) UNIQUE NOT NULL,
+                customer_id INTEGER,
+                construction_bid_id INTEGER,
+                client_name VARCHAR(200) NOT NULL,
+                client_email VARCHAR(200),
+                facility_address TEXT,
+                billing_mode VARCHAR(50) NOT NULL DEFAULT 'Recurring Janitorial',
+                payment_terms VARCHAR(40) NOT NULL DEFAULT 'Net 15',
+                issue_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                due_date DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '15 days'),
+                line_items_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+                subtotal_cents BIGINT NOT NULL DEFAULT 0,
+                is_tax_exempt BOOLEAN NOT NULL DEFAULT FALSE,
+                tax_exempt_reason VARCHAR(120),
+                tax_exempt_cert_number VARCHAR(80),
+                tax_rate_pct NUMERIC(6,3) NOT NULL DEFAULT 8.250,
+                tax_cents BIGINT NOT NULL DEFAULT 0,
+                retainage_pct NUMERIC(5,2) NOT NULL DEFAULT 0.00,
+                retainage_cents BIGINT NOT NULL DEFAULT 0,
+                total_cents BIGINT NOT NULL DEFAULT 0,
+                amount_paid_cents BIGINT NOT NULL DEFAULT 0,
+                balance_due_cents BIGINT NOT NULL DEFAULT 0,
+                stripe_fee_cents BIGINT NOT NULL DEFAULT 0,
+                preferred_payment_method VARCHAR(30) DEFAULT 'us_bank_account',
+                stripe_invoice_id VARCHAR(120),
+                stripe_checkout_url TEXT,
+                payment_token VARCHAR(64) UNIQUE NOT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'Sent',
+                lien_waiver_status VARCHAR(60) DEFAULT 'Not Applicable',
+                paid_at TIMESTAMP,
+                notes TEXT,
+                journal_entry_id INTEGER,
+                created_by VARCHAR(100) DEFAULT 'Maria Bolanos',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_client_invoices_customer ON "ClientInvoices" (customer_id, status);')
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_client_invoices_due_date ON "ClientInvoices" (due_date, status);')
+
+        # 5. VendorBills (AP, 1099-NEC Subcontractors & 3-Way Compliance Lock)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "VendorBills" (
+                id SERIAL PRIMARY KEY,
+                bill_number VARCHAR(40) UNIQUE NOT NULL,
+                subcontractor_id INTEGER,
+                vendor_name VARCHAR(200) NOT NULL,
+                vendor_email VARCHAR(200),
+                vendor_tax_classification VARCHAR(40) DEFAULT '1099-NEC Subcontractor',
+                customer_id INTEGER,
+                construction_bid_id INTEGER,
+                job_site_name VARCHAR(200),
+                expense_account_code VARCHAR(20) NOT NULL DEFAULT '5100',
+                bill_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                due_date DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '15 days'),
+                gross_amount_cents BIGINT NOT NULL DEFAULT 0,
+                retainage_withheld_cents BIGINT NOT NULL DEFAULT 0,
+                net_payable_cents BIGINT NOT NULL DEFAULT 0,
+                w9_verified BOOLEAN NOT NULL DEFAULT FALSE,
+                coi_verified BOOLEAN NOT NULL DEFAULT FALSE,
+                compliance_lock_status VARCHAR(40) NOT NULL DEFAULT 'Cleared',
+                is_1099_eligible BOOLEAN NOT NULL DEFAULT TRUE,
+                status VARCHAR(30) NOT NULL DEFAULT 'Approved',
+                paid_at TIMESTAMP,
+                payment_reference VARCHAR(120),
+                journal_entry_id INTEGER,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_vendor_bills_subcontractor ON "VendorBills" (subcontractor_id, status);')
+
+        # 6. ExpenseReceipts (Receipt Vault & Per-Building Job Costing)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS "ExpenseReceipts" (
+                id SERIAL PRIMARY KEY,
+                receipt_number VARCHAR(40) UNIQUE NOT NULL,
+                expense_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                merchant_name VARCHAR(200) NOT NULL,
+                category_account_code VARCHAR(20) NOT NULL DEFAULT '5200',
+                category_name VARCHAR(160) NOT NULL DEFAULT 'Chemicals, Liners & Janitorial Supplies',
+                amount_cents BIGINT NOT NULL DEFAULT 0,
+                sales_tax_paid_cents BIGINT NOT NULL DEFAULT 0,
+                payment_method VARCHAR(50) DEFAULT 'Company Checking / Debit',
+                customer_id INTEGER,
+                construction_bid_id INTEGER,
+                job_site_name VARCHAR(200),
+                receipt_memo TEXT,
+                receipt_sha256 VARCHAR(64),
+                journal_entry_id INTEGER,
+                created_by VARCHAR(100) DEFAULT 'Maria Bolanos',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        cur.execute('CREATE INDEX IF NOT EXISTS idx_expense_receipts_date ON "ExpenseReceipts" (expense_date DESC);')
+
+        # 7. Seed Official 28-Account Commercial Cleaning & Construction Chart of Accounts (HWB-ACC-001)
+        default_coa = [
+            ("1000", "Operating Checking Account", "Asset", "Debit", "Balance Sheet - Cash", "Bank", "Primary commercial operating bank account for HWB Cleaning Services LLC"),
+            ("1050", "Stripe Merchant Clearing Account", "Asset", "Debit", "Balance Sheet - Cash", "Bank", "In-transit Stripe ACH and credit card settlements awaiting bank payout"),
+            ("1100", "Accounts Receivable (Client Invoices)", "Asset", "Debit", "Balance Sheet - AR", "Accounts Receivable (A/R)", "Unpaid recurring janitorial and commercial invoices billed to clients"),
+            ("1150", "Construction Retainage Receivable (10%)", "Asset", "Debit", "Balance Sheet - Retainage AR", "Other Current Assets", "10% statutory construction progress billing retainage held by General Contractors"),
+            ("1200", "Chemical & Consumable Supply Inventory", "Asset", "Debit", "Balance Sheet - Inventory", "Other Current Assets", "On-hand EPA hospital disinfectants, floor finish, microfibers, and liners"),
+            ("1500", "Commercial Cleaning & Floor Care Equipment", "Asset", "Debit", "Form 4562 Depreciation", "Fixed Assets", "Auto-scrubbers, burnishers, HEPA vacuums, and commercial fleet assets"),
+            ("2000", "Accounts Payable (Vendor & Subcontractor Bills)", "Liability", "Credit", "Balance Sheet - AP", "Accounts Payable (A/P)", "Approved unpaid bills owed to 1099 subcontractors and chemical suppliers"),
+            ("2050", "Subcontractor Retainage Payable", "Liability", "Credit", "Balance Sheet - Retainage AP", "Other Current Liabilities", "Retainage withheld on 1099 subcontractor post-construction work orders"),
+            ("2100", "Texas Sales & Use Tax Payable (8.25%)", "Liability", "Credit", "Texas Comptroller Form 01-114", "Other Current Liabilities", "Texas 6.25% State + 2.00% Local sales tax collected on non-residential real property cleaning"),
+            ("2200", "W-2 Payroll & Tax Liabilities", "Liability", "Credit", "IRS Form 941 / TWC", "Other Current Liabilities", "Accrued W-2 cleaner wages, federal withholding, FICA, and Texas unemployment"),
+            ("2300", "Unearned Client Retainers & Deposits", "Liability", "Credit", "Balance Sheet - Deferred Rev", "Other Current Liabilities", "Advance mobilization deposits received prior to service delivery"),
+            ("3000", "Member's Capital & Owner's Equity", "Equity", "Credit", "Schedule K-1 / Equity", "Equity", "HWB Cleaning Services LLC founder capital contributions"),
+            ("3100", "Retained Earnings", "Equity", "Credit", "Balance Sheet - Equity", "Retained Earnings", "Cumulative net earnings retained in the business"),
+            ("3200", "QuickBooks Historical Opening Balance Equity", "Equity", "Credit", "Balance Sheet - QBO Migration", "Equity", "Offsetting equity account for historical QuickBooks Online balance imports"),
+            ("4000", "Recurring Commercial Janitorial Revenue", "Revenue", "Credit", "Gross Receipts - Line 1a", "Income", "Monthly contracted janitorial cleaning for offices, daycares, schools, and clinics"),
+            ("4100", "Post-Construction Cleaning Revenue (Rough/Final/Fluff)", "Revenue", "Credit", "Gross Receipts - Line 1a", "Income", "3-Phase CSI Division 01 74 23 post-construction turnover and progress billing"),
+            ("4200", "Strip & Wax, VCT & Specialty Floor Care Revenue", "Revenue", "Credit", "Gross Receipts - Line 1a", "Income", "Hard floor strip and wax, machine scrubbing, carpet extraction, and window care"),
+            ("4300", "Restroom Consumables & Paper Supply Revenue", "Revenue", "Credit", "Gross Receipts - Line 1a", "Income", "Billable paper towels, soap, trash liners, and dispenser restocking"),
+            ("5000", "W-2 Cleaning Technician Direct Labor (COGS)", "COGS", "Debit", "COGS - Direct Labor", "Cost of Goods Sold", "Direct hourly and overtime wages paid to W-2 field cleaning crews"),
+            ("5100", "1099 Subcontractor Partner Payouts (COGS)", "COGS", "Debit", "COGS - Contract Labor (1099-NEC)", "Cost of Goods Sold", "Direct job payouts to vetted 1099 subcontractor partners (IRS Form 1099-NEC)"),
+            ("5200", "Chemicals, Trash Liners & Janitorial Supplies (COGS)", "COGS", "Debit", "COGS - Materials & Supplies", "Cost of Goods Sold", "EPA disinfectants, microfiber pads, trash liners, and floor care chemicals used on jobs"),
+            ("5300", "Equipment Rental & Job-Site Machinery (COGS)", "COGS", "Debit", "COGS - Equipment Rental", "Cost of Goods Sold", "Scissor lifts, pressure washers, and specialty construction cleanup equipment rentals"),
+            ("6100", "Stripe ACH & Card Merchant Processing Fees", "Expense", "Debit", "Deductions - Bank & Merchant Fees", "Expenses", "Stripe ACH (0.8% capped at $5) and credit card (2.9% + $0.30) payment processing fees"),
+            ("6200", "Commercial Insurance (GL, Workers Comp & Umbrella)", "Expense", "Debit", "Deductions - Insurance", "Expenses", "General Liability, Workers Compensation (DWC-83), Auto, and Surety Bond premiums"),
+            ("6300", "Fleet Fuel, Mileage & Vehicle Maintenance", "Expense", "Debit", "Deductions - Car & Truck", "Expenses", "Fuel, tolls, maintenance, and supervisor site-visit vehicle expenses"),
+            ("6400", "Cloud Hosting, Software & IT Infrastructure", "Expense", "Debit", "Deductions - Office & Software", "Expenses", "Microsoft Azure, Cloudflare, domains, and telecommunications infrastructure"),
+            ("6500", "Marketing, Print Flyers & B2B Lead Generation", "Expense", "Debit", "Deductions - Advertising", "Expenses", "Commercial marketing campaigns, capability statements, and trade associations"),
+            ("6600", "Legal, CPA Accounting & Professional Fees", "Expense", "Debit", "Deductions - Legal & Professional", "Expenses", "CPA tax preparation, legal counsel, and state licensing/certification fees"),
+        ]
+        for code, name, acct_type, norm_bal, tax_map, qbo_type, desc in default_coa:
+            cur.execute("""
+                INSERT INTO "AccountingChartOfAccounts" (
+                    account_code, account_name, account_type, normal_balance,
+                    tax_line_mapping, qbo_account_type, description, is_system_account, is_active
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, TRUE)
+                ON CONFLICT (account_code) DO UPDATE SET
+                    account_name = EXCLUDED.account_name,
+                    account_type = EXCLUDED.account_type,
+                    normal_balance = EXCLUDED.normal_balance,
+                    tax_line_mapping = EXCLUDED.tax_line_mapping,
+                    qbo_account_type = EXCLUDED.qbo_account_type,
+                    description = EXCLUDED.description;
+            """, (code, name, acct_type, norm_bal, tax_map, qbo_type, desc))
+            summary["accounts_seeded"] += 1
+
+    conn.commit()
+    return summary
+
 
 
 

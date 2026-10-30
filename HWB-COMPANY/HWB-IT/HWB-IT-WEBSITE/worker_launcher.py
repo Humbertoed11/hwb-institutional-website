@@ -29,6 +29,13 @@ def launch_agents():
                 if p.poll() is not None:
                     print(f"[WORKER] CRITICAL: Agent {AGENTS[i][1]} died. Restarting...", flush=True)
                     processes[i] = subprocess.Popen(AGENTS[i])
+            # 24/7 Dead-Man's Switch: Verify AIEmployeeHeartbeat liveness for telegram_listener.py
+            try:
+                from core.ai_employee import get_ai_employee
+                emp = get_ai_employee()
+                emp.record_heartbeat("hwb_worker_supervisor", {"supervised_agents": len(processes)})
+            except Exception:
+                pass
             time.sleep(10)
     except KeyboardInterrupt:
         print("[WORKER] Terminating Agent Suite...", flush=True)

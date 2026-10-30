@@ -394,6 +394,155 @@
         display: none !important;
     }
 }
+
+/* === Universal Dual Horizontal Scrollbar (Top Rail + Sticky Bottom Dock) Engine (BUG-168) === */
+.isc-table-wrap,
+.sigma-table-scroll-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: auto;
+    scrollbar-color: #64748b #f1f5f9;
+    position: relative;
+}
+.isc-table-wrap::-webkit-scrollbar,
+.sigma-table-scroll-wrap::-webkit-scrollbar,
+.sigma-top-scroll-track::-webkit-scrollbar,
+.sigma-sticky-bottom-track::-webkit-scrollbar {
+    height: 11px;
+}
+.isc-table-wrap::-webkit-scrollbar-track,
+.sigma-table-scroll-wrap::-webkit-scrollbar-track,
+.sigma-top-scroll-track::-webkit-scrollbar-track,
+.sigma-sticky-bottom-track::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 6px;
+}
+.isc-table-wrap::-webkit-scrollbar-thumb,
+.sigma-table-scroll-wrap::-webkit-scrollbar-thumb,
+.sigma-top-scroll-track::-webkit-scrollbar-thumb,
+.sigma-sticky-bottom-track::-webkit-scrollbar-thumb {
+    background: #64748b;
+    border-radius: 6px;
+    border: 2px solid #f1f5f9;
+}
+.isc-table-wrap::-webkit-scrollbar-thumb:hover,
+.sigma-table-scroll-wrap::-webkit-scrollbar-thumb:hover,
+.sigma-top-scroll-track::-webkit-scrollbar-thumb:hover,
+.sigma-sticky-bottom-track::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+}
+.sigma-table-scroll-wrap.has-right-overflow {
+    box-shadow: inset -12px 0 12px -10px rgba(15, 23, 42, 0.16);
+}
+.sigma-top-scroll-rail {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.35rem 0.65rem;
+    margin-bottom: 0.45rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+.sigma-top-scroll-rail.is-active {
+    display: flex;
+}
+.sigma-top-scroll-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+.sigma-top-scroll-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #1e40af;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+.sigma-top-scroll-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.sigma-scroll-step-btn {
+    height: 24px;
+    padding: 0 0.5rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.sigma-scroll-step-btn:hover:not(:disabled) {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+.sigma-scroll-step-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.sigma-top-scroll-track {
+    flex: 1 1 auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 12px;
+    min-width: 100px;
+    scrollbar-width: auto;
+    scrollbar-color: #64748b #e2e8f0;
+}
+.sigma-top-scroll-spacer {
+    height: 1px;
+}
+.sigma-sticky-bottom-scrollbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 940;
+    background: rgba(248, 250, 252, 0.96);
+    border-top: 1px solid #cbd5e1;
+    box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.08);
+    padding: 3px 8px;
+    box-sizing: border-box;
+    backdrop-filter: blur(4px);
+    display: none;
+}
+.sigma-sticky-bottom-scrollbar.is-visible {
+    display: block;
+}
+.sigma-sticky-bottom-track {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 13px;
+    scrollbar-width: auto;
+    scrollbar-color: #475569 #e2e8f0;
+}
+.sigma-sticky-bottom-spacer {
+    height: 1px;
+}
+@media (max-width: 768px) {
+    body.sigma-phone-card-mode .sigma-top-scroll-rail,
+    body.sigma-phone-card-mode .sigma-sticky-bottom-scrollbar {
+        display: none !important;
+    }
+}
 `;
 
     function injectUniversalStyles() {
@@ -453,9 +602,289 @@
         });
     }
 
+    let activeStickyWrap = null;
+    let stickyBottomBar = null;
+    let stickyBottomTrack = null;
+    let stickyBottomSpacer = null;
+    let isStickySyncing = false;
+    let sharedResizeObserver = null;
+
+    function ensureStickyBottomScrollbar() {
+        if (!document.body) return null;
+        if (stickyBottomBar && document.body.contains(stickyBottomBar)) return stickyBottomBar;
+
+        stickyBottomBar = document.getElementById('sigma-sticky-bottom-scrollbar');
+        if (!stickyBottomBar) {
+            stickyBottomBar = document.createElement('div');
+            stickyBottomBar.id = 'sigma-sticky-bottom-scrollbar';
+            stickyBottomBar.className = 'sigma-sticky-bottom-scrollbar';
+            stickyBottomBar.setAttribute('aria-label', 'Sticky bottom horizontal table scrollbar');
+            stickyBottomBar.innerHTML = `
+                <div class="sigma-sticky-bottom-track" title="Drag to scroll table columns left or right">
+                    <div class="sigma-sticky-bottom-spacer"></div>
+                </div>
+            `;
+            document.body.appendChild(stickyBottomBar);
+        }
+        stickyBottomTrack = stickyBottomBar.querySelector('.sigma-sticky-bottom-track');
+        stickyBottomSpacer = stickyBottomBar.querySelector('.sigma-sticky-bottom-spacer');
+
+        if (stickyBottomTrack && !stickyBottomTrack.dataset.boundScroll) {
+            stickyBottomTrack.dataset.boundScroll = 'true';
+            stickyBottomTrack.addEventListener('scroll', function () {
+                if (isStickySyncing || !activeStickyWrap) return;
+                isStickySyncing = true;
+                activeStickyWrap.scrollLeft = stickyBottomTrack.scrollLeft;
+                if (activeStickyWrap._sigmaTopTrack) {
+                    activeStickyWrap._sigmaTopTrack.scrollLeft = stickyBottomTrack.scrollLeft;
+                }
+                updateWrapEdgeCues(activeStickyWrap);
+                window.requestAnimationFrame(function () {
+                    isStickySyncing = false;
+                });
+            }, { passive: true });
+        }
+        return stickyBottomBar;
+    }
+
+    function updateWrapEdgeCues(wrap) {
+        if (!wrap) return;
+        const maxScroll = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+        const hasOverflow = maxScroll > 6;
+        const atStart = wrap.scrollLeft <= 2;
+        const atEnd = wrap.scrollLeft >= maxScroll - 3;
+
+        wrap.classList.toggle('has-right-overflow', hasOverflow && !atEnd);
+        wrap.classList.toggle('has-left-overflow', hasOverflow && !atStart);
+
+        const rail = wrap._sigmaTopRail;
+        if (rail) {
+            const btnStart = rail.querySelector('[data-dir="start"]');
+            const btnLeft = rail.querySelector('[data-dir="left"]');
+            const btnRight = rail.querySelector('[data-dir="right"]');
+            const btnEnd = rail.querySelector('[data-dir="end"]');
+            if (btnStart) btnStart.disabled = atStart;
+            if (btnLeft) btnLeft.disabled = atStart;
+            if (btnRight) btnRight.disabled = atEnd;
+            if (btnEnd) btnEnd.disabled = atEnd;
+        }
+    }
+
+    function syncSingleWrapMetrics(wrap) {
+        if (!wrap) return;
+        const maxScroll = Math.max(0, wrap.scrollWidth - wrap.clientWidth);
+        const hasOverflow = maxScroll > 6 && wrap.clientWidth > 0;
+        const rail = wrap._sigmaTopRail;
+        const topTrack = wrap._sigmaTopTrack;
+        const topSpacer = wrap._sigmaTopSpacer;
+
+        if (rail && topTrack && topSpacer) {
+            if (hasOverflow) {
+                rail.classList.add('is-active');
+                rail.style.display = '';
+                topSpacer.style.width = wrap.scrollWidth + 'px';
+                if (Math.abs(topTrack.scrollLeft - wrap.scrollLeft) > 1) {
+                    topTrack.scrollLeft = wrap.scrollLeft;
+                }
+            } else {
+                rail.classList.remove('is-active');
+                rail.style.display = 'none';
+            }
+        }
+        updateWrapEdgeCues(wrap);
+    }
+
+    function updateStickyBottomScrollbar() {
+        ensureStickyBottomScrollbar();
+        if (!stickyBottomBar || !stickyBottomTrack || !stickyBottomSpacer) return;
+
+        if (window.innerWidth <= 768 && document.body && document.body.classList.contains('sigma-phone-card-mode')) {
+            stickyBottomBar.classList.remove('is-visible');
+            activeStickyWrap = null;
+            return;
+        }
+
+        const wraps = document.querySelectorAll('.sigma-table-scroll-wrap, .isc-table-wrap');
+        let candidate = null;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+
+        for (let i = 0; i < wraps.length; i++) {
+            const w = wraps[i];
+            if (!w || w.offsetParent === null) continue;
+            const maxScroll = w.scrollWidth - w.clientWidth;
+            if (maxScroll <= 6) continue;
+
+            const rect = w.getBoundingClientRect();
+            if (rect.width < 120 || rect.height < 60) continue;
+
+            // Show sticky bottom bar when the table is in view but its native bottom scrollbar is below the viewport
+            if (rect.top < vh - 64 && rect.bottom > vh + 12) {
+                candidate = { wrap: w, rect: rect };
+                break;
+            }
+        }
+
+        if (!candidate) {
+            stickyBottomBar.classList.remove('is-visible');
+            activeStickyWrap = null;
+            return;
+        }
+
+        activeStickyWrap = candidate.wrap;
+        const leftPx = Math.max(0, Math.round(candidate.rect.left));
+        const widthPx = Math.max(120, Math.min(Math.round(candidate.rect.width), window.innerWidth - leftPx));
+
+        stickyBottomBar.style.left = leftPx + 'px';
+        stickyBottomBar.style.width = widthPx + 'px';
+        stickyBottomSpacer.style.width = activeStickyWrap.scrollWidth + 'px';
+        stickyBottomBar.classList.add('is-visible');
+
+        if (!isStickySyncing && Math.abs(stickyBottomTrack.scrollLeft - activeStickyWrap.scrollLeft) > 1) {
+            isStickySyncing = true;
+            stickyBottomTrack.scrollLeft = activeStickyWrap.scrollLeft;
+            window.requestAnimationFrame(function () {
+                isStickySyncing = false;
+            });
+        }
+    }
+
+    function refreshAllScrollbars() {
+        document.querySelectorAll('.sigma-table-scroll-wrap, .isc-table-wrap').forEach(syncSingleWrapMetrics);
+        updateStickyBottomScrollbar();
+    }
+
+    function resolveTableScrollWrap(table) {
+        const parent = table.parentElement;
+        if (!parent) return null;
+        if (parent.matches('.isc-table-wrap, .sigma-table-scroll-wrap, .table-responsive')) {
+            parent.classList.add('sigma-table-scroll-wrap');
+            return parent;
+        }
+        const parentStyle = (parent.getAttribute('style') || '').toLowerCase();
+        if (parentStyle.includes('overflow-x')) {
+            parent.classList.add('sigma-table-scroll-wrap');
+            return parent;
+        }
+        // If parent has only the table (or table + mode bar), mark parent directly; otherwise wrap table cleanly
+        const nonMetaChildren = Array.from(parent.children).filter(
+            ch => !ch.classList.contains('sigma-table-mode-bar') && !ch.classList.contains('sigma-top-scroll-rail')
+        );
+        if (nonMetaChildren.length === 1 && nonMetaChildren[0] === table) {
+            parent.classList.add('sigma-table-scroll-wrap');
+            return parent;
+        }
+        const wrapper = document.createElement('div');
+        wrapper.className = 'sigma-table-scroll-wrap';
+        parent.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+        return wrapper;
+    }
+
+    function bindDualTableScrollbars(table, wrap) {
+        if (!wrap) return;
+        if (wrap.dataset.sigmaScrollBound === 'true') {
+            syncSingleWrapMetrics(wrap);
+            return;
+        }
+        wrap.dataset.sigmaScrollBound = 'true';
+
+        if (wrap.parentElement && !wrap.previousElementSibling?.classList?.contains('sigma-top-scroll-rail')) {
+            const rail = document.createElement('div');
+            rail.className = 'sigma-top-scroll-rail';
+            rail.setAttribute('aria-label', 'Horizontal column scroll controls');
+            rail.innerHTML = `
+                <div class="sigma-top-scroll-meta">
+                    <span class="sigma-top-scroll-badge" title="More columns extend to the right — drag scrollbar, click arrows, or hold Shift + Mouse Wheel"><i class="fas fa-arrows-alt-h"></i> Scroll Columns</span>
+                    <div class="sigma-top-scroll-btns">
+                        <button type="button" class="sigma-scroll-step-btn" data-dir="start" title="Jump to leftmost column">⏮</button>
+                        <button type="button" class="sigma-scroll-step-btn" data-dir="left" title="Scroll columns left">◀ Left</button>
+                        <button type="button" class="sigma-scroll-step-btn" data-dir="right" title="Scroll columns right">Right ▶</button>
+                        <button type="button" class="sigma-scroll-step-btn" data-dir="end" title="Jump to rightmost column">⏭</button>
+                    </div>
+                </div>
+                <div class="sigma-top-scroll-track" title="Drag to scroll columns left or right">
+                    <div class="sigma-top-scroll-spacer"></div>
+                </div>
+            `;
+            wrap.parentElement.insertBefore(rail, wrap);
+
+            const topTrack = rail.querySelector('.sigma-top-scroll-track');
+            const topSpacer = rail.querySelector('.sigma-top-scroll-spacer');
+            wrap._sigmaTopRail = rail;
+            wrap._sigmaTopTrack = topTrack;
+            wrap._sigmaTopSpacer = topSpacer;
+
+            let isLocalSyncing = false;
+            topTrack.addEventListener('scroll', function () {
+                if (isLocalSyncing) return;
+                isLocalSyncing = true;
+                wrap.scrollLeft = topTrack.scrollLeft;
+                if (activeStickyWrap === wrap && stickyBottomTrack) {
+                    stickyBottomTrack.scrollLeft = topTrack.scrollLeft;
+                }
+                updateWrapEdgeCues(wrap);
+                window.requestAnimationFrame(function () {
+                    isLocalSyncing = false;
+                });
+            }, { passive: true });
+
+            wrap.addEventListener('scroll', function () {
+                if (!isLocalSyncing && topTrack) {
+                    isLocalSyncing = true;
+                    topTrack.scrollLeft = wrap.scrollLeft;
+                    window.requestAnimationFrame(function () {
+                        isLocalSyncing = false;
+                    });
+                }
+                if (!isStickySyncing && activeStickyWrap === wrap && stickyBottomTrack) {
+                    isStickySyncing = true;
+                    stickyBottomTrack.scrollLeft = wrap.scrollLeft;
+                    window.requestAnimationFrame(function () {
+                        isStickySyncing = false;
+                    });
+                }
+                updateWrapEdgeCues(wrap);
+            }, { passive: true });
+
+            rail.querySelectorAll('.sigma-scroll-step-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const dir = this.getAttribute('data-dir');
+                    const step = Math.max(260, Math.round(wrap.clientWidth * 0.55));
+                    if (dir === 'start') {
+                        wrap.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else if (dir === 'end') {
+                        wrap.scrollTo({ left: wrap.scrollWidth, behavior: 'smooth' });
+                    } else if (dir === 'left') {
+                        wrap.scrollBy({ left: -step, behavior: 'smooth' });
+                    } else if (dir === 'right') {
+                        wrap.scrollBy({ left: step, behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+
+        if (window.ResizeObserver) {
+            if (!sharedResizeObserver) {
+                let roRaf = null;
+                sharedResizeObserver = new ResizeObserver(function () {
+                    if (!roRaf) {
+                        roRaf = window.requestAnimationFrame(function () {
+                            roRaf = null;
+                            refreshAllScrollbars();
+                        });
+                    }
+                });
+            }
+            sharedResizeObserver.observe(wrap);
+            sharedResizeObserver.observe(table);
+        }
+
+        syncSingleWrapMetrics(wrap);
+    }
+
     /**
      * Hydrates a single <table> with data-label attributes, responsive scroll wrapper,
-     * and the mobile [Cards | Table] switcher bar.
+     * dual horizontal scrollbars (top rail + sticky bottom dock), and the mobile [Cards | Table] switcher bar.
      */
     function hydrateTable(table) {
         if (!table || !(table instanceof HTMLTableElement)) return;
@@ -468,18 +897,12 @@
 
         table.setAttribute('data-sigma-responsive', 'true');
 
-        // Ensure table is wrapped in a touch-scrollable container for tablet & table-mode use
-        const parent = table.parentElement;
-        if (parent && !parent.matches('.isc-table-wrap, .sigma-table-scroll-wrap, .table-responsive')) {
-            const parentStyle = (parent.getAttribute('style') || '').toLowerCase();
-            if (!parentStyle.includes('overflow-x')) {
-                parent.classList.add('sigma-table-scroll-wrap');
-            }
-        }
+        // Ensure table is wrapped in a scrollable container across desktop, tablet, and mobile
+        const wrap = resolveTableScrollWrap(table) || table;
 
         // Inject [Cards | Table] mode switcher bar above primary data tables
-        const wrap = table.closest('.isc-table-wrap, .sigma-table-scroll-wrap') || table;
-        if (wrap && wrap.parentElement && !wrap.previousElementSibling?.classList?.contains('sigma-table-mode-bar')) {
+        const anchorEl = wrap._sigmaTopRail || wrap;
+        if (anchorEl && anchorEl.parentElement && !anchorEl.previousElementSibling?.classList?.contains('sigma-table-mode-bar') && !wrap.previousElementSibling?.classList?.contains('sigma-table-mode-bar')) {
             const currentMode = getSavedTableMode();
             const bar = document.createElement('div');
             bar.className = 'sigma-table-mode-bar';
@@ -499,7 +922,12 @@
                     setTableMode(this.dataset.mode);
                 });
             });
-            wrap.parentElement.insertBefore(bar, wrap);
+            anchorEl.parentElement.insertBefore(bar, anchorEl);
+        }
+
+        // Bind Top Synced Horizontal Scroll Rail + Sticky Bottom Viewport Scrollbar (BUG-168)
+        if (wrap !== table) {
+            bindDualTableScrollbars(table, wrap);
         }
 
         // Extract column header labels from <thead>
@@ -559,6 +987,34 @@
     function hydrateAllTables(root) {
         const scope = root && root.querySelectorAll ? root : document;
         scope.querySelectorAll('table').forEach(hydrateTable);
+        refreshAllScrollbars();
+    }
+
+    function initGlobalScrollAndResizeListeners() {
+        let scrollRaf = null;
+        window.addEventListener('scroll', function () {
+            if (!scrollRaf) {
+                scrollRaf = window.requestAnimationFrame(function () {
+                    scrollRaf = null;
+                    updateStickyBottomScrollbar();
+                });
+            }
+        }, { passive: true });
+
+        window.addEventListener('resize', function () {
+            if (!scrollRaf) {
+                scrollRaf = window.requestAnimationFrame(function () {
+                    scrollRaf = null;
+                    refreshAllScrollbars();
+                });
+            }
+        }, { passive: true });
+
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.closest && e.target.closest('.sigma-split-tab, .sigma-nav-btn, [onclick*="switchView"], [onclick*="setLeadPreset"], [onclick*="applyColumns"]')) {
+                window.setTimeout(refreshAllScrollbars, 60);
+            }
+        }, true);
     }
 
     /**
@@ -637,11 +1093,13 @@
 
     function init() {
         injectUniversalStyles();
+        ensureStickyBottomScrollbar();
         applyTableModeClass(getSavedTableMode());
         hydrateResponsiveGrids(document);
         hydrateAllTables(document);
         initQmsManualDrawer();
         centerActiveNavTab();
+        initGlobalScrollAndResizeListeners();
         initMutationObserver();
     }
 
@@ -655,6 +1113,7 @@
         hydrateAllTables: hydrateAllTables,
         hydrateTable: hydrateTable,
         hydrateResponsiveGrids: hydrateResponsiveGrids,
-        setTableMode: setTableMode
+        setTableMode: setTableMode,
+        refreshAllScrollbars: refreshAllScrollbars
     };
 })();

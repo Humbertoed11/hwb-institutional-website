@@ -142,6 +142,12 @@ MODULE_REGISTRY = {
         "sop_reference": "HWB-QMS-8.2",
         "icon": "fas fa-handshake"
     },
+    "accounting": {
+        "title": "Finance",
+        "action_phrase": "Send client bills, accept online payments, track job expenses, and download tax reports.",
+        "sop_reference": "HWB-ACC-001",
+        "icon": "fas fa-file-invoice-dollar"
+    },
     "construction_bids": {
         "title": "Construction",
         "action_phrase": "Check building floor plans, measure room sizes, calculate job costs, and create price quotes.",

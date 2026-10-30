@@ -135,7 +135,7 @@ def send_lead_email_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
     if personal_inbox and personal_inbox not in recipients:
         recipients.append(personal_inbox)
 
-    subject = f"🔥 ACTION REQUIRED: New Lead Ingested - {company} ({facility_type})"
+    subject = f"HWB Cleaning Services — New Lead Ingested: {company} ({facility_type})"
 
     body_html = f"""
     <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 620px; margin: 0 auto; color: #0f172a;">
@@ -399,14 +399,14 @@ def send_applicant_email_alert(applicant_data: Dict[str, Any]) -> Tuple[bool, st
         recipients.append(personal_inbox)
 
     if is_sales:
-        subject = f"💼 ACTION REQUIRED: New Sales & Revenue Applicant - {full_name} ({desired_role})"
+        subject = f"HWB Cleaning Services — New Sales & Revenue Applicant: {full_name} ({desired_role})"
         badge_label = "Sales & Growth Team"
         badge_bg = "#eff6ff"
         badge_color = "#1e40af"
         header_color = "#2563eb"
         title_header = "Commercial Sales Candidate Details"
     else:
-        subject = f"🔥 ACTION REQUIRED: New Technician Applicant - {full_name} ({desired_role})"
+        subject = f"HWB Cleaning Services — New Technician Applicant: {full_name} ({desired_role})"
         badge_label = "W-2 Candidate"
         badge_bg = "#d1fae5"
         badge_color = "#065f46"
@@ -701,7 +701,7 @@ def send_subcontractor_email_alert(partner_data: Dict[str, Any]) -> Tuple[bool, 
     if personal_inbox and personal_inbox not in recipients:
         recipients.append(personal_inbox)
 
-    subject = f"🤝 ACTION REQUIRED: New 1099 Subcontractor Crew - {company_name} ({crew_size} Cleaners)"
+    subject = f"HWB Cleaning Services — New 1099 Trade Partner Registration: {company_name} ({crew_size} Cleaners)"
 
     body_html = f"""
     <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 620px; margin: 0 auto; color: #0f172a;">
@@ -787,10 +787,59 @@ def send_subcontractor_email_alert(partner_data: Dict[str, Any]) -> Tuple[bool, 
     return transmit_email(recipients, subject, body_html)
 
 
+def build_canonical_portal_url(url_or_path: str, fallback_path: str = "/work-with-us") -> str:
+    """
+    Guarantees every outbound partner/applicant/client portal URL uses canonical
+    https://www.hwbcleaning.com (never http://, 127.0.0.1, localhost, or mop.test).
+    """
+    import re
+    raw = str(url_or_path or "").strip()
+    if not raw:
+        raw = fallback_path
+    if raw.startswith("/"):
+        return f"https://www.hwbcleaning.com{raw}"
+    m = re.match(r'^https?://[^/]+(/.*)$', raw, re.I)
+    if m:
+        return f"https://www.hwbcleaning.com{m.group(1)}"
+    return f"https://www.hwbcleaning.com/{raw.lstrip('/')}"
+
+
+def build_subcontractor_sms_invite(partner_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Builds a 1-tap SMS / text message invite and sms: URI for 1099 Trade Partner onboarding.
+    """
+    company_name = partner_data.get("company_name") or "Trade Partner"
+    contact_name = partner_data.get("contact_name") or "Partner"
+    partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
+    ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
+    onboarding_url = build_canonical_portal_url(partner_data.get("onboarding_url"), "/work-with-us")
+    raw_phone = str(partner_data.get("phone") or "")
+    digits = "".join(ch for ch in raw_phone if ch.isdigit())
+    if len(digits) == 10:
+        e164 = f"+1{digits}"
+    elif len(digits) == 11 and digits.startswith("1"):
+        e164 = f"+{digits}"
+    else:
+        e164 = digits
+
+    sms_body = (
+        f"Hello {contact_name}, this is HWB Cleaning Services LLC in Dallas. "
+        f"Your trade partner profile for {company_name} ({ref_code}) is ready. "
+        f"Use your pre-filled portal link to review your agreement and insurance profile: {onboarding_url}"
+    )
+    from urllib.parse import quote
+    sms_uri = f"sms:{e164}?body={quote(sms_body)}" if e164 else f"sms:?body={quote(sms_body)}"
+    return {
+        "sms_body": sms_body,
+        "sms_uri": sms_uri,
+        "canonical_url": onboarding_url,
+    }
+
+
 def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
     """
     Sends an automated confirmation receipt directly to the subcontractor's inbox
-    with their Partner Reference ID and W-9 / COI submission instructions.
+    with their Partner Reference ID and trade partner portal overview.
     """
     email = clean_email(partner_data.get("email"))
     if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
@@ -807,75 +856,75 @@ def send_subcontractor_receipt_email(partner_data: Dict[str, Any], is_repeat: bo
     ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
 
     if is_repeat:
-        subject = f"HWB Cleaning Services — Subcontractor Profile Already Registered & Updated ({ref_code})"
-        banner_title = "Existing Partner Profile Recognized & Updated"
+        subject = f"HWB Cleaning Services — Trade Partner Profile Updated for {company_name} ({ref_code})"
+        banner_title = "Trade Partner Profile Updated"
         intro_text = (
-            f"Your company (<strong>{company_name}</strong>) is already registered in the "
-            f"HWB Cleaning Services Subcontractor Partner Network as of <strong>{registered_date}</strong> "
-            f"(Partner Reference <strong>{ref_code}</strong>). Instead of creating a duplicate entry, "
-            "we have merged your latest crew capacity and specialty selections into your active partner record."
+            f"Your company (<strong>{company_name}</strong>) is already on file in the "
+            f"HWB Cleaning Services Trade Partner Network as of <strong>{registered_date}</strong> "
+            f"(Reference <strong>{ref_code}</strong>). We have updated your active partner profile "
+            "with your latest crew size and service specialties."
         )
     else:
-        subject = f"HWB Cleaning Services — Subcontractor Partner Registration Confirmed ({ref_code})"
-        banner_title = "Subcontractor Partner Registration Confirmed"
+        subject = f"HWB Cleaning Services — Trade Partner Registration Confirmed for {company_name} ({ref_code})"
+        banner_title = "Trade Partner Registration Confirmed"
         intro_text = (
             f"Thank you for registering <strong>{company_name}</strong> with the "
-            f"<strong>HWB Cleaning Services LLC</strong> Subcontractor Partner Network. "
+            f"<strong>HWB Cleaning Services LLC</strong> Trade Partner Network. "
             f"Your business is now on file under Partner Reference <strong>{ref_code}</strong>."
         )
 
     body_html = f"""
-    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
-        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;">
-            <div style="font-weight: 900; font-size: 20px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
-            <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 4px;">{banner_title} • {ref_code}</div>
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 28px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px;">
+            <div style="font-weight: 800; font-size: 19px; color: #0f172a;">HWB Cleaning Services LLC</div>
+            <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 4px;">{banner_title} &bull; {ref_code}</div>
         </div>
-        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
             <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
             <p>{intro_text}</p>
-            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0; background-color: #f8fafc; border-radius: 8px;">
                 <tr>
-                    <td style="padding: 6px 0; color: #64748b; width: 42%; font-weight: 600;">Partner Reference ID:</td>
-                    <td style="padding: 6px 0; color: #2563eb; font-weight: 800;">{ref_code}</td>
+                    <td style="padding: 8px 12px; color: #64748b; width: 42%; font-weight: 600;">Partner Reference ID:</td>
+                    <td style="padding: 8px 12px; color: #2563eb; font-weight: 800;">{ref_code}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Company Name:</td>
-                    <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">{company_name}</td>
+                    <td style="padding: 8px 12px; color: #64748b; font-weight: 600;">Company Name:</td>
+                    <td style="padding: 8px 12px; color: #0f172a; font-weight: 700;">{company_name}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Base City & Crew Size:</td>
-                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">{city}, TX • {crew_size} Crew Members</td>
+                    <td style="padding: 8px 12px; color: #64748b; font-weight: 600;">Base City &amp; Crew Size:</td>
+                    <td style="padding: 8px 12px; color: #0f172a; font-weight: 600;">{city}, TX &bull; {crew_size} Crew Members</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Trade Specialties:</td>
-                    <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">{specialties}</td>
+                    <td style="padding: 8px 12px; color: #64748b; font-weight: 600;">Trade Specialties:</td>
+                    <td style="padding: 8px 12px; color: #0f172a; font-weight: 600;">{specialties}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Roster Status:</td>
-                    <td style="padding: 6px 0; color: #16a34a; font-weight: 700;">{partner_status}</td>
+                    <td style="padding: 8px 12px; color: #64748b; font-weight: 600;">Roster Status:</td>
+                    <td style="padding: 8px 12px; color: #16a34a; font-weight: 700;">{partner_status}</td>
                 </tr>
             </table>
             <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 12px 16px; border-radius: 4px; margin-top: 16px;">
-                <strong style="color: #0f172a;">What to Expect Next (4-Step Compliance Workflow):</strong><br>
-                <span style="font-size: 12px; font-weight: 700; color: #1e40af;">1. Registered ✓ &rarr; 2. Profile Review &rarr; 3. W-9, COI &amp; MSA File &rarr; 4. On-File Roster Eligibility</span><br>
-                If your crew profile matches our regional trade needs, our operations team will email your pre-filled <strong>1099 Partner Onboarding Link</strong> where you can upload your <strong>Form W-9</strong> and <strong>Certificate of Insurance (COI)</strong> and e-sign your Master Subcontractor Agreement.
+                <strong style="color: #0f172a;">What to Expect Next (4-Step Partner Workflow):</strong><br>
+                <span style="font-size: 12px; font-weight: 700; color: #1e40af;">1. Registered &#10003; &rarr; 2. Profile Review &rarr; 3. Business &amp; Insurance File &rarr; 4. On-File Roster Eligibility</span><br>
+                When your crew profile matches our regional trade needs, our operations desk will send your pre-filled <strong>Trade Partner Onboarding Portal</strong> link so you can verify your business address, upload your <strong>Certificate of Insurance (COI)</strong>, and e-sign your Master Subcontractor Agreement.
             </div>
             <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #64748b; padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 12px; color: #475569; line-height: 1.5;">
                 <strong style="color: #0f172a;">Important Notice — No Guarantee of Work or Project Award:</strong> This receipt confirms registration of your company profile only. Registration or compliance onboarding does <strong>not</strong> guarantee immediate or future project assignments, minimum billable hours, or contract awards. Subcontracts are offered strictly on an as-needed, project-by-project basis if and when matching work becomes available.
             </div>
-        </div>
-        <div style="font-size: 12px; color: #64748b; text-align: center;">
-            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">
+                Questions? Simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.
+            </p>
         </div>
     </div>
     """
-    return transmit_email([email], subject, body_html)
+    return transmit_email([email], subject, body_html, attach_signature=True, stream_type="transactional")
 
 
 def send_subcontractor_onboarding_invite_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
     """
-    Sends the pre-filled 1099 Subcontractor Onboarding Portal link (/onboard/subcontractor/<token>)
-    after initial registration review (either manual executive sign-off or automated gate).
+    Sends the pre-filled Trade Partner Onboarding Portal link (/onboard/subcontractor/<token>)
+    after initial registration review using Fortune 500 anti-phishing deliverability standards.
     """
     email = clean_email(partner_data.get("email"))
     if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
@@ -885,52 +934,47 @@ def send_subcontractor_onboarding_invite_email(partner_data: Dict[str, Any]) -> 
     contact_name = partner_data.get("contact_name") or "Partner"
     partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
     ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
-    onboarding_url = partner_data.get("onboarding_url") or ""
+    onboarding_url = build_canonical_portal_url(partner_data.get("onboarding_url"), "/work-with-us")
     review_mode = partner_data.get("review_mode") or "Operations Review"
 
-    subject = f"ACTION REQUIRED: Complete Your Pre-Filled 1099 Partner Onboarding ({ref_code}) — HWB Cleaning Services"
+    subject = f"HWB Cleaning Services — Trade Partner Onboarding Portal for {company_name} ({ref_code})"
     body_html = f"""
-    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 30px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 620px; margin: 0 auto; color: #0f172a;">
-        <div style="border-bottom: 3px solid #7c3aed; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div style="font-weight: 900; font-size: 20px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
-                <div style="font-size: 12px; color: #7c3aed; font-weight: 700; margin-top: 4px;">1099 Subcontractor Onboarding Portal • {ref_code}</div>
-            </div>
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 28px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px;">
+            <div style="font-weight: 800; font-size: 19px; color: #0f172a;">HWB Cleaning Services LLC</div>
+            <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 4px;">Trade Partner Onboarding Portal &bull; {ref_code}</div>
         </div>
-        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; line-height: 1.6;">
+        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
             <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
             <p>
-                Your initial subcontractor registration for <strong>{company_name}</strong> (<strong>{ref_code}</strong>) has passed our initial review ({review_mode}).
+                Thank you for registering <strong>{company_name}</strong> (Partner Reference <strong>{ref_code}</strong>) with HWB Cleaning Services LLC. Your initial crew profile has been reviewed ({review_mode}).
             </p>
             <p>
-                We have prepared your <strong>pre-filled 1099 Onboarding Portal</strong>. All of your initial registration details are already filled in for you:
+                Your <strong>pre-filled Trade Partner Onboarding Portal</strong> is ready. All of the contact and crew details you already shared are pre-loaded for you:
             </p>
             <ul style="color: #334155; padding-left: 20px; margin: 14px 0;">
-                <li><strong>Step 1 — Upload Your Form W-9:</strong> Our system automatically reads your W-9 to fill in your street address, ZIP code, tax classification, and EIN/SSN.</li>
-                <li><strong>Step 2 — Certificate of Insurance (COI):</strong> Upload your COI now, or submit your W-9 and signed agreement first while we hold your profile at <em>Pending COI</em> until your insurance agent sends it.</li>
-                <li><strong>Step 3 — 1-Click Digital Signature:</strong> Review and e-sign your pre-filled Master Subcontractor Agreement (MSA) and Texas DWC-83 Independent Contractor Affirmation.</li>
+                <li><strong>Step 1 — Business Profile &amp; Registration Form:</strong> Upload your standard business registration document so our portal can automatically fill in your business street address and entity classification.</li>
+                <li><strong>Step 2 — Certificate of Insurance (COI):</strong> Upload your current COI PDF now, or complete Steps 1 and 3 first while your profile stays at <em>Pending COI</em> until your insurance agent sends it.</li>
+                <li><strong>Step 3 — Digital Partner Agreement:</strong> Review and e-sign your pre-filled Master Subcontractor Agreement (MSA) and Texas DWC-83 Independent Contractor Affirmation.</li>
             </ul>
             <div style="text-align: center; margin: 26px 0;">
-                <a href="{onboarding_url}" style="display: inline-block; background-color: #7c3aed; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: 800; font-size: 15px; text-decoration: none;">
-                    Open Pre-Filled 1099 Onboarding Portal &rarr;
+                <a href="{onboarding_url}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none;">
+                    Open Partner Onboarding Portal &rarr;
                 </a>
             </div>
-            <div style="font-size: 12px; color: #64748b; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                Direct Link: <a href="{onboarding_url}" style="color: #2563eb; word-break: break-all;">{onboarding_url}</a>
-            </div>
-        </div>
-        <div style="font-size: 12px; color: #64748b; text-align: center;">
-            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">
+                If you have any questions while completing your partner file, simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.
+            </p>
         </div>
     </div>
     """
-    return transmit_email([email], subject, body_html)
+    return transmit_email([email], subject, body_html, attach_signature=True, stream_type="transactional")
 
 
 def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Notifies executive leadership (Telegram + Email) and sends a receipt to the subcontractor
-    when they submit their W-9, signed MSA/DWC-83, and/or COI via the self-service portal.
+    when they submit their onboarding documents via the self-service portal.
     """
     results: Dict[str, Any] = {}
     company_name = partner_data.get("company_name") or "Trade Partner"
@@ -973,52 +1017,52 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
 
     # 2. Internal Executive Email Alert
     recipients = ["hdominguez@hwbcleaning.com", "sales@hwbcleaning.com"]
-    exec_subject = f"✅ 1099 Onboarding Submitted: {company_name} ({ref_code}) — {onboarding_status}"
+    exec_subject = f"✅ Trade Partner Onboarding Submitted: {company_name} ({ref_code}) — {onboarding_status}"
     exec_html = f"""
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
-        <h2 style="margin-top: 0; color: #0f172a;">1099 Onboarding Packet Submitted ({ref_code})</h2>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+        <h2 style="margin-top: 0; color: #0f172a;">Trade Partner Onboarding Packet Submitted ({ref_code})</h2>
         <p style="color: #334155; font-size: 14px;">
             <strong>{company_name}</strong> has completed the self-service onboarding portal:
         </p>
         <ul style="font-size: 14px; color: #0f172a; line-height: 1.6;">
-            <li><strong>W-9 Form:</strong> Uploaded &amp; Extracted ({tax_class})</li>
+            <li><strong>Business Registration Form:</strong> Uploaded &amp; Extracted ({tax_class})</li>
             <li><strong>Business Address:</strong> {street}, {city}, {state} {zip_code}</li>
             <li><strong>Master Subcontractor Agreement &amp; TX DWC-83:</strong> E-Signed by {signer_name}</li>
             <li><strong>COI Insurance Status:</strong> {coi_status}</li>
             <li><strong>Current Onboarding Status:</strong> {onboarding_status}</li>
         </ul>
         <div style="margin-top: 20px;">
-            <a href="https://hwbcleaning.com/admin/operations?view=workforce" style="display: inline-block; background: #059669; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px;">
+            <a href="https://www.hwbcleaning.com/admin/operations?view=workforce" style="display: inline-block; background: #059669; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px;">
                 Review &amp; Activate in Subcontractors Vault
             </a>
         </div>
     </div>
     """
-    em_ok, em_detail = transmit_email(recipients, exec_subject, exec_html)
+    em_ok, em_detail = transmit_email(recipients, exec_subject, exec_html, stream_type="transactional")
     results["executive_email"] = {"success": em_ok, "detail": em_detail}
 
     # 3. Partner Receipt Email
     partner_email = clean_email(partner_data.get("email"))
     if partner_email and not partner_email.endswith((".test", ".local", ".invalid", "@example.com")):
         coi_note = (
-            "Your W-9, Certificate of Insurance (COI), and signed Master Subcontractor Agreement have been recorded and are under compliance review for on-file roster eligibility."
+            "Your business registration form, Certificate of Insurance (COI), and signed Master Subcontractor Agreement have been recorded and are under compliance review for on-file roster eligibility."
             if "Pending" not in coi_status
-            else "Your W-9 and signed Master Subcontractor Agreement have been saved! Because your COI file was not uploaded yet, your profile is held at <strong>Pending COI</strong>. You can use your same onboarding link anytime to upload your COI once received from your insurance agent."
+            else "Your business registration form and signed Master Subcontractor Agreement have been saved! Because your COI file was not uploaded yet, your profile is held at <strong>Pending COI</strong>. You can use your same partner portal link anytime to upload your COI once received from your insurance agent."
         )
-        p_sub = f"HWB Cleaning Services — 1099 Onboarding Documents Received ({ref_code})"
+        p_sub = f"HWB Cleaning Services — Trade Partner Documents Received for {company_name} ({ref_code})"
         p_html = f"""
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
-            <h2 style="margin-top: 0; color: #0f172a;">1099 Onboarding Packet Received ({ref_code})</h2>
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+            <h2 style="margin-top: 0; color: #0f172a;">Trade Partner Packet Received ({ref_code})</h2>
             <p style="font-size: 14px; color: #334155;">Hello <strong>{contact_name}</strong>,</p>
             <p style="font-size: 14px; color: #334155; line-height: 1.6;">{coi_note}</p>
-            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: #334155; line-height: 1.5;">
-                <strong>What to Expect Next:</strong> <code>1. Registered ✓ &rarr; 2. W-9 &amp; MSA Signed ✓ &rarr; 3. COI Verification &rarr; 4. On-File Roster Eligibility</code><br><br>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: #334155; line-height: 1.5;">
+                <strong>What to Expect Next:</strong> <code>1. Registered &#10003; &rarr; 2. Agreement Signed &#10003; &rarr; 3. COI Verification &rarr; 4. On-File Roster Eligibility</code><br><br>
                 <strong>Important Notice — No Promise or Guarantee of Work:</strong> This receipt is solely an acknowledgment that your compliance documents have been received. Completion of onboarding or placement on our subcontractor roster does <strong>not</strong> guarantee immediate work, future project assignments, minimum billable hours, or any subcontract award. All work is offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
             </div>
-            <p style="font-size: 12px; color: #64748b; margin-top: 20px;">HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com</p>
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">Questions? Simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.</p>
         </div>
         """
-        rc_ok, rc_detail = transmit_email([partner_email], p_sub, p_html)
+        rc_ok, rc_detail = transmit_email([partner_email], p_sub, p_html, attach_signature=True, stream_type="transactional")
         results["partner_receipt"] = {"success": rc_ok, "detail": rc_detail}
 
     return results
@@ -1026,7 +1070,7 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
 
 def send_subcontractor_approved_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
     """
-    Sends an official 'Approved for Project Dispatch' notification to a 1099 partner
+    Sends an official 'Active on Trade Partner Roster' notification to a partner
     when leadership activates their profile in the backoffice.
     """
     email = clean_email(partner_data.get("email"))
@@ -1038,17 +1082,17 @@ def send_subcontractor_approved_email(partner_data: Dict[str, Any]) -> Tuple[boo
     partner_id = partner_data.get("partner_id") or partner_data.get("id") or "0001"
     ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
 
-    subject = f"APPROVED: {company_name} ({ref_code}) Active for Project Dispatch — HWB Cleaning Services"
+    subject = f"HWB Cleaning Services — Partner Profile Active for {company_name} ({ref_code})"
     body_html = f"""
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
         <div style="border-bottom: 3px solid #059669; padding-bottom: 14px; margin-bottom: 20px;">
-            <div style="font-weight: 900; font-size: 19px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
-            <div style="font-size: 12px; color: #059669; font-weight: 800; margin-top: 4px;">ACTIVE 1099 TRADE PARTNER • {ref_code}</div>
+            <div style="font-weight: 800; font-size: 19px; color: #0f172a;">HWB Cleaning Services LLC</div>
+            <div style="font-size: 12px; color: #059669; font-weight: 700; margin-top: 4px;">Active Trade Partner Profile &bull; {ref_code}</div>
         </div>
-        <div style="background: #ffffff; padding: 22px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6;">
+        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
             <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
             <p>
-                Congratulations — your compliance file (Form W-9, Certificate of Insurance, Master Subcontractor Agreement, and Texas DWC-83) for <strong>{company_name}</strong> has been verified and approved.
+                Your compliance file (business registration, Certificate of Insurance, Master Subcontractor Agreement, and Texas DWC-83) for <strong>{company_name}</strong> has been verified and approved.
             </p>
             <p>
                 Your crew is now listed on our eligible <strong>On-File Partner Roster ({ref_code})</strong>. If and when commercial post-construction or specialty cleaning project scopes arise in your service area that match your crew profile, our operations desk may reach out to discuss project availability.
@@ -1056,19 +1100,17 @@ def send_subcontractor_approved_email(partner_data: Dict[str, Any]) -> Tuple[boo
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #64748b; padding: 10px 14px; border-radius: 4px; margin-top: 12px; font-size: 12px; color: #475569; line-height: 1.5;">
                 <strong style="color: #0f172a;">Notice — No Guarantee of Project Award or Work Volume:</strong> Approval of your compliance file places your business on our eligible subcontractor roster for future consideration only and does <strong>not</strong> guarantee immediate or future project assignments, minimum billable hours, or contract awards. All work is offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
             </div>
-        </div>
-        <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 16px;">
-            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">Questions? Simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.</p>
         </div>
     </div>
     """
-    return transmit_email([email], subject, body_html)
+    return transmit_email([email], subject, body_html, attach_signature=True, stream_type="transactional")
 
 
 def send_subcontractor_coi_renewal_email(partner_data: Dict[str, Any]) -> Tuple[bool, str]:
     """
-    Sends an automated Certificate of Insurance (COI) expiration warning or expired-policy
-    renewal link directly to the subcontractor so they can upload their updated COI PDF.
+    Sends an automated Certificate of Insurance (COI) expiration notice or renewal link
+    directly to the subcontractor so they can upload their updated COI PDF.
     """
     email = clean_email(partner_data.get("email"))
     if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
@@ -1080,10 +1122,10 @@ def send_subcontractor_coi_renewal_email(partner_data: Dict[str, Any]) -> Tuple[
     ref_code = f"SUB-#{int(partner_id):04d}" if str(partner_id).isdigit() else f"SUB-#{partner_id}"
     exp_date = partner_data.get("coi_expiration_date") or "Soon"
     days_rem = int(partner_data.get("days_remaining") or 0)
-    onboarding_url = partner_data.get("onboarding_url") or "https://hwbcleaning.com/work-with-us"
+    onboarding_url = build_canonical_portal_url(partner_data.get("onboarding_url"), "/work-with-us")
 
     if days_rem < 0:
-        subject = f"URGENT: Certificate of Insurance Expired ({ref_code}) — Upload Renewed COI for HWB Dispatch"
+        subject = f"HWB Cleaning Services — Insurance Certificate Update Needed for {company_name} ({ref_code})"
         status_banner = f"COI Expired on {exp_date} • Dispatch Hold Active"
         banner_color = "#dc2626"
         lead_text = (
@@ -1092,7 +1134,7 @@ def send_subcontractor_coi_renewal_email(partner_data: Dict[str, Any]) -> Tuple[
             f"Your profile is temporarily held from new project dispatch until a renewed COI is uploaded."
         )
     else:
-        subject = f"REMINDER: Certificate of Insurance Expires in {days_rem} Days ({ref_code}) — HWB Cleaning Services"
+        subject = f"HWB Cleaning Services — Insurance Certificate Renewal Notice ({days_rem} Days) for {company_name} ({ref_code})"
         status_banner = f"COI Expires on {exp_date} ({days_rem} Days Remaining)"
         banner_color = "#d97706"
         lead_text = (
@@ -1102,30 +1144,28 @@ def send_subcontractor_coi_renewal_email(partner_data: Dict[str, Any]) -> Tuple[
         )
 
     body_html = f"""
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
         <div style="border-bottom: 3px solid {banner_color}; padding-bottom: 14px; margin-bottom: 20px;">
-            <div style="font-weight: 900; font-size: 19px; color: #0f172a;">HWB CLEANING SERVICES LLC</div>
-            <div style="font-size: 12px; color: {banner_color}; font-weight: 800; margin-top: 4px;">{status_banner} • {ref_code}</div>
+            <div style="font-weight: 800; font-size: 19px; color: #0f172a;">HWB Cleaning Services LLC</div>
+            <div style="font-size: 12px; color: {banner_color}; font-weight: 700; margin-top: 4px;">{status_banner} &bull; {ref_code}</div>
         </div>
-        <div style="background: #ffffff; padding: 22px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 14px; line-height: 1.6;">
+        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
             <p style="margin-top: 0;">Hello <strong>{contact_name}</strong>,</p>
             <p>{lead_text}</p>
             <p>
-                Please use your pre-filled partner link below to upload your renewed Certificate of Insurance naming
+                Please use your pre-filled partner portal button below to upload your renewed Certificate of Insurance naming
                 <strong>HWB Cleaning Services LLC</strong> as Certificate Holder:
             </p>
             <div style="text-align: center; margin: 22px 0;">
-                <a href="{onboarding_url}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 28px; border-radius: 8px; font-weight: 800; font-size: 14px; text-decoration: none;">
+                <a href="{onboarding_url}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none;">
                     Upload Renewed COI PDF &rarr;
                 </a>
             </div>
-        </div>
-        <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 16px;">
-            HWB Cleaning Services LLC • (214)-586-0257 • sales@hwbcleaning.com
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">Questions? Simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.</p>
         </div>
     </div>
     """
-    return transmit_email([email], subject, body_html)
+    return transmit_email([email], subject, body_html, attach_signature=True, stream_type="transactional")
 
 
 def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[str, Any]:

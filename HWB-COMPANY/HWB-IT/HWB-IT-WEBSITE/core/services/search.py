@@ -451,9 +451,54 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
                         return f"({col} ILIKE %s OR regexp_replace(COALESCE({col}, ''), '\\D', '', 'g') ILIKE %s)", [f"%{raw_val}%", f"%{digits}%"]
                     pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
                     return f'{col} ILIKE %s', [pat]
+                elif f_key in ('note', 'notes') and view in ('leads', 'sales_desk'):
+                    pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
+                    return (
+                        f"(COALESCE({col}, '') ILIKE %s OR EXISTS ("
+                        f'SELECT 1 FROM "GlobalActivities" ga_sn '
+                        f"WHERE ga_sn.parent_type = 'Lead' AND ga_sn.parent_id = id AND ga_sn.description ILIKE %s))"
+                    ), [pat, pat]
                 else:
                     pat = raw_val.replace('*', '%') if '*' in raw_val else f'%{raw_val}%'
                     return f'{col} ILIKE %s', [pat]
+            elif f_key == 'has' and view in ('leads', 'sales_desk'):
+                hv = raw_val.lower().strip()
+                if hv in ('note', 'notes', 'activity', 'activities'):
+                    return (
+                        "(NULLIF(BTRIM(COALESCE(notes, '')), '') IS NOT NULL OR EXISTS ("
+                        'SELECT 1 FROM "GlobalActivities" ga_hn '
+                        "WHERE ga_hn.parent_type = 'Lead' AND ga_hn.parent_id = id))"
+                    ), []
+                elif hv in ('pin', 'pinned'):
+                    return (
+                        'EXISTS (SELECT 1 FROM "GlobalActivities" ga_hp '
+                        "WHERE ga_hp.parent_type = 'Lead' AND ga_hp.parent_id = id AND COALESCE(ga_hp.is_pinned, FALSE) = TRUE)"
+                    ), []
+                elif hv in ('followup', 'follow_up', 'next_action', 'task'):
+                    return "NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL", []
+                return None, []
+            elif f_key in ('followup', 'follow_up', 'next_action') and view in ('leads', 'sales_desk'):
+                fv = raw_val.lower().strip()
+                if fv == 'overdue':
+                    return (
+                        "(COALESCE(status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED') "
+                        "AND NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL "
+                        "AND BTRIM(next_action_date) < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD'))"
+                    ), []
+                elif fv == 'today':
+                    return "BTRIM(COALESCE(next_action_date, '')) = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')", []
+                elif fv in ('due', 'soon', 'week'):
+                    return (
+                        "(COALESCE(status, 'New') NOT IN ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED') "
+                        "AND NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL "
+                        "AND BTRIM(next_action_date) <= TO_CHAR(CURRENT_DATE + INTERVAL '7 days', 'YYYY-MM-DD'))"
+                    ), []
+                elif fv in ('none', 'missing', 'null', 'empty'):
+                    return "NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NULL", []
+                else:
+                    norm_d = normalize_date(raw_val)
+                    valid_op = op if op in ['>=', '<=', '>', '<', '='] else '='
+                    return f"NULLIF(BTRIM(COALESCE(next_action_date, '')), '') IS NOT NULL AND BTRIM(next_action_date) {valid_op} %s", [norm_d]
             else:
                 pat = token_str.replace('*', '%') if '*' in token_str else f'%{token_str}%'
                 sub = ' OR '.join([f'{c} ILIKE %s' for c in general_cols])

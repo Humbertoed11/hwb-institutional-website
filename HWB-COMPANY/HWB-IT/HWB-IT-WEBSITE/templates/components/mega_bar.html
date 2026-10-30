@@ -167,6 +167,12 @@
                                 <span class="title">Client Accounts</span>
                                 <span class="desc">Active cleaning contracts.</span>
                             </a>
+                            {% if current_user.role in ['Executive', 'Admin'] %}
+                            <a href="{{ url_for('admin_operations', view='accounting') }}" class="mega-option" style="padding: 1rem 0;">
+                                <span class="title">Finance &amp; Stripe Billing</span>
+                                <span class="desc">Invoices, General Ledger &amp; Tax Center.</span>
+                            </a>
+                            {% endif %}
                             <a href="{{ url_for('admin_operations', view='workforce') }}" class="mega-option" style="padding: 1rem 0;">
                                 <span class="title">Workforce Network</span>
                                 <span class="desc">Cleaners (W-2) & Subs (1099).</span>

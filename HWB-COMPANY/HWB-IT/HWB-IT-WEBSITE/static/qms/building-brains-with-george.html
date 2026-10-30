@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-IT-BOOK-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">16.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">17.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Building HWB Cleaning with George: An Operator's Manual for Cleaning Services, Marketing Automation, and Systems Architecture</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-IT-BOOK-001</td></tr>
-                <tr><td><strong>Version</strong></td><td>16.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>17.0.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>10/26/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>10/29/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT (Information Technology)</td></tr>
             </tbody>
         </table>
@@ -417,6 +417,43 @@
         </ul>
         </p>
 
+        <h2>Chapter 24: The 9-Pillar Enterprise Lead Notes &amp; Touchpoint Engine, The 24/7 Enterprise AI Employee Architecture, and Multi-Campus Charter/Umbrella Governance (<code>BUG-161</code>–<code>BUG-163</code>)</h2>
+        <p><strong>24.1 The 9-Pillar Enterprise Lead Notes &amp; Touchpoint Architecture &amp; Deletion Persistence Fix (<code>BUG-161</code>–<code>BUG-162</code> / <code>test_39</code>):</strong><br>
+        On October 29, 2026, CEO Humberto Dominguez asked a foundational operational question: <em>"check the workflow for notes inside the leads. how are we using it, is it easy to add, read, edit?"</em><br>
+        George inspected all four lead note surfaces across the Commercial Leads table, Lead Command Modal, and 2-Minute Calling Console, and built a 9-Pillar Enterprise Lead Notes &amp; Touchpoint Architecture (backed by 1-command rollback script <code>scripts/rollback_lead_notes_workflow.sh</code>):
+        <ul>
+            <li><strong>PostgreSQL 16.15 Note Governance Schema:</strong> Added <code>created_by_user_id</code>, <code>created_by_name</code>, <code>outcome</code>, <code>is_pinned</code>, <code>updated_at</code>, <code>edited_by_name</code>, and <code>revision_history JSONB</code> to <code>"GlobalActivities"</code>, plus <code>notes_updated_at</code>, <code>notes_updated_by</code>, and <code>notes_revision_history JSONB</code> to <code>"Leads"</code>, indexed by <code>idx_global_activities_pinned</code> and <code>idx_global_activities_desc_trgm</code>.</li>
+            <li><strong>Dual-Layer Standing Facility Brief + Pinned Activity Stream Across All 4 Surfaces:</strong> Surfaced both the permanent Standing Facility Brief (<code>"Leads".notes</code>) and Pinned/Recent Activity Notes across the Table Hover Card (<code>#sigma-hover-card-popover</code>), Lead Overview Tab (<code>#lead-overview-notes-card</code>), Stage &amp; Call History Timeline (<code>#lead-list-timeline</code> with <code>All / 📌 Pinned / 📞 Calls / 📝 Notes / 🏢 Walkthroughs</code> filters), and 2-Minute Calling Console (<code>#cadence-standing-brief-card</code>). Eliminated false-positive <code>NOTE</code> log clutter when saving non-note profile fields on <code>PUT /api/v1/leads/&lt;id&gt;</code>.</li>
+            <li><strong>1-Click Inline Editing, Version History Restore (<code>[🕓 History]</code> + <code>[↩ Restore]</code>), Pinning (<code>📌</code>) &amp; Instant <code>0ms</code> Note/Lead Deletion (<code>BUG-162</code>):</strong> Enabled 1-click inline editing and full JSONB revision restore for both the Standing Facility Brief and every Activity Note; mapped <code>id: activity_id</code> in <code>serialize_row()</code> so 1-click Delete (<code>🗑️</code>) removes notes in <code>0ms</code> across all 4 surfaces and recalculates <code>"Leads".notes</code>; and updated <code>deleteLead()</code> inside the Lead Command Modal to close the modal cleanly instead of auto-advancing to the next row.</li>
+            <li><strong>Smart Field Extractor, 6 Call-Floor Speed-Chips, Sister-Location Umbrella Broadcast &amp; Search Parity:</strong> Automatically extracts email, phone, square footage, capacity, monthly budget, and <code>Who Cleans</code> (<code>IN_HOUSE</code> / <code>OUTSOURCED</code>) from note text; provides 6 one-tap Call-Floor Speed-Chips; broadcasts shared vendor intel across sister locations via <code>share_umbrella</code>; supports <code>note:</code>, <code>has:notes</code>, and <code>has:pinned</code> search tokens; and hands off all notes cleanly when promoting a Lead to a Client Account.</li>
+        </ul>
+        </p>
+
+        <p><strong>24.2 The 24/7 Enterprise AI Employee Architecture &amp; 1-Tap Pre-Change Rollback Ledger (<code>BUG-163</code>):</strong><br>
+        When reviewing how Telegram (<code>@Georgebytesbot</code>) handled live multi-location research on Cadence Education (where an initial narrow keyword search found only <code>20</code> of Cadence's <code>42</code> Texas schools because <code>22</code> operated under sub-brand names like <em>Kids 'R' Kids</em>, <em>Legacy Academy</em>, and <em>Sunbrook Academy</em>), CEO Humberto Dominguez directed George to upgrade the HWB Cleaning assistant into a true <strong>24/7 Enterprise AI Employee</strong> with full institutional memory, deterministic verification, and 1-tap rollback safety:
+        <ul>
+            <li><strong>5 PostgreSQL 16.15 Governance Tables (<code>core/ai_employee/engine.py</code>):</strong>
+                <ol>
+                    <li><code>"AIEmployeeWorkingMemory"</code>: Cross-session, cross-channel (Telegram + Web Backoffice) working memory storing active context, recent entity IDs, and executive decisions per user.</li>
+                    <li><code>"AIEmployeeStandingOrders"</code>: Permanent institutional rules and corporate umbrella mappings (such as multi-brand parent groups, pricing floors, and territory rules) automatically injected into every reasoning cycle.</li>
+                    <li><code>"AIEmployeeChangeLedger"</code>: Pre-change JSONB snapshot ledger capturing exact <code>before_state</code> and <code>after_state</code> for every database row before any write occurs, paired with 1-tap Telegram inline buttons (<code>[✅ Apply #CS-&lt;id&gt;]</code> and <code>[↩️ Rollback #CS-&lt;id&gt;]</code>) and REST endpoints (<code>/api/v1/ai-employee/changeset/&lt;id&gt;/apply</code> and <code>/rollback</code>).</li>
+                    <li><code>"AIEmployeeBudgetLedger"</code>: Hard FinOps token and cost circuit breaker enforcing a strict <strong><code>$0.50/day</code></strong> and <strong><code>$15.00/month</code></strong> ceiling with automatic zero-cost deterministic SQL fallback.</li>
+                    <li><code>"AIEmployeeHeartbeat"</code>: 60-second worker health heartbeat and 5:30 PM weekday call-floor wrap-up summary inside <code>worker_launcher.py</code>.</li>
+                </ol>
+            </li>
+            <li><strong>Department Specialist Tools, Schema-Aware Read-Only SQL Analyst &amp; Deterministic Citation Firewall:</strong> Equipped the AI Employee with multi-angle Umbrella &amp; Brand Discovery (searching name, umbrella, email domain, website domain, and shared phone numbers simultaneously), Lead &amp; Note Updater, Outbox Email Drafter (<code>HWB-COM-001</code>), Bid Pipeline Inspector, Read-Only <code>SELECT</code> SQL Analyst, and a Citation Firewall that verifies every cited Lead ID, Bid ID, and Outbox ID against PostgreSQL before any message is sent. Disabled noisy Telegram URL preview cards (<code>link_preview_options: {"is_disabled": True}</code>) and preserved a 1-command rollback script (<code>scripts/rollback_ai_employee_upgrade.sh</code>).</li>
+        </ul>
+        </p>
+
+        <p><strong>24.3 ResponsiveEd (<code>110</code> Texas Campuses) Corporate Intelligence, Incumbent Vendor Discovery &amp; Dual-Layer Statutory TPIA/RFP Dispatch:</strong><br>
+        Putting the upgraded AI Employee engine to work immediately, CEO Humberto Dominguez ordered a full corporate, procurement, and CRM audit of <strong>ResponsiveEd (<code>https://responsiveed.com/</code> — Responsive Education Solutions)</strong>:
+        <ul>
+            <li><strong>Corporate Structure &amp; 110-Campus CRM Unification (<code>Change-Set #CS-7</code>):</strong> Identified ResponsiveEd as one of the largest 501(c)(3) non-profit Charter Management Organizations (CMOs) in the United States (HQ: <code>1301 Waters Ridge Dr, Lewisville, TX 75057</code>, CEO Chuck Cook, <code>$250M+</code> annual budget), operating under 3 Texas charters (<em>Texas College Preparatory Academies</em>, <em>Premier High Schools</em>, and <em>TexasWorks</em>) and 7 campus brands (<em>Founders Classical Academy</em>, <em>Premier High School</em>, <em>Ignite Community School</em>, <em>iSchool High</em>, <em>Quest Collegiate Academy</em>, <em>Classical Academies</em>, and <em>TexasWorks</em>). Executed Change-Set <code>#CS-7</code> to unify all <code>47</code> split charter records with the existing <code>63</code> records—bringing ResponsiveEd to <strong><code>110</code> linked Texas campuses</strong> under <code>umbrella_name = 'ResponsiveEd'</code>—and saved permanent Standing Order <code>umbrella_responsiveed</code>.</li>
+            <li><strong>Incumbent Janitorial Contractor &amp; Procurement Portal Discovery:</strong> Identified ResponsiveEd's primary contracted janitorial vendor in North Texas as <strong>DTK Facility Services LLC (<code>dtkinc.com</code>)</strong> (receiving <code>$100,000–$500,000+</code> per disbursement cycle in ResponsiveEd check registers), alongside regional vendor <strong>Belk Cleaning Service</strong>, and mapped their official Facilities &amp; Construction RFP portal (<code>https://sites.google.com/responsiveed.com/construction/home</code>).</li>
+            <li><strong>Dual-Layer Tracked Statutory TPIA &amp; Vendor Registration Dispatch (<code>Outbox #332</code> / <code>Lead #83340</code>):</strong> Staged, proof-tested, and dispatched official correspondence (<code>Outbox #332</code>) via Microsoft Graph (<code>HTTP 202 Accepted</code>) to <strong><code>publicinformation@responsiveed.com</code></strong> with <strong><code>BCC: mrondinella@hwbcleaning.com</code></strong>, linked directly to <strong>Lead <code>#83340</code> (<code>ResponsiveEd Corporate HQ</code>)</strong>. Upgraded <code>blueprints/telemetry.py</code> and <code>core/services/email_service.py</code> with Dual-Layer Open Verification (invisible tracking pixel <code>5836e50458fe4d9aa89a52a59bb1026f</code> + Microsoft Exchange Delivery/Read Receipts + automatic <code>X-List-Unsubscribe</code> header retry), so the moment ResponsiveEd opens the email, <code>PendingOutbox #332</code> marks <code>OPENED</code>, Lead <code>#83340</code> promotes to <code>Engaged</code>, and `@Georgebytesbot` sends an instant Telegram alert to the CEO.</li>
+        </ul>
+        </p>
+
         <hr />
         <p style="font-style: italic; text-align: center;">Note: This manual is the official technical guide for HWB Cleaning developer-operators. 100% Alignment verified.</p>
     </div>
@@ -538,6 +575,12 @@
                     <td style="text-align: left;">10/26/2026</td>
                     <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
                     <td style="text-align: left;">Added Chapter 23: The Enterprise CRM Lead Lifecycle, Calling Workstation &amp; 5-Layer Button, Gear Menu &amp; Delete Architecture (BUG-150–BUG-160 &amp; ARCH-016). Documented Two-Way Scope Planner &amp; Address Autocomplete (BUG-150), 8-Pillar LLM/GEO Search Visibility (BUG-151), 6-Point Post-Exploitation &amp; Non-Root Container Security Hardening (BUG-152), Cloudflare Edge Caching &amp; DNS CAA/SPF Hardening (BUG-153), Faceted Lead Search &amp; Owner Filtering (BUG-154–BUG-155), Universal US State/Address Hygiene &amp; Bulk/Round-Robin Owner Assignment (BUG-156), 6-Stage Lead Lifecycle &amp; Separate Who Cleans Column with LeadStageHistory (BUG-157), Placeholder Email Sanitization, Worked Today Filter &amp; SHA-256 Static Asset Fingerprinting (BUG-158–BUG-159), and the 5-Layer Enterprise Button, Gear Menu &amp; Atomic Delete/Undo Lifecycle Architecture (BUG-160 / POST /api/v1/crm/restore-deleted), certified by 37/37 Rack 14 tests and 9/9 Yamamoto Moto modules (Grade A+). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">17.0.0</td>
+                    <td style="text-align: left;">10/29/2026</td>
+                    <td style="text-align: left;">George (Systems Architect) &amp; George Bytes</td>
+                    <td style="text-align: left;">Added Chapter 24: The 9-Pillar Enterprise Lead Notes &amp; Touchpoint Engine, The 24/7 Enterprise AI Employee Architecture, and Multi-Campus Charter/Umbrella Governance (BUG-161–BUG-163). Documented Dual-Layer Standing Facility Briefs &amp; Pinned Activity Streams across 4 surfaces with 1-click inline edit, JSONB revision restore, Smart Field Extractor, and Sister-Location Umbrella Broadcast (BUG-161 / test_39); 0ms Note &amp; Lead Deletion UI Persistence Fix (BUG-162); the 24/7 Enterprise AI Employee Engine (core/ai_employee/engine.py) with 5 PostgreSQL governance tables, 1-tap Change-Set Rollback Ledger, FinOps Circuit Breaker ($0.50/day, $15.00/mo), and Citation Firewall (BUG-163); and the ResponsiveEd 110-campus unification (#CS-7), DTK Facility Services incumbent discovery, and Dual-Layer Tracked TPIA/RFP Outbox #332 dispatch to publicinformation@responsiveed.com (BCC: mrondinella@hwbcleaning.com). Approved by Humberto Dominguez, CEO.</td>
                 </tr>
             </tbody>
         </table>

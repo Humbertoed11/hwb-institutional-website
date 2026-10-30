@@ -106,6 +106,7 @@ def _deterministic_parse_w9(text_blob: str, fallback_row: Optional[Dict[str, Any
         "state": "",
         "zip_code": "",
         "ein_or_ssn": "",
+        "tax_id_mode": "",
         "is_signed": False,
         "extraction_source": "deterministic_pdf_parser",
     }
@@ -118,18 +119,27 @@ def _deterministic_parse_w9(text_blob: str, fallback_row: Optional[Dict[str, Any
     ssn_match = re.search(r"\b(\d{3}-\d{2}-\d{4})\b", text_blob)
     if ein_match:
         extracted["ein_or_ssn"] = ein_match.group(1)
+        extracted["tax_id_mode"] = "ein"
     elif ssn_match:
         extracted["ein_or_ssn"] = ssn_match.group(1)
+        extracted["tax_id_mode"] = "ssn"
     else:
         labeled_tin = re.search(
-            r"(?:EIN|SSN|TIN|Taxpayer\s+Identification|Employer\s+ID)[:\s#-]*(\d{2}-?\d{7}|\d{3}-?\d{2}-?\d{4})",
+            r"(EIN|SSN|Social\s+Security|ITIN|TIN|Taxpayer\s+Identification|Employer\s+ID)[:\s#-]*(\d{2}-?\d{7}|\d{3}-?\d{2}-?\d{4})",
             text_blob,
             re.IGNORECASE,
         )
         if labeled_tin:
-            raw_digits = re.sub(r"\D", "", labeled_tin.group(1))
+            lbl_key = labeled_tin.group(1).lower()
+            raw_val = labeled_tin.group(2)
+            raw_digits = re.sub(r"\D", "", raw_val)
             if len(raw_digits) == 9:
-                extracted["ein_or_ssn"] = f"{raw_digits[:2]}-{raw_digits[2:]}"
+                if "ssn" in lbl_key or "social" in lbl_key or "itin" in lbl_key or re.match(r"^\d{3}-\d{2}-\d{4}$", raw_val):
+                    extracted["ein_or_ssn"] = f"{raw_digits[:3]}-{raw_digits[3:5]}-{raw_digits[5:]}"
+                    extracted["tax_id_mode"] = "ssn"
+                else:
+                    extracted["ein_or_ssn"] = f"{raw_digits[:2]}-{raw_digits[2:]}"
+                    extracted["tax_id_mode"] = "ein"
 
     # 2. Labeled Legal Name & Business Name
     name_m = re.search(
@@ -376,9 +386,14 @@ def extract_subcontractor_document_metadata(
             base_result["extraction_source"] = ai_res.get("extraction_source", "hybrid_ai_pdf")
 
     if norm_type == "w9" and base_result.get("ein_or_ssn"):
-        masked_tin, last4, _ = encrypt_and_mask_subcontractor_tin(str(base_result.get("ein_or_ssn") or ""))
+        masked_tin, last4, _ = encrypt_and_mask_subcontractor_tin(
+            str(base_result.get("ein_or_ssn") or ""),
+            tax_id_mode=str(base_result.get("tax_id_mode") or ""),
+        )
         base_result["ein_last4"] = last4
         base_result["ein_masked"] = masked_tin
+        if not base_result.get("tax_id_mode"):
+            base_result["tax_id_mode"] = "ssn" if masked_tin.startswith("***-") else "ein"
 
     return base_result
 
@@ -403,7 +418,10 @@ def check_extraction_rate_limit(key_str: str, limit: int = 15, window_seconds: i
     return True, max(0, limit - len(bucket))
 
 
-def encrypt_and_mask_subcontractor_tin(raw_tin: str) -> Tuple[str, str, Optional[str]]:
+def encrypt_and_mask_subcontractor_tin(
+    raw_tin: str,
+    tax_id_mode: Optional[str] = None,
+) -> Tuple[str, str, Optional[str]]:
     """
     Takes a raw EIN (XX-XXXXXXX) or SSN (XXX-XX-XXXX) or 4-digit suffix and returns:
     (masked_display, last_four_digits, aes256_fernet_encrypted_full_tin).
@@ -413,11 +431,16 @@ def encrypt_and_mask_subcontractor_tin(raw_tin: str) -> Tuple[str, str, Optional
     if not digits:
         return (cleaned, "", None)
 
+    explicit_mode = str(tax_id_mode or "").strip().lower()
+    is_ssn = (
+        explicit_mode in ("ssn", "itin", "ssn_itin")
+        or bool(re.match(r"^[0-9*•]{3}-[0-9*•]{2}-", cleaned))
+    )
+
     last4 = digits[-4:] if len(digits) >= 4 else digits
     encrypted_val: Optional[str] = None
     if len(digits) == 9:
-        # Format canonically as EIN (XX-XXXXXXX) unless originally SSN (XXX-XX-XXXX)
-        if re.match(r"^\d{3}-\d{2}-\d{4}$", cleaned):
+        if is_ssn:
             canonical_full = f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
             masked_display = f"***-**-{last4}"
         else:
@@ -429,7 +452,10 @@ def encrypt_and_mask_subcontractor_tin(raw_tin: str) -> Tuple[str, str, Optional
         except Exception:
             encrypted_val = None
     else:
-        masked_display = f"**-***{last4}" if len(last4) == 4 else cleaned
+        if is_ssn and len(last4) == 4:
+            masked_display = f"***-**-{last4}"
+        else:
+            masked_display = f"**-***{last4}" if len(last4) == 4 else cleaned
 
     return masked_display, last4, encrypted_val
 
@@ -715,6 +741,140 @@ def generate_signed_msa_dwc83_certificate_pdf(
     )
     ops.append(
         f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (Electronic Signature ID: {_pdf_escape(sig_hash)}) Tj ET"
+    )
+
+    stream_bytes = "\n".join(ops).encode("latin-1", errors="replace")
+
+    objects: List[bytes] = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        (
+            b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+            b"/Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>\nendobj\n"
+        ),
+        b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
+        b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>\nendobj\n",
+        f"6 0 obj\n<< /Length {len(stream_bytes)} >>\nstream\n".encode("latin-1")
+        + stream_bytes
+        + b"\nendstream\nendobj\n",
+    ]
+
+    pdf_out = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets: List[int] = []
+    for obj_bytes in objects:
+        offsets.append(len(pdf_out))
+        pdf_out.extend(obj_bytes)
+
+    xref_pos = len(pdf_out)
+    pdf_out.extend(f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode("latin-1"))
+    for off in offsets:
+        pdf_out.extend(f"{off:010d} 00000 n \n".encode("latin-1"))
+
+    pdf_out.extend(
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode("latin-1")
+    )
+    return bytes(pdf_out)
+
+
+def generate_signed_substitute_w9_pdf(
+    partner: Dict[str, Any],
+    signer_name: str,
+    signer_title: str,
+    signer_ip: str,
+    signed_at_display: str,
+    signature_hash: str = "",
+) -> bytes:
+    """
+    Generates a locked, read-only PDF 1.4 IRS Substitute Form W-9 (Rev. March 2024)
+    compliant with IRS Publication 1586 and 26 CFR § 31.3406(h)-3.
+    Contains Line 1 (Legal Entity / Taxpayer Name), Line 2 (Business / DBA Name),
+    Line 3a (Federal Tax Classification), Lines 5-6 (Registered Business Address),
+    Part I (Taxpayer Identification Number — EIN or SSN), and Part II (Statutory
+    Certification Under Penalties of Perjury + Electronic Signature & SHA-256 Digest).
+    """
+    import textwrap
+
+    partner_id = partner.get("id") or 0
+    ref_code = f"SUB-#{int(partner_id):04d}"
+    company_name = str(partner.get("company_name") or "Subcontractor")
+    legal_name = str(partner.get("legal_entity_name") or partner.get("contact_name") or signer_name)
+    tax_class = str(partner.get("tax_classification") or "LLC")
+    ein_masked = str(partner.get("ein_or_ssn") or "On File")
+    tin_type_label = "Social Security Number (SSN / ITIN)" if ein_masked.startswith("***-") else "Employer Identification Number (EIN)"
+    street = str(partner.get("street_address") or "Address On File")
+    city = str(partner.get("city") or "DFW")
+    state = str(partner.get("state") or "TX")
+    zip_code = str(partner.get("zip_code") or "")
+    sig_hash = signature_hash or compute_msa_signature_hash(
+        partner, signer_name, signer_title, signer_ip, signed_at_display
+    )
+
+    ops: List[str] = []
+    # Top IRS Substitute W-9 Banner
+    ops.append("0.06 0.09 0.16 rg 40 722 532 50 re f")
+    ops.append("BT /F2 13 Tf 1 1 1 rg 52 751 Td (SUBSTITUTE FORM W-9 \\(REV. MARCH 2024\\)) Tj ET")
+    ops.append("BT /F2 8.5 Tf 0.58 0.77 0.99 rg 52 735 Td (REQUEST FOR TAXPAYER IDENTIFICATION NUMBER AND CERTIFICATION - IRS PUB. 1586) Tj ET")
+    ops.append(f"BT /F2 9 Tf 1 1 1 rg 425 751 Td (Requester: HWB Cleaning) Tj ET")
+    ops.append(f"BT /F1 8 Tf 0.88 0.91 0.94 rg 425 736 Td (Partner ID: {_pdf_escape(ref_code)}) Tj ET")
+
+    # Part 0: Entity & Address Fields Box (Lines 1 - 6)
+    ops.append("0.97 0.98 0.99 rg 40 562 532 148 re f")
+    ops.append("0.75 0.80 0.86 RG 1 w 40 562 532 148 re S")
+
+    w9_fields = [
+        ("1. Name of entity/individual (as shown on your income tax return):", legal_name),
+        ("2. Business name / disregarded entity name (if different from above):", company_name),
+        ("3a. Federal tax classification of entity/individual:", tax_class),
+        ("5. Address (number, street, and apt. or suite no.):", street),
+        ("6. City, state, and ZIP code:", f"{city}, {state} {zip_code}"),
+        ("7. Requester's name and address:", "HWB Cleaning Services LLC, 1910 Pacific Ave, Ste 2000, Dallas, TX 75201"),
+    ]
+    y_pos = 692
+    for label_str, val_str in w9_fields:
+        ops.append(f"BT /F2 8.2 Tf 0.25 0.31 0.40 rg 50 {y_pos} Td ({_pdf_escape(label_str)}) Tj ET")
+        ops.append(f"BT /F2 9.5 Tf 0.06 0.09 0.16 rg 318 {y_pos} Td ({_pdf_escape(val_str[:46])}) Tj ET")
+        y_pos -= 21
+
+    # Part I: Taxpayer Identification Number (TIN)
+    ops.append("0.93 0.96 1.00 rg 40 492 532 58 re f")
+    ops.append("0.15 0.39 0.92 RG 1.2 w 40 492 532 58 re S")
+    ops.append("BT /F2 10 Tf 0.12 0.25 0.69 rg 50 534 Td (PART I - TAXPAYER IDENTIFICATION NUMBER \\(TIN\\)) Tj ET")
+    ops.append(f"BT /F2 9.5 Tf 0.06 0.09 0.16 rg 50 516 Td (TIN Type: {_pdf_escape(tin_type_label)}) Tj ET")
+    ops.append(f"BT /F2 11 Tf 0.06 0.09 0.16 rg 330 516 Td (TIN on File: {_pdf_escape(ein_masked)}) Tj ET")
+    ops.append("BT /F1 8 Tf 0.28 0.33 0.41 rg 50 500 Td (Full 9-digit TIN is encrypted at rest via AES-256 Fernet for authorized IRS Form 1099-NEC reporting.) Tj ET")
+
+    # Part II: Statutory Certification Under Penalties of Perjury
+    y_pos = 468
+    ops.append(f"BT /F2 10 Tf 0.12 0.25 0.69 rg 40 {y_pos} Td (PART II - CERTIFICATION UNDER PENALTIES OF PERJURY \\(26 CFR SEC. 31.3406\\(h\\)-3\\)) Tj ET")
+    y_pos -= 16
+
+    cert_clauses = [
+        "Under penalties of perjury, I certify that:",
+        "1. The number shown on this form is my correct taxpayer identification number (or I am waiting for a number to be issued to me); and",
+        "2. I am not subject to backup withholding because: (a) I am exempt from backup withholding, or (b) I have not been notified by the Internal Revenue Service (IRS) that I am subject to backup withholding as a result of a failure to report all interest or dividends, or (c) the IRS has notified me that I am no longer subject to backup withholding; and",
+        "3. I am a U.S. citizen or other U.S. person (defined in the official IRS Form W-9 instructions); and",
+        "4. The FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting is correct.",
+        "The Internal Revenue Service does not require your consent to any provision of this document other than the certifications required to avoid backup withholding.",
+    ]
+    for para in cert_clauses:
+        for line in textwrap.wrap(para, width=95):
+            ops.append(f"BT /F1 8.5 Tf 0.18 0.23 0.30 rg 46 {y_pos} Td ({_pdf_escape(line)}) Tj ET")
+            y_pos -= 12.5
+        y_pos -= 4
+
+    # Electronic Signature Box
+    sig_top = max(84, y_pos - 86)
+    ops.append(f"0.94 0.99 0.95 rg 40 {sig_top} 532 80 re f")
+    ops.append(f"0.09 0.64 0.29 RG 1.5 w 40 {sig_top} 532 80 re S")
+    ops.append(f"BT /F2 9 Tf 0.09 0.40 0.20 rg 50 {sig_top + 61} Td (PART II SIGNATURE OF U.S. PERSON \\(ELECTRONICALLY EXECUTED UNDER PENALTIES OF PERJURY\\)) Tj ET")
+    ops.append(
+        f"BT /F2 10.5 Tf 0.06 0.09 0.16 rg 50 {sig_top + 43} Td (Sign Here: /s/ {_pdf_escape(signer_name)} - {_pdf_escape(signer_title)} \\({_pdf_escape(company_name)}\\)) Tj ET"
+    )
+    ops.append(
+        f"BT /F1 8.5 Tf 0.20 0.25 0.33 rg 50 {sig_top + 26} Td (Date & Time: {_pdf_escape(signed_at_display)}   |   Signer IP: {_pdf_escape(signer_ip)}   |   Partner Ref: {_pdf_escape(ref_code)}) Tj ET"
+    )
+    ops.append(
+        f"BT /F1 7.8 Tf 0.28 0.33 0.41 rg 50 {sig_top + 10} Td (SHA-256 Verification Digest: {_pdf_escape(sig_hash)}) Tj ET"
     )
 
     stream_bytes = "\n".join(ops).encode("latin-1", errors="replace")

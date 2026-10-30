@@ -605,6 +605,48 @@
             </div>
             {% endif %}
 
+            <!-- 8. Finance & Accounting Department Tab (ARCH-017 Double-Entry Ledger, QuickBooks Replacement & Stripe Billing) -->
+            {% if current_user.role in ['Executive', 'Admin'] or (current_user.has_permission and current_user.has_permission('accounting', 'view')) %}
+            <div class="sigma-split-tab {% if request.endpoint == 'admin_operations' and active_view == 'accounting' %}active{% endif %}" id="tab-accounting-container">
+                <a href="{{ url_for('admin_operations', view='accounting') }}" class="sigma-split-main" title="Send client bills, accept online payments, track job expenses, and download tax reports.">
+                    <i class="fas fa-file-invoice-dollar" style="color: #059669; margin-right: 6px; font-size: 0.75rem;"></i> Finance
+                </a>
+                <button type="button" class="sigma-split-chevron" onclick="toggleSigmaJump('menu-jump-accounting', event)" title="Finance, Stripe Invoicing &amp; General Ledger" aria-label="Finance, Stripe Invoicing &amp; General Ledger">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div id="menu-jump-accounting" class="sigma-jump-menu sigma-jump-menu-right">
+                    <div class="sigma-jump-header">
+                        <span>Finance &amp; Accounting (HWB-ACC)</span>
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#invoices" class="sigma-jump-item">
+                        <span><i class="fas fa-file-invoice-dollar" style="color: #059669;"></i> Client Invoices &amp; Stripe AR</span>
+                        <span class="sigma-jump-badge" style="background:#ecfdf5; color:#065f46; font-weight:800;">ACH $5 Cap</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#progress" class="sigma-jump-item">
+                        <span><i class="fas fa-hard-hat" style="color: #d97706;"></i> GC Progress Billing &amp; Lien Waivers</span>
+                        <span class="sigma-jump-badge">10% Retainage</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#bills" class="sigma-jump-item">
+                        <span><i class="fas fa-hand-holding-dollar" style="color: #2563eb;"></i> Subcontractor Bills &amp; 1099-NEC</span>
+                        <span class="sigma-jump-badge">W-9/COI Lock</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#expenses" class="sigma-jump-item">
+                        <span><i class="fas fa-receipt" style="color: #7c3aed;"></i> Expenses &amp; Receipt Vault</span>
+                        <span class="sigma-jump-badge">Job Costing</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#ledger" class="sigma-jump-item">
+                        <span><i class="fas fa-scale-balanced" style="color: #0284c7;"></i> Double-Entry Ledger &amp; QBO Import</span>
+                        <span class="sigma-jump-badge">28 Accounts</span>
+                    </a>
+                    <a href="{{ url_for('admin_operations', view='accounting') }}#reports" class="sigma-jump-item">
+                        <span><i class="fas fa-chart-pie" style="color: #0f172a;"></i> CPA Reports &amp; Texas 8.25% Tax</span>
+                        <span class="sigma-jump-badge">Form 01-114</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- 8. Command Tab (Split Dropdown: Command Deck + Systems Hub + Lab) -->
             {% if current_user.role in ['Executive', 'Admin'] %}
             <div class="sigma-split-tab {% if request.endpoint in ['sigma_executive', 'sigmajan_lab'] or (request.endpoint == 'admin_operations' and active_view == 'it_department') %}active{% endif %}" id="tab-execit-container">

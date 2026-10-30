@@ -9,6 +9,175 @@
     let currentHoverType = 'Lead';
     let hoverTimeout = null;
     const activityCache = {};
+    let _activeLeadTimelineFilter = 'ALL';
+    window.activeLeadDetailData = null;
+
+    function escapeNoteHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function invalidateLeadActivityCache(leadId) {
+        if (!leadId) return;
+        delete activityCache[`Lead_${leadId}`];
+        delete activityCache[`Account_${leadId}`];
+    }
+
+    function updateLeadRowNoteIndicators(leadId, latestNoteText, deltaCount = 0, isPinned = null, exactCount = null) {
+        if (!leadId) return;
+        const countEl = document.getElementById(`lead-act-count-${leadId}`);
+        if (countEl) {
+            if (exactCount !== null && exactCount !== undefined) {
+                countEl.innerText = String(Math.max(0, parseInt(exactCount, 10) || 0));
+            } else if (deltaCount !== 0) {
+                const cur = parseInt(countEl.innerText || '0', 10) || 0;
+                countEl.innerText = String(Math.max(0, cur + deltaCount));
+            }
+        }
+        if (latestNoteText !== undefined) {
+            const noteEl = document.getElementById(`lead-last-note-${leadId}`);
+            if (noteEl) {
+                const cleanText = String(latestNoteText || '').trim();
+                if (!cleanText) {
+                    noteEl.innerText = '--';
+                    noteEl.title = '--';
+                } else {
+                    const hasPinPrefix = cleanText.startsWith('📌');
+                    const prefix = (isPinned && !hasPinPrefix) ? '📌 ' : '';
+                    noteEl.innerText = (prefix + cleanText).trim() || '--';
+                    noteEl.title = cleanText.replace(/^📌\s*/, '') || '--';
+                }
+            }
+        }
+    }
+
+    function insertNoteSpeedChip(textareaId, chipText) {
+        const el = document.getElementById(textareaId);
+        if (!el) return;
+        const start = typeof el.selectionStart === 'number' ? el.selectionStart : el.value.length;
+        const end = typeof el.selectionEnd === 'number' ? el.selectionEnd : el.value.length;
+        const before = el.value.substring(0, start);
+        const after = el.value.substring(end);
+        const sep = (before.length > 0 && !/\s$/.test(before)) ? ' • ' : '';
+        const inserted = sep + chipText;
+        el.value = before + inserted + after;
+        el.focus();
+        const cursor = start + inserted.length;
+        try { el.setSelectionRange(cursor, cursor); } catch (_) {}
+        if (textareaId === 'cadence-lead-notes') {
+            detectSmartNoteFields(el.value, 'cadence-smart-detect');
+        } else if (textareaId === 'lead-activity-desc') {
+            detectSmartNoteFields(el.value, 'lead-activity-smart-detect');
+        }
+    }
+
+    function parseSmartFieldsClientSide(noteText) {
+        const raw = String(noteText || '').trim();
+        if (!raw) return {};
+        const out = {};
+        const emailMatch = raw.match(/\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/);
+        if (emailMatch) out.email = emailMatch[1].toLowerCase();
+
+        const phoneMatch = raw.match(/(?:\+?1[-.\s]?)?\(?([2-9]\d{2})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/);
+        if (phoneMatch) out.phone = `(${phoneMatch[1]})-${phoneMatch[2]}-${phoneMatch[3]}`;
+
+        const sqfMatch = raw.match(/\b(\d{1,3}(?:,\d{3})+|\d{4,6})\s*(?:sq\.?\s*ft\.?|sqft|sqf|sf|square\s*feet)\b/i);
+        if (sqfMatch) {
+            const val = parseInt(sqfMatch[1].replace(/,/g, ''), 10);
+            if (val >= 500 && val <= 2000000) out.sqf = val;
+        }
+        const kSqfMatch = !out.sqf && raw.match(/\b(\d{1,3}(?:\.\d+)?)\s*k\s*(?:sq\.?\s*ft\.?|sqft|sqf|sf)\b/i);
+        if (kSqfMatch) {
+            const val = Math.round(parseFloat(kSqfMatch[1]) * 1000);
+            if (val >= 500 && val <= 2000000) out.sqf = val;
+        }
+
+        const capMatch = raw.match(/\b(\d{2,4})\s*(?:kids|children|students|capacity|enrolled)\b/i);
+        if (capMatch) {
+            const cVal = parseInt(capMatch[1], 10);
+            if (cVal >= 10 && cVal <= 5000) out.capacity = cVal;
+        }
+
+        const lower = raw.toLowerCase();
+        if (['in-house', 'in house', 'teachers clean', 'staff cleans', 'own staff', 'internal staff'].some(k => lower.includes(k))) {
+            out.cleaning_delivery_model = 'IN_HOUSE';
+        } else if (['outsourced', 'contract cleaner', 'current vendor', 'cleaning company', 'janitorial service', 'third party'].some(k => lower.includes(k))) {
+            out.cleaning_delivery_model = 'OUTSOURCED';
+        }
+
+        if (/\b(call\s*back\s*tomorrow|follow[\s-]*up\s*tomorrow|tomorrow\s*(?:morning|afternoon))\b/i.test(raw)) {
+            out.next_action_date = computeSmartNextBusinessDateJS(1);
+        } else if (/\b(next\s+week|following\s+week)\b/i.test(raw)) {
+            out.next_action_date = computeSmartNextBusinessDateJS(5);
+        } else {
+            const inDaysMatch = raw.match(/\b(?:in|after)\s+(\d{1,2})\s+(?:business\s+)?days?\b/i);
+            if (inDaysMatch) {
+                const nDays = Math.min(Math.max(1, parseInt(inDaysMatch[1], 10) || 1), 60);
+                out.next_action_date = computeSmartNextBusinessDateJS(nDays);
+            }
+        }
+        return out;
+    }
+
+    function detectSmartNoteFields(noteText, bannerId) {
+        const banner = document.getElementById(bannerId);
+        if (!banner) return;
+        const detected = parseSmartFieldsClientSide(noteText);
+        const keys = Object.keys(detected);
+        if (keys.length === 0) {
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+            return;
+        }
+        const chips = [];
+        if (detected.email) chips.push(`✉️ Email: <b>${escapeNoteHtml(detected.email)}</b>`);
+        if (detected.phone) chips.push(`📞 Phone: <b>${escapeNoteHtml(detected.phone)}</b>`);
+        if (detected.sqf) chips.push(`📐 SQF: <b>${Number(detected.sqf).toLocaleString()}</b>`);
+        if (detected.capacity) chips.push(`👶 Capacity: <b>${detected.capacity}</b>`);
+        if (detected.cleaning_delivery_model) {
+            chips.push(`🧹 Who Cleans: <b>${detected.cleaning_delivery_model === 'IN_HOUSE' ? 'In-House' : 'Contract Cleaning'}</b>`);
+        }
+        if (detected.next_action_date) {
+            chips.push(`⏰ Follow-Up: <b>${escapeNoteHtml(detected.next_action_date)}</b>`);
+        }
+        banner.dataset.detectedJson = JSON.stringify(detected);
+        banner.style.display = 'flex';
+        banner.innerHTML = `
+            <span>✨ Smart Note Sync detected: ${chips.join(' • ')}</span>
+            <button type="button" onclick="applyDetectedSmartFields('${bannerId}')" class="sigma-mini-btn" style="height: 22px; padding: 0 0.55rem; font-size: 0.68rem; font-weight: 800; background: #2563eb; color: #ffffff; border-color: #1d4ed8;">
+                Apply to Lead Fields
+            </button>
+        `;
+    }
+
+    function applyDetectedSmartFields(bannerId) {
+        const banner = document.getElementById(bannerId);
+        if (!banner || !banner.dataset.detectedJson) return;
+        try {
+            const d = JSON.parse(banner.dataset.detectedJson);
+            if (bannerId === 'cadence-smart-detect') {
+                if (d.email && document.getElementById('cadence-lead-email')) document.getElementById('cadence-lead-email').value = d.email;
+                if (d.phone && document.getElementById('cadence-lead-phone')) document.getElementById('cadence-lead-phone').value = d.phone;
+                if (d.next_action_date && document.getElementById('cadence-lead-next-date')) document.getElementById('cadence-lead-next-date').value = d.next_action_date;
+                if (d.cleaning_delivery_model && typeof setCadenceCleaningModel === 'function') {
+                    setCadenceCleaningModel(d.cleaning_delivery_model, false);
+                }
+            } else {
+                if (d.email && document.getElementById('lead-action-email')) document.getElementById('lead-action-email').value = d.email;
+                if (d.phone && document.getElementById('lead-action-phone')) document.getElementById('lead-action-phone').value = d.phone;
+                if (d.next_action_date && document.getElementById('lead-activity-next-date')) document.getElementById('lead-activity-next-date').value = d.next_action_date;
+                if (d.cleaning_delivery_model && document.getElementById('lead-activity-cleaning-model')) {
+                    document.getElementById('lead-activity-cleaning-model').value = d.cleaning_delivery_model;
+                }
+            }
+            if (typeof showToast === 'function') showToast('Smart fields synced into form inputs!', 'success');
+        } catch (_) {}
+    }
 
     async function submitQuickLog(id, type, inputElement) {
         if (!inputElement) return;
@@ -23,10 +192,18 @@
             });
             const data = await res.json();
             if (data.status === 'success') {
+                invalidateLeadActivityCache(id);
+                updateLeadRowNoteIndicators(id, note, 1, false);
+                if (data.next_action_date) {
+                    updateLeadRowNextActionDateDOM(id, data.next_action_date);
+                }
                 inputElement.value = '';
                 inputElement.placeholder = '✓ Logged!';
                 inputElement.style.transition = 'all 0.2s ease';
                 inputElement.style.boxShadow = '0 0 0 3px #86efac';
+                if (data.auto_updated_fields && Object.keys(data.auto_updated_fields).length > 0 && typeof showToast === 'function') {
+                    showToast(`Note saved + synced: ${Object.keys(data.auto_updated_fields).join(', ')}`, 'success');
+                }
                 setTimeout(() => {
                     inputElement.placeholder = 'Call note...';
                     inputElement.style.boxShadow = 'none';
@@ -53,9 +230,11 @@
         const body = document.getElementById('hover-card-body');
         if (!popover || !body) return;
 
-        const rect = element.getBoundingClientRect();
-        popover.style.top = Math.min(rect.bottom + 4, window.innerHeight - 340) + 'px';
-        popover.style.left = Math.min(Math.max(10, rect.left - 120), window.innerWidth - 360) + 'px';
+        if (element && typeof element.getBoundingClientRect === 'function') {
+            const rect = element.getBoundingClientRect();
+            popover.style.top = Math.min(Math.max(12, rect.bottom + 4), window.innerHeight - 410) + 'px';
+            popover.style.left = Math.min(Math.max(12, rect.left - 150), window.innerWidth - 435) + 'px';
+        }
         popover.style.display = 'block';
         popover.style.opacity = '1';
 
@@ -65,13 +244,13 @@
             return;
         }
 
-        body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;"><i class="fas fa-spinner fa-spin" style="margin-right:0.35rem;"></i> Fetching touchpoints...</div>';
+        body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;"><i class="fas fa-spinner fa-spin" style="margin-right:0.35rem;"></i> Loading notes &amp; touchpoints...</div>';
         try {
             const res = await fetch(`/api/v1/activities/${type}/${id}`);
             const data = await res.json();
-            if (data.status === 'success' && data.activities) {
-                activityCache[cacheKey] = data.activities;
-                renderHoverCardItems(data.activities, id, type);
+            if (data.status === 'success') {
+                activityCache[cacheKey] = data;
+                renderHoverCardItems(data, id, type);
             } else {
                 body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;">No activities logged yet.</div>';
             }
@@ -80,36 +259,209 @@
         }
     }
 
-    function renderHoverCardItems(items, id, type) {
+    function renderHoverCardItems(payloadOrItems, id, type) {
         const body = document.getElementById('hover-card-body');
+        const briefBox = document.getElementById('hover-card-brief-box');
+        const briefTextEl = document.getElementById('hover-card-brief-text');
+        const briefInputEl = document.getElementById('hover-card-brief-input');
+        const countBadge = document.getElementById('hover-card-count-badge');
+        if (!body) return;
+
+        const isFullPayload = payloadOrItems && !Array.isArray(payloadOrItems) && Array.isArray(payloadOrItems.activities);
+        const items = isFullPayload ? payloadOrItems.activities : (Array.isArray(payloadOrItems) ? payloadOrItems : []);
+        const standingBrief = isFullPayload ? (payloadOrItems.standing_brief || '') : '';
+        const hoverNextDateInput = document.getElementById('hover-card-quick-next-date');
+        if (hoverNextDateInput) {
+            const existingNext = isFullPayload ? String(payloadOrItems.next_action_date || '').slice(0, 10) : '';
+            const todayIso = computeSmartNextBusinessDateJS(0);
+            const leadSt = isFullPayload ? String(payloadOrItems.lead_status || 'New') : 'New';
+            const isTerminal = ['Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'].includes(leadSt);
+            if (isTerminal) {
+                hoverNextDateInput.value = '';
+            } else if (existingNext && existingNext >= todayIso) {
+                hoverNextDateInput.value = existingNext;
+            } else {
+                hoverNextDateInput.value = computeSmartNextBusinessDateJS(3);
+            }
+        }
+
+        if (countBadge) {
+            countBadge.innerText = `${items.length} shown`;
+        }
+
+        if (briefBox && String(type || '').toLowerCase() === 'lead') {
+            briefBox.style.display = 'block';
+            if (briefTextEl) {
+                briefTextEl.innerText = standingBrief.trim() || 'No standing facility brief yet. Click ✏️ Edit to add gatekeeper, hours, or vendor info.';
+                briefTextEl.style.color = standingBrief.trim() ? '#fef3c7' : '#94a3b8';
+            }
+            if (briefInputEl) {
+                briefInputEl.value = standingBrief;
+            }
+        } else if (briefBox) {
+            briefBox.style.display = 'none';
+        }
+
         if (!items || items.length === 0) {
-            body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem;">No activities logged yet.</div>';
+            body.innerHTML = '<div style="color:#94a3b8; font-size:0.75rem; padding: 0.35rem 0;">No touchpoint notes logged yet. Type below to add the first note.</div>';
             return;
         }
+
         body.innerHTML = items.map(act => {
             let icon = 'fa-sticky-note';
             const t = (act.type || '').toUpperCase();
-            if (t.includes('CALL') || t.includes('PHONE')) icon = 'fa-phone-alt';
+            if (t.includes('CALL') || t.includes('PHONE') || t.includes('SPOKE') || t.includes('VOICEMAIL')) icon = 'fa-phone-alt';
             else if (t.includes('EMAIL')) icon = 'fa-envelope';
-            else if (t.includes('VISIT')) icon = 'fa-walking';
+            else if (t.includes('VISIT') || t.includes('WALKTHROUGH')) icon = 'fa-walking';
             else if (t.includes('CONVERT')) icon = 'fa-check-circle';
-            
+
+            const pinnedStyle = act.is_pinned
+                ? 'background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(251, 191, 36, 0.35);'
+                : 'background: rgba(30, 41, 59, 0.55); border: 1px solid #1e293b;';
+            const authorBadge = act.created_by_name ? `<span style="color:#cbd5e1; font-weight:700;">• ${escapeNoteHtml(act.created_by_name)}</span>` : '';
+            const editedBadge = act.updated_at ? `<span style="color:#fbbf24; font-size:0.62rem; margin-left:0.25rem;" title="Edited by ${escapeNoteHtml(act.edited_by_name || 'User')} at ${escapeNoteHtml(act.updated_at)}">(edited)</span>` : '';
+            const outcomeBadge = act.outcome ? `<span style="background:#1e3a8a; color:#93c5fd; padding:1px 5px; border-radius:4px; font-size:0.62rem; font-weight:800; margin-left:0.25rem;">${escapeNoteHtml(act.outcome)}</span>` : '';
+            const revCount = Array.isArray(act.revision_history) ? act.revision_history.length : 0;
+            const actId = act.id || act.activity_id;
+            const taskBadgeHtml = renderActivityFollowUpTaskBadge(act, 'hover');
+
             return `
-                <div onclick="openHoverTargetModal()" style="border-bottom: 1px solid #1e293b; padding: 0.35rem 0.4rem; border-radius: 0.4rem; cursor: pointer; transition: background 0.15s ease;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='transparent'">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.15rem;">
-                        <span style="font-weight: 800; color: #38bdf8; font-size: 0.75rem;"><i class="fas ${icon}" style="margin-right:0.35rem;"></i>${act.type}</span>
-                        <span style="font-size: 0.65rem; color: #64748b;">${act.timestamp}</span>
+                <div id="hover-act-item-${actId}" style="${pinnedStyle} padding: 0.45rem 0.55rem; border-radius: 0.45rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.3rem; margin-bottom: 0.2rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap;">
+                            <span style="font-weight: 800; color: ${act.is_pinned ? '#fbbf24' : '#38bdf8'}; font-size: 0.72rem;">
+                                ${act.is_pinned ? '📌 ' : ''}<i class="fas ${icon}" style="margin-right:0.25rem;"></i>${escapeNoteHtml(act.type || act.activity_type || 'Note')}
+                            </span>
+                            ${outcomeBadge}
+                            <span style="font-size: 0.65rem; color: #94a3b8;">${escapeNoteHtml(act.timestamp)} ${authorBadge}</span>
+                            ${editedBadge}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.25rem;">
+                            <button type="button" onclick="event.stopPropagation(); toggleActivityPin(${actId}, 'hover')" title="${act.is_pinned ? 'Unpin note' : 'Pin note to top'}" style="background:transparent; border:none; color:${act.is_pinned ? '#fbbf24' : '#64748b'}; cursor:pointer; font-size:0.7rem; padding:1px 4px;">📌</button>
+                            <button type="button" onclick="event.stopPropagation(); startInlineActivityEdit(${actId}, 'hover')" title="Edit this note" style="background:transparent; border:none; color:#93c5fd; cursor:pointer; font-size:0.7rem; padding:1px 4px;">✏️</button>
+                            ${revCount > 0 ? `<button type="button" onclick="event.stopPropagation(); toggleActivityRevisionHistory(${actId}, 'hover')" title="View ${revCount} previous version(s)" style="background:transparent; border:none; color:#fde68a; cursor:pointer; font-size:0.66rem; padding:1px 4px;">🕓v${revCount + 1}</button>` : ''}
+                            <button type="button" onclick="event.stopPropagation(); deleteLeadActivityItem(${actId}, 'hover')" title="Delete this note" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-size:0.7rem; padding:1px 4px;"><i class="fas fa-trash-alt"></i></button>
+                        </div>
                     </div>
-                    <div style="color: #e2e8f0; font-size: 0.78rem; line-height: 1.3; font-weight: 500;">${act.description}</div>
+                    <div id="hover-act-desc-${actId}" style="color: #f1f5f9; font-size: 0.76rem; line-height: 1.35; font-weight: 500; white-space: pre-wrap;">${escapeNoteHtml(act.description)}</div>
+                    ${taskBadgeHtml}
+                    <div id="hover-act-edit-wrap-${actId}" style="display: none; margin-top: 0.35rem;" onclick="event.stopPropagation();">
+                        <textarea id="hover-act-edit-input-${actId}" aria-label="Edit activity note" style="width:100%; height:54px; border-radius:5px; border:1px solid #38bdf8; background:#0f172a; color:#ffffff; padding:0.35rem; font-size:0.74rem; font-family:inherit;">${escapeNoteHtml(act.description)}</textarea>
+                        <div style="display:flex; justify-content:flex-end; gap:0.3rem; margin-top:0.25rem;">
+                            <button type="button" onclick="cancelInlineActivityEdit(${actId}, 'hover')" style="background:#334155; color:#cbd5e1; border:none; border-radius:4px; padding:2px 7px; font-size:0.65rem; cursor:pointer;">Cancel</button>
+                            <button type="button" onclick="saveInlineActivityEdit(${actId}, 'hover')" style="background:#0284c7; color:#ffffff; border:none; border-radius:4px; padding:2px 8px; font-size:0.65rem; font-weight:800; cursor:pointer;">Save Edit</button>
+                        </div>
+                    </div>
+                    <div id="hover-act-rev-wrap-${actId}" style="display: none; margin-top: 0.35rem; padding-top: 0.3rem; border-top: 1px dashed #334155; font-size: 0.68rem; color: #cbd5e1;" onclick="event.stopPropagation();">
+                        ${(act.revision_history || []).slice().reverse().map(rev => `
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.35rem; margin-bottom:0.25rem; background:#0f172a; padding:0.25rem 0.4rem; border-radius:4px;">
+                                <div>
+                                    <div style="color:#94a3b8; font-size:0.62rem;">v${rev.version} • ${escapeNoteHtml(rev.edited_by || 'User')}</div>
+                                    <div style="color:#e2e8f0;">${escapeNoteHtml(rev.old_text || '')}</div>
+                                </div>
+                                <button type="button" onclick="restoreActivityVersion(${actId}, ${rev.version}, 'hover')" style="background:#1e293b; color:#38bdf8; border:1px solid #334155; border-radius:4px; padding:1px 6px; font-size:0.62rem; font-weight:800; cursor:pointer; white-space:nowrap;">↩ Restore</button>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
         }).join('');
     }
 
+    function toggleHoverBriefEdit(forceState = null) {
+        const editor = document.getElementById('hover-card-brief-editor');
+        const textEl = document.getElementById('hover-card-brief-text');
+        if (!editor) return;
+        const show = forceState !== null ? forceState : (editor.style.display === 'none');
+        editor.style.display = show ? 'block' : 'none';
+        if (textEl) textEl.style.display = show ? 'none' : 'block';
+        if (show) {
+            const inp = document.getElementById('hover-card-brief-input');
+            if (inp) inp.focus();
+        }
+    }
+
+    async function saveHoverStandingBrief() {
+        if (!currentHoverId) return;
+        const inp = document.getElementById('hover-card-brief-input');
+        if (!inp) return;
+        const newNotes = inp.value.trim();
+        try {
+            const res = await fetch(`/api/v1/leads/${currentHoverId}/standing-brief`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ notes: newNotes, log_touchpoint: false })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                invalidateLeadActivityCache(currentHoverId);
+                updateLeadRowNoteIndicators(currentHoverId, newNotes, 0, Boolean(newNotes));
+                toggleHoverBriefEdit(false);
+                if (typeof showToast === 'function') showToast(newNotes ? 'Standing Facility Brief updated!' : 'Standing Facility Brief cleared.', 'success');
+                const refreshRes = await fetch(`/api/v1/activities/${currentHoverType}/${currentHoverId}`);
+                const refreshData = await refreshRes.json();
+                if (refreshData.status === 'success') {
+                    activityCache[`${currentHoverType}_${currentHoverId}`] = refreshData;
+                    renderHoverCardItems(refreshData, currentHoverId, currentHoverType);
+                }
+            }
+        } catch (err) {
+            console.error('Error saving hover brief:', err);
+        }
+    }
+
+    async function submitHoverCardQuickNote() {
+        if (!currentHoverId) return;
+        const inputEl = document.getElementById('hover-card-quick-note-input');
+        const pinEl = document.getElementById('hover-card-quick-pin');
+        const nextDateEl = document.getElementById('hover-card-quick-next-date');
+        if (!inputEl) return;
+        const note = inputEl.value.trim();
+        if (!note) return;
+        const isPinned = Boolean(pinEl && pinEl.checked);
+        const explicitNextDate = (nextDateEl && nextDateEl.value) ? nextDateEl.value.trim() : null;
+        try {
+            const res = await fetch('/api/v1/activities/quick-log', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    parent_id: currentHoverId,
+                    parent_type: currentHoverType || 'Lead',
+                    activity_type: 'NOTE',
+                    note: note,
+                    is_pinned: isPinned,
+                    next_action_date: explicitNextDate
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                inputEl.value = '';
+                if (pinEl) pinEl.checked = false;
+                invalidateLeadActivityCache(currentHoverId);
+                updateLeadRowNoteIndicators(currentHoverId, note, 1, isPinned);
+                if (data.next_action_date) {
+                    updateLeadRowNextActionDateDOM(currentHoverId, data.next_action_date);
+                }
+                if (typeof showToast === 'function') {
+                    const followUpSuffix = data.next_action_date ? ` (Follow-up: ${data.next_action_date})` : '';
+                    showToast((isPinned ? 'Pinned note added!' : 'Note added!') + followUpSuffix, 'success');
+                }
+                const refreshRes = await fetch(`/api/v1/activities/${currentHoverType}/${currentHoverId}`);
+                const refreshData = await refreshRes.json();
+                if (refreshData.status === 'success') {
+                    activityCache[`${currentHoverType}_${currentHoverId}`] = refreshData;
+                    renderHoverCardItems(refreshData, currentHoverId, currentHoverType);
+                }
+            }
+        } catch (err) {
+            console.error('Hover quick note error:', err);
+        }
+    }
+
     function openHoverTargetModal() {
         if (!currentHoverId) return;
         hideActivityHoverCardNow();
-        if (currentHoverType.lower === 'account') {
+        if (String(currentHoverType || '').toLowerCase() === 'account') {
             openAccountCommand(currentHoverId, 'activities');
         } else {
             openLeadCommand(currentHoverId, 'activities');
@@ -389,58 +741,227 @@
         quickUpdateLead(leadId, 'next_action_date', dateStr, btnElement);
     }
 
-    // --- SigmaFidelity™ Unified Grid Engine (2026 Architectural Hardening) ---
+    // --- SigmaFidelity™ Unified Grid Engine v2.0 (BUG-164 Universal All-Module Enterprise Hardening) ---
+    const DESC_FIRST_SORT_COLS = new Set([
+        'value', 'revenue', 'sqf', 'capacity', 'activities', 'last_contact',
+        'input_date', 'created', 'date', 'recent', 'updated', 'monthly'
+    ]);
+
     const SigmaGridEngine = {
+        getGridIdFromFormOrHeader: function(targetId) {
+            const id = String(targetId || '').toLowerCase();
+            if (id.includes('acc')) return 'accounts';
+            if (id.includes('bid')) return 'construction_bids';
+            return 'leads';
+        },
+        getHeaderRowIdForGrid: function(gridId) {
+            if (gridId === 'accounts') return 'accounts-header-row';
+            if (gridId === 'construction_bids') return 'bids-header-row';
+            return 'leads-header-row';
+        },
+        getAnchorColForGrid: function(gridId) {
+            return gridId === 'construction_bids' ? 'project' : 'company';
+        },
+        getCurrentOrderedCols: function(gridId) {
+            const headerId = this.getHeaderRowIdForGrid(gridId);
+            const header = document.getElementById(headerId);
+            if (header) {
+                const domCols = Array.from(header.querySelectorAll('th'))
+                    .map(th => th.getAttribute('data-col'))
+                    .filter(Boolean);
+                if (domCols.length > 0) return domCols;
+            }
+            if (typeof ACTIVE_GRID_COLS !== 'undefined' && Array.isArray(ACTIVE_GRID_COLS) && ACTIVE_GRID_COLS.length > 0) {
+                return [...ACTIVE_GRID_COLS];
+            }
+            return [this.getAnchorColForGrid(gridId)];
+        },
+        refreshColumnMenuBadges: function(menuEl, gridId) {
+            if (!menuEl) return;
+            const form = menuEl.querySelector('form');
+            if (!form) return;
+            const currentOrder = this.getCurrentOrderedCols(gridId);
+            const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"][name="cols"]'));
+            // Compute ordered sequence: existing ordered columns that are checked, followed by newly checked columns
+            const checkedValues = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+            const orderedActive = [];
+            currentOrder.forEach(c => {
+                if (checkedValues.includes(c) && !orderedActive.includes(c)) orderedActive.push(c);
+            });
+            checkedValues.forEach(c => {
+                if (!orderedActive.includes(c)) orderedActive.push(c);
+            });
+
+            checkboxes.forEach(cb => {
+                const label = cb.closest('label');
+                if (!label) return;
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.gap = '0.35rem';
+                let badge = label.querySelector('.sigma-col-order-badge');
+                const idx = orderedActive.indexOf(cb.value);
+                if (cb.checked && idx !== -1) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'sigma-col-order-badge';
+                        label.appendChild(badge);
+                    }
+                    badge.textContent = '#' + (idx + 2); // #1 is anchor column (Company / Project)
+                    badge.title = `Column position #${idx + 2} (drag table headers to reorder)`;
+                } else if (badge) {
+                    badge.remove();
+                }
+                if (!cb.dataset.badgeListenerBound) {
+                    cb.dataset.badgeListenerBound = '1';
+                    cb.addEventListener('change', () => this.refreshColumnMenuBadges(menuEl, gridId));
+                }
+            });
+        },
         toggleMenu: function(menuId, e) {
             if (e) e.stopPropagation();
             const m = document.getElementById(menuId);
             if (!m) return;
             const isOpening = (m.style.display === 'none' || !m.style.display);
             m.style.display = isOpening ? 'block' : 'none';
-            if (isOpening && window.innerWidth > 1024) {
-                m.style.left = '0';
-                m.style.right = 'auto';
-                const rect = m.getBoundingClientRect();
-                if (rect.right > window.innerWidth - 12) {
-                    const shift = rect.right - (window.innerWidth - 12);
-                    m.style.left = Math.max(-rect.left + 12, -shift) + 'px';
+            if (isOpening) {
+                const gridId = this.getGridIdFromFormOrHeader(menuId);
+                this.refreshColumnMenuBadges(m, gridId);
+                if (window.innerWidth > 1024) {
+                    m.style.left = '0';
+                    m.style.right = 'auto';
+                    const rect = m.getBoundingClientRect();
+                    if (rect.right > window.innerWidth - 12) {
+                        const shift = rect.right - (window.innerWidth - 12);
+                        m.style.left = Math.max(-rect.left + 12, -shift) + 'px';
+                    }
                 }
             }
         },
-        applyColumns: function(e) {
+        computeOrderPreservingCols: function(formEl, gridId) {
+            const anchor = this.getAnchorColForGrid(gridId);
+            const currentOrder = this.getCurrentOrderedCols(gridId);
+            const formData = new FormData(formEl);
+            const checkedSet = new Set(
+                formData.getAll('cols')
+                    .map(c => String(c || '').trim())
+                    .filter(c => c && c !== 'on')
+            );
+            checkedSet.add(anchor);
+
+            const finalCols = [anchor];
+            // 1. Preserve user's existing dragged sequence for all columns that remain checked
+            currentOrder.forEach(col => {
+                if (col !== anchor && checkedSet.has(col) && !finalCols.includes(col)) {
+                    finalCols.push(col);
+                }
+            });
+            // 2. Append newly checked columns at the end
+            checkedSet.forEach(col => {
+                if (col !== anchor && !finalCols.includes(col)) {
+                    finalCols.push(col);
+                }
+            });
+            return finalCols;
+        },
+        saveGridStateToServer: async function(gridId, payload) {
+            try {
+                const bodyObj = Object.assign({ grid_id: gridId }, payload || {});
+                await fetch('/api/v1/ui/grid-state', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(bodyObj),
+                    keepalive: true
+                });
+            } catch (err) {
+                console.warn('[SigmaGridEngine] Grid state save warning:', err);
+            }
+        },
+        syncNavigationLinksCols: function(gridId, colsStr) {
+            // Remove any stale ?cols=... from pagination/filter links and current URL so server state is authoritative
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('cols')) {
+                url.searchParams.delete('cols');
+                window.history.replaceState({}, '', url.href);
+            }
+            document.querySelectorAll('a[href*="/admin/operations"]').forEach(a => {
+                try {
+                    const aUrl = new URL(a.href, window.location.origin);
+                    if (aUrl.searchParams.has('cols')) {
+                        aUrl.searchParams.delete('cols');
+                        a.href = aUrl.pathname + aUrl.search;
+                    }
+                } catch (e) {}
+            });
+            const searchColsInput = document.getElementById('search-cols-input');
+            if (searchColsInput) searchColsInput.remove();
+            const accColsInput = document.getElementById('acc-cols-input');
+            if (accColsInput) accColsInput.remove();
+        },
+        applyColumns: async function(e) {
             e.preventDefault();
-            const submitBtn = e.target ? (e.submitter || e.target.querySelector('button[type="submit"]')) : null;
+            const formEl = e.target;
+            const submitBtn = formEl ? (e.submitter || formEl.querySelector('button[type="submit"]')) : null;
             if (submitBtn && window.spinAndLock) {
                 window.spinAndLock(submitBtn, 'Applying View...');
             }
-            const formData = new FormData(e.target);
-            const cols = formData.getAll('cols').join(',');
-            const url = new URL(window.location);
-            url.searchParams.set('cols', cols);
+            const gridId = this.getGridIdFromFormOrHeader(formEl ? formEl.id : '');
+            const finalCols = this.computeOrderPreservingCols(formEl, gridId);
+            const colsStr = finalCols.join(',');
+            await this.saveGridStateToServer(gridId, { active_cols: finalCols });
+            const url = new URL(window.location.href);
+            url.searchParams.set('cols', colsStr);
+            window.location.href = url.href;
+        },
+        applyDirectColsList: async function(gridId, colsList, extraParams) {
+            const anchor = this.getAnchorColForGrid(gridId);
+            const cleanList = [anchor, ...colsList.filter(c => c && c !== anchor)];
+            const colsStr = cleanList.join(',');
+            await this.saveGridStateToServer(gridId, { active_cols: cleanList });
+            const url = new URL(window.location.href);
+            url.searchParams.set('cols', colsStr);
+            if (extraParams && typeof extraParams === 'object') {
+                Object.entries(extraParams).forEach(([k, v]) => {
+                    if (v === null || v === undefined) url.searchParams.delete(k);
+                    else url.searchParams.set(k, v);
+                });
+            }
             window.location.href = url.href;
         },
         resetColumns: function(viewTitle) {
+            const gridId = this.getGridIdFromFormOrHeader(viewTitle);
             showDecision({
                 title: 'Reset your view?',
-                text: `This will restore the standard columns for the ${viewTitle} view.`,
+                text: `This will restore the standard columns and default widths for the ${viewTitle} view.`,
                 confirmText: 'Reset View',
                 icon: 'fa-sync-alt',
-                onConfirm: () => {
-                    const url = new URL(window.location);
+                onConfirm: async () => {
+                    localStorage.removeItem('sigma_col_widths_' + gridId);
+                    await this.saveGridStateToServer(gridId, { reset: true });
+                    const url = new URL(window.location.href);
                     url.searchParams.set('cols', 'default');
                     window.location.href = url.href;
                 }
             });
         },
         sort: function(view, col, defaultSort, defaultDir) {
-            const url = new URL(window.location);
+            const url = new URL(window.location.href);
             let currentSort = url.searchParams.get('sort') || (defaultSort || '');
             let currentDir = (url.searchParams.get('dir') || (defaultDir || 'asc')).toLowerCase();
-            let newDir = (currentSort === col && currentDir === 'asc') ? 'desc' : 'asc';
+            let newDir;
+            if (currentSort === col) {
+                newDir = (currentDir === 'asc') ? 'desc' : 'asc';
+            } else {
+                newDir = DESC_FIRST_SORT_COLS.has(String(col || '').toLowerCase()) ? 'desc' : 'asc';
+            }
             url.searchParams.set('view', view);
             url.searchParams.set('sort', col);
             url.searchParams.set('dir', newDir);
             url.searchParams.set('page', '1');
+            url.searchParams.delete('cols'); // Rely on server-persisted column order
             window.location.href = url.href;
         }
     };
@@ -624,36 +1145,40 @@
     function savePersonalLeadPreset() {
         const form = document.getElementById('col-form');
         if (!form) return;
-        const checked = form.querySelectorAll('input[type="checkbox"][name="cols"]:checked');
-        const cols = Array.from(checked).map(cb => cb.value);
-        if (cols.length === 0) {
+        const orderedCols = SigmaGridEngine.computeOrderPreservingCols(form, 'leads').filter(c => c !== 'company');
+        if (orderedCols.length === 0) {
             showToast('Please check at least one column before saving your view.', 'error');
             return;
         }
-        localStorage.setItem('sigma_lead_preset_personal', JSON.stringify(cols));
+        localStorage.setItem('sigma_lead_preset_personal', JSON.stringify(orderedCols));
+        SigmaGridEngine.saveGridStateToServer('leads', { personal_preset: orderedCols });
         const btn = document.getElementById('btn-preset-personal-lead');
         if (btn) {
             btn.style.background = '#ede9fe';
             btn.style.borderColor = '#8b5cf6';
             btn.style.color = '#5b21b6';
-            btn.title = `My View: Load your saved personal column layout (${cols.length} columns)`;
+            btn.title = `My View: Load your saved personal column layout (${orderedCols.length} columns)`;
         }
-        showToast('Personal column view saved successfully!', 'success');
+        showToast('Personal column view saved to your account!', 'success');
     }
 
     function setLeadPreset(presetType) {
         const form = document.getElementById('col-form');
         if (!form) return;
         const checkboxes = form.querySelectorAll('input[type="checkbox"][name="cols"]');
-        
+
         let personalCols = null;
         if (presetType === 'personal') {
-            const saved = localStorage.getItem('sigma_lead_preset_personal');
-            if (saved) {
-                try {
-                    personalCols = JSON.parse(saved);
-                } catch(e) {
-                    personalCols = null;
+            if (typeof SERVER_GRID_STATE !== 'undefined' && SERVER_GRID_STATE && Array.isArray(SERVER_GRID_STATE.personal_preset) && SERVER_GRID_STATE.personal_preset.length > 0) {
+                personalCols = SERVER_GRID_STATE.personal_preset;
+            } else {
+                const saved = localStorage.getItem('sigma_lead_preset_personal');
+                if (saved) {
+                    try {
+                        personalCols = JSON.parse(saved);
+                    } catch (e) {
+                        personalCols = null;
+                    }
                 }
             }
             if (!personalCols || !Array.isArray(personalCols) || personalCols.length === 0) {
@@ -675,95 +1200,63 @@
         checkboxes.forEach(cb => {
             cb.checked = selectedCols.includes(cb.value);
         });
+        const menuEl = document.getElementById('col-mgr-menu');
+        if (menuEl) SigmaGridEngine.refreshColumnMenuBadges(menuEl, 'leads');
         if (presetType === 'm_and_a') {
-            const url = new URL(window.location);
-            url.searchParams.set('cols', ['company', ...selectedCols].join(','));
-            url.searchParams.set('m_and_a', 'true');
-            window.location.href = url.href;
-        } else if (presetType === 'personal') {
-            showToast('Personal view loaded! Click "Apply View" to save.', 'success');
+            SigmaGridEngine.applyDirectColsList('leads', selectedCols, { m_and_a: 'true', page: '1' });
+        } else {
+            SigmaGridEngine.applyDirectColsList('leads', selectedCols, { page: '1' });
         }
     }
 
     function savePersonalAccountPreset() {
         const form = document.getElementById('col-form-acc');
         if (!form) return;
-        const checked = form.querySelectorAll('input[type="checkbox"][name="cols"]:checked');
-        const cols = Array.from(checked).map(cb => cb.value);
-        if (cols.length === 0) {
+        const orderedCols = SigmaGridEngine.computeOrderPreservingCols(form, 'accounts').filter(c => c !== 'company');
+        if (orderedCols.length === 0) {
             showToast('Please check at least one column before saving your view.', 'error');
             return;
         }
-        localStorage.setItem('sigma_acc_preset_personal', JSON.stringify(cols));
+        localStorage.setItem('sigma_acc_preset_personal', JSON.stringify(orderedCols));
+        SigmaGridEngine.saveGridStateToServer('accounts', { personal_preset: orderedCols });
         const btn = document.getElementById('btn-preset-personal-acc');
         if (btn) {
             btn.style.background = '#ede9fe';
             btn.style.borderColor = '#8b5cf6';
             btn.style.color = '#5b21b6';
-            btn.title = `My View: Load your saved personal client column layout (${cols.length} columns)`;
+            btn.title = `My View: Load your saved personal client column layout (${orderedCols.length} columns)`;
         }
         const toolbarBtn = document.getElementById('btn-toolbar-personal-acc');
         if (toolbarBtn) {
             toolbarBtn.style.background = '#ede9fe';
             toolbarBtn.style.borderColor = '#8b5cf6';
             toolbarBtn.style.color = '#5b21b6';
-            toolbarBtn.title = `My View: Load your saved personal client columns (${cols.length} columns)`;
+            toolbarBtn.title = `My View: Load your saved personal client columns (${orderedCols.length} columns)`;
         }
-        showToast('Personal client column view saved successfully!', 'success');
+        showToast('Personal client column view saved to your account!', 'success');
     }
 
     function applyAccountPresetForm(presetType) {
-        const form = document.getElementById('col-form-acc');
-        if (!form) return;
-        const checkboxes = form.querySelectorAll('input[type="checkbox"][name="cols"]');
-        
-        let personalCols = null;
-        if (presetType === 'personal') {
-            const saved = localStorage.getItem('sigma_acc_preset_personal');
-            if (saved) {
-                try {
-                    personalCols = JSON.parse(saved);
-                } catch(e) {
-                    personalCols = null;
-                }
-            }
-            if (!personalCols || !Array.isArray(personalCols) || personalCols.length === 0) {
-                showToast('No personal view saved yet! Check your preferred columns and click "Save My View".', 'error');
-                return;
-            }
-        }
-
-        const presets = {
-            'portfolio': ['status', 'umbrella', 'cleaning_model', 'contact', 'revenue', 'sqf', 'account_health'],
-            'revenue': ['status', 'umbrella', 'revenue', 'cycle', 'quote', 'frequency', 'start_date'],
-            'health': ['status', 'contact', 'account_health', 'quick_log_acc', 'last_note', 'activities'],
-            'personal': personalCols || [],
-            'all': Array.from(checkboxes).map(cb => cb.value)
-        };
-        const selectedCols = presets[presetType] || [];
-        checkboxes.forEach(cb => {
-            cb.checked = selectedCols.includes(cb.value);
-        });
-        if (presetType === 'personal') {
-            showToast('Personal client view loaded! Click "Apply View" to save.', 'success');
-        } else {
-            showToast('Preset columns selected! Click "Apply View" to save.', 'info');
-        }
+        setAccountPreset(presetType);
     }
 
     function setAccountPreset(presetType) {
         const form = document.getElementById('col-form-acc');
         if (!form) return;
         const checkboxes = form.querySelectorAll('input[type="checkbox"][name="cols"]');
-        
+
         let personalCols = null;
         if (presetType === 'personal') {
-            const saved = localStorage.getItem('sigma_acc_preset_personal');
-            if (saved) {
-                try {
-                    personalCols = JSON.parse(saved);
-                } catch(e) {
-                    personalCols = null;
+            if (typeof SERVER_GRID_STATE !== 'undefined' && SERVER_GRID_STATE && Array.isArray(SERVER_GRID_STATE.personal_preset) && SERVER_GRID_STATE.personal_preset.length > 0) {
+                personalCols = SERVER_GRID_STATE.personal_preset;
+            } else {
+                const saved = localStorage.getItem('sigma_acc_preset_personal');
+                if (saved) {
+                    try {
+                        personalCols = JSON.parse(saved);
+                    } catch (e) {
+                        personalCols = null;
+                    }
                 }
             }
             if (!personalCols || !Array.isArray(personalCols) || personalCols.length === 0) {
@@ -783,95 +1276,62 @@
         checkboxes.forEach(cb => {
             cb.checked = selectedCols.includes(cb.value);
         });
-        const colsStr = ['company', ...selectedCols.filter(c => c !== 'company')].join(',');
-        const url = new URL(window.location.href);
+        const extra = {};
         const searchInput = document.querySelector('#form-search-acc input[name="q"]');
         if (searchInput && searchInput.value.trim()) {
-            url.searchParams.set('q', searchInput.value.trim());
+            extra.q = searchInput.value.trim();
         }
-        url.searchParams.set('cols', colsStr);
-        window.location.href = url.href;
+        SigmaGridEngine.applyDirectColsList('accounts', selectedCols, extra);
     }
 
     function savePersonalBidPreset() {
         const form = document.getElementById('col-form-bids');
         if (!form) return;
-        const checked = form.querySelectorAll('input[type="checkbox"][name="cols"]:checked');
-        const cols = Array.from(checked).map(cb => cb.value);
-        if (cols.length === 0) {
+        const orderedCols = SigmaGridEngine.computeOrderPreservingCols(form, 'construction_bids').filter(c => c !== 'project');
+        if (orderedCols.length === 0) {
             showToast('Please check at least one column before saving your view.', 'error');
             return;
         }
-        localStorage.setItem('sigma_bid_preset_personal', JSON.stringify(cols));
+        localStorage.setItem('sigma_bid_preset_personal', JSON.stringify(orderedCols));
+        SigmaGridEngine.saveGridStateToServer('construction_bids', { personal_preset: orderedCols });
         const btn = document.getElementById('btn-preset-personal-bids');
         if (btn) {
             btn.style.background = '#ede9fe';
             btn.style.borderColor = '#8b5cf6';
             btn.style.color = '#5b21b6';
-            btn.title = `My View: Load your saved personal bidding column layout (${cols.length} columns)`;
+            btn.title = `My View: Load your saved personal bidding column layout (${orderedCols.length} columns)`;
         }
         const toolbarBtn = document.getElementById('btn-toolbar-personal-bids');
         if (toolbarBtn) {
             toolbarBtn.style.background = '#ede9fe';
             toolbarBtn.style.borderColor = '#8b5cf6';
             toolbarBtn.style.color = '#5b21b6';
-            toolbarBtn.title = `My View: Load your saved personal bidding columns (${cols.length} columns)`;
+            toolbarBtn.title = `My View: Load your saved personal bidding columns (${orderedCols.length} columns)`;
         }
-        showToast('Personal bidding column view saved successfully!', 'success');
+        showToast('Personal bidding column view saved to your account!', 'success');
     }
 
     function applyBidPresetForm(presetType) {
-        const form = document.getElementById('col-form-bids');
-        if (!form) return;
-        const checkboxes = form.querySelectorAll('input[type="checkbox"][name="cols"]');
-        
-        let personalCols = null;
-        if (presetType === 'personal') {
-            const saved = localStorage.getItem('sigma_bid_preset_personal');
-            if (saved) {
-                try {
-                    personalCols = JSON.parse(saved);
-                } catch(e) {
-                    personalCols = null;
-                }
-            }
-            if (!personalCols || !Array.isArray(personalCols) || personalCols.length === 0) {
-                showToast('No personal view saved yet! Check your preferred columns and click "Save My View".', 'error');
-                return;
-            }
-        }
-
-        const presets = {
-            'sprint': ['status', 'due_date', 'created', 'estimator', 'phone', 'actions'],
-            'takeoff': ['status', 'sqf', 'value', 'scope', 'platform', 'special_reqs', 'actions'],
-            'logistics': ['status', 'location', 'address', 'dates', 'prequal', 'estimator', 'actions'],
-            'personal': personalCols || [],
-            'all': Array.from(checkboxes).map(cb => cb.value)
-        };
-        const selectedCols = presets[presetType] || [];
-        checkboxes.forEach(cb => {
-            cb.checked = selectedCols.includes(cb.value);
-        });
-        if (presetType === 'personal') {
-            showToast('Personal bidding view loaded! Click "Apply View" to save.', 'success');
-        } else {
-            showToast('Preset columns selected! Click "Apply View" to save.', 'info');
-        }
+        setBidPreset(presetType);
     }
 
     function setBidPreset(presetType) {
         const form = document.getElementById('col-form-bids');
         if (!form) return;
         const checkboxes = form.querySelectorAll('input[type="checkbox"][name="cols"]');
-        
+
         let personalCols = null;
         if (presetType === 'personal') {
-            const saved = localStorage.getItem('sigma_bid_preset_personal');
-            if (saved) {
-                try {
-                    personalCols = JSON.parse(saved);
-                } catch(e) {
-                    personalCols = null;
+            if (typeof SERVER_GRID_STATE !== 'undefined' && SERVER_GRID_STATE && Array.isArray(SERVER_GRID_STATE.personal_preset) && SERVER_GRID_STATE.personal_preset.length > 0) {
+                personalCols = SERVER_GRID_STATE.personal_preset;
+            } else {
+                const saved = localStorage.getItem('sigma_bid_preset_personal');
+                if (saved) {
+                    try {
+                        personalCols = JSON.parse(saved);
+                    } catch (e) {
+                        personalCols = null;
+                    }
                 }
             }
             if (!personalCols || !Array.isArray(personalCols) || personalCols.length === 0) {
@@ -891,10 +1351,7 @@
         checkboxes.forEach(cb => {
             cb.checked = selectedCols.includes(cb.value);
         });
-        const colsStr = ['project', ...selectedCols.filter(c => c !== 'project')].join(',');
-        const url = new URL(window.location);
-        url.searchParams.set('cols', colsStr);
-        window.location.href = url.href;
+        SigmaGridEngine.applyDirectColsList('construction_bids', selectedCols, { page: '1' });
     }
 
     function matchBooleanQuery(text, query) {
@@ -1395,18 +1852,46 @@
             setVal('lead-action-email', lead.email);
             setVal('lead-activity-status', '');
             setVal('lead-activity-cleaning-model', lead.cleaning_delivery_model || 'UNKNOWN');
-            setVal('lead-activity-next-date', lead.next_action_date ? String(lead.next_action_date).slice(0, 10) : '');
+            const rawLeadNextDate = lead.next_action_date ? String(lead.next_action_date).slice(0, 10) : '';
+            const todayIsoStr = computeSmartNextBusinessDateJS(0);
+            const isTerminalLead = ['Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'].includes(String(lead.status || 'New'));
+            if (isTerminalLead) {
+                setVal('lead-activity-next-date', '');
+            } else if (rawLeadNextDate && rawLeadNextDate >= todayIsoStr) {
+                setVal('lead-activity-next-date', rawLeadNextDate);
+            } else {
+                setVal('lead-activity-next-date', computeSmartNextBusinessDateJS(3));
+            }
+            const updateNextCb = document.getElementById('update-next-action');
+            if (updateNextCb) updateNextCb.checked = !isTerminalLead;
+
+            const actPinEl = document.getElementById('lead-activity-pin');
+            if (actPinEl) actPinEl.checked = false;
+            const actUmbrellaWrap = document.getElementById('lead-activity-umbrella-wrap');
+            const actUmbrellaCb = document.getElementById('lead-activity-share-umbrella');
+            const actUmbrellaLbl = document.getElementById('lead-activity-umbrella-label');
+            if (actUmbrellaCb) actUmbrellaCb.checked = false;
+            if (actUmbrellaWrap) {
+                const sCount = parseInt(data.sister_count || 0, 10) || 0;
+                if (lead.umbrella_name && sCount > 0) {
+                    actUmbrellaWrap.style.display = 'inline-flex';
+                    if (actUmbrellaLbl) {
+                        actUmbrellaLbl.innerText = `🏢 Copy note to ${sCount} sister location${sCount === 1 ? '' : 's'} (${lead.umbrella_name})`;
+                    }
+                } else {
+                    actUmbrellaWrap.style.display = 'none';
+                }
+            }
+
+            window.activeLeadDetailData = data;
+            renderLeadOverviewNotesCard(lead, data.activities || []);
 
             const contactList = document.getElementById('lead-list-contacts');
             if (contactList) {
                 contactList.innerHTML = (data.contacts || []).map(c => `<div class="isc-list-item"><div style="font-weight:900; font-size:1.1rem">${c.full_name}</div><div style="font-size:0.75rem; color:var(--brand); font-weight:800; text-transform:uppercase;">${c.role || 'Lead Contact'}</div><div style="height:1px; background:var(--slate-100); margin:1rem 0;"></div><div style="display:flex; gap:1.5rem;"><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-phone"></i> ${c.phone || '--'}</div><div style="font-size:0.85rem; color:var(--slate-600);"><i class="fas fa-envelope"></i> ${c.email || '--'}</div></div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No additional contacts.</p>';
             }
 
-            const typeMap = { 'LEAD_CREATED': 'Lead added', 'PHONE_CALL': 'Phone call', 'EMAIL_SENT': 'Email sent', 'SITE_VISIT': 'Building visit', 'NOTE': 'Note added', 'STAGE_CHANGE': 'Stage updated', 'CLEANING_SETUP_UPDATED': 'Who Cleans updated', 'CONVERTED': 'Upgraded to Client Account' };
-            const timeline = document.getElementById('lead-list-timeline');
-            if (timeline) {
-                timeline.innerHTML = (data.activities || []).map(a => `<div class="timeline-node"><div style="font-size:0.7rem; font-weight:900; color:var(--brand); text-transform:uppercase"><i class="fas fa-stream"></i> ${formatDashboardDate(a.timestamp)}</div><div style="font-weight:800; margin:0.5rem 0;">${typeMap[a.activity_type] || a.activity_type}</div><div style="font-size:0.9rem; color:var(--slate-600)">${a.description}</div></div>`).join('') || '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No history.</p>';
-            }
+            renderLeadTimelineList(data.activities || [], _activeLeadTimelineFilter);
 
             const paneEdit = document.getElementById('lead-pane-edit');
             const paneOverview = document.getElementById('lead-pane-overview');
@@ -1564,35 +2049,160 @@
 
     function handleActivityResultChange(resultVal) {
         const stageSelect = document.getElementById('lead-activity-status');
+        const nextDateInput = document.getElementById('lead-activity-next-date');
+        const updateNextCb = document.getElementById('update-next-action');
         if (!stageSelect) return;
         if (resultVal === 'Spoke with Manager - Interested' || resultVal === 'Walkthrough Requested') {
             stageSelect.value = 'Qualified';
+            if (nextDateInput) nextDateInput.value = computeSmartNextBusinessDateJS(1);
+            if (updateNextCb) updateNextCb.checked = true;
         } else if (resultVal === 'Spoke to them' || resultVal === 'Spoke with Manager - Follow Up') {
             stageSelect.value = 'Contacted';
+            if (nextDateInput) nextDateInput.value = computeSmartNextBusinessDateJS(3);
+            if (updateNextCb) updateNextCb.checked = true;
         } else if (resultVal === 'Walkthrough Completed') {
             stageSelect.value = 'Walkthrough Completed';
+            if (nextDateInput) nextDateInput.value = computeSmartNextBusinessDateJS(1);
+            if (updateNextCb) updateNextCb.checked = true;
         } else if (resultVal === 'Not Interested') {
             stageSelect.value = 'Not Interested';
+            if (nextDateInput) nextDateInput.value = '';
+            if (updateNextCb) updateNextCb.checked = false;
         } else if (resultVal === 'Unsubscribed') {
             stageSelect.value = 'Unsubscribed';
+            if (nextDateInput) nextDateInput.value = '';
+            if (updateNextCb) updateNextCb.checked = false;
         } else if (resultVal === 'Do Not Call (DNC)') {
             stageSelect.value = 'Do Not Call (DNC)';
-        } else {
-            // Voicemail / Gatekeeper / No Answer: keep current stage so higher stages are not downgraded
+            if (nextDateInput) nextDateInput.value = '';
+            if (updateNextCb) updateNextCb.checked = false;
+        } else if (resultVal === 'No Answer') {
             stageSelect.value = '';
+            if (nextDateInput) nextDateInput.value = computeSmartNextBusinessDateJS(1);
+            if (updateNextCb) updateNextCb.checked = true;
+        } else {
+            // Voicemail / Gatekeeper: keep current stage and set +2 business days follow-up
+            stageSelect.value = '';
+            if (nextDateInput) nextDateInput.value = computeSmartNextBusinessDateJS(2);
+            if (updateNextCb) updateNextCb.checked = true;
         }
     }
 
-    function setActivityNextDateOffset(offsetDays) {
+    function computeSmartNextBusinessDateJS(offsetBusinessDays = 3) {
         const d = new Date();
-        d.setDate(d.getDate() + offsetDays);
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        let remaining = Math.max(0, parseInt(offsetBusinessDays, 10) || 0);
+        if (remaining === 0) {
+            if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+            if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        } else {
+            while (remaining > 0) {
+                d.setDate(d.getDate() + 1);
+                if (d.getDay() !== 0 && d.getDay() !== 6) {
+                    remaining -= 1;
+                }
+            }
+        }
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function setActivityNextDateOffset(offsetDays) {
         const el = document.getElementById('lead-activity-next-date');
-        if (el) el.value = `${yyyy}-${mm}-${dd}`;
+        if (el) el.value = computeSmartNextBusinessDateJS(offsetDays);
+    }
+
+    function setHoverQuickFollowupOffset(offsetDays) {
+        const el = document.getElementById('hover-card-quick-next-date');
+        if (el) el.value = computeSmartNextBusinessDateJS(offsetDays);
+    }
+
+    function updateLeadRowNextActionDateDOM(leadId, nextActionDate) {
+        if (!leadId) return;
+        const row = document.querySelector(`.leads-row[data-id="${leadId}"]`);
+        if (!row) return;
+        const dateInp = row.querySelector('input[type="date"][onchange*="next_action_date"]');
+        if (dateInp) {
+            dateInp.value = nextActionDate ? String(nextActionDate).slice(0, 10) : '';
+        }
+    }
+
+    function renderActivityFollowUpTaskBadge(act, context = 'timeline') {
+        if (!act) return '';
+        const actId = act.id || act.activity_id;
+        const fDate = String(act.follow_up_date || '').slice(0, 10);
+        const fAction = String(act.follow_up_action || 'Follow-Up Task');
+        const tStatus = String(act.task_status || 'OPEN').toUpperCase();
+        if (!fDate && tStatus !== 'COMPLETED') return '';
+
+        const isDark = (context === 'hover');
+        if (tStatus === 'COMPLETED') {
+            return `<div style="margin-top:0.3rem; display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap;">
+                <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.66rem; font-weight:800; padding:2px 7px; border-radius:999px; background:${isDark ? 'rgba(16,185,129,0.18)' : '#dcfce7'}; color:${isDark ? '#6ee7b7' : '#15803d'}; border:1px solid ${isDark ? 'rgba(52,211,153,0.35)' : '#86efac'};">
+                    ✓ Task Completed${fDate ? ' (' + escapeNoteHtml(fDate) + ')' : ''}
+                </span>
+            </div>`;
+        }
+        if (tStatus === 'CLOSED') {
+            return '';
+        }
+        const todayIso = new Date().toISOString().slice(0, 10);
+        const isOverdue = fDate && fDate < todayIso;
+        const isToday = fDate && fDate === todayIso;
+        let bg = isDark ? 'rgba(56,189,248,0.15)' : '#eff6ff';
+        let col = isDark ? '#7dd3fc' : '#1d4ed8';
+        let bdr = isDark ? 'rgba(56,189,248,0.35)' : '#bfdbfe';
+        let icon = '📅';
+        if (isOverdue) {
+            bg = isDark ? 'rgba(239,68,68,0.2)' : '#fee2e2';
+            col = isDark ? '#fca5a5' : '#b91c1c';
+            bdr = isDark ? 'rgba(248,113,113,0.4)' : '#fca5a5';
+            icon = '🚨 Overdue';
+        } else if (isToday) {
+            bg = isDark ? 'rgba(245,158,11,0.2)' : '#fef3c7';
+            col = isDark ? '#fcd34d' : '#b45309';
+            bdr = isDark ? 'rgba(251,191,36,0.4)' : '#fde68a';
+            icon = '⏰ Due Today';
+        } else {
+            icon = '📅 Follow-Up';
+        }
+        return `<div style="margin-top:0.32rem; display:flex; align-items:center; justify-content:space-between; gap:0.4rem; flex-wrap:wrap;" onclick="event.stopPropagation();">
+            <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.66rem; font-weight:800; padding:2px 8px; border-radius:999px; background:${bg}; color:${col}; border:1px solid ${bdr};">
+                ${icon}: ${escapeNoteHtml(fDate)} • ${escapeNoteHtml(fAction)}
+            </span>
+            <button type="button" onclick="event.stopPropagation(); completeActivityTask(${actId}, '${context}')" style="background:${isDark ? '#065f46' : '#f0fdf4'}; color:${isDark ? '#ecfdf5' : '#15803d'}; border:1px solid ${isDark ? '#10b981' : '#86efac'}; border-radius:5px; padding:1px 7px; font-size:0.65rem; font-weight:800; cursor:pointer;" title="Mark this follow-up task completed and roll next follow-up date forward">
+                ✓ Mark Done
+            </button>
+        </div>`;
+    }
+
+    async function completeActivityTask(activityId, context = 'timeline') {
+        if (!activityId) return;
+        try {
+            const res = await fetch(`/api/v1/activities/${activityId}/complete-task`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({})
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                const targetLeadId = data.parent_id || currentLeadId || currentHoverId || (activeCadenceLead && activeCadenceLead.id);
+                invalidateLeadActivityCache(targetLeadId);
+                if (data.next_action_date) {
+                    updateLeadRowNextActionDateDOM(targetLeadId, data.next_action_date);
+                }
+                if (typeof showToast === 'function') {
+                    const nextMsg = data.next_action_date ? ` Next follow-up scheduled for ${data.next_action_date}.` : '';
+                    showToast(`Follow-up task completed!${nextMsg}`, 'success');
+                }
+                await refreshActiveNoteSurfaces(targetLeadId, context);
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'Could not complete task.', 'error');
+            }
+        } catch (err) {
+            console.error('Complete activity task error:', err);
+        }
     }
 
     async function saveQuickLeadContactFromActivities() {
@@ -1985,15 +2595,15 @@
         const phone = document.getElementById('lead-action-phone') ? document.getElementById('lead-action-phone').value.trim() : '';
         const email = document.getElementById('lead-action-email') ? document.getElementById('lead-action-email').value.trim() : '';
         const nextDate = document.getElementById('lead-activity-next-date') ? document.getElementById('lead-activity-next-date').value.trim() : '';
-        let desc = document.getElementById('lead-activity-desc').value;
+        const updateNextActionCb = document.getElementById('update-next-action');
+        const shouldUpdateNextAction = updateNextActionCb ? Boolean(updateNextActionCb.checked) : true;
+        const isPinned = Boolean(document.getElementById('lead-activity-pin')?.checked);
+        const shareUmbrella = Boolean(document.getElementById('lead-activity-share-umbrella')?.checked);
+        const desc = (document.getElementById('lead-activity-desc')?.value || '').trim();
 
         if (explicitStatus === 'UPGRADE_TO_ACCOUNT') {
             promoteLead(id);
             return;
-        }
-
-        if (resultVal) {
-            desc = `[Result: ${resultVal}] ${desc}`;
         }
 
         showToast("Saving activity & lead updates...", "success");
@@ -2004,8 +2614,12 @@
                 phone: phone,
                 email: email,
                 note: desc,
-                activity_type: resultVal || type,
-                next_action_date: nextDate || null
+                activity_type: type || resultVal || 'Note',
+                outcome: resultVal || '',
+                is_pinned: isPinned,
+                share_umbrella: shareUmbrella,
+                update_next_action: shouldUpdateNextAction,
+                next_action_date: shouldUpdateNextAction ? (nextDate || null) : null
             };
             if (explicitStatus) {
                 payload.status = explicitStatus;
@@ -2022,10 +2636,23 @@
             const result = res.ok ? await res.json().catch(() => ({})) : null;
 
             if (res.ok) { 
-                document.getElementById('lead-activity-desc').value = ''; 
-                showToast("Activity and stage dates saved.", "success"); 
+                document.getElementById('lead-activity-desc').value = '';
+                const pinCb = document.getElementById('lead-activity-pin');
+                if (pinCb) pinCb.checked = false;
+                const umbCb = document.getElementById('lead-activity-share-umbrella');
+                if (umbCb) umbCb.checked = false;
+                const smartBanner = document.getElementById('lead-activity-smart-detect');
+                if (smartBanner) smartBanner.style.display = 'none';
+                invalidateLeadActivityCache(id);
+                updateLeadRowNoteIndicators(id, desc || resultVal, 1, isPinned);
+                if (result && result.next_action_date !== undefined) {
+                    updateLeadRowNextActionDateDOM(id, result.next_action_date);
+                }
+                const sisterMsg = (result && result.sister_broadcast_count) ? ` (+ copied to ${result.sister_broadcast_count} sister location(s))` : '';
+                const followUpMsg = (result && result.next_action_date) ? ` • Next follow-up: ${result.next_action_date}` : '';
+                showToast(`Activity and stage dates saved${followUpMsg}${sisterMsg}.`, "success"); 
                 await openLeadCommand(id, 'timeline');
-                syncOperationalData();
+                syncOperationalData({ silent: true });
             } else {
                 const err = result || {message: "Submission failed"};
                 showToast("System Error: " + (err.message || "Failed to save"), "error");
@@ -2033,6 +2660,449 @@
         } catch (err) {
             console.error("Log Error:", err);
             showToast("Network Error: Could not reach server", "error");
+        }
+    }
+
+    // --- Enterprise Lead Notes, Standing Brief, Inline Edit, Pin & Version History Engine (BUG-159) ---
+    function renderLeadOverviewNotesCard(lead, activities) {
+        const displayEl = document.getElementById('lead-overview-brief-display');
+        const inputEl = document.getElementById('lead-overview-brief-input');
+        const metaEl = document.getElementById('lead-overview-brief-meta');
+        const histBtn = document.getElementById('btn-overview-brief-history');
+        const histDrawer = document.getElementById('lead-overview-brief-history-drawer');
+        const pinnedListEl = document.getElementById('lead-overview-pinned-list');
+
+        const briefText = String(lead.notes || '').trim();
+        if (displayEl) {
+            displayEl.innerText = briefText || 'No standing facility brief saved yet. Click "Edit Brief" to record gatekeeper names, best calling hours, current cleaning vendor, or gate codes.';
+            displayEl.style.color = briefText ? '#78350f' : '#92400e';
+            displayEl.style.fontStyle = briefText ? 'normal' : 'italic';
+        }
+        if (inputEl) {
+            inputEl.value = briefText;
+        }
+        if (metaEl) {
+            if (lead.notes_updated_by || lead.notes_updated_at) {
+                metaEl.innerText = `• Updated by ${lead.notes_updated_by || 'Staff'} (${formatDashboardDate(lead.notes_updated_at)})`;
+            } else {
+                metaEl.innerText = '';
+            }
+        }
+
+        let revs = lead.notes_revision_history || [];
+        if (typeof revs === 'string') {
+            try { revs = JSON.parse(revs); } catch (_) { revs = []; }
+        }
+        if (!Array.isArray(revs)) revs = [];
+
+        if (histBtn) {
+            if (revs.length > 0) {
+                histBtn.style.display = 'inline-flex';
+                histBtn.innerHTML = `<i class="fas fa-history"></i> History (${revs.length})`;
+            } else {
+                histBtn.style.display = 'none';
+            }
+        }
+        if (histDrawer) {
+            histDrawer.style.display = 'none';
+            if (revs.length > 0) {
+                histDrawer.innerHTML = `
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #92400e; text-transform: uppercase; margin-bottom: 0.35rem;">Previous Standing Brief Versions</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                        ${revs.slice().reverse().map(r => `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; background: #ffffff; border: 1px solid #fde68a; border-radius: 6px; padding: 0.4rem 0.6rem; font-size: 0.76rem;">
+                                <div>
+                                    <div style="font-size: 0.68rem; color: #b45309; font-weight: 700;">Version v${r.version} • Edited by ${escapeNoteHtml(r.edited_by || 'User')} (${formatDashboardDate(r.edited_at)})</div>
+                                    <div style="color: #475569; margin-top: 0.15rem; white-space: pre-wrap;">${escapeNoteHtml(r.old_text || '(empty)')}</div>
+                                </div>
+                                <button type="button" onclick="restoreStandingBriefVersion(${lead.id}, ${r.version}, 'overview')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.55rem; font-size: 0.68rem; font-weight: 800; background: #fffbeb; color: #92400e; border-color: #fcd34d; white-space: nowrap;">
+                                    ↩ Restore
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                histDrawer.innerHTML = '';
+            }
+        }
+
+        const pinnedItems = (activities || []).filter(a => a.is_pinned);
+        if (pinnedListEl) {
+            if (pinnedItems.length > 0) {
+                pinnedListEl.style.display = 'block';
+                pinnedListEl.innerHTML = `
+                    <div style="font-size: 0.7rem; font-weight: 900; color: #92400e; text-transform: uppercase; margin-bottom: 0.4rem;">📌 Pinned Call &amp; Touchpoint Notes (${pinnedItems.length})</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                        ${pinnedItems.map(p => {
+                            const actId = p.id || p.activity_id;
+                            return `
+                            <div id="overview-pin-item-${actId}" style="background: #ffffff; border: 1px solid #fcd34d; border-radius: 6px; padding: 0.5rem 0.7rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 0.7rem; font-weight: 800; color: #b45309;">
+                                        📌 ${escapeNoteHtml(p.activity_type || 'Note')} ${p.outcome ? `<span style="background:#dbeafe; color:#1e40af; padding:1px 6px; border-radius:4px; margin-left:4px;">${escapeNoteHtml(p.outcome)}</span>` : ''}
+                                        <span style="color: #64748b; font-weight: 600;">• ${formatDashboardDate(p.timestamp)} ${p.created_by_name ? 'by ' + escapeNoteHtml(p.created_by_name) : ''}</span>
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: #1e293b; font-weight: 600; margin-top: 0.2rem; white-space: pre-wrap;">${escapeNoteHtml(p.description)}</div>
+                                </div>
+                                <div style="display: flex; gap: 0.3rem;">
+                                    <button type="button" onclick="iscLeadTab('timeline'); setTimeout(() => startInlineActivityEdit(${actId}, 'timeline'), 80);" class="sigma-mini-btn" style="height: 24px; padding: 0 0.45rem; font-size: 0.68rem;" title="Edit this pinned note">✏️ Edit</button>
+                                    <button type="button" onclick="toggleActivityPin(${actId}, 'overview')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.45rem; font-size: 0.68rem;" title="Unpin note">Unpin</button>
+                                    <button type="button" onclick="deleteLeadActivityItem(${actId}, 'overview')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.45rem; font-size: 0.68rem; color: #dc2626; border-color: #fecaca; background: #fff5f5;" title="Delete this note"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </div>
+                        `;
+                        }).join('')}
+                    </div>
+                `;
+            } else {
+                pinnedListEl.style.display = 'none';
+                pinnedListEl.innerHTML = '';
+            }
+        }
+    }
+
+    function toggleOverviewBriefEdit(forceState = null) {
+        const editor = document.getElementById('lead-overview-brief-editor');
+        const displayEl = document.getElementById('lead-overview-brief-display');
+        if (!editor) return;
+        const show = forceState !== null ? forceState : (editor.style.display === 'none');
+        editor.style.display = show ? 'block' : 'none';
+        if (displayEl) displayEl.style.display = show ? 'none' : 'block';
+        if (show) {
+            const inp = document.getElementById('lead-overview-brief-input');
+            if (inp) inp.focus();
+        }
+    }
+
+    function toggleOverviewBriefHistory() {
+        const drawer = document.getElementById('lead-overview-brief-history-drawer');
+        if (!drawer) return;
+        drawer.style.display = (drawer.style.display === 'none') ? 'block' : 'none';
+    }
+
+    async function saveStandingBriefFromOverview() {
+        if (!currentLeadId) return;
+        const inp = document.getElementById('lead-overview-brief-input');
+        if (!inp) return;
+        const notes = inp.value.trim();
+        try {
+            const res = await fetch(`/api/v1/leads/${currentLeadId}/standing-brief`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ notes: notes, log_touchpoint: false })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                invalidateLeadActivityCache(currentLeadId);
+                updateLeadRowNoteIndicators(currentLeadId, notes, 0, Boolean(notes));
+                toggleOverviewBriefEdit(false);
+                if (typeof showToast === 'function') showToast(notes ? 'Standing Facility Brief saved!' : 'Standing Facility Brief cleared.', 'success');
+                await openLeadCommand(currentLeadId, 'overview');
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'Could not save brief', 'error');
+            }
+        } catch (err) {
+            console.error('Save overview brief error:', err);
+        }
+    }
+
+    async function restoreStandingBriefVersion(leadId, versionNum, context = 'overview') {
+        if (!leadId) return;
+        try {
+            const res = await fetch(`/api/v1/leads/${leadId}/standing-brief/restore`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ version: versionNum })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                invalidateLeadActivityCache(leadId);
+                updateLeadRowNoteIndicators(leadId, data.standing_brief || undefined, 0, true);
+                if (typeof showToast === 'function') showToast(`Restored Standing Brief to v${versionNum}!`, 'success');
+                if (context === 'overview') {
+                    await openLeadCommand(leadId, 'overview');
+                }
+            }
+        } catch (err) {
+            console.error('Restore standing brief error:', err);
+        }
+    }
+
+    function filterLeadTimeline(filterType = 'ALL') {
+        _activeLeadTimelineFilter = filterType;
+        document.querySelectorAll('.lead-tl-filter-btn').forEach(btn => {
+            const isMatch = (btn.getAttribute('data-filter') === filterType);
+            btn.style.background = isMatch ? 'var(--brand)' : '#ffffff';
+            btn.style.color = isMatch ? '#ffffff' : 'var(--slate-700)';
+            btn.style.borderColor = isMatch ? 'var(--brand)' : 'var(--slate-200)';
+            btn.style.fontWeight = isMatch ? '800' : '700';
+        });
+        const acts = (window.activeLeadDetailData && window.activeLeadDetailData.activities) ? window.activeLeadDetailData.activities : [];
+        renderLeadTimelineList(acts, filterType);
+    }
+
+    function renderLeadTimelineList(activities, filterType = 'ALL') {
+        const timeline = document.getElementById('lead-list-timeline');
+        if (!timeline) return;
+        const typeMap = {
+            'LEAD_CREATED': 'Lead added',
+            'PHONE_CALL': 'Phone call',
+            'Phone Call': 'Phone call',
+            'EMAIL_SENT': 'Email sent',
+            'Email Sent': 'Email sent',
+            'SITE_VISIT': 'Building walkthrough',
+            'Site Visit': 'Building walkthrough',
+            'WALKTHROUGH_BOOKED': 'Walkthrough scheduled',
+            'NOTE': 'Note added',
+            'Note': 'Note added',
+            'STAGE_CHANGE': 'Stage updated',
+            'CLEANING_SETUP_UPDATED': 'Who Cleans updated',
+            'CONVERTED': 'Upgraded to Client Account'
+        };
+
+        const filtered = (activities || []).filter(a => {
+            if (!filterType || filterType === 'ALL') return true;
+            const t = String(a.activity_type || '').toUpperCase();
+            if (filterType === 'PINNED') return Boolean(a.is_pinned);
+            if (filterType === 'CALL') return t.includes('CALL') || t.includes('PHONE') || t.includes('SPOKE') || t.includes('VOICEMAIL') || t.includes('MESSAGE');
+            if (filterType === 'NOTE') return t.includes('NOTE');
+            if (filterType === 'VISIT') return t.includes('VISIT') || t.includes('WALKTHROUGH');
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            timeline.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--slate-400);">No matching activity notes found.</p>';
+            return;
+        }
+
+        timeline.innerHTML = filtered.map(a => {
+            const actId = a.id || a.activity_id;
+            let revs = a.revision_history || [];
+            if (typeof revs === 'string') {
+                try { revs = JSON.parse(revs); } catch (_) { revs = []; }
+            }
+            if (!Array.isArray(revs)) revs = [];
+            const authorName = a.created_by_name || 'System';
+            const initials = authorName.split(/\s+/).map(p => p[0] || '').join('').substring(0, 2).toUpperCase() || 'OP';
+            const isPinned = Boolean(a.is_pinned);
+            const cardBg = isPinned ? '#fffbeb' : '#ffffff';
+            const cardBorder = isPinned ? '#fcd34d' : 'var(--slate-200)';
+            const editedMeta = a.updated_at ? `<span style="color:#d97706; font-size:0.7rem; font-weight:700; margin-left:0.35rem;">(Edited by ${escapeNoteHtml(a.edited_by_name || 'User')} • ${formatDashboardDate(a.updated_at)})</span>` : '';
+
+            return `
+                <div class="timeline-node" id="tl-act-node-${actId}" style="background: ${cardBg}; border: 1px solid ${cardBorder}; border-left: 4px solid ${isPinned ? '#f59e0b' : 'var(--brand)'}; border-radius: 8px; padding: 0.85rem 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.4rem;">
+                        <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                            <span style="width: 24px; height: 24px; border-radius: 999px; background: #1e3a8a; color: #ffffff; font-size: 0.65rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center;">${escapeNoteHtml(initials)}</span>
+                            <span style="font-size: 0.78rem; font-weight: 800; color: var(--slate-900);">${escapeNoteHtml(authorName)}</span>
+                            <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800;">
+                                ${isPinned ? '📌 ' : ''}${escapeNoteHtml(typeMap[a.activity_type] || a.activity_type || 'Note')}
+                            </span>
+                            ${a.outcome ? `<span style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800;">Result: ${escapeNoteHtml(a.outcome)}</span>` : ''}
+                            <span style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;">${formatDashboardDate(a.timestamp)}</span>
+                            ${editedMeta}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <button type="button" onclick="toggleActivityPin(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.5rem; font-size: 0.68rem; font-weight: 800; background: ${isPinned ? '#fef3c7' : '#f8fafc'}; color: ${isPinned ? '#92400e' : 'var(--slate-600)'}; border-color: ${isPinned ? '#fcd34d' : 'var(--slate-200)'};">
+                                📌 ${isPinned ? 'Pinned' : 'Pin'}
+                            </button>
+                            <button type="button" onclick="startInlineActivityEdit(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.5rem; font-size: 0.68rem; font-weight: 700;">
+                                ✏️ Edit
+                            </button>
+                            ${revs.length > 0 ? `<button type="button" onclick="toggleActivityRevisionHistory(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.5rem; font-size: 0.68rem; font-weight: 700; color: #b45309; border-color: #fde68a; background: #fffbeb;">🕓 History (${revs.length})</button>` : ''}
+                            <button type="button" onclick="deleteLeadActivityItem(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 24px; padding: 0 0.45rem; font-size: 0.68rem; color: #dc2626; border-color: #fecaca; background: #fff5f5;" title="Delete this note">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="timeline-act-desc-${actId}" style="font-size: 0.88rem; color: var(--slate-800); line-height: 1.45; white-space: pre-wrap;">${escapeNoteHtml(a.description)}</div>
+                    ${renderActivityFollowUpTaskBadge(a, 'timeline')}
+                    <div id="timeline-act-edit-wrap-${actId}" style="display: none; margin-top: 0.5rem;">
+                        <textarea id="timeline-act-edit-input-${actId}" aria-label="Edit activity note in timeline" class="sigma-input" style="width: 100%; height: 74px; background: #ffffff; font-size: 0.84rem; padding: 0.5rem;">${escapeNoteHtml(a.description)}</textarea>
+                        <div style="display: flex; justify-content: flex-end; gap: 0.4rem; margin-top: 0.4rem;">
+                            <button type="button" onclick="cancelInlineActivityEdit(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 26px; padding: 0 0.65rem; font-size: 0.72rem;">Cancel</button>
+                            <button type="button" onclick="saveInlineActivityEdit(${actId}, 'timeline')" class="sigma-mini-btn" style="height: 26px; padding: 0 0.75rem; font-size: 0.72rem; font-weight: 800; background: var(--brand); color: #ffffff; border-color: var(--brand);">Save Changes</button>
+                        </div>
+                    </div>
+                    <div id="timeline-act-rev-wrap-${actId}" style="display: none; margin-top: 0.55rem; padding-top: 0.45rem; border-top: 1px dashed var(--slate-200);">
+                        <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase; margin-bottom: 0.3rem;">Previous Note Versions</div>
+                        ${revs.slice().reverse().map(rev => `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.35rem 0.55rem; margin-bottom: 0.25rem; font-size: 0.75rem;">
+                                <div>
+                                    <div style="font-size: 0.66rem; color: var(--slate-500); font-weight: 700;">v${rev.version} • Edited by ${escapeNoteHtml(rev.edited_by || 'User')} (${formatDashboardDate(rev.edited_at)})</div>
+                                    <div style="color: var(--slate-700); white-space: pre-wrap;">${escapeNoteHtml(rev.old_text || '')}</div>
+                                </div>
+                                <button type="button" onclick="restoreActivityVersion(${actId}, ${rev.version}, 'timeline')" class="sigma-mini-btn" style="height: 22px; padding: 0 0.5rem; font-size: 0.66rem; font-weight: 800; color: var(--brand); border-color: #bfdbfe; background: #eff6ff; white-space: nowrap;">↩ Restore</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function startInlineActivityEdit(activityId, context = 'timeline') {
+        const prefix = context === 'hover' ? 'hover-act' : (context === 'cadence' ? 'cadence-act' : 'timeline-act');
+        const descEl = document.getElementById(`${prefix}-desc-${activityId}`);
+        const wrapEl = document.getElementById(`${prefix}-edit-wrap-${activityId}`);
+        if (wrapEl) wrapEl.style.display = 'block';
+        if (descEl) descEl.style.display = 'none';
+        const inp = document.getElementById(`${prefix}-edit-input-${activityId}`);
+        if (inp) inp.focus();
+    }
+
+    function cancelInlineActivityEdit(activityId, context = 'timeline') {
+        const prefix = context === 'hover' ? 'hover-act' : (context === 'cadence' ? 'cadence-act' : 'timeline-act');
+        const descEl = document.getElementById(`${prefix}-desc-${activityId}`);
+        const wrapEl = document.getElementById(`${prefix}-edit-wrap-${activityId}`);
+        if (wrapEl) wrapEl.style.display = 'none';
+        if (descEl) descEl.style.display = 'block';
+    }
+
+    function toggleActivityRevisionHistory(activityId, context = 'timeline') {
+        const prefix = context === 'hover' ? 'hover-act' : (context === 'cadence' ? 'cadence-act' : 'timeline-act');
+        const revEl = document.getElementById(`${prefix}-rev-wrap-${activityId}`);
+        if (!revEl) return;
+        revEl.style.display = (revEl.style.display === 'none') ? 'block' : 'none';
+    }
+
+    async function saveInlineActivityEdit(activityId, context = 'timeline') {
+        const prefix = context === 'hover' ? 'hover-act' : (context === 'cadence' ? 'cadence-act' : 'timeline-act');
+        const inp = document.getElementById(`${prefix}-edit-input-${activityId}`);
+        if (!inp) return;
+        const newText = inp.value.trim();
+        if (!newText) {
+            if (typeof showToast === 'function') showToast('Note text cannot be empty.', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(`/api/v1/activities/${activityId}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ description: newText })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                const targetLeadId = (data.activity && data.activity.parent_id) || currentLeadId || currentHoverId || (activeCadenceLead && activeCadenceLead.id);
+                invalidateLeadActivityCache(targetLeadId);
+                updateLeadRowNoteIndicators(targetLeadId, newText, 0, data.activity && data.activity.is_pinned);
+                if (typeof showToast === 'function') showToast('Note updated (version saved)!', 'success');
+                await refreshActiveNoteSurfaces(targetLeadId, context);
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'Could not update note.', 'error');
+            }
+        } catch (err) {
+            console.error('Save inline activity edit error:', err);
+        }
+    }
+
+    async function toggleActivityPin(activityId, context = 'timeline') {
+        try {
+            const res = await fetch(`/api/v1/activities/${activityId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ toggle_pin: true })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                const act = data.activity || {};
+                const targetLeadId = act.parent_id || currentLeadId || currentHoverId || (activeCadenceLead && activeCadenceLead.id);
+                invalidateLeadActivityCache(targetLeadId);
+                if (act.is_pinned) {
+                    updateLeadRowNoteIndicators(targetLeadId, act.description, 0, true);
+                }
+                if (typeof showToast === 'function') {
+                    showToast(act.is_pinned ? '📌 Note pinned to top of lead!' : 'Note unpinned.', 'success');
+                }
+                await refreshActiveNoteSurfaces(targetLeadId, context);
+            }
+        } catch (err) {
+            console.error('Toggle pin error:', err);
+        }
+    }
+
+    async function restoreActivityVersion(activityId, versionNum, context = 'timeline') {
+        try {
+            const res = await fetch(`/api/v1/activities/${activityId}/restore`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ version: versionNum })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                const act = data.activity || {};
+                const targetLeadId = act.parent_id || currentLeadId || currentHoverId || (activeCadenceLead && activeCadenceLead.id);
+                invalidateLeadActivityCache(targetLeadId);
+                updateLeadRowNoteIndicators(targetLeadId, act.description, 0, act.is_pinned);
+                if (typeof showToast === 'function') showToast(`Restored note to version v${versionNum}!`, 'success');
+                await refreshActiveNoteSurfaces(targetLeadId, context);
+            }
+        } catch (err) {
+            console.error('Restore activity version error:', err);
+        }
+    }
+
+    async function deleteLeadActivityItem(activityId, context = 'timeline') {
+        if (!activityId) return;
+        // Optimistic 0ms DOM removal across all note surfaces so the deleted note never remains on screen
+        ['tl-act-node-', 'hover-act-item-', 'cadence-act-item-', 'overview-pin-item-'].forEach(prefix => {
+            const el = document.getElementById(`${prefix}${activityId}`);
+            if (el) el.remove();
+        });
+        if (window.activeLeadDetailData && Array.isArray(window.activeLeadDetailData.activities)) {
+            window.activeLeadDetailData.activities = window.activeLeadDetailData.activities.filter(
+                a => String(a.id || a.activity_id) !== String(activityId)
+            );
+        }
+        try {
+            const res = await fetch(`/api/v1/activities/${activityId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                const targetLeadId = data.parent_id || currentLeadId || currentHoverId || (activeCadenceLead && activeCadenceLead.id);
+                invalidateLeadActivityCache(targetLeadId);
+                const nextLastNote = (data.last_note !== undefined && data.last_note !== null) ? data.last_note : '';
+                const hasPinned = (data.pinned_count || 0) > 0;
+                updateLeadRowNoteIndicators(targetLeadId, nextLastNote, -1, hasPinned, data.activity_count);
+                if (typeof showToast === 'function') showToast('Activity note deleted.', 'info');
+                await refreshActiveNoteSurfaces(targetLeadId, context);
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'Could not delete note.', 'error');
+            }
+        } catch (err) {
+            console.error('Delete activity error:', err);
+        }
+    }
+
+    async function refreshActiveNoteSurfaces(leadId, context) {
+        if (!leadId) return;
+        if (context === 'hover' && currentHoverId) {
+            const refreshRes = await fetch(`/api/v1/activities/${currentHoverType || 'Lead'}/${leadId}`);
+            const refreshData = await refreshRes.json();
+            if (refreshData.status === 'success') {
+                activityCache[`${currentHoverType || 'Lead'}_${leadId}`] = refreshData;
+                renderHoverCardItems(refreshData, leadId, currentHoverType || 'Lead');
+            }
+        }
+        const leadModal = document.getElementById('modal-lead-command');
+        if (leadModal && leadModal.style.display !== 'none' && String(currentLeadId) === String(leadId)) {
+            const res = await fetch(`/api/v1/leads/${leadId}`);
+            const data = await res.json();
+            if (res.ok && data.lead) {
+                window.activeLeadDetailData = data;
+                renderLeadOverviewNotesCard(data.lead, data.activities || []);
+                renderLeadTimelineList(data.activities || [], _activeLeadTimelineFilter);
+            }
+        }
+        const cadenceModal = document.getElementById('modal-lead-cadence');
+        if (cadenceModal && cadenceModal.style.display !== 'none' && activeCadenceLead && String(activeCadenceLead.id) === String(leadId)) {
+            const res = await fetch(`/api/v1/leads/${leadId}`);
+            const data = await res.json();
+            if (res.ok && data.lead) {
+                activeCadenceLead = data.lead;
+                renderCadenceStandingBrief(data.lead);
+                renderLeadCadenceHistory(data.activities || []);
+            }
         }
     }
 
@@ -2653,20 +3723,7 @@
                     if (res.ok && data.status !== 'error') {
                         const modal = document.getElementById('modal-lead-command');
                         if (modal && modal.style.display !== 'none' && String(currentLeadId) === String(id)) {
-                            const rows = Array.from(document.querySelectorAll('.leads-row'));
-                            const ids = rows.map(r => r.getAttribute('data-id'));
-                            const idx = ids.indexOf(id.toString());
-
-                            if (ids.length > 1) {
-                                let nextIdx = (idx + 1 < ids.length) ? (idx + 1) : (idx - 1);
-                                if (nextIdx >= 0 && nextIdx < ids.length) {
-                                    openLeadCommand(ids[nextIdx], 'overview');
-                                } else {
-                                    closeModal('modal-lead-command');
-                                }
-                            } else {
-                                closeModal('modal-lead-command');
-                            }
+                            closeModal('modal-lead-command');
                         }
 
                         const cadenceModal = document.getElementById('modal-lead-cadence');
@@ -2674,7 +3731,14 @@
                             closeModal('modal-lead-cadence');
                         }
 
+                        const hoverPopover = document.getElementById('sigma-hover-card-popover');
+                        if (hoverPopover && String(currentHoverId) === String(id)) {
+                            hoverPopover.style.display = 'none';
+                        }
+
+                        invalidateLeadActivityCache(id);
                         removeTableRowsAndSyncCounts('lead', [id]);
+                        syncOperationalData({ silent: true });
                         const toastOpts = data.restore_token ? {
                             actionLabel: '↩ Undo',
                             onAction: () => restoreDeletedCrmRecord(data.restore_token),
@@ -3784,7 +4848,11 @@
         initLibrary();
         fetchUserScripts();
         
-        // Personal lead preset button state initialization
+        // Personal lead preset button state initialization (Server + localStorage)
+        const serverLeadState = (window.SERVER_GRID_STATE && window.SERVER_GRID_STATE.leads) || {};
+        if (Array.isArray(serverLeadState.personal_preset) && serverLeadState.personal_preset.length > 0) {
+            localStorage.setItem('sigma_lead_preset_personal', JSON.stringify(serverLeadState.personal_preset));
+        }
         const savedPersonalLeadPreset = localStorage.getItem('sigma_lead_preset_personal');
         if (savedPersonalLeadPreset) {
             try {
@@ -3799,7 +4867,11 @@
             } catch(e) {}
         }
 
-        // Personal account preset button state initialization
+        // Personal account preset button state initialization (Server + localStorage)
+        const serverAccState = (window.SERVER_GRID_STATE && window.SERVER_GRID_STATE.accounts) || {};
+        if (Array.isArray(serverAccState.personal_preset) && serverAccState.personal_preset.length > 0) {
+            localStorage.setItem('sigma_acc_preset_personal', JSON.stringify(serverAccState.personal_preset));
+        }
         const savedPersonalAccPreset = localStorage.getItem('sigma_acc_preset_personal');
         if (savedPersonalAccPreset) {
             try {
@@ -3823,7 +4895,11 @@
             } catch(e) {}
         }
 
-        // Personal bids preset button state initialization
+        // Personal bids preset button state initialization (Server + localStorage)
+        const serverBidState = (window.SERVER_GRID_STATE && window.SERVER_GRID_STATE.construction_bids) || {};
+        if (Array.isArray(serverBidState.personal_preset) && serverBidState.personal_preset.length > 0) {
+            localStorage.setItem('sigma_bid_preset_personal', JSON.stringify(serverBidState.personal_preset));
+        }
         const savedPersonalBidPreset = localStorage.getItem('sigma_bid_preset_personal');
         if (savedPersonalBidPreset) {
             try {
@@ -3847,34 +4923,155 @@
             } catch(e) {}
         }
         
-        const syncColumns = (evt, tableId) => {
-            const table = document.getElementById(tableId);
-            if (!table) return;
+        const syncColumns = (evt, tableElOrId) => {
+            const table = typeof tableElOrId === 'string' ? document.getElementById(tableElOrId) : tableElOrId;
+            if (!table || evt.oldIndex === evt.newIndex) return;
             const rows = table.querySelectorAll('tbody tr');
             rows.forEach(row => {
                 const cells = Array.from(row.children);
+                if (cells.length <= 1) return; // Skip colspan empty-state rows
                 const cellToMove = cells[evt.oldIndex];
                 const targetCell = cells[evt.newIndex];
+                if (!cellToMove || !targetCell) return;
                 if (evt.newIndex > evt.oldIndex) {
                     row.insertBefore(cellToMove, targetCell.nextSibling);
                 } else {
                     row.insertBefore(cellToMove, targetCell);
                 }
             });
+            // Keep mobile data-label attributes synchronized with the new header order
+            const thLabels = Array.from(table.querySelectorAll('thead tr th')).map(th => (th.textContent || '').replace(/[▲▼↕]/g, '').trim());
+            rows.forEach(row => {
+                Array.from(row.children).forEach((td, idx) => {
+                    if (thLabels[idx]) td.setAttribute('data-label', thLabels[idx]);
+                });
+            });
+        };
+
+        const HEADER_TO_GRID_MAP = {
+            'leads-header-row': { gridId: 'leads', formId: 'leads-col-form', menuId: 'col-mgr-menu', tableId: 'table-leads' },
+            'accounts-header-row': { gridId: 'accounts', formId: 'accounts-col-form', menuId: 'col-mgr-menu-acc', tableId: 'table-accounts' },
+            'bids-header-row': { gridId: 'construction_bids', formId: 'bids-col-form', menuId: 'col-mgr-menu-bids', tableId: 'table-construction-bids' }
         };
 
         const persistColumns = (headerId) => {
             const header = document.getElementById(headerId);
             if (!header) return;
-            const cols = Array.from(header.querySelectorAll('th'))
+            const colsArr = Array.from(header.querySelectorAll('th'))
                 .map(th => th.getAttribute('data-col'))
-                .filter(Boolean)
-                .join(',');
-            if (!cols) return;
-            const url = new URL(window.location);
-            url.searchParams.set('cols', cols);
-            window.history.replaceState({}, '', url.href);
-            fetch(url.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+                .filter(Boolean);
+            if (!colsArr.length) return;
+            const cols = colsArr.join(',');
+            const meta = HEADER_TO_GRID_MAP[headerId];
+            const gridId = meta ? meta.gridId : headerId;
+
+            if (window.ACTIVE_GRID_COLS) {
+                window.ACTIVE_GRID_COLS[gridId] = colsArr;
+            }
+            localStorage.setItem(`sigma_grid_order_${gridId}`, JSON.stringify(colsArr));
+
+            // Strip any stale cols= param from current URL and all pagination/search links
+            SigmaGridEngine.syncNavigationLinksCols(gridId, cols);
+
+            // Persist immediately to PostgreSQL UserBehavioralProfiles + Flask session
+            SigmaGridEngine.saveGridStateToServer(gridId, { active_cols: colsArr });
+
+            // Refresh order badges inside the Column Manager menu
+            if (meta && meta.formId) {
+                SigmaGridEngine.refreshColumnMenuBadges(meta.formId, gridId);
+            }
+            if (typeof showToast === 'function') {
+                showToast('Column order saved across all pages.', 'success');
+            }
+        };
+
+        const initColumnResizersAndDensity = (tableEl, gridId) => {
+            if (!tableEl) return;
+            const headerRow = tableEl.querySelector('thead tr');
+            if (!headerRow) return;
+            const ths = Array.from(headerRow.querySelectorAll('th'));
+            if (!ths.length) return;
+
+            // 1. Dynamic sticky-1 offset: 50px if checkbox column exists, 0px otherwise
+            const hasCheckboxCol = ths[0] && ths[0].classList.contains('sticky-cb');
+            tableEl.style.setProperty('--sigma-sticky-1-left', hasCheckboxCol ? '50px' : '0px');
+
+            // 2. Auto-density mode when 9+ data columns are visible
+            const dataColCount = ths.filter(th => !th.classList.contains('sticky-cb')).length;
+            if (dataColCount >= 9) {
+                tableEl.classList.add('sigma-dense-grid');
+            } else {
+                tableEl.classList.remove('sigma-dense-grid');
+            }
+
+            // 3. Load persisted column widths from Server state or localStorage
+            let savedWidths = {};
+            try {
+                const localW = localStorage.getItem(`sigma_col_widths_${gridId}`);
+                if (localW) savedWidths = JSON.parse(localW) || {};
+            } catch (e) {}
+            if (window.SERVER_GRID_STATE && window.SERVER_GRID_STATE[gridId] && window.SERVER_GRID_STATE[gridId].col_widths) {
+                savedWidths = Object.assign({}, savedWidths, window.SERVER_GRID_STATE[gridId].col_widths);
+            }
+
+            ths.forEach((th, idx) => {
+                if (th.classList.contains('sticky-cb') || th.classList.contains('no-drag')) return;
+                const colKey = th.getAttribute('data-col') || `col_${idx}`;
+                if (savedWidths[colKey]) {
+                    const w = parseInt(savedWidths[colKey], 10);
+                    if (w >= 60 && w <= 900) {
+                        th.style.width = `${w}px`;
+                        th.style.minWidth = `${w}px`;
+                        th.style.maxWidth = `${w}px`;
+                    }
+                }
+                if (th.querySelector('.sigma-col-resizer')) return;
+                const resizer = document.createElement('span');
+                resizer.className = 'sigma-col-resizer no-drag';
+                resizer.title = 'Drag to resize column width (Double-click to auto-fit)';
+                resizer.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+                resizer.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    th.style.width = '';
+                    th.style.minWidth = '';
+                    th.style.maxWidth = '';
+                    delete savedWidths[colKey];
+                    localStorage.setItem(`sigma_col_widths_${gridId}`, JSON.stringify(savedWidths));
+                    SigmaGridEngine.saveGridStateToServer(gridId, { col_widths: savedWidths });
+                });
+                resizer.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const startX = e.pageX;
+                    const startWidth = th.getBoundingClientRect().width;
+                    resizer.classList.add('is-resizing');
+
+                    const onMouseMove = (moveEvt) => {
+                        const newWidth = Math.max(68, Math.min(850, Math.round(startWidth + (moveEvt.pageX - startX))));
+                        th.style.width = `${newWidth}px`;
+                        th.style.minWidth = `${newWidth}px`;
+                        th.style.maxWidth = `${newWidth}px`;
+                    };
+
+                    const onMouseUp = () => {
+                        resizer.classList.remove('is-resizing');
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        const finalW = Math.round(th.getBoundingClientRect().width);
+                        savedWidths[colKey] = finalW;
+                        localStorage.setItem(`sigma_col_widths_${gridId}`, JSON.stringify(savedWidths));
+                        SigmaGridEngine.saveGridStateToServer(gridId, { col_widths: savedWidths });
+                    };
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+                th.appendChild(resizer);
+            });
         };
 
         const lHeader = document.getElementById('leads-header-row');
@@ -3883,13 +5080,16 @@
                 animation: 150,
                 delay: 200,
                 delayOnTouchOnly: true,
-                filter: '.no-drag',
+                filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
                 onEnd: (evt) => {
                     syncColumns(evt, 'table-leads');
                     persistColumns('leads-header-row');
                 }
             }); 
+            initColumnResizersAndDensity(document.getElementById('table-leads'), 'leads');
+            SigmaGridEngine.refreshColumnMenuBadges('leads-col-form', 'leads');
+            SigmaGridEngine.syncNavigationLinksCols('leads', '');
         }
         
         const aHeader = document.getElementById('accounts-header-row');
@@ -3898,13 +5098,16 @@
                 animation: 150,
                 delay: 200,
                 delayOnTouchOnly: true,
-                filter: '.no-drag',
+                filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
                 onEnd: (evt) => {
                     syncColumns(evt, 'table-accounts');
                     persistColumns('accounts-header-row');
                 }
             }); 
+            initColumnResizersAndDensity(document.getElementById('table-accounts'), 'accounts');
+            SigmaGridEngine.refreshColumnMenuBadges('accounts-col-form', 'accounts');
+            SigmaGridEngine.syncNavigationLinksCols('accounts', '');
         }
 
         const bHeader = document.getElementById('bids-header-row');
@@ -3913,14 +5116,137 @@
                 animation: 150,
                 delay: 200,
                 delayOnTouchOnly: true,
-                filter: '.no-drag',
+                filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
                 onEnd: (evt) => {
                     syncColumns(evt, 'table-construction-bids');
                     persistColumns('bids-header-row');
                 }
             }); 
+            initColumnResizersAndDensity(document.getElementById('table-construction-bids'), 'construction_bids');
+            SigmaGridEngine.refreshColumnMenuBadges('bids-col-form', 'construction_bids');
+            SigmaGridEngine.syncNavigationLinksCols('construction_bids', '');
         }
+
+        // --- Universal Secondary Table Upgrader (Client-Side Sort + Drag Reorder + Column Resize) ---
+        const upgradeUniversalSecondaryTables = () => {
+            const secondarySelectors = [
+                { sel: '#view-general-contractors table.sigma-table', id: 'general_contractors' },
+                { sel: '#view-institutional-bids table.sigma-table', id: 'institutional_bids' },
+                { sel: '#view-programs table.sigma-table', id: 'gov_programs' },
+                { sel: '#view-marketing table.sigma-table', id: 'marketing_campaigns' },
+                { sel: '#table-workforce-employees', id: 'workforce_employees' },
+                { sel: '#table-workforce-applicants', id: 'workforce_applicants' },
+                { sel: '#table-workforce-subcontractors', id: 'workforce_subcontractors' },
+                { sel: '#table-workforce-payroll', id: 'workforce_payroll' },
+                { sel: '#table-workforce-training', id: 'workforce_training' },
+                { sel: '#table-dispatch-workorders', id: 'dispatch_workorders' },
+                { sel: '#view-safety table.sigma-table', id: 'safety_incidents' }
+            ];
+
+            const parseCellSortValue = (cellText) => {
+                const raw = (cellText || '').trim();
+                if (!raw || raw === '--' || raw === 'N/A' || raw === 'TBD') return { type: 'empty', val: '' };
+                // Currency / Numeric / Percentage / SF
+                const numClean = raw.replace(/[$,%]/g, '').replace(/\b(SF|sq\s*ft|hrs|mi)\b/gi, '').replace(/,/g, '').trim();
+                if (/^-?\d+(\.\d+)?$/.test(numClean)) {
+                    return { type: 'number', val: parseFloat(numClean) };
+                }
+                // Date MM/DD/YYYY or YYYY-MM-DD
+                if (/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(raw) || /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                    const ts = Date.parse(raw);
+                    if (!isNaN(ts)) return { type: 'number', val: ts };
+                }
+                return { type: 'string', val: raw.toLowerCase() };
+            };
+
+            secondarySelectors.forEach(({ sel, id }) => {
+                document.querySelectorAll(sel).forEach((table, tIdx) => {
+                    const gridId = tIdx === 0 ? id : `${id}_${tIdx}`;
+                    const headerRow = table.querySelector('thead tr');
+                    const tbody = table.querySelector('tbody');
+                    if (!headerRow || !tbody) return;
+
+                    const ths = Array.from(headerRow.querySelectorAll('th'));
+                    ths.forEach((th, idx) => {
+                        if (!th.getAttribute('data-col')) {
+                            const slug = (th.textContent || `col_${idx}`).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                            th.setAttribute('data-col', slug || `col_${idx}`);
+                        }
+                        const labelText = (th.textContent || '').trim().toLowerCase();
+                        if (labelText === 'action' || labelText === 'actions' || th.querySelector('input[type="checkbox"]')) {
+                            th.classList.add('no-drag');
+                            return;
+                        }
+                        if (!th.getAttribute('onclick')) {
+                            th.style.cursor = 'pointer';
+                            th.style.userSelect = 'none';
+                            th.title = 'Click to sort column • Drag to reorder';
+                            th.addEventListener('click', (e) => {
+                                if (e.target.classList.contains('sigma-col-resizer')) return;
+                                const currentThs = Array.from(headerRow.querySelectorAll('th'));
+                                const colIdx = currentThs.indexOf(th);
+                                if (colIdx < 0) return;
+
+                                const isNumericHeader = /(value|amount|price|pay|rate|score|sqf|sqft|size|date|due|submitted|updated|total|count|hours)/i.test(labelText);
+                                const prevDir = th.getAttribute('data-sort-dir');
+                                const nextDir = prevDir ? (prevDir === 'asc' ? 'desc' : 'asc') : (isNumericHeader ? 'desc' : 'asc');
+
+                                currentThs.forEach(h => {
+                                    h.removeAttribute('data-sort-dir');
+                                    const ind = h.querySelector('.sigma-client-sort-ind');
+                                    if (ind) ind.remove();
+                                });
+                                th.setAttribute('data-sort-dir', nextDir);
+                                const ind = document.createElement('span');
+                                ind.className = 'sigma-client-sort-ind';
+                                ind.style.cssText = 'margin-left:4px; font-size:0.7rem; color:#2563eb; font-weight:800;';
+                                ind.textContent = nextDir === 'asc' ? '▲' : '▼';
+                                th.appendChild(ind);
+
+                                const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.children.length > 1);
+                                rows.sort((rA, rB) => {
+                                    const cA = parseCellSortValue(rA.children[colIdx] ? rA.children[colIdx].textContent : '');
+                                    const cB = parseCellSortValue(rB.children[colIdx] ? rB.children[colIdx].textContent : '');
+                                    if (cA.type === 'empty' && cB.type === 'empty') return 0;
+                                    if (cA.type === 'empty') return 1; // Always push empty cells to bottom
+                                    if (cB.type === 'empty') return -1;
+                                    if (cA.type === 'number' && cB.type === 'number') {
+                                        return nextDir === 'asc' ? (cA.val - cB.val) : (cB.val - cA.val);
+                                    }
+                                    return nextDir === 'asc'
+                                        ? String(cA.val).localeCompare(String(cB.val), undefined, { numeric: true })
+                                        : String(cB.val).localeCompare(String(cA.val), undefined, { numeric: true });
+                                });
+                                rows.forEach(r => tbody.appendChild(r));
+                            });
+                        }
+                    });
+
+                    if (typeof Sortable !== 'undefined') {
+                        new Sortable(headerRow, {
+                            animation: 150,
+                            delay: 200,
+                            delayOnTouchOnly: true,
+                            filter: '.no-drag, .sigma-col-resizer',
+                            preventOnFilter: false,
+                            onEnd: (evt) => {
+                                syncColumns(evt, table);
+                                const colsArr = Array.from(headerRow.querySelectorAll('th'))
+                                    .map(h => h.getAttribute('data-col'))
+                                    .filter(Boolean);
+                                localStorage.setItem(`sigma_grid_order_${gridId}`, JSON.stringify(colsArr));
+                                SigmaGridEngine.saveGridStateToServer(gridId, { active_cols: colsArr });
+                            }
+                        });
+                    }
+
+                    initColumnResizersAndDensity(table, gridId);
+                });
+            });
+        };
+
+        upgradeUniversalSecondaryTables();
 
         // --- SigmaFidelity™ Client Details & Dispatch Deep-Link Engine ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -4712,9 +6038,38 @@
                 stageDateInfoEl.innerText = `Stage: ${stageName} (${daysInStage} day${daysInStage === 1 ? '' : 's'})`;
             }
 
-            // Reset notes & follow up
+            // Reset notes & follow up (pre-fill smart next business date if open lead has none/past)
             document.getElementById('cadence-lead-notes').value = '';
-            document.getElementById('cadence-lead-next-date').value = activeCadenceLead.next_action_date || '';
+            const cadRawNext = activeCadenceLead.next_action_date ? String(activeCadenceLead.next_action_date).slice(0, 10) : '';
+            const cadTodayIso = computeSmartNextBusinessDateJS(0);
+            const cadIsTerminal = ['Not Interested', 'Unsubscribed', 'Do Not Call (DNC)'].includes(String(activeCadenceLead.status || 'New'));
+            if (cadIsTerminal) {
+                document.getElementById('cadence-lead-next-date').value = '';
+            } else if (cadRawNext && cadRawNext >= cadTodayIso) {
+                document.getElementById('cadence-lead-next-date').value = cadRawNext;
+            } else {
+                document.getElementById('cadence-lead-next-date').value = computeSmartNextBusinessDateJS(3);
+            }
+            const cadPin = document.getElementById('cadence-note-pin');
+            if (cadPin) cadPin.checked = false;
+            const cadSmart = document.getElementById('cadence-smart-detect');
+            if (cadSmart) cadSmart.style.display = 'none';
+            const cadUmbrellaWrap = document.getElementById('cadence-umbrella-share-wrap');
+            const cadUmbrellaCb = document.getElementById('cadence-note-share-umbrella');
+            const cadUmbrellaLbl = document.getElementById('cadence-umbrella-share-label');
+            if (cadUmbrellaCb) cadUmbrellaCb.checked = false;
+            if (cadUmbrellaWrap) {
+                const sCount = parseInt(data.sister_count || 0, 10) || 0;
+                if (activeCadenceLead.umbrella_name && sCount > 0) {
+                    cadUmbrellaWrap.style.display = 'inline-flex';
+                    if (cadUmbrellaLbl) {
+                        cadUmbrellaLbl.innerText = `🏢 Copy note to ${sCount} sister location${sCount === 1 ? '' : 's'} (${activeCadenceLead.umbrella_name})`;
+                    }
+                } else {
+                    cadUmbrellaWrap.style.display = 'none';
+                }
+            }
+            renderCadenceStandingBrief(activeCadenceLead);
             closeCadenceWalkthroughDrawer();
 
             // Load caller's custom scripts and select default opener
@@ -4735,6 +6090,57 @@
         }
     }
 
+    function renderCadenceStandingBrief(lead) {
+        const textEl = document.getElementById('cadence-standing-brief-text');
+        const inputEl = document.getElementById('cadence-standing-brief-input');
+        const editorEl = document.getElementById('cadence-standing-brief-editor');
+        const brief = String((lead && lead.notes) || '').trim();
+        if (textEl) {
+            textEl.innerText = brief || 'No standing facility brief recorded yet. Click "Edit Brief" to save gatekeeper name, best calling hours, or current cleaning vendor.';
+            textEl.style.fontStyle = brief ? 'normal' : 'italic';
+            textEl.style.display = 'block';
+        }
+        if (inputEl) inputEl.value = brief;
+        if (editorEl) editorEl.style.display = 'none';
+    }
+
+    function toggleCadenceBriefEdit(forceState = null) {
+        const editorEl = document.getElementById('cadence-standing-brief-editor');
+        const textEl = document.getElementById('cadence-standing-brief-text');
+        if (!editorEl) return;
+        const show = forceState !== null ? forceState : (editorEl.style.display === 'none');
+        editorEl.style.display = show ? 'block' : 'none';
+        if (textEl) textEl.style.display = show ? 'none' : 'block';
+        if (show) {
+            const inp = document.getElementById('cadence-standing-brief-input');
+            if (inp) inp.focus();
+        }
+    }
+
+    async function saveStandingBriefFromCadence() {
+        if (!activeCadenceLead || !activeCadenceLead.id) return;
+        const inp = document.getElementById('cadence-standing-brief-input');
+        if (!inp) return;
+        const notes = inp.value.trim();
+        try {
+            const res = await fetch(`/api/v1/leads/${activeCadenceLead.id}/standing-brief`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ notes: notes, log_touchpoint: false })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                activeCadenceLead.notes = notes;
+                invalidateLeadActivityCache(activeCadenceLead.id);
+                updateLeadRowNoteIndicators(activeCadenceLead.id, notes || undefined, 0, true);
+                renderCadenceStandingBrief(activeCadenceLead);
+                if (typeof showToast === 'function') showToast('Standing Facility Brief updated!', 'success');
+            }
+        } catch (err) {
+            console.error('Save cadence brief error:', err);
+        }
+    }
+
     function renderLeadCadenceHistory(activities) {
         const container = document.getElementById('lead-cadence-history-list');
         if (!container) return;
@@ -4743,15 +6149,36 @@
             return;
         }
 
-        container.innerHTML = activities.slice(0, 10).map(a => `
-            <div style="background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.78rem; border: 1px solid var(--slate-200); border-left: 3px solid var(--brand);">
-                <div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--slate-800); margin-bottom: 0.15rem;">
-                    <span>${a.activity_type || 'Touchpoint'}</span>
-                    <span style="font-size: 0.7rem; color: var(--slate-400); font-weight: 500;">${formatDashboardDate(a.timestamp)}</span>
+        container.innerHTML = activities.slice(0, 12).map(a => {
+            const actId = a.id || a.activity_id;
+            const isPinned = Boolean(a.is_pinned);
+            const borderCol = isPinned ? '#f59e0b' : 'var(--brand)';
+            const bgCol = isPinned ? '#fffbeb' : '#ffffff';
+            const authorStr = a.created_by_name ? ` • ${escapeNoteHtml(a.created_by_name)}` : '';
+            const outcomeChip = a.outcome ? `<span style="background:#dbeafe; color:#1e40af; padding:1px 6px; border-radius:4px; font-size:0.66rem; font-weight:800; margin-left:4px;">${escapeNoteHtml(a.outcome)}</span>` : '';
+            return `
+            <div id="cadence-act-item-${actId}" style="background: ${bgCol}; padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.78rem; border: 1px solid var(--slate-200); border-left: 3px solid ${borderCol};">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: var(--slate-800); margin-bottom: 0.15rem; gap: 0.35rem; flex-wrap: wrap;">
+                    <span>${isPinned ? '📌 ' : ''}${escapeNoteHtml(a.activity_type || 'Touchpoint')}${outcomeChip}</span>
+                    <div style="display: flex; align-items: center; gap: 0.3rem;">
+                        <span style="font-size: 0.68rem; color: var(--slate-400); font-weight: 600;">${formatDashboardDate(a.timestamp)}${authorStr}</span>
+                        <button type="button" onclick="toggleActivityPin(${actId}, 'cadence')" style="background:transparent; border:none; cursor:pointer; font-size:0.7rem;" title="${isPinned ? 'Unpin' : 'Pin to top'}">📌</button>
+                        <button type="button" onclick="startInlineActivityEdit(${actId}, 'cadence')" style="background:transparent; border:none; cursor:pointer; font-size:0.7rem;" title="Edit note">✏️</button>
+                        <button type="button" onclick="deleteLeadActivityItem(${actId}, 'cadence')" style="background:transparent; border:none; color:#ef4444; cursor:pointer; font-size:0.7rem;" title="Delete note"><i class="fas fa-trash-alt"></i></button>
+                    </div>
                 </div>
-                <div style="color: var(--slate-600); font-size: 0.78rem;">${a.description || '--'}</div>
+                <div id="cadence-act-desc-${actId}" style="color: var(--slate-700); font-size: 0.78rem; white-space: pre-wrap;">${escapeNoteHtml(a.description || '--')}</div>
+                ${renderActivityFollowUpTaskBadge(a, 'cadence')}
+                <div id="cadence-act-edit-wrap-${actId}" style="display: none; margin-top: 0.35rem;">
+                    <textarea id="cadence-act-edit-input-${actId}" aria-label="Edit call note in calling console" style="width:100%; height:52px; border:1px solid var(--brand); border-radius:5px; padding:0.35rem; font-size:0.76rem; font-family:inherit;">${escapeNoteHtml(a.description || '')}</textarea>
+                    <div style="display:flex; justify-content:flex-end; gap:0.3rem; margin-top:0.25rem;">
+                        <button type="button" onclick="cancelInlineActivityEdit(${actId}, 'cadence')" class="sigma-mini-btn" style="height:22px; padding:0 0.5rem; font-size:0.66rem;">Cancel</button>
+                        <button type="button" onclick="saveInlineActivityEdit(${actId}, 'cadence')" class="sigma-mini-btn" style="height:22px; padding:0 0.6rem; font-size:0.66rem; font-weight:800; background:var(--brand); color:#fff; border-color:var(--brand);">Save</button>
+                    </div>
+                </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function escapeUserScriptHtml(str) {
@@ -5360,6 +6787,8 @@
         const note = document.getElementById('cadence-lead-notes').value.trim();
         const nextDate = document.getElementById('cadence-lead-next-date').value.trim();
         const cleaningModel = document.getElementById('cadence-lead-cleaning-model') ? document.getElementById('cadence-lead-cleaning-model').value : (activeCadenceLead.cleaning_delivery_model || 'UNKNOWN');
+        const isPinned = Boolean(document.getElementById('cadence-note-pin')?.checked);
+        const shareUmbrella = Boolean(document.getElementById('cadence-note-share-umbrella')?.checked);
 
         const payload = {
             decision_maker: dm,
@@ -5369,6 +6798,9 @@
             note: note,
             next_action_date: nextDate || null,
             activity_type: activityType,
+            outcome: activityType !== 'General Note Saved' ? activityType : '',
+            is_pinned: isPinned,
+            share_umbrella: shareUmbrella,
             status: targetStatus || activeCadenceLead.status,
             priority_level: targetPriority || activeCadenceLead.priority_level,
             cleaning_delivery_model: cleaningModel
@@ -5383,8 +6815,14 @@
             const data = await res.json();
 
             if (res.ok && data.status === 'success') {
+                invalidateLeadActivityCache(activeCadenceLead.id);
+                updateLeadRowNoteIndicators(activeCadenceLead.id, note || activityType, 1, isPinned);
+                if (data.next_action_date !== undefined) {
+                    updateLeadRowNextActionDateDOM(activeCadenceLead.id, data.next_action_date);
+                }
+                const sisterMsg = data.sister_broadcast_count ? ` (+ copied to ${data.sister_broadcast_count} sister location(s))` : '';
                 if (typeof showToast === 'function') {
-                    showToast(`Recorded: ${activityType}`, "success");
+                    showToast(`Recorded: ${activityType}${sisterMsg}`, "success");
                 }
 
                 // Update table row if visible in DOM
@@ -5417,9 +6855,16 @@
                 } else {
                     // Stay: refresh local touchpoints
                     document.getElementById('cadence-lead-notes').value = '';
+                    const pinCb = document.getElementById('cadence-note-pin');
+                    if (pinCb) pinCb.checked = false;
+                    const umbCb = document.getElementById('cadence-note-share-umbrella');
+                    if (umbCb) umbCb.checked = false;
+                    const smartBanner = document.getElementById('cadence-smart-detect');
+                    if (smartBanner) smartBanner.style.display = 'none';
                     try {
                         const refreshRes = await fetch(`/api/v1/leads/${activeCadenceLead.id}`);
                         const refreshData = await refreshRes.json();
+                        if (refreshData.lead) renderCadenceStandingBrief(refreshData.lead);
                         if (refreshData.activities) renderLeadCadenceHistory(refreshData.activities);
                     } catch(e) {}
                 }
@@ -7088,9 +8533,11 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Onboarding...';
 
+        const subOnboardEinEl = document.getElementById('sub-onboard-ein');
         const payload = {
             company_name: document.getElementById('sub-onboard-company').value.trim(),
-            ein_or_ssn: document.getElementById('sub-onboard-ein').value.trim(),
+            ein_or_ssn: subOnboardEinEl ? subOnboardEinEl.value.trim() : '',
+            tax_id_mode: subOnboardEinEl ? (subOnboardEinEl.getAttribute('data-tax-mode') || 'ein') : 'ein',
             contact_name: document.getElementById('sub-onboard-contact').value.trim(),
             phone: document.getElementById('sub-onboard-phone').value.trim(),
             email: document.getElementById('sub-onboard-email').value.trim(),
@@ -7165,7 +8612,14 @@
             document.getElementById('edit-sub-contact').value = s.contact_name || '';
             document.getElementById('edit-sub-phone').value = s.phone || '';
             document.getElementById('edit-sub-email').value = s.email || '';
-            document.getElementById('edit-sub-ein').value = s.ein_or_ssn || '';
+            const editEinEl = document.getElementById('edit-sub-ein');
+            if (editEinEl) {
+                editEinEl.value = s.ein_or_ssn || '';
+                const isSsnMask = String(s.ein_or_ssn || '').indexOf('***-') === 0 || /^\d{3}-\d{2}-/.test(String(s.ein_or_ssn || ''));
+                if (typeof window.setTaxIdMode === 'function') {
+                    window.setTaxIdMode('edit-sub-ein', isSsnMask ? 'ssn' : 'ein');
+                }
+            }
             document.getElementById('edit-sub-city').value = s.city || '';
             document.getElementById('edit-sub-counties').value = s.coverage_counties || 'Dallas, Tarrant, Collin, Denton';
             document.getElementById('edit-sub-crew').value = s.crew_size || 2;
@@ -7185,6 +8639,44 @@
         }
     }
 
+    async function revealSubcontractorTinInModal() {
+        const subId = document.getElementById('edit-sub-id')?.value;
+        const tinInput = document.getElementById('edit-sub-ein');
+        const btn = document.getElementById('btn-reveal-sub-tin');
+        if (!subId || !tinInput) return;
+
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+        try {
+            const res = await fetch(`/api/v1/workforce/subcontractors/${encodeURIComponent(subId)}/reveal-tin`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success' && data.tin) {
+                tinInput.value = data.tin;
+                const isSsn = /^\d{3}-\d{2}-\d{4}$/.test(data.tin);
+                if (typeof window.setTaxIdMode === 'function') {
+                    window.setTaxIdMode('edit-sub-ein', isSsn ? 'ssn' : 'ein');
+                }
+                showToast('Full 9-digit Tax ID revealed and logged in Security Audit Ledger.', 'success');
+            } else {
+                showToast(data.message || 'No encrypted 9-digit Tax ID on file to reveal.', 'warning');
+            }
+        } catch (err) {
+            showToast('Error revealing Tax ID.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+        }
+    }
+    window.revealSubcontractorTinInModal = revealSubcontractorTinInModal;
+
     async function saveSubcontractorEdit(event) {
         event.preventDefault();
         const id = document.getElementById('edit-sub-id').value;
@@ -7193,13 +8685,15 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
+        const editEinInput = document.getElementById('edit-sub-ein');
         const payload = {
             company_name: document.getElementById('edit-sub-company').value.trim(),
             status: document.getElementById('edit-sub-status').value,
             contact_name: document.getElementById('edit-sub-contact').value.trim(),
             phone: document.getElementById('edit-sub-phone').value.trim(),
             email: document.getElementById('edit-sub-email').value.trim(),
-            ein_or_ssn: document.getElementById('edit-sub-ein').value.trim(),
+            ein_or_ssn: editEinInput ? editEinInput.value.trim() : '',
+            tax_id_mode: editEinInput ? (editEinInput.getAttribute('data-tax-mode') || 'ein') : 'ein',
             city: document.getElementById('edit-sub-city').value.trim(),
             coverage_counties: document.getElementById('edit-sub-counties').value.trim(),
             crew_size: parseInt(document.getElementById('edit-sub-crew').value) || 2,
@@ -7253,16 +8747,33 @@
                 const s = data.subcontractor;
                 document.getElementById('sub-doc-modal-company').innerText = s.company_name || `Subcontractor #${subId}`;
 
-                // Onboarding Link & Stage Pill
+                // Onboarding Link & Stage Pill (Canonical https://www.hwbcleaning.com — BUG-166)
                 const onbUrlInput = document.getElementById('sub-doc-onboarding-url');
                 const onbStagePill = document.getElementById('sub-doc-onb-stage-pill');
+                const canonicalOnbUrl = s.onboarding_token
+                    ? `https://www.hwbcleaning.com/onboard/subcontractor/${s.onboarding_token}`
+                    : '';
                 if (onbUrlInput) {
-                    onbUrlInput.value = s.onboarding_token
-                        ? `${window.location.origin}/onboard/subcontractor/${s.onboarding_token}`
-                        : 'Click Send Onboarding Email to generate link';
+                    onbUrlInput.value = canonicalOnbUrl || 'Click Send Onboarding Email to generate link';
                 }
                 if (onbStagePill) {
                     onbStagePill.innerText = `Stage: ${s.onboarding_status || 'Initial Review'}`;
+                }
+                window._activeSubcontractorSmsMeta = {
+                    subId: subId,
+                    company: s.company_name || `Partner #${subId}`,
+                    contact: s.contact_name || 'Partner',
+                    phone: s.phone || '',
+                    onboardingUrl: canonicalOnbUrl,
+                    smsBody: canonicalOnbUrl
+                        ? `HWB Cleaning Services: Hi ${(s.contact_name || 'Partner').split(' ')[0]}, here is your secure subcontractor portal link to upload your COI & W-9: ${canonicalOnbUrl} - Questions? Call (214) 586-0257.`
+                        : ''
+                };
+                const smsBtn = document.getElementById('sub-doc-sms-btn');
+                if (smsBtn && window._activeSubcontractorSmsMeta.smsBody) {
+                    const cleanDigits = String(s.phone || '').replace(/\D/g, '');
+                    const phoneTarget = cleanDigits.length === 10 ? `+1${cleanDigits}` : (cleanDigits.length === 11 && cleanDigits.startsWith('1') ? `+${cleanDigits}` : '');
+                    smsBtn.href = `sms:${phoneTarget}?body=${encodeURIComponent(window._activeSubcontractorSmsMeta.smsBody)}`;
                 }
 
                 // Extracted W-9 Summary Card
@@ -7446,8 +8957,24 @@
                     stageEl.innerText = `Stage: ${data.onboarding_status || 'Invited'}`;
                     stageEl.style.color = '#7c3aed';
                 }
+                const modalStagePill = document.getElementById('sub-doc-onb-stage-pill');
+                if (modalStagePill) {
+                    modalStagePill.innerText = `Stage: ${data.onboarding_status || 'Invited'}`;
+                }
                 const urlInput = document.getElementById('sub-doc-onboarding-url');
                 if (urlInput && data.onboarding_url) urlInput.value = data.onboarding_url;
+                if (data.sms_body || data.sms_uri) {
+                    window._activeSubcontractorSmsMeta = Object.assign(window._activeSubcontractorSmsMeta || {}, {
+                        subId: subId,
+                        onboardingUrl: data.onboarding_url || '',
+                        smsBody: data.sms_body || '',
+                        smsUri: data.sms_uri || ''
+                    });
+                    const smsBtn = document.getElementById('sub-doc-sms-btn');
+                    if (smsBtn && data.sms_uri) {
+                        smsBtn.href = data.sms_uri;
+                    }
+                }
                 showToast((data.message || 'Onboarding link dispatched!') + ' (Link copied to clipboard)', 'success');
             } else {
                 showToast('Error sending onboarding link: ' + (data.message || 'Unknown error'), 'error');
@@ -7473,13 +9000,42 @@
         if (!urlInput || !urlInput.value) return;
         if (navigator.clipboard) {
             navigator.clipboard.writeText(urlInput.value).then(() => {
-                showToast('Pre-filled 1099 onboarding link copied to clipboard!', 'success');
+                showToast('Subcontractor onboarding portal link copied to clipboard!', 'success');
             });
         } else {
             urlInput.select();
             document.execCommand('copy');
-            showToast('Pre-filled 1099 onboarding link copied to clipboard!', 'success');
+            showToast('Subcontractor onboarding portal link copied to clipboard!', 'success');
         }
+    }
+
+    async function copySubcontractorSmsInvite() {
+        const subId = document.getElementById('upload-sub-doc-id')?.value;
+        let smsBody = (window._activeSubcontractorSmsMeta && window._activeSubcontractorSmsMeta.smsBody) || '';
+        if (!smsBody && subId) {
+            await sendSubcontractorOnboardingLink(subId, null);
+            smsBody = (window._activeSubcontractorSmsMeta && window._activeSubcontractorSmsMeta.smsBody) || '';
+        }
+        if (!smsBody) {
+            const urlVal = document.getElementById('sub-doc-onboarding-url')?.value || 'https://www.hwbcleaning.com';
+            smsBody = `HWB Cleaning Services: Here is your secure subcontractor portal link to upload your COI & W-9: ${urlVal} - Questions? Call (214) 586-0257.`;
+        }
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(smsBody).then(() => {
+                showToast('SMS invite text copied! Paste into Text / Google Voice / WhatsApp.', 'success');
+            });
+        }
+    }
+
+    function triggerSubcontractorSmsInvite(event) {
+        const smsBtn = document.getElementById('sub-doc-sms-btn');
+        if (smsBtn && smsBtn.getAttribute('href') && smsBtn.getAttribute('href').startsWith('sms:')) {
+            copySubcontractorSmsInvite();
+            return true;
+        }
+        if (event) event.preventDefault();
+        copySubcontractorSmsInvite();
+        return false;
     }
 
     async function approveSubcontractorFromModal(btn) {

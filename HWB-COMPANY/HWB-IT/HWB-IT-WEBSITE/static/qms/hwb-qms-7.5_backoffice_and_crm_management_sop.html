@@ -4,7 +4,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.5-BO-CRM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">6.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5 &amp; 8.1 (Operational Planning)</span></div>
     </div>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">6.0.0</td>
+                    <td style="text-align: left;">6.2.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -44,7 +44,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/24/2026</td>
+                    <td style="text-align: left;">10/29/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
@@ -165,6 +165,11 @@ flowchart TD
             <li><strong>6-Stage Sales Lifecycle, Separate <code>🧹 Who Cleans</code> Column &amp; Stage-Date History (<code>BUG-157</code>):</strong> Lead progression follows 6 sequential stages (<code>New &rarr; In Campaign &rarr; Engaged &rarr; Contacted &rarr; Qualified &rarr; Walkthrough Completed</code>, plus <code>Upgrade to Client Account</code> and disqualifiers <code>Not Interested / Unsubscribed / Do Not Call (DNC)</code>), recorded with timestamps and actor attribution in <code>"LeadStageHistory"</code>. The facility's current cleaning arrangement is tracked independently in the <strong>🧹 Who Cleans</strong> column (<code>⚪ Unknown</code>, <code>🏠 In-House Cleaning</code>, <code>🤝 Contract Cleaning</code>).</li>
             <li><strong>Placeholder Email Protection, <code>📅 Worked Today</code> Filter &amp; Calling Workstation High-Contrast Selector (<code>BUG-158</code>–<code>BUG-159</code>):</strong> Placeholder and internal emails (<code>000000000@oooo</code>, <code>none@none.com</code>, <code>hwbcleaning11@gmail.com</code>) are automatically stripped to <code>NULL</code> so two different businesses never overwrite each other. Unassigned leads automatically claim the logged-in user as <code>owner_id</code> when added or worked, while preserving the original <code>input_date</code> and surfacing under the <strong>📅 Worked Today</strong> filter pill. Clicking <code>🏠 In-House Cleaning</code> or <code>🤝 Contract Cleaning</code> inside the Calling Workstation highlights the active selection with a bold checkmark and switches the Call Script box to <code>🧹 "Have cleaner"</code>.</li>
             <li><strong>5-Layer Enterprise Button, Gear Menu (<code>⚙️</code>), &amp; Atomic Delete/Undo Lifecycle (<code>BUG-160</code>):</strong> Deleting a Lead, Client Account, Candidate, or Subcontractor Partner saves a recoverable JSON snapshot in <code>"SecurityAuditLogs"</code> (<code>RECORD_DELETED_SNAPSHOT</code>), cleans up all child tables (<code>"PendingOutbox"</code>, <code>"CampaignRecipients"</code>, <code>"LeadStageHistory"</code>, <code>"Contacts"</code>, <code>"GlobalActivities"</code>) in foreign-key-safe order, removes the row in <code>0ms</code> without stripping dropdowns on remaining rows, and displays a 1-click <strong><code>[↩ Undo]</code></strong> button on the confirmation toast wired to <code>POST /api/v1/crm/restore-deleted</code>.</li>
+            <li><strong>9-Pillar Enterprise Lead Notes, Touchpoint &amp; Deletion Persistence Architecture (<code>BUG-161</code>–<code>BUG-162</code> / <code>test_39</code>):</strong> Unifies structured Standing Facility Briefs (<code>"Leads".notes</code>) and timestamped Activity Streams (<code>"GlobalActivities"</code>) across all 4 sales surfaces (Table Hover Card, Lead Overview Tab, Stage &amp; Call History Timeline with <code>All / 📌 Pinned / 📞 Calls / 📝 Notes / 🏢 Walkthroughs</code> filters, and 2-Minute Calling Console). Includes 1-click inline editing, full JSONB revision history with 1-click <code>[↩ Restore]</code>, 1-click Pin/Unpin (<code>📌</code>) and Delete (<code>🗑️</code>) with <code>0ms</code> optimistic DOM removal, 6 Call-Floor Speed-Chips, Smart Field Extractor (auto-extracting email, phone, SQF, capacity, budget, and <code>Who Cleans</code> from call notes), Sister-Location Umbrella Broadcast (<code>share_umbrella</code>), <code>note:</code> / <code>has:notes</code> / <code>has:pinned</code> search tokens, and complete note handoff upon Lead-to-Client promotion.</li>
+            <li><strong>Dual-Layer Outbox Open Tracking &amp; Multi-Campus CMO/Umbrella Governance (<code>BUG-163</code>):</strong> Standalone <code>"PendingOutbox"</code> records (such as statutory TPIA/RFP correspondence and executive letters) include both an invisible open-tracking pixel (<code>/api/v1/marketing/track/open/&lt;tracking_token&gt;.gif</code>) and Microsoft Exchange delivery/read receipt headers (<code>isDeliveryReceiptRequested</code>, <code>isReadReceiptRequested</code>), plus optional <code>BCC</code> routing and automatic <code>X-List-Unsubscribe</code> header retry compatibility. When opened by the recipient, <code>blueprints/telemetry.py</code> marks <code>PendingOutbox.status = 'OPENED'</code>, promotes the linked Lead in <code>"Leads"</code> to <code>status = 'Engaged'</code> with a timestamped <code>"GlobalActivities"</code> audit entry, and sends an instant Telegram alert to the CEO. Multi-brand school and childcare networks (including <strong>ResponsiveEd</strong> across <code>110</code> Texas campuses and <strong>Cadence Education</strong> across <code>42</code> Texas campuses) are governed under unified <code>umbrella_name</code> standing orders in <code>"AIEmployeeStandingOrders"</code>.</li>
+            <li><strong>5-Pillar Enterprise Universal Grid Engine &amp; Universal Dual Horizontal Scrollbars (<code>BUG-164</code> &amp; <code>BUG-168</code> / <code>test_40</code> &amp; <code>test_44</code>):</strong> Persists per-user dragged column sequences, custom column widths, and personal presets in PostgreSQL (<code>GET / POST /api/v1/ui/grid-state</code> inside <code>"UserBehavioralProfiles".adaptive_preferences</code>) so custom column orders survive pagination and search without URL resets. Provides an order-preserving Column Manager with live <code>#2 / #3</code> sequence badges, interactive column resizers (<code>.sigma-col-resizer</code>), semantic SQL sorting across all columns, a <strong>Top Synced Horizontal Scroll Rail</strong> (<code>.sigma-top-scroll-rail</code> with <code>⏮ / ◀ Left / Right ▶ / ⏭</code> quick-pan buttons), and an <strong>Always-Visible Sticky Bottom Scrollbar Dock</strong> (<code>#sigma-sticky-bottom-scrollbar</code>) across all 14 backoffice tables.</li>
+            <li><strong>4-Pillar Mandatory Follow-Up &amp; Task Engine for the Notes Workflow (<code>BUG-165</code> / <code>test_42</code>):</strong> Guarantees zero active leads are ever left without an upcoming follow-up date. Saving any note or call outcome on an open lead across Quick Call Log, Hover Popover, Lead Overview, or Calling Console automatically assigns or validates a future business-day <code>next_action_date</code> (extracting natural-language dates such as <code>"call back tomorrow"</code> or <code>"next week"</code>, or applying smart business-day SLA offsets skipping weekends), tracks task status on <code>"GlobalActivities"</code> (<code>follow_up_date</code>, <code>follow_up_action</code>, <code>task_status</code>, <code>completed_at</code>), provides 1-click <code>✓ Mark Done</code> task completion (<code>POST /api/v1/activities/&lt;id&gt;/complete-task</code>), and exposes the <code>⏰ Follow-Ups Due</code> toolbar filter pill and search tokens (<code>followup:due</code>, <code>followup:overdue</code>, <code>followup:today</code>).</li>
+            <li><strong>6-Pillar Subcontractor Email Deliverability &amp; 8-Pillar 1099 Dual-Mode Tax ID (<code>EIN</code> / <code>SSN</code>) Onboarding Engine (<code>BUG-166</code> &amp; <code>BUG-167</code> / <code>test_41</code> &amp; <code>test_43</code>):</strong> Outbound subcontractor portal invitations and receipts are authenticated via Cloudflare Microsoft 365 DKIM (<code>selector1</code> / <code>selector2</code>), BIMI SVG brand logo (<code>default._bimi.hwbcleaning.com</code>), and DMARC quarantine enforcement (<code>p=quarantine; pct=100</code>), isolated on the transactional stream, and paired with 1-tap SMS invitations. The 1099 onboarding portal (<code>/onboard/subcontractor/&lt;token&gt;</code>) and backoffice subcontractor modals provide a 1-click <code>[EIN (XX-XXXXXXX) | SSN / ITIN (XXX-XX-XXXX)]</code> mode switcher, Single-Member LLC (Disregarded Entity) support, real-time IRS/SSA prefix and checksum validation (<code>validate_federal_tax_id</code>), automatic <strong>Digital IRS Substitute Form W-9 PDF generation</strong> (<code>generate_signed_substitute_w9_pdf</code>), 1-click receipt COI upload, and an audited <code>[👁️ Reveal]</code> TIN endpoint (<code>POST /api/v1/workforce/subcontractors/&lt;id&gt;/reveal-tin</code>).</li>
         </ul>
 
         <h2>7.0 Verification &amp; Quality Control</h2>
@@ -172,7 +177,7 @@ flowchart TD
             <li>All lead conversions, ecosystem updates, and employee onboardings must be verifiable in the <code>SecurityAuditLogs</code> WORM feed.</li>
             <li>All 87 templates in <code>templates/</code> must pass <code>compliance_code_linter.py</code> with 0 violations (100% Grade A+ WCAG 2.2 AA &amp; CIPA/CPRA compliance).</li>
             <li>Subtab transitions in the Workforce view must synchronize with URL parameters without page reloads.</li>
-            <li>Zero synthetic data, zero duplicate intake rows, and 100% pass rate across <code>scripts/test_web_performance_rack_14.py</code> (<code>37/37</code> passing) and <code>scripts/yamamoto_bid_test_suite.py</code> (<code>9/9</code> Grade A+).</li>
+            <li>Zero synthetic data, zero duplicate intake rows, and 100% pass rate across <code>scripts/test_web_performance_rack_14.py</code> (<code>44/44</code> passing) and <code>scripts/yamamoto_bid_test_suite.py</code> (<code>9/9</code> Grade A+).</li>
         </ul>
 
         <hr />
@@ -187,6 +192,18 @@ flowchart TD
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">6.2.0</td>
+                    <td style="text-align: left;">10/29/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified the 5-Pillar Enterprise Universal Grid Engine (BUG-164 / test_40), 4-Pillar Mandatory Follow-Up &amp; Task Engine for the Notes Workflow (BUG-165 / test_42), 6-Pillar Subcontractor Email Deliverability &amp; Anti-Phishing Shield (BUG-166 / test_41), 8-Pillar 1099 Subcontractor Dual-Mode Tax ID (EIN/SSN) &amp; Digital Substitute Form W-9 Architecture (BUG-167 / test_43), and Universal Dual Horizontal Scrollbar Engine (BUG-168 / test_44), certified by 44/44 passing Rack 14 tests. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">6.1.0</td>
+                    <td style="text-align: left;">10/29/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added 9-Pillar Enterprise Lead Notes &amp; Touchpoint Architecture (BUG-161 / test_39), Note &amp; Lead Deletion UI Persistence Fix (BUG-162), Dual-Layer PendingOutbox Open Tracking &amp; BCC/Read-Receipt Dispatch, and Multi-Campus Umbrella Governance (BUG-163: ResponsiveEd 110 campuses &amp; Cadence Education 42 campuses). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">6.0.0</td>
                     <td style="text-align: left;">10/26/2026</td>

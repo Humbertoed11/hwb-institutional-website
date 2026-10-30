@@ -49,8 +49,10 @@ from blueprints import (
     academy_bp,
     partner_bp,
     mobile_api_bp,
+    accounting_bp,
     register_blueprint_hub
 )
+from blueprints.ai_employee_api import ai_employee_bp
 
 # Institutional Secret Loading (HWB-QMS-9.5)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -77,6 +79,8 @@ register_blueprint_hub(app, crm_api_bp)
 register_blueprint_hub(app, academy_bp)
 register_blueprint_hub(app, partner_bp)
 register_blueprint_hub(app, mobile_api_bp)
+register_blueprint_hub(app, accounting_bp)
+register_blueprint_hub(app, ai_employee_bp)
 
 # --- SigmaFidelity™ Institutional JSON Encoder ---
 class InstitutionalJSONEncoder(json.JSONEncoder):

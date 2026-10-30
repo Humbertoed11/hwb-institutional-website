@@ -1,10 +1,10 @@
 {
   "standard": "Super_Architecture Master Library (BABYSOP-SOP-0.34 & 0.35)",
   "authority": "Humberto Dominguez (CEO) & Super George (Systems Architect)",
-  "synced_at_utc": "2026-10-26T11:35:31.584396+00:00",
+  "synced_at_utc": "2026-10-30T00:51:22.817992+00:00",
   "total_books": 9,
-  "active_cartridges_count": 43,
-  "total_cartridges_count": 43,
+  "active_cartridges_count": 68,
+  "total_cartridges_count": 68,
   "books": [
     {
       "book_code": "BOOK-01",
@@ -129,6 +129,30 @@
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
     },
     {
+      "cartridge_id": "AI-05",
+      "book_name": "Super_ai_finops_architecture",
+      "title": "Multi-Intent Compound DAG Task Decomposer, Anti-Hijack Shield & Stateful Assumption Overrides",
+      "specification": "Decomposes multi-step executive prompts into ordered DAG execution plans (CompoundExecutionPlan), prevents single-keyword table dumps from hijacking analytical prompts, and persists stateful underwriting overrides (HEX_UnderwritingOverrides) with side-by-side .xlsx comparison matrices.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "AI-06",
+      "book_name": "Super_ai_finops_architecture",
+      "title": "Lock-Free Distributed Queue (FOR UPDATE SKIP LOCKED), Kahn's Algorithm DAG & 3-Strike DLQ_QUARANTINE",
+      "specification": "Atomic multi-worker job claiming with SQS-style lease recovery, exponential backoff (2^retry_count min), 3-strike Dead-Letter Queue quarantine, and Kahn's Algorithm topological dependency sorting (HEX_WorkflowDependencies).",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
       "cartridge_id": "DATA-01",
       "book_name": "Super_data_and_excel_architecture",
       "title": "10-Step Data Cleansing & 100% Financial Reconciliation Gate",
@@ -175,6 +199,30 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
+    },
+    {
+      "cartridge_id": "DATA-05",
+      "book_name": "Super_data_and_excel_architecture",
+      "title": "5-Pillar Enterprise Data Sovereignty Triggers, Canonical Deal Repository & 254-County TxGIO/TNRIS Spine",
+      "specification": "Enforces PostgreSQL triggers (trg_enforce_single_active_deal_per_chat, trg_enforce_workorder_project_parity, trg_sync_project_canonical_truth, trg_block_synthetic_incidents), zero hardcoded deal/region fallbacks, and statewide 254-county TxGIO StratMap parcel resolution.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "DATA-06",
+      "book_name": "Super_data_and_excel_architecture",
+      "title": "3-Layer USPS State Normalization, Faceted Entity Search & Texas City Spell-Correction",
+      "specification": "Enforces 2-letter USPS state codes (trg_leads_normalize_state), USPS Pub 28 address_line_2 extraction, full-name sales rep recognition without city collision (Beabe Wiley vs. Wylie, TX), and automatic Texas city spell-correction (TX_CITY_MISSPELLING_MAP).",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
     },
     {
       "cartridge_id": "GRO-01",
@@ -235,6 +283,42 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-25T02:10:04.673971+00:00"
+    },
+    {
+      "cartridge_id": "GRO-06",
+      "book_name": "Super_growth_and_seo_architecture",
+      "title": "9-Pillar Lead Notes, Standing Facility Brief, Stage-Date Ledger & Zero-Orphan Mandatory Follow-Up Engine",
+      "specification": "Separates Status from Who Cleans (cleaning_model), tracks stage timestamps (LeadStageHistory), separates Standing Facility Brief from Pinned/Chronological Notes with JSONB version restore and smart field extraction, and enforces the Zero-Orphan Mandatory Follow-Up Rule (Follow-Ups Due).",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "GRO-07",
+      "book_name": "Super_growth_and_seo_architecture",
+      "title": "5-Pillar Closed-Loop Campaign State Machine, RFC 8058 One-Click Unsubscribe & Email Geofence",
+      "specification": "Bi-directional Leads <-> Marketing synchronization, cryptographic List-Unsubscribe: <https://.../one-click> (RFC 8058), dual-table suppression gate (EmailSuppressionList), and automated international/competitor geofence filtering.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "GRO-08",
+      "book_name": "Super_growth_and_seo_architecture",
+      "title": "7-Pillar Technology-Driven Operator Commercial Funnel & Interactive System Showcase",
+      "specification": "Positions the enterprise as a software-powered operator with a 'Crossed Fingers vs. System-Protected' visual contrast block, Dual Specialty Tracks (Recurring + GC Final Clean), and interactive live workflow showcases (No-Show Eliminator & Quality Watchdog).",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
     },
     {
       "cartridge_id": "ISO-01",
@@ -309,6 +393,42 @@
       "updated_at": "2026-10-20T15:33:54.145696+00:00"
     },
     {
+      "cartridge_id": "ISO-07",
+      "book_name": "Super_ISO_business_strategy_Tactics",
+      "title": "Canonical QMS Library Deduplication, Self-Cleaning sigma_kb Vector Sync & 52-Mermaid AST Sentinel",
+      "specification": "Purges hollow stubs and retired stack references from QMS catalogs, strips internal audit/database jargon from public client-facing pages, and enforces AST validation across all 52 synchronized Mermaid workflow diagrams.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "ISO-08",
+      "book_name": "Super_ISO_business_strategy_Tactics",
+      "title": "50-State + DC Strategy Playbook, 42-Signal 5-Stack Convergence Bus & Non-Fiduciary B2B SaaS Safe Harbor",
+      "specification": "Scales statutory real estate intelligence across 51 US jurisdictions and 3,143 counties, routes 42 distress/infrastructure/title signals through 5 stacks with Release-of-Lien cure verification and exponential time decay into 10 core playbooks, and enforces the Publisher's Exclusion (15 U.S.C. 80b-2(a)(11)(D)) non-fiduciary SaaS safe harbor.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "ISO-09",
+      "book_name": "Super_ISO_business_strategy_Tactics",
+      "title": "Closed-Loop Fortune 500 First-Pass Enforcement Engine & 3-Plane Lifecycle Hook Gate (GOV-04 / Mandate 13)",
+      "specification": "Eliminates executive prompting by enforcing the 5-Pillar Fortune 500 First-Pass Rubric across PreInvocation (Input Gate), PreToolUse (PendingOutbox Gate), and Stop (Self-Correction Output Gate) hooks with WORM SHA-256 receipts in Fortune500GateReceipts.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-30T00:22:05.447673+00:00"
+    },
+    {
       "cartridge_id": "MEM-01",
       "book_name": "Super_memory_architecture",
       "title": "4-Tier L0-L3 Memory Stack & <=15KB L0 Scratchpad Auto-Compactor",
@@ -355,6 +475,30 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
+    },
+    {
+      "cartridge_id": "MEM-05",
+      "book_name": "Super_memory_architecture",
+      "title": "15-Book Dynamic Master Playbook Encyclopedia & Client Behavioral Book",
+      "specification": "Database-backed 15-book rule engine (225 rules) including Book 14 (The Client Book) with automatic cross-book rule transfers and SOT-08 Video Air-Lock.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "MEM-06",
+      "book_name": "Super_memory_architecture",
+      "title": "24/7 Stateful AI Employee Working Desk, Rollback Ledger & Citation Firewall",
+      "specification": "5-table PostgreSQL AI Employee core (AIEmployeeWorkingMemory, StandingOrders, ChangeLedger with 1-tap BEFORE/AFTER rollback, BudgetLedger, Heartbeat) and Deterministic Citation Firewall.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
     },
     {
       "cartridge_id": "OPS-01",
@@ -405,6 +549,42 @@
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
     },
     {
+      "cartridge_id": "OPS-05",
+      "book_name": "Super_recovery_and_devops_architecture",
+      "title": "Zero Silent except: pass AST Gatekeeper & Non-Reentrant Connection Pool Return Hygiene",
+      "specification": "AST static gatekeeper blocking silent except Exception: pass blocks in favor of EnterpriseDBSession.safe_rollback(), paired with strict finally: conn.close() pool return hygiene and self-healing ALTER TABLE ... ADD COLUMN IF NOT EXISTS parity guards.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "OPS-06",
+      "book_name": "Super_recovery_and_devops_architecture",
+      "title": "Pre-Change Byte-for-Byte Snapshot & 1-Command Turnkey Rollback Script Standard",
+      "specification": "Captures byte-for-byte code and SQL state snapshots inside .snapshots/ paired with an executable 1-command rollback script (scripts/rollback_*.sh) prior to major workflow deployments.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "OPS-07",
+      "book_name": "Super_recovery_and_devops_architecture",
+      "title": "Fortune 500 7-Level Observability, W3C Trace Correlation, SLO Burn-Rate & Cardinality Firewall",
+      "specification": "Delivers WORM Logs, Bounded Metrics, Distributed Microsecond Spans (SO_DistributedTraces), W3C traceparent Correlation, Proactive Circuit/Telegram Alerts, Rolling 30-Day SLO Error-Budget Burn-Rate evaluation, and High-Cardinality Metric Label Stripping at $0/mo SaaS cost.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-30T00:44:06.996017+00:00"
+    },
+    {
       "cartridge_id": "PERF-01",
       "book_name": "Super_performance_architecture",
       "title": "Zero-Round-Trip DB Connection Pool & Timezone Pinning",
@@ -451,6 +631,30 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
+    },
+    {
+      "cartridge_id": "PERF-05",
+      "book_name": "Super_performance_architecture",
+      "title": "Cloudflare Edge Cache Everything, Smart Tiered Cache, Early Hints & SHA-256 Asset Fingerprinting",
+      "specification": "Deploys Edge HIT caching (46ms-64ms TTFB) on public /services/* and /locations/* routes, Apex-to-WWW 301 redirect, DNSSEC + 10 CAA records, HSTS preload, and automatic ?f=<8-char-sha256> static asset cache-busting.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "PERF-06",
+      "book_name": "Super_performance_architecture",
+      "title": "PostGIS Binary Mapbox Vector Tiles (ST_AsMVT), ST_Subdivide Indexing & 3-Tier Medallion Lakehouse",
+      "specification": "Serves C-compiled .pbf binary vector tiles (90% smaller than GeoJSON), slices complex polygons to <=256 vertices via ST_Subdivide (20x-50x faster spatial intersections), and tiers Bronze Blob -> Silver GeoParquet/DuckDB (5M parcels in 2.5 GB) -> Gold PostGIS 3.4.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
     },
     {
       "cartridge_id": "SEC-01",
@@ -525,6 +729,54 @@
       "updated_at": "2026-10-20T15:30:02.688024+00:00"
     },
     {
+      "cartridge_id": "SEC-07",
+      "book_name": "Super_security_architecture",
+      "title": "White-Box Post-Exploitation Lockdown, Zero-Disk BYTEA Vault & Non-Root Container",
+      "specification": "Eliminates transition password lists and plaintext HR_VAULT_DIR disk caches, streams MultiFernet BYTEA documents strictly from RAM (io.BytesIO), enforces uid=1000 non-root Docker execution, and revokes deactivated user sessions immediately.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "SEC-08",
+      "book_name": "Super_security_architecture",
+      "title": "Adversarial Plaintiff-Counsel Legal Shield & WORM Cryptographic Consent Ledger",
+      "specification": "Enforces zero pre-checked consent boxes (47 CFR 64.1200), standalone /fcra-disclosure separation, DOJ Form I-9 List A / List B+C safe harbor, FAA Binding Individual Arbitration & Class-Action Waiver (30-day cure), TDPSA AG link + Sec-GPC: 1, and WORM SHA-256 consent receipts.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "SEC-09",
+      "book_name": "Super_security_architecture",
+      "title": "6-Pillar Email Deliverability, Cloud DKIM/BIMI/DMARC Quarantine & Anti-Phishing Shield",
+      "specification": "Dual Microsoft 365 DKIM CNAME selectors (selector1/selector2), BIMI SVG brand mark, strict DMARC (p=quarantine; pct=100), transactional vs. marketing stream isolation, anti-phishing subject/link firewall, and 1-tap SMS invite.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "SEC-10",
+      "book_name": "Super_security_architecture",
+      "title": "Fortune 500 Reversible Tokenization Vault, ZDR Vendor Firewall & WORM DLP Egress Airlock",
+      "specification": "Swaps sensitive PII, tax IDs, emails, phones, and client names with reversible session tokens (<TOKEN_CATEGORY_NNN>) on 127.0.0.1, enforces Zero-Data-Retention (ZDR) vendor gates, blocks raw-inbox AI OAuth plugins, and writes WORM SHA-256 DLP receipts.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T23:59:36.637035+00:00"
+    },
+    {
       "cartridge_id": "UX-01",
       "book_name": "Super_ui_ux_architecture",
       "title": "Six Cognitive UX Laws (MF-REF-015)",
@@ -595,6 +847,54 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-20T16:14:15.466191+00:00"
+    },
+    {
+      "cartridge_id": "UX-07",
+      "book_name": "Super_ui_ux_architecture",
+      "title": "5-Pillar Enterprise Universal Grid Engine & Per-User PostgreSQL Column Persistence",
+      "specification": "Persists dragged column order, order-preserving column manager selections, interactive .sigma-col-resizer pixel widths, and semantic SQL sort states per user in PostgreSQL (grid_states), with dynamic sticky-column offset shields and .sigma-dense-grid auto-compaction.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "UX-08",
+      "book_name": "Super_ui_ux_architecture",
+      "title": "Universal Dual Horizontal Scrollbar Engine (Top Synced Rail + Sticky Bottom Dock)",
+      "specification": "Injects a synchronized top horizontal scroll rail (.sigma-top-scroll-rail with quick-step pan buttons) and an always-visible sticky bottom scrollbar dock (#sigma-sticky-bottom-scrollbar) across all overflowing data tables.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "UX-09",
+      "book_name": "Super_ui_ux_architecture",
+      "title": "5-Layer Network-Aware Button Auto-Unlock, Zero-Destruction DOM Swap & Snapshot Undo Restore",
+      "specification": "Unlocks AJAX submit buttons within 60ms of window.fetch completion, updates tables via non-destructive DOMParser tbody swaps, and provides FK-safe atomic deletion with 1-click [Undo] snapshot recovery (POST /api/v1/crm/restore-deleted).",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "UX-10",
+      "book_name": "Super_ui_ux_architecture",
+      "title": "5-Layer Input Masking, Dual-Mode Tax ID (EIN/SSN) Switcher & Digital Substitute Form W-9 Vault",
+      "specification": "Real-time phone/ZIP/routing masks, 1-click [EIN | SSN/ITIN] switcher with IRS campus prefix & SSA validation, on-device Digital IRS Substitute Form W-9 PDF generator (26 CFR 31.3406(h)-3), tamper-evident SHA-256 receipt cards with 1-click COI upload, and audited [Reveal] TIN access.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-10-29T22:12:43.182085+00:00"
     }
   ]
 }

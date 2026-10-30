@@ -11,6 +11,7 @@ ROLE_MODULE_PRESETS = {
     'Executive': {
         'leads': {'view': True, 'edit': True, 'delete': True},
         'accounts': {'view': True, 'edit': True, 'delete': True},
+        'accounting': {'view': True, 'edit': True, 'delete': True},
         'sales_desk': {'view': True, 'edit': True, 'delete': True},
         'bids': {'view': True, 'edit': True, 'delete': True},
         'workforce': {'view': True, 'edit': True, 'delete': True},
@@ -24,6 +25,7 @@ ROLE_MODULE_PRESETS = {
     'Admin': {
         'leads': {'view': True, 'edit': True, 'delete': True},
         'accounts': {'view': True, 'edit': True, 'delete': True},
+        'accounting': {'view': True, 'edit': True, 'delete': True},
         'sales_desk': {'view': True, 'edit': True, 'delete': True},
         'bids': {'view': True, 'edit': True, 'delete': True},
         'workforce': {'view': True, 'edit': True, 'delete': True},
@@ -37,6 +39,7 @@ ROLE_MODULE_PRESETS = {
     'Manager': {
         'leads': {'view': True, 'edit': True, 'delete': False},
         'accounts': {'view': True, 'edit': True, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': True, 'edit': True, 'delete': False},
         'bids': {'view': True, 'edit': True, 'delete': False},
         'workforce': {'view': True, 'edit': True, 'delete': False},
@@ -50,6 +53,7 @@ ROLE_MODULE_PRESETS = {
     'Operator': {
         'leads': {'view': True, 'edit': True, 'delete': False},
         'accounts': {'view': True, 'edit': False, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': False, 'edit': False, 'delete': False},
         'bids': {'view': True, 'edit': False, 'delete': False},
         'workforce': {'view': True, 'edit': True, 'delete': False},
@@ -63,6 +67,7 @@ ROLE_MODULE_PRESETS = {
     'Sales': {
         'leads': {'view': True, 'edit': True, 'delete': False},
         'accounts': {'view': True, 'edit': True, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': True, 'edit': True, 'delete': False},
         'bids': {'view': True, 'edit': False, 'delete': False},
         'workforce': {'view': False, 'edit': False, 'delete': False},
@@ -76,6 +81,7 @@ ROLE_MODULE_PRESETS = {
     'Estimator': {
         'leads': {'view': False, 'edit': False, 'delete': False},
         'accounts': {'view': False, 'edit': False, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': False, 'edit': False, 'delete': False},
         'bids': {'view': True, 'edit': True, 'delete': False},
         'workforce': {'view': False, 'edit': False, 'delete': False},
@@ -89,6 +95,7 @@ ROLE_MODULE_PRESETS = {
     'Technician': {
         'leads': {'view': False, 'edit': False, 'delete': False},
         'accounts': {'view': False, 'edit': False, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': False, 'edit': False, 'delete': False},
         'bids': {'view': False, 'edit': False, 'delete': False},
         'workforce': {'view': False, 'edit': False, 'delete': False},
@@ -102,6 +109,7 @@ ROLE_MODULE_PRESETS = {
     'Custom': {
         'leads': {'view': False, 'edit': False, 'delete': False},
         'accounts': {'view': False, 'edit': False, 'delete': False},
+        'accounting': {'view': False, 'edit': False, 'delete': False},
         'sales_desk': {'view': False, 'edit': False, 'delete': False},
         'bids': {'view': False, 'edit': False, 'delete': False},
         'workforce': {'view': False, 'edit': False, 'delete': False},
