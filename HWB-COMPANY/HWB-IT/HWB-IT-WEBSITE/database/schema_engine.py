@@ -327,6 +327,8 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'Active';
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
                 ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS website TEXT;
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS facility_type TEXT;
+                ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS industry TEXT;
 
                 -- BUG-156: Normalize drifted state values ('tx', '', 'texas', 'tejas' -> 'TX') and enforce via trigger
                 UPDATE "Leads"

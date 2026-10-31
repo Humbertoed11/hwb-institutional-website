@@ -187,3 +187,177 @@ def log_sensitive_access(user_id, username, employee_id, field_name, ip_address=
         if conn:
             conn.close()
 
+
+# =========================================================================
+# SEC-11 Binary File-Upload Magic-Byte Airlock & Active-Payload Scanner
+# Standard: AICPA SOC 2 Criterion CC6.8 / BABYSOP-SOP-0.41 / Mandate 10
+# =========================================================================
+import zlib
+
+FORBIDDEN_UPLOAD_EXTENSIONS = {
+    ".php", ".phtml", ".php5", ".js", ".mjs", ".exe", ".dll", ".so",
+    ".sh", ".bash", ".bat", ".cmd", ".ps1", ".vbs", ".py", ".rb",
+    ".pl", ".cgi", ".jar", ".war", ".jsp", ".asp", ".aspx", ".html",
+    ".htm", ".xhtml", ".svg", ".xml", ".hta", ".scr", ".msi", ".com",
+}
+
+MAGIC_BYTE_SIGNATURES = {
+    ".pdf": (b"%PDF-",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    ".webp": (b"RIFF",),
+}
+
+ACTIVE_PAYLOAD_SIGNATURES = (
+    b"/javascript",
+    b"/js",
+    b"/launch",
+    b"/openaction",
+    b"/aa",
+    b"/richmedia",
+    b"/submitform",
+    b"/importdata",
+    b"<?php",
+    b"<script",
+    b"javascript:",
+    b"vbscript:",
+    b"onload=",
+    b"onerror=",
+)
+
+
+def inspect_and_sanitize_file_upload(
+    filename: str,
+    raw_bytes: bytes,
+    allowed_extensions: tuple = (".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".csv", ".txt"),
+    max_bytes: int = 10 * 1024 * 1024,
+    max_compression_ratio: float = 25.0,
+) -> dict:
+    """
+    Fortune 500 Binary File-Upload Airlock (Cartridge SEC-11 / SOC 2 CC6.8):
+    1. Rejects empty payloads and enforces deterministic byte-size ceiling (10 MB default).
+    2. Blocks polyglot / double extensions (e.g. 'invoice.php.pdf') and executable extensions.
+    3. Validates cryptographic magic-byte file headers against the declared extension.
+    4. Scans raw bytes for embedded active payloads (/JavaScript, /Launch, <?php, <script).
+    5. Enforces Zip-Bomb / FlateDecode decompression ratio ceiling (<= 25:1).
+    """
+    raw_name = (filename or "").strip()
+    sha256_hash = hashlib.sha256(raw_bytes or b"").hexdigest()
+
+    def _reject(reason: str) -> dict:
+        try:
+            from core.services.security_logger import log_security_event
+            log_security_event(
+                event_category="FILE_UPLOAD_AIRLOCK",
+                event_action="BLOCKED_MALICIOUS_UPLOAD",
+                severity="CRITICAL",
+                status_code=400,
+                details={
+                    "filename": raw_name,
+                    "size_bytes": len(raw_bytes or b""),
+                    "sha256": sha256_hash,
+                    "rejection_reason": reason,
+                    "standard": "SEC-11 / SOC2-CC6.8",
+                },
+            )
+        except Exception:
+            pass
+        return {
+            "allowed": False,
+            "rejection_reason": reason,
+            "sha256": sha256_hash,
+            "size_bytes": len(raw_bytes or b""),
+        }
+
+    if not raw_name or "\x00" in raw_name:
+        return _reject("INVALID_OR_NULL_FILENAME")
+    if not raw_bytes:
+        return _reject("EMPTY_FILE_PAYLOAD")
+    if len(raw_bytes) > max_bytes:
+        return _reject(f"PAYLOAD_EXCEEDS_MAX_BYTES ({len(raw_bytes)} > {max_bytes})")
+
+    clean_parts = [p.lower() for p in raw_name.replace("\\", "/").split("/")[-1].split(".") if p]
+    if len(clean_parts) < 2:
+        return _reject("MISSING_FILE_EXTENSION")
+
+    for part in clean_parts[1:]:
+        if f".{part}" in FORBIDDEN_UPLOAD_EXTENSIONS:
+            return _reject(f"FORBIDDEN_OR_POLYGLOT_EXTENSION (.{part})")
+
+    ext = f".{clean_parts[-1]}"
+    allowed_norm = {e.lower() for e in allowed_extensions}
+    if ext not in allowed_norm:
+        return _reject(f"DISALLOWED_EXTENSION ({ext})")
+
+    # Magic-byte header verification
+    if ext in MAGIC_BYTE_SIGNATURES:
+        valid_prefixes = MAGIC_BYTE_SIGNATURES[ext]
+        if not any(raw_bytes.startswith(prefix) for prefix in valid_prefixes):
+            return _reject(f"MAGIC_BYTE_HEADER_MISMATCH_FOR_{ext.upper().lstrip('.')}")
+        if ext == ".webp" and raw_bytes[8:12] != b"WEBP":
+            return _reject("MAGIC_BYTE_HEADER_MISMATCH_FOR_WEBP")
+    elif ext in (".csv", ".txt"):
+        # Reject binary executables or archives masquerading as CSV/TXT
+        if raw_bytes.startswith((b"MZ", b"\x7fELF", b"PK\x03\x04", b"%PDF-")) or b"\x00" in raw_bytes[:4096]:
+            return _reject("BINARY_PAYLOAD_DISGUISED_AS_TEXT")
+
+    # Active-payload inspection (case-insensitive scan over raw bytes)
+    lowered = raw_bytes.lower()
+    for sig in ACTIVE_PAYLOAD_SIGNATURES:
+        if sig in lowered:
+            # For /js or /aa in PDFs, ensure it is a PDF name token followed by delimiter
+            if sig in (b"/js", b"/aa"):
+                if re.search(rb"/(?:js|aa)(?:[\s(<\[/]|$)", lowered):
+                    return _reject(f"ACTIVE_PAYLOAD_DETECTED ({sig.decode('ascii', 'ignore')})")
+            else:
+                return _reject(f"ACTIVE_PAYLOAD_DETECTED ({sig.decode('ascii', 'ignore')})")
+
+    # Zip-Bomb / PDF stream decompression ratio guard
+    if ext == ".pdf":
+        total_decompressed = 0
+        for stream_m in re.finditer(rb"stream[\r\n]+(.*?)[\r\n]+endstream", raw_bytes, re.DOTALL):
+            s_bytes = stream_m.group(1)
+            if not s_bytes:
+                continue
+            for wbits in (zlib.MAX_WBITS, -zlib.MAX_WBITS):
+                try:
+                    d_obj = zlib.decompressobj(wbits)
+                    decomp = d_obj.decompress(s_bytes, max_bytes + 1024)
+                    if d_obj.unconsumed_tail:
+                        return _reject("ZIP_BOMB_DECOMPRESSION_CEILING_EXCEEDED")
+                    total_decompressed += len(decomp)
+                    ratio = len(decomp) / max(1, len(s_bytes))
+                    if ratio > max_compression_ratio and len(decomp) > 1024 * 1024:
+                        return _reject(f"ZIP_BOMB_COMPRESSION_RATIO_EXCEEDED ({ratio:.1f}:1)")
+                    break
+                except Exception:
+                    continue
+            if total_decompressed > max_bytes * 2:
+                return _reject("CUMULATIVE_PDF_STREAM_EXPANSION_EXCEEDED")
+
+    safe_filename = re.sub(r"[^A-Za-z0-9_.\-]", "_", clean_parts[0])[:80] + ext
+    return {
+        "allowed": True,
+        "verified_extension": ext,
+        "sanitized_filename": safe_filename,
+        "sha256": sha256_hash,
+        "size_bytes": len(raw_bytes),
+    }
+
+
+def sanitize_csv_cell_value(val: str) -> str:
+    """
+    Neutralizes CSV Formula Injection (OWASP CSV Injection / CWE-1236) by stripping
+    leading spreadsheet execution triggers (=, +, -, @, tab, CR) from text cells.
+    """
+    cleaned = str(val or "").strip()
+    if cleaned and cleaned[0] in ("=", "+", "-", "@", "\t", "\r"):
+        # Preserve negative numbers like -123.45 while stripping formulas like -cmd|...
+        if cleaned[0] == "-" and re.match(r"^-\d+(?:\.\d+)?$", cleaned):
+            return cleaned
+        return cleaned.lstrip("=+-@\t\r").strip()
+    return cleaned
+
+

@@ -1051,7 +1051,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertEqual(r_portal_w2.status_code, 200)
 
                 w4_bytes = (
-                    f"Form W-4 Employee's Withholding Certificate\n"
+                    f"%PDF-1.4\nForm W-4 Employee's Withholding Certificate\n"
                     f"First Name: Valeria\nLast Name: Solis-{uid}\n"
                     "Address: 2900 McKinney Ave\nCity, State, ZIP: Dallas, TX 75204\n"
                     "Social security number: 123-45-6789\n"
@@ -1060,7 +1060,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 ).encode()
                 r_up_w4 = self.client.post(
                     f"/api/v1/employees/onboard/{emp_token}/upload-doc",
-                    data={"doc_type": "Form W-4", "file": (io.BytesIO(w4_bytes), "Valeria_W4.txt")},
+                    data={"doc_type": "Form W-4", "file": (io.BytesIO(w4_bytes), "Valeria_W4.pdf")},
                     content_type="multipart/form-data",
                 )
                 self.assertEqual(r_up_w4.status_code, 200)
@@ -1098,7 +1098,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
 
                 r_bo_doc_w2 = self.client.post(
                     f"/api/v1/hr/employees/{emp_id}/documents",
-                    data={"document_type": "Driver License / State ID", "document": (io.BytesIO(b"TEXAS DRIVER LICENSE\n4d DL: 88776655\n4b EXP: 05/14/2030\n"), "tx_id.txt")},
+                    data={"document_type": "Driver License / State ID", "document": (io.BytesIO(b"%PDF-1.4\nTEXAS DRIVER LICENSE\n4d DL: 88776655\n4b EXP: 05/14/2030\n"), "tx_id.pdf")},
                     content_type="multipart/form-data",
                 )
                 self.assertEqual(r_bo_doc_w2.status_code, 201, r_bo_doc_w2.get_data(as_text=True))
@@ -4260,6 +4260,430 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             r_view = auth_client.get(view_url)
             self.assertEqual(r_view.status_code, 200, f"View {view_url} failed to render")
             self.assertIn("sigma_responsive_engine.js", r_view.get_data(as_text=True))
+
+    def test_45_enterprise_column_sorting_and_newest_first_dates_bug_169(self) -> None:
+        """
+        BUG-169 6-Pillar Enterprise Column Sorting & Newest-First Date Sorting Suite:
+        1. All date/deadline/follow-up columns (next_action, due_date, start_date, dates, pre_bid,
+           input_date, created, last_contact) default to DESC (Newest Date -> Older Date) on first click
+           and when dir is omitted.
+        2. Previously failing SQL sort keys (facility, industry in Accounts; last_note in Construction Bids)
+           execute valid SQL with non-empty rows in both ASC and DESC.
+        3. Universal NULLS LAST & NULLIF(..., 0) / NULLIF(..., '') normalization in both ASC and DESC.
+        4. Per-user sort_by / sort_dir persists across page loads and resets via sort=default.
+        5. Drag/resize click-suppression guard (_sigmaSuppressNextSortClickUntil) & 3-state sort cycle active.
+        """
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ops_js_path = os.path.join(base_dir, "static", "js", "backoffice_operations_core.js")
+        with open(ops_js_path, "r", encoding="utf-8") as f:
+            ops_js = f.read()
+
+        for marker in (
+            "'next_action'",
+            "'due_date'",
+            "'start_date'",
+            "'dates'",
+            "'pre_bid'",
+            "_sigmaSuppressNextSortClickUntil",
+            "decoratePrimarySortableHeaders",
+            "clearSort:",
+        ):
+            self.assertIn(marker, ops_js, f"Missing BUG-169 sort marker in backoffice_operations_core.js: {marker}")
+
+        auth_client = self.get_auth_client()
+        json_headers = {"X-Requested-With": "XMLHttpRequest", "Accept": "application/json"}
+        try:
+            # 1. Verify next_action defaults to DESC (Newest Date -> Older Date) when dir is omitted
+            r_next = auth_client.get("/admin/operations?view=leads&sort=next_action&format=json", headers=json_headers)
+            self.assertEqual(r_next.status_code, 200)
+            leads_next = (r_next.get_json() or {}).get("leads") or []
+            self.assertGreater(len(leads_next), 0)
+            non_empty_dates = [
+                str(r.get("next_action_date") or "").strip()
+                for r in leads_next
+                if str(r.get("next_action_date") or "").strip() not in ("", "None")
+            ]
+            if len(non_empty_dates) >= 2:
+                self.assertGreaterEqual(
+                    non_empty_dates[0],
+                    non_empty_dates[-1],
+                    "sort=next_action must default to DESC (Newest Date -> Older Date)",
+                )
+
+            # 2. Verify sort persistence on Leads when reloading without ?sort= and reset via ?sort=default
+            r_persisted = auth_client.get("/admin/operations?view=leads")
+            self.assertEqual(r_persisted.status_code, 200)
+            self.assertIn('name="sort" value="next_action"', r_persisted.get_data(as_text=True))
+
+            r_reset = auth_client.get("/admin/operations?view=leads&sort=default")
+            self.assertEqual(r_reset.status_code, 200)
+            self.assertIn('name="sort" value=""', r_reset.get_data(as_text=True))
+
+            # 3. Verify Accounts facility & industry sorting and Construction Bids last_note sorting in ASC and DESC
+            for acc_col in ("facility", "industry", "start_date", "sqf", "revenue", "cycle", "last_note"):
+                for d in ("asc", "desc"):
+                    r_acc = auth_client.get(
+                        f"/admin/operations?view=accounts&sort={acc_col}&dir={d}&format=json",
+                        headers=json_headers,
+                    )
+                    self.assertEqual(r_acc.status_code, 200)
+                    acc_rows = (r_acc.get_json() or {}).get("clients") or []
+                    self.assertGreater(len(acc_rows), 0, f"Accounts sort={acc_col} dir={d} returned 0 rows")
+
+            for bid_col in ("last_note", "due_date", "value", "sqf", "owner", "activities"):
+                for d in ("asc", "desc"):
+                    r_bid = auth_client.get(
+                        f"/admin/operations?view=construction_bids&sort={bid_col}&dir={d}&format=json",
+                        headers=json_headers,
+                    )
+                    self.assertEqual(r_bid.status_code, 200)
+                    bid_rows = (r_bid.get_json() or {}).get("construction_bids") or []
+                    self.assertGreater(len(bid_rows), 0, f"ConstructionBids sort={bid_col} dir={d} returned 0 rows")
+                    if bid_col == "value" and d == "desc":
+                        # Verify NULLS LAST on DESC: first row must have a non-null estimated_value
+                        self.assertIsNotNone(
+                            bid_rows[0].get("estimated_value"),
+                            "ConstructionBids sort=value dir=desc must enforce NULLS LAST (first row cannot be NULL)",
+                        )
+        finally:
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "leads", "reset": True})
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "accounts", "reset": True})
+            auth_client.post("/api/v1/ui/grid-state", json={"grid_id": "construction_bids", "reset": True})
+
+    def test_46_complete_1099_and_w2_onboarding_workflows_bug_170(self) -> None:
+        """
+        BUG-170 8-Pillar 1099 Subcontractor & W-2 Employee Onboarding Workflow Suite:
+        1. Backoffice direct-add 1099 subcontractor generates onboarding_token & 30-day expiry immediately.
+        2. 1099 portal deferred-COI submission renders 6-Card Summary Grid, @media print, and self-service
+           token-authenticated PDF downloads (/onboard/subcontractor/<token>/download/w9 & /msa).
+        3. Returning 1099 partner quick COI upload (/onboard/subcontractor/<token>/extract-document) advances
+           onboarding_status to 'Docs Under Review', logs GlobalActivities, and enables /download/coi.
+        4. Backoffice POST /api/v1/hr/onboard leaves job_description_acknowledged_at NULL until the employee signs,
+           and POST /api/v1/hr/employees/<id>/send-onboarding-link dispatches email, builds sms_uri, and logs activity.
+        5. W-2 portal (/onboard/employee/<token>) enforces 30-day token expiration (410 TOKEN_EXPIRED) and supports
+           1-click link renewal (POST /onboard/employee/<token>/renew).
+        6. W-2 portal includes Form I-9 Citizenship selector, W-4 Step 2(c) checkbox, un-prechecked e-sign consent,
+           records WORM CONSENT_LEDGER in SecurityAuditLogs, populates job_description_acknowledged_at, and serves
+           self-service signed PDF packet (/onboard/employee/<token>/download-packet) & uploaded doc downloads.
+        """
+        import io
+        import uuid
+        from unittest.mock import patch
+
+        uid = uuid.uuid4().hex[:8]
+        auth_client = self.get_auth_client()
+        created_sub_ids = []
+        created_emp_ids = []
+
+        w9_bytes = (
+            f"%PDF-1.4\n1. Name of entity/individual: Carlos Vega\n"
+            f"2. Business name: Vega Commercial Floors {uid} LLC\n"
+            "3a. Federal tax classification: Limited Liability Company (LLC)\n"
+            "5. Address: 2100 Ross Ave\n6. City, state, and ZIP: Dallas, TX 75201\n"
+            "Employer Identification Number: 82-7741902\n"
+        ).encode()
+        coi_bytes = (
+            b"%PDF-1.4\nACORD CERTIFICATE OF LIABILITY INSURANCE\n"
+            b"INSURER A: Hiscox Insurance Company Inc\n"
+            b"COMMERCIAL GENERAL LIABILITY\n"
+            b"Policy Number: GL-99201144\n"
+            b"Policy Eff: 01/01/2026 Policy Exp: 12/31/2027\n"
+            b"EACH OCCURRENCE: $1,000,000\n"
+        )
+        w4_bytes = (
+            b"%PDF-1.4\nForm W-4 Employee's Withholding Certificate\n"
+            b"Address: 4500 Live Oak St\nCity, state, and ZIP: Dallas, TX 75204\n"
+            b"Filing Status: Married Filing Jointly\n"
+        )
+
+        try:
+            with (
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.requests.post") as mock_tg_post,
+            ):
+                mock_tg_post.return_value.status_code = 200
+                # =====================================================================
+                # PART A: 1099 SUBCONTRACTOR ONBOARDING & RECEIPT WORKFLOW
+                # =====================================================================
+                r_add_sub = auth_client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"Vega Commercial Floors {uid} LLC",
+                        "contact_name": "Carlos Vega",
+                        "email": f"carlos.vega.{uid}@example.com",
+                        "phone": f"(214) 555-{uid[:4] if uid[:4].isdigit() else '4190'}",
+                        "city": "Dallas",
+                        "specialties": "Floor Strip & Wax, Post-Construction",
+                        "crew_size": 6,
+                    },
+                )
+                self.assertEqual(r_add_sub.status_code, 201, r_add_sub.get_data(as_text=True))
+                sub_json = r_add_sub.get_json()
+                sub_id = sub_json["subcontractor_id"]
+                created_sub_ids.append(sub_id)
+                sub_token = sub_json.get("onboarding_token")
+                self.assertTrue(sub_token and sub_token.startswith(f"sub_{sub_id}_"), "Backoffice add must generate onboarding_token")
+
+                # Submit 1099 onboarding WITH W-9 + MSA/DWC-83, deferring COI upload
+                r_sub_submit = self.client.post(
+                    f"/onboard/subcontractor/{sub_token}/submit",
+                    data={
+                        "company_name": f"Vega Commercial Floors {uid} LLC",
+                        "legal_entity_name": "Carlos Vega",
+                        "contact_name": "Carlos Vega",
+                        "email": f"carlos.vega.{uid}@example.com",
+                        "phone": "(214) 555-4190",
+                        "tax_classification": "LLC",
+                        "ein_or_ssn": "82-7741902",
+                        "street_address": "2100 Ross Ave",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75201",
+                        "msa_signer_name": "Carlos Vega",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                        "w9_file": (io.BytesIO(w9_bytes), "vega_w9.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_sub_submit.status_code, 200, r_sub_submit.get_data(as_text=True))
+                sub_submit_data = r_sub_submit.get_json()
+                self.assertEqual(sub_submit_data["status"], "success")
+                self.assertFalse(sub_submit_data["coi_uploaded"])
+                self.assertIn(sub_submit_data["onboarding_status"], ("Pending COI", "Awaiting COI Upload"))
+                self.assertTrue(sub_submit_data.get("msa_download_url"))
+                self.assertTrue(sub_submit_data.get("w9_download_url"))
+
+                # Verify 1099 portal receipt card HTML contains 6-card summary, @media print, and download bar
+                r_sub_portal = self.client.get(f"/onboard/subcontractor/{sub_token}")
+                self.assertEqual(r_sub_portal.status_code, 200)
+                sub_portal_html = r_sub_portal.get_data(as_text=True)
+                for marker in (
+                    "@media print",
+                    "receipt-download-bar",
+                    "receipt-dl-msa",
+                    "receipt-dl-w9",
+                    "receipt-dl-coi",
+                    "receipt-address",
+                    "receipt-contact",
+                    "receipt-coi-status",
+                    "receipt-quick-coi-upload-box",
+                ):
+                    self.assertIn(marker, sub_portal_html, f"Missing 1099 receipt marker: {marker}")
+
+                # Verify self-service token-authenticated W-9 & MSA downloads
+                for doc_slug in ("w9", "msa", "dwc83"):
+                    r_dl = self.client.get(f"/onboard/subcontractor/{sub_token}/download/{doc_slug}")
+                    self.assertEqual(r_dl.status_code, 200)
+                    self.assertTrue(r_dl.data.startswith(b"%PDF-1.4"))
+                    self.assertTrue(r_dl.headers.get("X-Sigma-Vault-SHA256"))
+                    r_dl.close()
+
+                # Deferred COI Quick Upload on receipt card -> advances status to 'Docs Under Review'
+                r_quick_coi = self.client.post(
+                    f"/onboard/subcontractor/{sub_token}/extract-document",
+                    data={"doc_type": "coi", "file": (io.BytesIO(coi_bytes), "vega_coi.pdf")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_quick_coi.status_code, 200, r_quick_coi.get_data(as_text=True))
+                q_coi_data = r_quick_coi.get_json()
+                self.assertEqual(q_coi_data["onboarding_status"], "Docs Under Review")
+
+                # Verify COI self-service download now succeeds
+                r_dl_coi = self.client.get(f"/onboard/subcontractor/{sub_token}/download/coi")
+                self.assertEqual(r_dl_coi.status_code, 200)
+                self.assertTrue(r_dl_coi.data.startswith(b"%PDF-1.4"))
+                r_dl_coi.close()
+
+                # =====================================================================
+                # PART B: W-2 EMPLOYEE ONBOARDING & RECEIPT WORKFLOW
+                # =====================================================================
+                r_hire_w2 = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Elena",
+                        "last_name": f"Navarro-{uid}",
+                        "email": f"elena.navarro.{uid}@hwbcleaning.com",
+                        "phone": "(214) 555-7812",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Full-Time",
+                        "pay_rate_hourly": 18.50,
+                        "hire_date": "2026-10-29",
+                    },
+                )
+                self.assertEqual(r_hire_w2.status_code, 201, r_hire_w2.get_data(as_text=True))
+                hire_data = r_hire_w2.get_json()
+                emp_id = hire_data["employee_id"]
+                created_emp_ids.append(emp_id)
+                emp_token = hire_data["onboarding_token"]
+                self.assertIn("https://www.hwbcleaning.com/onboard/employee/", hire_data["onboarding_url"])
+
+                # Verify job_description_acknowledged_at is NULL before the employee signs in the portal
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT job_description_acknowledged_at, onboarding_packet_signed FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        emp_init_row = cur.fetchone()
+                        self.assertIsNone(
+                            emp_init_row[0],
+                            "job_description_acknowledged_at must be NULL prior to employee e-signature",
+                        )
+                        self.assertFalse(bool(emp_init_row[1]))
+                finally:
+                    conn.close()
+
+                # Verify POST /api/v1/hr/employees/<id>/send-onboarding-link returns canonical URL & SMS URI
+                r_send_w2 = auth_client.post(f"/api/v1/hr/employees/{emp_id}/send-onboarding-link")
+                self.assertEqual(r_send_w2.status_code, 200, r_send_w2.get_data(as_text=True))
+                send_w2_data = r_send_w2.get_json()
+                self.assertTrue(send_w2_data.get("email_sent"))
+                self.assertTrue(send_w2_data.get("sms_uri", "").startswith("sms:"))
+                self.assertIn("https://www.hwbcleaning.com/onboard/employee/", send_w2_data.get("onboarding_url", ""))
+
+                # Simulate expired token -> verify 410 TOKEN_EXPIRED on upload & complete, then renew
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'UPDATE "Employees" SET onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL \'2 days\' WHERE id = %s;',
+                            (emp_id,),
+                        )
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                r_exp_complete = self.client.post(
+                    f"/api/v1/employees/onboard/{emp_token}/complete",
+                    json={"first_name": "Elena", "last_name": f"Navarro-{uid}", "signer_name": f"Elena Navarro-{uid}"},
+                )
+                self.assertEqual(r_exp_complete.status_code, 410)
+                self.assertEqual(r_exp_complete.get_json().get("error_code"), "TOKEN_EXPIRED")
+
+                r_renew_w2 = self.client.post(f"/onboard/employee/{emp_token}/renew")
+                self.assertEqual(r_renew_w2.status_code, 200)
+                self.assertEqual(r_renew_w2.get_json().get("status"), "success")
+
+                # Upload W-4 doc via portal
+                r_up_w4 = self.client.post(
+                    f"/api/v1/employees/onboard/{emp_token}/upload-doc",
+                    data={"document_type": "Form W-4", "document": (io.BytesIO(w4_bytes), "elena_w4.pdf")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_up_w4.status_code, 200, r_up_w4.get_data(as_text=True))
+                up_w4_data = r_up_w4.get_json()
+                self.assertTrue(up_w4_data.get("download_url"))
+
+                # Complete W-2 Onboarding Packet
+                r_complete_w2 = self.client.post(
+                    f"/api/v1/employees/onboard/{emp_token}/complete",
+                    json={
+                        "first_name": "Elena",
+                        "last_name": f"Navarro-{uid}",
+                        "phone": "(214) 555-7812",
+                        "email": f"elena.navarro.{uid}@hwbcleaning.com",
+                        "address_street": "4500 Live Oak St",
+                        "address_city": "Dallas",
+                        "address_state": "TX",
+                        "address_zip": "75204",
+                        "emergency_contact_name": "Mateo Navarro",
+                        "emergency_contact_phone": "(214) 555-9901",
+                        "ssn": "123-45-6789",
+                        "state_id_number": "TX-44881122",
+                        "state_id_expiration": "2029-08-15",
+                        "w4_filing_status": "Married Filing Jointly",
+                        "w4_step2_multiple_jobs": True,
+                        "w4_step3_dependents": 2000,
+                        "w4_step4c_extra_withholding": 25,
+                        "i9_citizenship_status": "1. A citizen of the United States",
+                        "direct_deposit_bank": "Chase Bank",
+                        "direct_deposit_routing": "111000614",
+                        "direct_deposit_account": "987654321",
+                        "signer_name": f"Elena Navarro-{uid}",
+                    },
+                )
+                self.assertEqual(r_complete_w2.status_code, 200, r_complete_w2.get_data(as_text=True))
+                comp_w2_data = r_complete_w2.get_json()
+                self.assertEqual(comp_w2_data["status"], "success")
+                self.assertTrue(comp_w2_data.get("download_packet_url"))
+                self.assertEqual(comp_w2_data.get("ssn_masked"), "***-**-6789")
+                self.assertTrue((comp_w2_data.get("direct_deposit_account_masked") or "").endswith("4321"))
+
+                # Verify W-2 portal receipt card HTML, self-service signed PDF download, and uploaded doc download
+                r_w2_portal = self.client.get(f"/onboard/employee/{emp_token}")
+                self.assertEqual(r_w2_portal.status_code, 200)
+                w2_portal_html = r_w2_portal.get_data(as_text=True)
+                for w2_marker in (
+                    "@media print",
+                    "w2-receipt-download-bar",
+                    "w2-receipt-dl-packet",
+                    "w2-receipt-address",
+                    "w2-receipt-w4",
+                    "w2-receipt-dd",
+                    "emp-i9-citizenship",
+                    "emp-w4-step2",
+                    "emp-esign-consent",
+                ):
+                    self.assertIn(w2_marker, w2_portal_html, f"Missing W-2 portal marker: {w2_marker}")
+
+                r_dl_w2_pkt = self.client.get(f"/onboard/employee/{emp_token}/download-packet")
+                self.assertEqual(r_dl_w2_pkt.status_code, 200)
+                self.assertTrue(r_dl_w2_pkt.data.startswith(b"%PDF-1.4"))
+                self.assertTrue(r_dl_w2_pkt.headers.get("X-Sigma-Vault-SHA256"))
+                r_dl_w2_pkt.close()
+
+                r_dl_w2_doc = self.client.get(up_w4_data["download_url"])
+                self.assertEqual(r_dl_w2_doc.status_code, 200)
+                self.assertTrue(r_dl_w2_doc.data.startswith(b"%PDF-1.4"))
+                r_dl_w2_doc.close()
+
+                # Verify CONSENT_LEDGER entry & job_description_acknowledged_at populated in PostgreSQL
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT job_description_acknowledged_at, onboarding_packet_signed, w4_step2_multiple_jobs, i9_citizenship_status FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        emp_final_row = cur.fetchone()
+                        self.assertIsNotNone(emp_final_row[0], "job_description_acknowledged_at must be set after e-sign")
+                        self.assertTrue(bool(emp_final_row[1]))
+                        self.assertTrue(bool(emp_final_row[2]))
+                        self.assertEqual(emp_final_row[3], "1. A citizen of the United States")
+
+                        cur.execute(
+                            '''
+                            SELECT details
+                            FROM "SecurityAuditLogs"
+                            WHERE event_category = 'CONSENT_LEDGER'
+                              AND event_action = 'W2_EMPLOYEE_ONBOARDING_SIGNED'
+                              AND details::text LIKE %s
+                            ORDER BY id DESC
+                            LIMIT 1;
+                            ''',
+                            (f"%elena.navarro.{uid}@hwbcleaning.com%",),
+                        )
+                        w2_consent = cur.fetchone()
+                        self.assertIsNotNone(w2_consent, "WORM CONSENT_LEDGER receipt must be recorded on W-2 completion")
+                finally:
+                    conn.close()
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for sid in created_sub_ids:
+                        cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sid,))
+                        cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                    for eid in created_emp_ids:
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                        cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                conn.commit()
+            finally:
+                conn.close()
 
 
 if __name__ == "__main__":

@@ -23,12 +23,30 @@ def launch_agents():
         p = subprocess.Popen(cmd)
         processes.append(p)
 
+    MAX_RESTARTS = 5
+    restart_counts = [0] * len(AGENTS)
+    last_start_times = [time.time()] * len(AGENTS)
+
     try:
         while True:
+            now_ts = time.time()
             for i, p in enumerate(processes):
+                if p is None:
+                    continue
                 if p.poll() is not None:
-                    print(f"[WORKER] CRITICAL: Agent {AGENTS[i][1]} died. Restarting...", flush=True)
+                    if now_ts - last_start_times[i] > 60.0:
+                        restart_counts[i] = 0
+                    restart_counts[i] += 1
+                    if restart_counts[i] > MAX_RESTARTS:
+                        print(
+                            f"[WORKER] CIRCUIT BREAKER TRIPPED (SEC-13): Agent {AGENTS[i][1]} exceeded {MAX_RESTARTS} rapid crashes. Halting respawn.",
+                            flush=True,
+                        )
+                        processes[i] = None
+                        continue
+                    print(f"[WORKER] CRITICAL: Agent {AGENTS[i][1]} died (attempt {restart_counts[i]}/{MAX_RESTARTS}). Restarting...", flush=True)
                     processes[i] = subprocess.Popen(AGENTS[i])
+                    last_start_times[i] = time.time()
             # 24/7 Dead-Man's Switch: Verify AIEmployeeHeartbeat liveness for telegram_listener.py
             try:
                 from core.ai_employee import get_ai_employee

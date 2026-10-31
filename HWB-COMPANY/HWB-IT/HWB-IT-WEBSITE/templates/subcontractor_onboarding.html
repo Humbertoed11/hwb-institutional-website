@@ -2,6 +2,25 @@
 {% block title %}1099 Subcontractor Onboarding Portal ({{ ref_code }}) | HWB Cleaning Services{% endblock %}
 
 {% block content %}
+<style>
+@media print {
+    header, nav, footer, .no-print, #receipt-quick-coi-upload-box, #btn-reopen-onboarding-form, #form-subcontractor-onboarding, #onboarding-error-banner, #onboarding-expired-banner {
+        display: none !important;
+    }
+    body, section {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    #onboarding-receipt-card {
+        display: block !important;
+        box-shadow: none !important;
+        border: 1.5px solid #0f172a !important;
+        margin: 0 !important;
+        page-break-inside: avoid;
+    }
+}
+</style>
 <section style="background: #f8fafc; min-height: 88vh; padding: 2.5rem 1rem 4rem 1rem;">
     <div style="max-width: 860px; margin: 0 auto;">
 
@@ -55,7 +74,7 @@
                 </div>
             </div>
 
-            <!-- Structured Transaction Summary Grid -->
+            <!-- 6-Card Structured Transaction Summary Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; margin-bottom: 1.25rem;">
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
                     <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Business &amp; Legal Name</div>
@@ -65,7 +84,7 @@
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
                     <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Federal Tax Classification &amp; TIN</div>
                     <div id="receipt-tax-class" style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.tax_classification or 'LLC' }}</div>
-                    <div id="receipt-masked-tin" style="font-size: 0.78rem; font-weight: 700; color: #475569;">Tax ID: {{ partner.ein_or_ssn or ('**-***' ~ partner.w9_ein_last4 if partner.w9_ein_last4 else 'Encrypted On File') }}</div>
+                    <div id="receipt-masked-tin" style="font-size: 0.78rem; font-weight: 700; color: #475569;">Tax ID: {{ partner.ein_or_ssn or ('**-***' ~ partner.w9_ein_last4 if partner.w9_ein_last4 else 'Masked On File') }}</div>
                 </div>
                 <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
                     <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Authorized Signer &amp; Timestamp</div>
@@ -74,14 +93,33 @@
                         {% if partner.msa_signed_at and partner.msa_signed_at.strftime is defined %}
                             {{ partner.msa_signed_at.strftime('%m/%d/%Y %I:%M %p') }}
                         {% else %}
-                            {{ partner.msa_signed_at or 'Recorded in Vault' }}
+                            {{ partner.msa_signed_at or 'Recorded On File' }}
                         {% endif %}
+                    </div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Recorded Business Address</div>
+                    <div id="receipt-address-val" style="font-size: 0.88rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.street_address or 'Address On File' }}</div>
+                    <div id="receipt-city-state-val" style="font-size: 0.78rem; color: #475569;">{{ partner.city or 'Dallas' }}, {{ partner.state or 'TX' }} {{ partner.zip_code or '' }}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">Primary Contact &amp; Crew</div>
+                    <div id="receipt-contact-val" style="font-size: 0.88rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">{{ partner.contact_name or partner.company_name }}</div>
+                    <div id="receipt-email-phone-val" style="font-size: 0.78rem; color: #475569;">{{ partner.phone or '' }}{% if partner.email %} &bull; {{ partner.email }}{% endif %}</div>
+                </div>
+                <div id="receipt-coi-status" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1rem;">
+                    <div style="font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase;">General Liability Insurance (COI)</div>
+                    <div id="receipt-coi-carrier-val" style="font-size: 0.88rem; font-weight: 800; color: #0f172a; margin-top: 0.2rem;">
+                        {% if partner.coi_carrier %}{{ partner.coi_carrier }}{% elif partner.coi_file_url %}COI Certificate Uploaded ✓{% else %}Pending COI Upload{% endif %}
+                    </div>
+                    <div id="receipt-coi-exp-val" style="font-size: 0.78rem; color: #475569;">
+                        {% if partner.coi_expiration_date %}Expires: {{ partner.coi_expiration_date }}{% elif partner.coi_file_url %}Under Compliance Review{% else %}Upload Below When Available{% endif %}
                     </div>
                 </div>
             </div>
 
             <!-- Document Checklist Bar -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.15rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 0.9rem;">
                 <div style="display: flex; align-items: center; gap: 0.55rem; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800; color: #065f46;">
                     <i class="fas fa-check-circle"></i>
                     <span id="receipt-w9-badge">IRS Form W-9: Verified ✓</span>
@@ -93,6 +131,24 @@
                 <div id="receipt-coi-box" style="display: flex; align-items: center; gap: 0.55rem; {% if partner.coi_file_url %}background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46;{% else %}background: #fffbeb; border: 1px solid #fde68a; color: #92400e;{% endif %} padding: 0.6rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 800;">
                     <i class="fas fa-shield-alt"></i>
                     <span id="receipt-coi-badge">COI: {% if partner.coi_file_url %}Uploaded ✓{% else %}Pending Upload{% endif %}</span>
+                </div>
+            </div>
+
+            <!-- Self-Service Recorded Compliance Documents Download Bar -->
+            <div id="receipt-download-bar" class="no-print" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.65rem;">
+                <div style="font-size: 0.76rem; font-weight: 800; color: #0f172a;">
+                    <i class="fas fa-file-pdf" style="color: #dc2626; margin-right: 0.35rem;"></i> Download Your Recorded Copies (PDF):
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a id="receipt-dl-msa" href="/onboard/subcontractor/{{ partner.onboarding_token }}/download/msa" target="_blank" style="height: 32px; padding: 0 0.85rem; border-radius: 6px; background: #7c3aed; color: #ffffff; font-size: 0.76rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-download"></i> Signed MSA &amp; TX DWC-83 (PDF)
+                    </a>
+                    <a id="receipt-dl-w9" href="/onboard/subcontractor/{{ partner.onboarding_token }}/download/w9" target="_blank" style="height: 32px; padding: 0 0.85rem; border-radius: 6px; background: #2563eb; color: #ffffff; font-size: 0.76rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-download"></i> Signed IRS Form W-9 (PDF)
+                    </a>
+                    <a id="receipt-dl-coi" href="/onboard/subcontractor/{{ partner.onboarding_token }}/download/coi" target="_blank" style="height: 32px; padding: 0 0.85rem; border-radius: 6px; background: #059669; color: #ffffff; font-size: 0.76rem; font-weight: 800; text-decoration: none; display: {% if partner.coi_file_url %}inline-flex{% else %}none{% endif %}; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-download"></i> Uploaded COI (PDF)
+                    </a>
                 </div>
             </div>
 
@@ -634,16 +690,32 @@ async function handleReceiptQuickCoiUpload(fileInput) {
                 fbEl.style.color = '#065f46';
                 fbEl.innerHTML = '<i class="fas fa-check-circle"></i> Certificate of Insurance uploaded! Your compliance file is now under final review.';
             }
+            const ext = data.extracted || {};
             const coiBadge = document.getElementById('receipt-coi-badge');
             const coiBox = document.getElementById('receipt-coi-box');
             const statusPill = document.getElementById('portal-status-pill');
             const crumbStep3 = document.getElementById('receipt-crumb-step3');
             const crumbStep4 = document.getElementById('receipt-crumb-step4');
+            const nextStepsText = document.getElementById('receipt-next-steps-text');
+            const quickCoiBox = document.getElementById('receipt-quick-coi-upload-box');
+            const dlCoiBtn = document.getElementById('receipt-dl-coi');
+            const coiCarrierVal = document.getElementById('receipt-coi-carrier-val');
+            const coiExpVal = document.getElementById('receipt-coi-exp-val');
+
             if (coiBadge) coiBadge.textContent = 'COI: Uploaded ✓';
             if (coiBox) {
                 coiBox.style.background = '#ecfdf5';
                 coiBox.style.borderColor = '#a7f3d0';
                 coiBox.style.color = '#065f46';
+            }
+            if (coiCarrierVal) {
+                coiCarrierVal.textContent = ext.coi_carrier || 'COI Certificate Uploaded ✓';
+            }
+            if (coiExpVal) {
+                coiExpVal.textContent = ext.coi_expiration_date ? ('Expires: ' + ext.coi_expiration_date) : 'Under Compliance Review';
+            }
+            if (dlCoiBtn) {
+                dlCoiBtn.style.display = 'inline-flex';
             }
             if (statusPill && data.onboarding_status) {
                 statusPill.textContent = 'Status: ' + data.onboarding_status;
@@ -661,6 +733,14 @@ async function handleReceiptQuickCoiUpload(fileInput) {
                 crumbStep4.style.background = '#eff6ff';
                 crumbStep4.style.color = '#1e40af';
                 crumbStep4.style.borderColor = '#bfdbfe';
+            }
+            if (nextStepsText) {
+                nextStepsText.innerHTML = 'Our compliance desk will review your uploaded W-9 and Certificate of Insurance. Once verified, your company remains on file in our eligible subcontractor pool so our operations desk can reach out if and when matching commercial projects become available.';
+            }
+            if (quickCoiBox) {
+                setTimeout(() => {
+                    quickCoiBox.style.display = 'none';
+                }, 1400);
             }
         } else if (fbEl) {
             fbEl.style.background = '#fef2f2';
@@ -882,11 +962,26 @@ async function submitSubcontractorOnboarding(e) {
             setTxt('receipt-timestamp', data.receipt_timestamp || 'Recorded Just Now');
             setTxt('receipt-sig-hash', data.msa_signature_hash);
 
+            const streetVal = data.street_address || document.getElementById('onb-street-address')?.value || 'Address On File';
+            const cityVal = data.city || document.getElementById('onb-city')?.value || 'Dallas';
+            const stateVal = data.state || document.getElementById('onb-state')?.value || 'TX';
+            const zipVal = data.zip_code || document.getElementById('onb-zip')?.value || '';
+            setTxt('receipt-address-val', streetVal);
+            setTxt('receipt-city-state-val', `${cityVal}, ${stateVal} ${zipVal}`.trim());
+
+            const contactVal = data.contact_name || document.getElementById('onb-contact-name')?.value || data.company_name;
+            const phoneVal = data.phone || document.getElementById('onb-phone')?.value || '';
+            const emailVal = data.email || document.getElementById('onb-email')?.value || '';
+            setTxt('receipt-contact-val', contactVal);
+            setTxt('receipt-email-phone-val', emailVal ? `${phoneVal} • ${emailVal}` : phoneVal);
+
             const coiBox = document.getElementById('receipt-coi-box');
             const coiBadge = document.getElementById('receipt-coi-badge');
             const crumbStep3 = document.getElementById('receipt-crumb-step3');
             const crumbStep4 = document.getElementById('receipt-crumb-step4');
             const nextStepsText = document.getElementById('receipt-next-steps-text');
+            const quickCoiBox = document.getElementById('receipt-quick-coi-upload-box');
+            const dlCoiBtn = document.getElementById('receipt-dl-coi');
             if (coiBadge && data.coi_status) {
                 const hasCoi = data.coi_status.toLowerCase().includes('upload') || data.coi_status.toLowerCase().includes('verified');
                 coiBadge.textContent = hasCoi ? 'COI: Uploaded ✓' : 'COI: Pending Upload';
@@ -894,6 +989,14 @@ async function submitSubcontractorOnboarding(e) {
                     coiBox.style.background = hasCoi ? '#ecfdf5' : '#fffbeb';
                     coiBox.style.borderColor = hasCoi ? '#a7f3d0' : '#fde68a';
                     coiBox.style.color = hasCoi ? '#065f46' : '#92400e';
+                }
+                setTxt('receipt-coi-carrier-val', data.coi_carrier || (hasCoi ? 'COI Certificate Uploaded ✓' : 'Pending COI Upload'));
+                setTxt('receipt-coi-exp-val', data.coi_expiration_date ? ('Expires: ' + data.coi_expiration_date) : (hasCoi ? 'Under Compliance Review' : 'Upload Below When Available'));
+                if (quickCoiBox) {
+                    quickCoiBox.style.display = hasCoi ? 'none' : 'block';
+                }
+                if (dlCoiBtn) {
+                    dlCoiBtn.style.display = hasCoi ? 'inline-flex' : 'none';
                 }
                 if (crumbStep3) {
                     crumbStep3.textContent = hasCoi ? '3. COI Uploaded ✓' : '3. Next: Upload COI (Use This Same Link)';

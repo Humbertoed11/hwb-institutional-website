@@ -120,6 +120,31 @@
             align-items: center;
             gap: 0.5rem;
         }
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            .portal-header,
+            .no-print,
+            #w2-step1-card,
+            #w2-onboard-form,
+            #btn-reopen-w2-form,
+            #w2-expired-banner {
+                display: none !important;
+            }
+            .portal-container {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #w2-receipt-card {
+                display: block !important;
+                box-shadow: none !important;
+                border: 1.5px solid #059669 !important;
+                margin: 0 !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -127,7 +152,7 @@
         <div style="max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
             <div>
                 <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #93c5fd;">
-                    HWB Cleaning Services LLC &bull; Encrypted W-2 HR Vault
+                    HWB Cleaning Services LLC &bull; W-2 New Hire Onboarding Portal
                 </div>
                 <h1 style="margin: 0.25rem 0 0 0; font-size: 1.35rem; font-weight: 900;">
                     New Hire Onboarding &amp; Tax Packet
@@ -141,6 +166,24 @@
 
     <main class="portal-container">
         {% set w2_submitted = (employee.onboarding_packet_signed or false) %}
+
+        {% if token_expired and not w2_submitted %}
+        <div id="w2-expired-banner" class="card" style="background: #fffbeb; border: 1.5px solid #f59e0b; border-left: 5px solid #d97706;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.9rem;">
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <i class="fas fa-clock" style="margin-right: 0.35rem;"></i> 30-Day Onboarding Link Expired
+                    </div>
+                    <p style="font-size: 0.85rem; color: #78350f; margin: 0.25rem 0 0 0; line-height: 1.45;">
+                        For your security, W-2 onboarding links expire after 30 days. Click the button on the right to extend your active link for another 30 days.
+                    </p>
+                </div>
+                <button type="button" onclick="renewExpiredW2Link(this)" style="height: 36px; padding: 0 1.1rem; border-radius: 6px; border: none; background: #d97706; color: #ffffff; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-sync-alt"></i> Renew Link for 30 Days
+                </button>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Official Tamper-Evident W-2 Transaction Receipt Card (Shown after submission & on revisit) -->
         <div id="w2-receipt-card" class="card" style="display: {% if w2_submitted %}block{% else %}none{% endif %}; border: 1.5px solid #059669; border-top: 5px solid #059669; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.08);">
@@ -157,7 +200,7 @@
                             W-2 Onboarding &amp; Job Description Packet Recorded
                         </h2>
                         <p id="w2-receipt-message" style="font-size: 0.86rem; color: var(--slate-700); margin: 0; line-height: 1.5;">
-                            Your verified address, W-4 withholding, encrypted SSN/Direct Deposit details, and signed Job Description have been saved under <strong>{{ employee.employee_number }}</strong>.
+                            Your verified address, W-4 withholding, protected Social Security / Direct Deposit details, and signed Job Description have been saved under <strong>{{ employee.employee_number }}</strong>.
                         </p>
                     </div>
                 </div>
@@ -184,10 +227,52 @@
                         {% if employee.onboarding_signed_at and employee.onboarding_signed_at.strftime is defined %}
                             {{ employee.onboarding_signed_at.strftime('%m/%d/%Y %I:%M %p') }}
                         {% else %}
-                            {{ employee.onboarding_signed_at or 'Encrypted in HR Vault' }}
+                            {{ employee.onboarding_signed_at or 'Recorded On File' }}
                         {% endif %}
                     </div>
-                    <div style="font-size: 0.74rem; color: var(--slate-500);">Secure HR File</div>
+                    <div style="font-size: 0.74rem; color: var(--slate-500);">Protected Personnel Record</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Recorded Home Address</div>
+                    <div id="w2-receipt-address" style="font-size: 0.82rem; font-weight: 700; color: var(--slate-900); margin-top: 0.15rem;">
+                        {{ employee.address_street or 'Address on File' }}{% if employee.address_city %}, {{ employee.address_city }}, {{ employee.address_state or 'TX' }} {{ employee.address_zip or '' }}{% endif %}
+                    </div>
+                    <div id="w2-receipt-emergency" style="font-size: 0.74rem; color: var(--slate-500);">Emergency: {{ employee.emergency_contact_name or 'On File' }} {% if employee.emergency_contact_phone %}({{ employee.emergency_contact_phone }}){% endif %}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">W-4 Withholding &amp; Masked SSN</div>
+                    <div id="w2-receipt-w4" style="font-size: 0.82rem; font-weight: 800; color: var(--slate-900); margin-top: 0.15rem;">
+                        {{ employee.w4_filing_status or 'Single' }}{% if employee.w4_step2_multiple_jobs %} &bull; Step 2(c){% endif %}
+                    </div>
+                    <div id="w2-receipt-ssn" style="font-size: 0.74rem; color: var(--slate-500);">SSN: {{ ('***-**-' ~ employee.ssn_last_four) if employee.ssn_last_four else 'Protected on File' }}</div>
+                </div>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.7rem 0.9rem;">
+                    <div style="font-size: 0.68rem; font-weight: 800; color: var(--slate-500); text-transform: uppercase;">Direct Deposit &amp; Form I-9</div>
+                    <div id="w2-receipt-dd" style="font-size: 0.82rem; font-weight: 800; color: var(--slate-900); margin-top: 0.15rem;">
+                        {{ employee.direct_deposit_bank or 'Payroll Direct Deposit' }} {% if employee.direct_deposit_account_last_four %}(••••{{ employee.direct_deposit_account_last_four }}){% endif %}
+                    </div>
+                    <div id="w2-receipt-i9" style="font-size: 0.74rem; color: var(--slate-500);">I-9 Status: {{ employee.i9_citizenship_status or 'Authorized to Work in the U.S.' }}</div>
+                </div>
+            </div>
+
+            <!-- Self-Service Signed Packet & Uploaded Documents Download Bar -->
+            <div id="w2-receipt-download-bar" class="no-print" style="background: #ffffff; border: 1px solid var(--slate-300); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+                    <div style="font-size: 0.74rem; font-weight: 800; color: var(--slate-900); text-transform: uppercase; letter-spacing: 0.04em;">
+                        <i class="fas fa-file-pdf" style="color: var(--brand); margin-right: 0.35rem;"></i> Your Recorded W-2 Packet &amp; Uploaded Files
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <a id="w2-receipt-dl-packet" href="/onboard/employee/{{ token }}/download-packet" target="_blank" rel="noopener" style="height: 32px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid #bfdbfe; background: #eff6ff; color: #1e40af; font-size: 0.76rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fas fa-download"></i> Download Signed W-2 &amp; Job Description PDF
+                        </a>
+                    </div>
+                </div>
+                <div id="w2-receipt-docs-list" style="margin-top: {% if current_docs %}0.6rem{% else %}0{% endif %}; display: flex; flex-wrap: wrap; gap: 0.45rem;">
+                    {% for doc in current_docs %}
+                    <a href="/onboard/employee/{{ token }}/download/{{ doc.id }}" target="_blank" rel="noopener" style="height: 28px; padding: 0 0.7rem; border-radius: 5px; border: 1px solid var(--slate-300); background: #f8fafc; color: var(--slate-700); font-size: 0.73rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <i class="fas fa-paperclip" style="color: #059669;"></i> {{ doc.document_type }} ({{ doc.file_name }})
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -212,11 +297,11 @@
                     <span style="background: #f1f5f9; color: #475569; padding: 0.2rem 0.55rem; border-radius: 6px; border: 1px solid #cbd5e1;">4. Route Scheduling (As Needed)</span>
                 </div>
                 <div style="font-size: 0.77rem; color: var(--slate-700); line-height: 1.48; background: #ffffff; border: 1px solid var(--slate-200); border-left: 3px solid #64748b; padding: 0.55rem 0.8rem; border-radius: 6px;">
-                    <strong style="color: var(--slate-900);">Important Notice — At-Will Employment &amp; No Guarantee of Hours:</strong> This receipt confirms that your onboarding documents have been recorded in our HR vault. Employment with HWB Cleaning Services LLC is strictly at-will, and completion of onboarding paperwork does not guarantee immediate shift placement, a fixed schedule, or a minimum number of weekly hours. Shift assignments are scheduled based on active client facility needs.
+                    <strong style="color: var(--slate-900);">Important Notice — At-Will Employment &amp; No Guarantee of Hours:</strong> This receipt confirms that your onboarding documents have been recorded in our HR personnel records. Employment with HWB Cleaning Services LLC is strictly at-will, and completion of onboarding paperwork does not guarantee immediate shift placement, a fixed schedule, or a minimum number of weekly hours. Shift assignments are scheduled based on active client facility needs.
                 </div>
             </div>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <div class="no-print" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
                 <button type="button" onclick="window.print()" class="btn-primary" style="height: 38px;">
                     <i class="fas fa-print"></i> Print / Save Receipt
                 </button>
@@ -331,9 +416,9 @@
             <div class="card">
                 <h2 class="section-title">
                     <i class="fas fa-university" style="color: var(--brand);"></i>
-                    Step 3: Tax Withholding (W-4), Optional ID &amp; Direct Deposit
+                    Step 3: Tax Withholding (W-4), Form I-9 Attestation &amp; Direct Deposit
                 </h2>
-                <p class="section-sub">Your Social Security Number and Bank Account Number are encrypted and stored securely before saving.</p>
+                <p class="section-sub">Your Social Security Number and Bank Account Number are protected and stored securely before saving.</p>
 
                 <div class="grid-3" style="margin-bottom: 0.85rem;">
                     <div>
@@ -347,6 +432,27 @@
                     <div>
                         <label for="emp-state-id-exp">Document Expiration Date (If Applicable)</label>
                         <input type="date" id="emp-state-id-exp" class="sigma-input" value="{{ employee.state_id_expiration.strftime('%Y-%m-%d') if employee.state_id_expiration else '' }}">
+                    </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom: 0.85rem;">
+                    <div>
+                        <label for="emp-i9-citizenship">Form I-9 Section 1 Work Eligibility Attestation *</label>
+                        <select id="emp-i9-citizenship" class="sigma-input" required>
+                            {% set cur_i9 = employee.i9_citizenship_status or '1. A citizen of the United States' %}
+                            <option value="1. A citizen of the United States" {% if 'citizen' in (cur_i9|lower) and 'noncitizen' not in (cur_i9|lower) %}selected{% endif %}>1. A citizen of the United States</option>
+                            <option value="2. A noncitizen national of the United States" {% if 'noncitizen national' in (cur_i9|lower) %}selected{% endif %}>2. A noncitizen national of the United States</option>
+                            <option value="3. A lawful permanent resident" {% if 'permanent resident' in (cur_i9|lower) %}selected{% endif %}>3. A lawful permanent resident</option>
+                            <option value="4. A noncitizen authorized to work" {% if 'authorized to work' in (cur_i9|lower) %}selected{% endif %}>4. A noncitizen authorized to work</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: flex-end; padding-bottom: 0.25rem;">
+                        <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.5rem 0.75rem; width: 100%; display: flex; align-items: center; gap: 0.55rem;">
+                            <input type="checkbox" id="emp-w4-step2" style="width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;">
+                            <label for="emp-w4-step2" style="margin: 0; font-size: 0.76rem; font-weight: 700; color: var(--slate-900); text-transform: none; cursor: pointer;">
+                                W-4 Step 2(c): Check if you hold two jobs or your spouse also works
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -396,14 +502,17 @@
                     <strong>Summary:</strong> {{ employee.job_position_summary or 'Perform commercial cleaning, sanitation, floor care, and facility lockup in compliance with HWB Cleaning Services LLC safety and quality standards.' }}
                 </div>
 
-                <div style="margin-bottom: 1rem;">
+                <div style="margin-bottom: 0.85rem;">
                     <label for="emp-signer-name">Type Your Full Legal Name to Sign Electronically *</label>
                     <input type="text" id="emp-signer-name" class="sigma-input" required value="{{ (employee.first_name ~ ' ' ~ employee.last_name)|trim }}">
                 </div>
 
-                <p style="font-size: 0.78rem; color: var(--slate-500); margin: 0 0 0.85rem 0;">
-                    By signing electronically below, you agree to our <a href="/terms" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Terms of Service</a> and <a href="/privacy-policy" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Privacy Policy</a>.
-                </p>
+                <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 8px; padding: 0.75rem 0.95rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.65rem;">
+                    <input type="checkbox" id="emp-esign-consent" required style="width: 18px; height: 18px; margin-top: 0.15rem; cursor: pointer; flex-shrink: 0;">
+                    <label for="emp-esign-consent" style="margin: 0; font-size: 0.78rem; font-weight: 600; color: var(--slate-700); text-transform: none; line-height: 1.45; cursor: pointer;">
+                        I certify under penalty of perjury that the personal, W-4 tax withholding, and Form I-9 eligibility information provided above is true and complete, I acknowledge receipt of my official Job Description and At-Will Employment terms, and I agree to sign electronically under our <a href="/terms" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Terms of Service</a> and <a href="/privacy-policy" style="color: var(--brand); font-weight: 700; text-decoration: underline;">Privacy Policy</a>. *
+                    </label>
+                </div>
 
                 <button type="submit" id="btn-complete-w2" class="btn-primary">
                     <i class="fas fa-lock"></i> Sign &amp; Complete W-2 Onboarding Packet
@@ -415,6 +524,43 @@
 
     <script>
         const ONBOARD_TOKEN = {{ token|tojson }};
+        const INITIAL_W4_STEP2 = {{ (employee.w4_step2_multiple_jobs or false)|tojson }};
+        document.addEventListener('DOMContentLoaded', () => {
+            const step2El = document.getElementById('emp-w4-step2');
+            if (step2El && INITIAL_W4_STEP2) {
+                step2El.checked = true;
+            }
+        });
+
+        async function renewExpiredW2Link(btnEl) {
+            if (btnEl) {
+                btnEl.disabled = true;
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renewing...';
+            }
+            try {
+                const res = await fetch(`/onboard/employee/${ONBOARD_TOKEN}/renew`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const expBanner = document.getElementById('w2-expired-banner');
+                    if (expBanner) {
+                        expBanner.style.background = '#ecfdf5';
+                        expBanner.style.borderColor = '#10b981';
+                        expBanner.innerHTML = `<div style="font-size:0.84rem;font-weight:800;color:#065f46;"><i class="fas fa-check-circle"></i> ${data.message}</div>`;
+                    }
+                } else if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Link for 30 Days';
+                }
+            } catch (e) {
+                if (btnEl) {
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Link for 30 Days';
+                }
+            }
+        }
 
         async function uploadPortalDoc(inputEl, docType) {
             if (!inputEl.files || !inputEl.files.length) return;
@@ -424,7 +570,7 @@
 
             const banner = document.getElementById('extract-banner');
             banner.style.display = 'block';
-            banner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Reading & encrypting ${docType}...`;
+            banner.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Reading & saving ${docType}...`;
 
             try {
                 const res = await fetch(`/api/v1/employees/onboard/${ONBOARD_TOKEN}/upload-doc`, {
@@ -440,6 +586,10 @@
                     if (ext.address_zip) document.getElementById('emp-zip').value = ext.address_zip;
                     if (ext.ssn_masked) document.getElementById('emp-ssn').value = ext.ssn_masked;
                     if (ext.w4_filing_status) document.getElementById('emp-w4-status').value = ext.w4_filing_status;
+                    if (ext.w4_step2_multiple_jobs !== undefined) {
+                        const s2 = document.getElementById('emp-w4-step2');
+                        if (s2) s2.checked = Boolean(ext.w4_step2_multiple_jobs);
+                    }
                     if (ext.w4_step3_dependents !== undefined && ext.w4_step3_dependents > 0) {
                         document.getElementById('emp-w4-step3').value = ext.w4_step3_dependents;
                     }
@@ -451,6 +601,24 @@
                     if (ext.direct_deposit_bank) document.getElementById('emp-bank-name').value = ext.direct_deposit_bank;
                     if (ext.direct_deposit_routing) document.getElementById('emp-bank-routing').value = ext.direct_deposit_routing;
                     if (ext.direct_deposit_account_masked) document.getElementById('emp-bank-account').value = ext.direct_deposit_account_masked;
+                    if (ext.i9_citizenship_status) {
+                        const i9El = document.getElementById('emp-i9-citizenship');
+                        if (i9El) i9El.value = ext.i9_citizenship_status;
+                    }
+
+                    if (data.download_url) {
+                        const docsList = document.getElementById('w2-receipt-docs-list');
+                        if (docsList) {
+                            docsList.style.marginTop = '0.6rem';
+                            const link = document.createElement('a');
+                            link.href = data.download_url;
+                            link.target = '_blank';
+                            link.rel = 'noopener';
+                            link.style.cssText = 'height: 28px; padding: 0 0.7rem; border-radius: 5px; border: 1px solid var(--slate-300); background: #f8fafc; color: var(--slate-700); font-size: 0.73rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;';
+                            link.innerHTML = `<i class="fas fa-paperclip" style="color: #059669;"></i> ${docType} (${data.file_name || 'Document'})`;
+                            docsList.appendChild(link);
+                        }
+                    }
 
                     const popList = (data.auto_populated_fields || []).join(', ');
                     banner.innerHTML = `<i class="fas fa-check-circle"></i> ${data.message} ${popList ? 'Auto-filled: ' + popList : ''}`;
@@ -481,9 +649,21 @@
 
         async function submitW2Onboarding(ev) {
             ev.preventDefault();
+            const consentEl = document.getElementById('emp-esign-consent');
+            const resBox = document.getElementById('complete-result');
+            if (consentEl && !consentEl.checked) {
+                if (resBox) {
+                    resBox.style.display = 'block';
+                    resBox.innerHTML = '<span style="color:#b91c1c;">Please check the certification and electronic signature box to complete your onboarding packet.</span>';
+                }
+                return;
+            }
             const btn = document.getElementById('btn-complete-w2');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Encrypting & Signing Packet...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving & Signing Packet...';
+
+            const step2Checked = Boolean(document.getElementById('emp-w4-step2') && document.getElementById('emp-w4-step2').checked);
+            const i9Val = document.getElementById('emp-i9-citizenship') ? document.getElementById('emp-i9-citizenship').value : '1. A citizen of the United States';
 
             const payload = {
                 first_name: document.getElementById('emp-first-name').value.trim(),
@@ -500,12 +680,15 @@
                 state_id_number: document.getElementById('emp-state-id').value.trim(),
                 state_id_expiration: document.getElementById('emp-state-id-exp').value,
                 w4_filing_status: document.getElementById('emp-w4-status').value,
+                w4_step2_multiple_jobs: step2Checked,
                 w4_step3_dependents: document.getElementById('emp-w4-step3').value,
                 w4_step4c_extra_withholding: document.getElementById('emp-w4-step4c').value,
+                i9_citizenship_status: i9Val,
                 direct_deposit_bank: document.getElementById('emp-bank-name').value.trim(),
                 direct_deposit_routing: document.getElementById('emp-bank-routing').value.trim(),
                 direct_deposit_account: document.getElementById('emp-bank-account').value.trim(),
-                signer_name: document.getElementById('emp-signer-name').value.trim()
+                signer_name: document.getElementById('emp-signer-name').value.trim(),
+                esign_consent: true
             };
 
             try {
@@ -515,7 +698,6 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                const resBox = document.getElementById('complete-result');
                 if (data.status === 'success') {
                     const receiptCard = document.getElementById('w2-receipt-card');
                     const step1 = document.getElementById('w2-step1-card');
@@ -529,6 +711,14 @@
                     setTxt('w2-receipt-signer', data.signer_name || payload.signer_name);
                     setTxt('w2-receipt-timestamp', data.receipt_timestamp || 'Recorded Just Now');
                     setTxt('w2-receipt-hash', data.signature_hash);
+                    setTxt('w2-receipt-address', `${payload.address_street}, ${payload.address_city}, ${payload.address_state} ${payload.address_zip}`);
+                    setTxt('w2-receipt-emergency', `Emergency: ${payload.emergency_contact_name} (${payload.emergency_contact_phone})`);
+                    setTxt('w2-receipt-w4', `${payload.w4_filing_status}${step2Checked ? ' • Step 2(c)' : ''}`);
+                    if (data.ssn_masked) setTxt('w2-receipt-ssn', `SSN: ${data.ssn_masked}`);
+                    if (payload.direct_deposit_bank || data.direct_deposit_account_masked) {
+                        setTxt('w2-receipt-dd', `${payload.direct_deposit_bank || 'Payroll Direct Deposit'} ${data.direct_deposit_account_masked ? '(' + data.direct_deposit_account_masked + ')' : ''}`.trim());
+                    }
+                    setTxt('w2-receipt-i9', `I-9 Status: ${payload.i9_citizenship_status}`);
                     const msgEl = document.getElementById('w2-receipt-message');
                     if (msgEl && data.message) msgEl.innerHTML = data.message;
 

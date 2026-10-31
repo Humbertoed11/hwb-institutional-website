@@ -1517,6 +1517,8 @@
                                             </div>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem;">
                                                 <label class="sigma-col-label" title="Date of the most recent phone call, email, or touchpoint note"><input type="checkbox" name="cols" value="last_contact" {% if 'last_contact' in active_cols %}checked{% endif %}> 📋 Last Touchpoint</label>
+                                                <label class="sigma-col-label" title="Total logged calls, emails, and estimator notes on this bid"><input type="checkbox" name="cols" value="activities" {% if 'activities' in active_cols %}checked{% endif %}> 📞 Calls &amp; Notes</label>
+                                                <label class="sigma-col-label" title="Most recent estimator note logged on this bid"><input type="checkbox" name="cols" value="last_note" {% if 'last_note' in active_cols %}checked{% endif %}> 📜 Last Note</label>
                                                 <label class="sigma-col-label" title="Quick buttons: Takeoff calculator, AI GC enrichment, and calling schedule"><input type="checkbox" name="cols" value="actions" {% if 'actions' in active_cols %}checked{% endif %}> ⚡ Takeoff &amp; Dialing</label>
                                             </div>
                                         </div>
@@ -1623,6 +1625,10 @@
                                     <th data-col="owner" onclick="iscSortBids('owner')" style="min-width: 155px; cursor: pointer;">Assigned Rep {% if sort_by == 'owner' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'last_contact' %}
                                     <th data-col="last_contact" onclick="iscSortBids('last_contact')" style="min-width: 150px; cursor: pointer;">Last Touchpoint {% if sort_by == 'last_contact' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'activities' %}
+                                    <th data-col="activities" onclick="iscSortBids('activities')" style="min-width: 120px; cursor: pointer;">Calls &amp; Notes {% if sort_by == 'activities' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
+                                    {% elif col_key == 'last_note' %}
+                                    <th data-col="last_note" onclick="iscSortBids('last_note')" style="min-width: 210px; cursor: pointer;">📜 Last Note {% if sort_by == 'last_note' %}<span style='margin-left: 0.5rem; color: var(--brand);'>{{ '▲' if sort_dir == 'ASC' else '▼' }}</span>{% endif %}</th>
                                     {% elif col_key == 'actions' %}
                                     <th data-col="actions" style="min-width: 180px; text-align: right;" class="no-drag">Conversion Actions</th>
                                     {% endif %}
@@ -1831,6 +1837,16 @@
                                     <td>
                                         <div style="font-size: 0.75rem; color: var(--slate-600); font-weight: 600;">
                                             {{ bid.last_contact or '--' }}
+                                        </div>
+                                    </td>
+                                    {% elif col_key == 'activities' %}
+                                    <td style="text-align: center; font-weight: 800;">
+                                        <span class="sigma-unit-pill" style="background:#f1f5f9; color:#0f172a; font-weight:800; border:1px solid #cbd5e1;">{{ bid.activity_count or 0 }}</span>
+                                    </td>
+                                    {% elif col_key == 'last_note' %}
+                                    <td>
+                                        <div style="font-size: 0.73rem; color: var(--slate-600); max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ bid.last_note or '' }}">
+                                            {{ bid.last_note or '--' }}
                                         </div>
                                     </td>
                                     {% elif col_key == 'actions' %}

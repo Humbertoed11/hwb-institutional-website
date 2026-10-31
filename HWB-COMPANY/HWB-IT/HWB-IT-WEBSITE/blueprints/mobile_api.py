@@ -269,11 +269,26 @@ def complete_mobile_task():
     if 'evidence_photo' in request.files:
         photo = request.files['evidence_photo']
         if photo and photo.filename:
-            filename = f"proof_wo{work_order_id}_{task_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+            raw_photo_bytes = photo.read()
+            from core.security import inspect_and_sanitize_file_upload
+            airlock = inspect_and_sanitize_file_upload(
+                photo.filename,
+                raw_photo_bytes,
+                allowed_extensions=('.jpg', '.jpeg', '.png', '.webp', '.gif'),
+            )
+            if not airlock.get('allowed'):
+                return jsonify({
+                    "status": "error",
+                    "code": "SEC11_FILE_AIRLOCK_REJECTED",
+                    "message": f"Security check blocked evidence photo: {airlock.get('rejection_reason')}",
+                }), 400
+            ext_verified = airlock.get('verified_extension', '.jpg')
+            filename = f"proof_wo{work_order_id}_{task_id}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}{ext_verified}"
             upload_dir = os.path.join(current_app.static_folder, 'uploads', 'evidence')
             os.makedirs(upload_dir, exist_ok=True)
             save_path = os.path.join(upload_dir, filename)
-            photo.save(save_path)
+            with open(save_path, 'wb') as pf:
+                pf.write(raw_photo_bytes)
             evidence_url = f"/static/uploads/evidence/{filename}"
 
     now_tx = datetime.datetime.now(TX_TIMEZONE).strftime("%Y-%m-%dT%H:%M:%SZ")

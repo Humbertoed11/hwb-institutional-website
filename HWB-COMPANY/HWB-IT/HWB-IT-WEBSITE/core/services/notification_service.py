@@ -1044,6 +1044,9 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
     # 3. Partner Receipt Email
     partner_email = clean_email(partner_data.get("email"))
     if partner_email and not partner_email.endswith((".test", ".local", ".invalid", "@example.com")):
+        tok = (partner_data.get("onboarding_token") or "").strip()
+        raw_portal = partner_data.get("onboarding_url") or (f"/onboard/subcontractor/{tok}" if tok else "/work-with-us")
+        portal_url = build_canonical_portal_url(raw_portal, "/work-with-us")
         coi_note = (
             "Your business registration form, Certificate of Insurance (COI), and signed Master Subcontractor Agreement have been recorded and are under compliance review for on-file roster eligibility."
             if "Pending" not in coi_status
@@ -1055,6 +1058,11 @@ def send_subcontractor_onboarding_completed_notifications(partner_data: Dict[str
             <h2 style="margin-top: 0; color: #0f172a;">Trade Partner Packet Received ({ref_code})</h2>
             <p style="font-size: 14px; color: #334155;">Hello <strong>{contact_name}</strong>,</p>
             <p style="font-size: 14px; color: #334155; line-height: 1.6;">{coi_note}</p>
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{portal_url}" style="display: inline-block; background: #059669; color: #ffffff; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none;">
+                    View Recorded Receipt &amp; Download Signed PDFs &rarr;
+                </a>
+            </div>
             <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: #334155; line-height: 1.5;">
                 <strong>What to Expect Next:</strong> <code>1. Registered &#10003; &rarr; 2. Agreement Signed &#10003; &rarr; 3. COI Verification &rarr; 4. On-File Roster Eligibility</code><br><br>
                 <strong>Important Notice — No Promise or Guarantee of Work:</strong> This receipt is solely an acknowledgment that your compliance documents have been received. Completion of onboarding or placement on our subcontractor roster does <strong>not</strong> guarantee immediate work, future project assignments, minimum billable hours, or any subcontract award. All work is offered strictly on an as-needed, project-by-project basis upon mutual execution of a separate project Scope of Work.
@@ -1198,5 +1206,190 @@ def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[s
 
     print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}", flush=True)
     return results
+
+
+def build_employee_sms_invite(emp_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Builds a 1-tap SMS / text message invite and sms: URI for W-2 Employee onboarding.
+    """
+    first_name = (emp_data.get("first_name") or "Team Member").strip()
+    last_name = (emp_data.get("last_name") or "").strip()
+    full_name = f"{first_name} {last_name}".strip()
+    emp_num = emp_data.get("employee_number") or f"HWB-EMP-{emp_data.get('id') or '1001'}"
+    tok = (emp_data.get("onboarding_token") or "").strip()
+    raw_url = emp_data.get("onboarding_url") or (f"/onboard/employee/{tok}" if tok else "/work-with-us")
+    onboarding_url = build_canonical_portal_url(raw_url, "/work-with-us")
+
+    raw_phone = str(emp_data.get("phone") or "")
+    digits = "".join(ch for ch in raw_phone if ch.isdigit())
+    if len(digits) == 10:
+        e164 = f"+1{digits}"
+    elif len(digits) == 11 and digits.startswith("1"):
+        e164 = f"+{digits}"
+    else:
+        e164 = digits
+
+    sms_body = (
+        f"Hello {first_name}, welcome to HWB Cleaning Services LLC ({emp_num})! "
+        f"Please complete your pre-filled W-2 New Hire Onboarding & Tax Packet here: {onboarding_url} "
+        f"- Questions? Call (214) 586-0257."
+    )
+    from urllib.parse import quote
+    sms_uri = f"sms:{e164}?body={quote(sms_body)}" if e164 else f"sms:?body={quote(sms_body)}"
+    return {
+        "sms_body": sms_body,
+        "sms_uri": sms_uri,
+        "canonical_url": onboarding_url,
+        "full_name": full_name,
+    }
+
+
+def send_employee_onboarding_invite_email(emp_data: Dict[str, Any]) -> Tuple[bool, str]:
+    """
+    Sends the pre-filled W-2 Employee Onboarding Portal link (/onboard/employee/<token>)
+    to the newly hired employee using plain-spoken commercial language.
+    """
+    email = clean_email(emp_data.get("email"), allow_internal=True)
+    if not email or email.endswith((".test", ".local", ".invalid", "@example.com")):
+        return False, "Skipped non-routable or missing employee email"
+
+    first_name = (emp_data.get("first_name") or "Team Member").strip()
+    last_name = (emp_data.get("last_name") or "").strip()
+    full_name = f"{first_name} {last_name}".strip()
+    emp_num = emp_data.get("employee_number") or f"HWB-EMP-{emp_data.get('id') or '1001'}"
+    role = emp_data.get("primary_role") or "Commercial Cleaning Technician"
+    tok = (emp_data.get("onboarding_token") or "").strip()
+    raw_url = emp_data.get("onboarding_url") or (f"/onboard/employee/{tok}" if tok else "/work-with-us")
+    onboarding_url = build_canonical_portal_url(raw_url, "/work-with-us")
+
+    subject = f"HWB Cleaning Services — Welcome & W-2 New Hire Onboarding Portal ({emp_num})"
+    body_html = f"""
+    <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; padding: 28px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 600px; margin: 0 auto; color: #0f172a;">
+        <div style="border-bottom: 3px solid #2563eb; padding-bottom: 14px; margin-bottom: 20px;">
+            <div style="font-weight: 800; font-size: 19px; color: #0f172a;">HWB Cleaning Services LLC</div>
+            <div style="font-size: 12px; color: #2563eb; font-weight: 700; margin-top: 4px;">W-2 New Hire Onboarding Portal &bull; {emp_num}</div>
+        </div>
+        <div style="font-size: 14px; line-height: 1.6; color: #1e293b;">
+            <p style="margin-top: 0;">Hello <strong>{full_name}</strong>,</p>
+            <p>
+                Welcome to <strong>HWB Cleaning Services LLC</strong>! Your personnel file (Employee ID <strong>{emp_num}</strong>, Role: <strong>{role}</strong>) has been prepared.
+            </p>
+            <p>
+                Please use your <strong>pre-filled W-2 New Hire Onboarding Portal</strong> below to verify your contact information, complete your IRS Form W-4 tax withholding, add your Direct Deposit banking details, and sign your official Job Description:
+            </p>
+            <div style="text-align: center; margin: 26px 0;">
+                <a href="{onboarding_url}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 30px; border-radius: 8px; font-weight: 700; font-size: 15px; text-decoration: none;">
+                    Open W-2 Onboarding Portal &rarr;
+                </a>
+            </div>
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">
+                If you have any questions while completing your new hire packet, simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.
+            </p>
+        </div>
+    </div>
+    """
+    return transmit_email([email], subject, body_html, attach_signature=True, stream_type="transactional")
+
+
+def send_employee_onboarding_completed_notifications(emp_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Notifies executive leadership (Telegram + Email) and sends an official confirmation receipt
+    to the W-2 employee when they complete and sign their onboarding packet.
+    """
+    results: Dict[str, Any] = {}
+    first_name = (emp_data.get("first_name") or "Team Member").strip()
+    last_name = (emp_data.get("last_name") or "").strip()
+    full_name = f"{first_name} {last_name}".strip()
+    emp_num = emp_data.get("employee_number") or f"HWB-EMP-{emp_data.get('id') or '1001'}"
+    role = emp_data.get("primary_role") or "Commercial Cleaning Technician"
+    signer_name = emp_data.get("signer_name") or full_name
+    street = emp_data.get("address_street") or ""
+    city = emp_data.get("address_city") or "TX"
+    state = emp_data.get("address_state") or "TX"
+    zip_code = emp_data.get("address_zip") or ""
+    w4_status = emp_data.get("w4_filing_status") or "Single"
+    dd_bank = emp_data.get("direct_deposit_bank") or "Provided"
+    tok = (emp_data.get("onboarding_token") or "").strip()
+    raw_url = emp_data.get("onboarding_url") or (f"/onboard/employee/{tok}" if tok else "/work-with-us")
+    portal_url = build_canonical_portal_url(raw_url, "/work-with-us")
+
+    # 1. Telegram Alert to Executive Team
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_ids = get_active_telegram_recipients()
+    if bot_token and chat_ids:
+        tg_msg = (
+            "✅ *W-2 EMPLOYEE ONBOARDING COMPLETED*\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"👤 *Employee:* {full_name} (`{emp_num}`)\n"
+            f"🏷️ *Role:* {role}\n"
+            f"📍 *Address:* {street}, {city}, {state} {zip_code}\n"
+            f"🏛️ *W-4 Filing:* {w4_status}\n"
+            f"🏦 *Direct Deposit:* {dd_bank}\n"
+            f"✍️ *Job Description Signed:* {signer_name} ✓\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "⚡ _View in Backoffice -> Workforce -> W-2 Personnel Roster_"
+        )
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        for cid in chat_ids:
+            try:
+                requests.post(url, json={"chat_id": cid, "text": tg_msg, "parse_mode": "Markdown"}, timeout=6)
+            except Exception:
+                pass
+        results["telegram"] = True
+
+    # 2. Internal Executive Email Alert
+    recipients = ["hdominguez@hwbcleaning.com", "sales@hwbcleaning.com"]
+    exec_subject = f"✅ W-2 Onboarding Completed: {full_name} ({emp_num}) — {role}"
+    exec_html = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+        <h2 style="margin-top: 0; color: #0f172a;">W-2 Employee Onboarding Completed ({emp_num})</h2>
+        <p style="color: #334155; font-size: 14px;">
+            <strong>{full_name}</strong> has completed and signed their W-2 onboarding packet:
+        </p>
+        <ul style="font-size: 14px; color: #0f172a; line-height: 1.6;">
+            <li><strong>Role:</strong> {role}</li>
+            <li><strong>Home Address:</strong> {street}, {city}, {state} {zip_code}</li>
+            <li><strong>W-4 Filing Status:</strong> {w4_status}</li>
+            <li><strong>Direct Deposit Bank:</strong> {dd_bank}</li>
+            <li><strong>Official Job Description:</strong> E-Signed by {signer_name}</li>
+        </ul>
+        <div style="margin-top: 20px;">
+            <a href="https://www.hwbcleaning.com/admin/operations?view=workforce&subtab=employees" style="display: inline-block; background: #059669; color: #ffffff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px;">
+                Open W-2 Personnel Roster
+            </a>
+        </div>
+    </div>
+    """
+    em_ok, em_detail = transmit_email(recipients, exec_subject, exec_html, stream_type="transactional")
+    results["executive_email"] = {"success": em_ok, "detail": em_detail}
+
+    # 3. Employee Receipt Email
+    emp_email = clean_email(emp_data.get("email"), allow_internal=True)
+    if emp_email and not emp_email.endswith((".test", ".local", ".invalid", "@example.com")):
+        e_sub = f"HWB Cleaning Services — W-2 Onboarding Packet Recorded ({emp_num})"
+        e_html = f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; padding: 24px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; max-width: 600px; margin: 0 auto;">
+            <h2 style="margin-top: 0; color: #0f172a;">W-2 Onboarding Packet Recorded ({emp_num})</h2>
+            <p style="font-size: 14px; color: #334155;">Hello <strong>{full_name}</strong>,</p>
+            <p style="font-size: 14px; color: #334155; line-height: 1.6;">
+                Thank you for completing your W-2 New Hire Onboarding &amp; Tax Packet for <strong>HWB Cleaning Services LLC</strong>. Your verified address, W-4 withholding, Direct Deposit preferences, and signed Job Description have been recorded under Employee ID <strong>{emp_num}</strong>.
+            </p>
+            <div style="text-align: center; margin: 20px 0;">
+                <a href="{portal_url}" style="display: inline-block; background: #059669; color: #ffffff; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; text-decoration: none;">
+                    View Recorded Receipt &amp; Download Signed Packet &rarr;
+                </a>
+            </div>
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: #334155; line-height: 1.5;">
+                <strong>What to Expect Next:</strong> <code>1. Tax &amp; ID Packet Recorded &#10003; &rarr; 2. Job Description Signed &#10003; &rarr; 3. HR &amp; Form I-9 Verification &rarr; 4. Route Scheduling (As Needed)</code><br><br>
+                <strong>Important Notice — At-Will Employment &amp; No Guarantee of Hours:</strong> Employment with HWB Cleaning Services LLC is strictly at-will. Completion of onboarding paperwork does not guarantee immediate shift placement, a fixed schedule, or a minimum number of weekly hours. Shift assignments are scheduled based on active client facility needs.
+            </div>
+            <p style="font-size: 13px; color: #475569; margin-top: 16px;">Questions? Simply reply to this email or call our Dallas operations desk at <strong>(214) 586-0257</strong>.</p>
+        </div>
+        """
+        rc_ok, rc_detail = transmit_email([emp_email], e_sub, e_html, attach_signature=True, stream_type="transactional")
+        results["employee_receipt"] = {"success": rc_ok, "detail": rc_detail}
+
+    return results
+
 
 

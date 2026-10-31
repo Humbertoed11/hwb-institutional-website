@@ -11,6 +11,7 @@ import urllib.parse
 import csv
 import json
 import hashlib
+import secrets
 import datetime
 from datetime import datetime as dt_cls
 import uuid
@@ -4914,6 +4915,11 @@ def api_get_or_create_subcontractors():
                 dwc83_signed = bool(data.get('dwc83_signed', False))
                 status = data.get('status', 'Active Partner')
                 notes = (data.get('notes') or '').strip()
+                init_onb_status = (
+                    'Approved / Active'
+                    if (status == 'Active Partner' and coi_status == 'Verified' and w9_status == 'Verified' and dwc83_signed)
+                    else (data.get('onboarding_status') or 'Invited')
+                )
 
                 cur.execute('''
                     INSERT INTO "SubcontractorPartners" (
@@ -4921,26 +4927,43 @@ def api_get_or_create_subcontractors():
                         contact_name, phone, email,
                         city, state, coverage_counties, crew_size, specialties,
                         hourly_rate_range, coi_status, coi_expiration_date,
-                        w9_status, dwc83_signed, status, notes
+                        w9_status, dwc83_signed, status, onboarding_status, notes
                     ) VALUES (
                         %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s,
-                        %s, %s, %s, %s
+                        %s, %s, %s, %s, %s
                     ) RETURNING id;
                 ''', (
                     company_name, ein_or_ssn, last4_tin or None, encrypted_tin,
                     contact_name, phone, email,
                     city, state, coverage_counties, crew_size, specialties,
                     hourly_rate_range, coi_status, coi_expiration_date,
-                    w9_status, dwc83_signed, status, notes
+                    w9_status, dwc83_signed, status, init_onb_status, notes
                 ))
                 new_id = cur.fetchone()['id']
+                onboarding_token = f"sub_{new_id}_{secrets.token_urlsafe(24)}"
+                cur.execute('''
+                    UPDATE "SubcontractorPartners"
+                    SET onboarding_token = %s,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                        onboarding_invited_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (onboarding_token, new_id))
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
                 return jsonify({
                     'status': 'success',
                     'subcontractor_id': new_id,
+                    'onboarding_token': onboarding_token,
+                    'onboarding_url': onboarding_url,
+                    'onboarding_status': init_onb_status,
                     'message': f"Trade Partner '{company_name}' onboarded successfully."
                 }), 201
 
@@ -5180,6 +5203,15 @@ def api_upload_subcontractor_document(id):
     if not raw_bytes:
         return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
 
+    from core.security import inspect_and_sanitize_file_upload
+    airlock = inspect_and_sanitize_file_upload(file.filename, raw_bytes)
+    if not airlock.get('allowed'):
+        return jsonify({
+            'status': 'error',
+            'code': 'SEC11_FILE_AIRLOCK_REJECTED',
+            'message': f"Security check blocked file upload: {airlock.get('rejection_reason')}",
+        }), 400
+
     filename = secure_filename(file.filename)
     safe_name = f"sub_{id}_{doc_type.replace(' ', '_')}_{int(dt_cls.now().timestamp())}_{filename}"
 
@@ -5281,11 +5313,45 @@ def api_upload_subcontractor_document(id):
                     id
                 ))
 
+            # Auto-advance onboarding_status when documents are deposited via backoffice vault
+            cur.execute('''
+                SELECT w9_status, coi_status, msa_signed, dwc83_signed, onboarding_status, status
+                FROM "SubcontractorPartners" WHERE id = %s;
+            ''', (id,))
+            latest_sub = cur.fetchone() or {}
+            curr_onb = latest_sub.get('onboarding_status') or 'Initial Review'
+            next_onb = curr_onb
+            if (
+                latest_sub.get('w9_status') == 'Verified'
+                and latest_sub.get('coi_status') == 'Verified'
+                and (latest_sub.get('msa_signed') or latest_sub.get('dwc83_signed'))
+                and latest_sub.get('status') == 'Active Partner'
+            ):
+                next_onb = 'Approved / Active'
+            elif (
+                latest_sub.get('coi_status') in ('Verified', 'File Uploaded (Review)')
+                and curr_onb in ('Pending COI', 'Invited', 'Initial Review', 'Docs In Progress')
+            ):
+                next_onb = 'Docs Under Review'
+
+            if next_onb != curr_onb:
+                cur.execute('''
+                    UPDATE "SubcontractorPartners"
+                    SET onboarding_status = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (next_onb, id))
+
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({
                 'status': 'success',
                 'file_name': filename,
                 'document_type': doc_type,
+                'onboarding_status': next_onb,
                 'extracted': extracted,
                 'vault_receipt': vault_receipt,
                 'message': f"{doc_type} securely deposited into Encrypted Vault (v{vault_receipt['version_number']})."
@@ -5861,13 +5927,20 @@ def api_hr_onboard_candidate():
                     ''', (role, emp_number, applicant_id))
 
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                canonical_dup_url = f"https://www.hwbcleaning.com/onboard/employee/{emp_token}"
                 return jsonify({
                     'status': 'already_registered',
                     'is_duplicate': True,
                     'employee_id': emp_id,
                     'employee_number': emp_number,
                     'onboarding_token': emp_token,
-                    'onboarding_url': f"/onboard/employee/{emp_token}",
+                    'onboarding_path': f"/onboard/employee/{emp_token}",
+                    'onboarding_url': canonical_dup_url,
                     'message': f"Employee {first_name} {last_name} ({emp_number}) is already onboarded — existing profile updated."
                 }), 200
 
@@ -5894,6 +5967,8 @@ def api_hr_onboard_candidate():
                     ssn_enc_onboard = encrypt_pii(raw_ssn_onboard)
                     ssn_l4_onboard = digits_ssn[-4:]
 
+            ack_ts = dt_cls.now() if data.get('job_description_acknowledged') else None
+
             cur.execute('''
                 INSERT INTO "Employees" (
                     employee_number, applicant_id, first_name, last_name, phone, email,
@@ -5902,7 +5977,7 @@ def api_hr_onboard_candidate():
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
                     assigned_customer_id, weekly_hours_allocated, notes,
                     job_position_id, job_description_acknowledged_at,
-                    onboarding_token, onboarding_token_expires_at, onboarding_status,
+                    onboarding_token, onboarding_token_expires_at, onboarding_invited_at, onboarding_status,
                     ssn_encrypted, ssn_last_four
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
@@ -5910,8 +5985,8 @@ def api_hr_onboard_candidate():
                     %s, %s, %s, %s,
                     %s, %s, %s, %s,
                     %s, %s, %s,
-                    %s, CURRENT_TIMESTAMP,
-                    %s, CURRENT_TIMESTAMP + INTERVAL '30 days', 'Pending Onboarding',
+                    %s, %s,
+                    %s, CURRENT_TIMESTAMP + INTERVAL '30 days', CURRENT_TIMESTAMP, 'Pending Onboarding',
                     %s, %s
                 ) RETURNING id, employee_number;
             ''', (
@@ -5920,7 +5995,7 @@ def api_hr_onboard_candidate():
                 pay_rate, overtime_rate, pay_frequency, primary_language,
                 emergency_name, emergency_phone, city, state,
                 assigned_customer_id, weekly_hours, notes,
-                job_position_id, new_token,
+                job_position_id, ack_ts, new_token,
                 ssn_enc_onboard, ssn_l4_onboard
             ))
             new_emp = cur.fetchone()
@@ -5933,13 +6008,38 @@ def api_hr_onboard_candidate():
                 ''', (role, emp_number, applicant_id))
 
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+
+            canonical_new_url = f"https://www.hwbcleaning.com/onboard/employee/{new_token}"
+            if clean_emp_email:
+                try:
+                    from core.services.notification_service import send_employee_onboarding_invite_email
+                    send_employee_onboarding_invite_email({
+                        'id': new_emp['id'],
+                        'employee_number': new_emp['employee_number'],
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'email': clean_emp_email,
+                        'phone': phone,
+                        'primary_role': role,
+                        'onboarding_token': new_token,
+                        'onboarding_url': canonical_new_url,
+                    })
+                except Exception:
+                    pass
+
             return jsonify({
                 'status': 'success',
                 'is_duplicate': False,
                 'employee_id': new_emp['id'],
                 'employee_number': new_emp['employee_number'],
                 'onboarding_token': new_token,
-                'onboarding_url': f"/onboard/employee/{new_token}",
+                'onboarding_path': f"/onboard/employee/{new_token}",
+                'onboarding_url': canonical_new_url,
                 'message': f"Employee {first_name} {last_name} ({new_emp['employee_number']}) onboarded successfully."
             }), 201
     finally:
@@ -6065,13 +6165,29 @@ def api_manage_employee(id):
                 return jsonify({'status': 'success', 'employee': emp_data})
 
             elif request.method == 'DELETE':
+                cur.execute('SELECT applicant_id FROM "Employees" WHERE id = %s;', (id,))
+                emp_del = cur.fetchone()
                 cur.execute('''
                     UPDATE "Employees" 
-                    SET employment_status = 'Terminated', termination_date = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP
+                    SET employment_status = 'Terminated',
+                        badge_status = 'Revoked',
+                        termination_date = CURRENT_DATE,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (id,))
+                if emp_del and emp_del.get('applicant_id'):
+                    cur.execute('''
+                        UPDATE "JobApplicants"
+                        SET status = 'Terminated', updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (emp_del['applicant_id'],))
                 conn.commit()
-                return jsonify({'status': 'success', 'message': f'Employee #{id} marked Terminated.'})
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
+                return jsonify({'status': 'success', 'badge_status': 'Revoked', 'message': f'Employee #{id} marked Terminated and badge revoked.'})
 
             elif request.method == 'PATCH':
                 data = request.get_json() or {}
@@ -6363,6 +6479,16 @@ def api_upload_employee_document(id):
     raw_bytes = file.read()
     if not raw_bytes:
         return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+
+    from core.security import inspect_and_sanitize_file_upload
+    airlock = inspect_and_sanitize_file_upload(file.filename, raw_bytes)
+    if not airlock.get('allowed'):
+        return jsonify({
+            'status': 'error',
+            'code': 'SEC11_FILE_AIRLOCK_REJECTED',
+            'message': f"Security check blocked file upload: {airlock.get('rejection_reason')}",
+        }), 400
+
     mime_type = file.mimetype or 'application/pdf'
     client_ip = request.headers.get('X-Forwarded-For', request.remote_addr or '127.0.0.1')
 
@@ -6712,10 +6838,16 @@ def api_acknowledge_job_description(id):
 def api_send_employee_onboarding_link(id):
     """
     Generates or refreshes a 30-day self-service W-2 onboarding link (/onboard/employee/<token>)
-    pre-filled with the employee's application and profile information.
+    pre-filled with the employee's application and profile information, dispatches the
+    onboarding email via Microsoft Graph, and returns the canonical URL and SMS invite URI.
     """
     from database.schema_engine import ensure_employee_onboarding_schema
     from core.services.employee_doc_extractor import generate_employee_onboarding_token
+    from core.services.notification_service import (
+        build_canonical_portal_url,
+        build_employee_sms_invite,
+        send_employee_onboarding_invite_email,
+    )
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -6726,7 +6858,8 @@ def api_send_employee_onboarding_link(id):
             if not emp:
                 return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
 
-            token = emp.get('onboarding_token')
+            emp_dict = dict(emp)
+            token = emp_dict.get('onboarding_token')
             if not token:
                 token = f"emp_{id}_{generate_employee_onboarding_token()}"
 
@@ -6736,22 +6869,64 @@ def api_send_employee_onboarding_link(id):
                     onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
                     onboarding_invited_at = CURRENT_TIMESTAMP,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s;
+                WHERE id = %s
+                RETURNING onboarding_token_expires_at;
             ''', (token, id))
-            conn.commit()
+            exp_row = cur.fetchone()
+            exp_ts = exp_row['onboarding_token_expires_at'] if isinstance(exp_row, dict) else (exp_row[0] if exp_row else None)
 
-            base_url = request.host_url.rstrip('/')
             portal_path = f"/onboard/employee/{token}"
-            full_url = f"{base_url}{portal_path}"
+            full_url = build_canonical_portal_url(portal_path, "/work-with-us")
+            emp_name = f"{emp_dict.get('first_name') or ''} {emp_dict.get('last_name') or ''}".strip() or f"Employee #{id}"
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                VALUES (%s, 'Employee', 'W-2 Onboarding Link Sent', %s, CURRENT_TIMESTAMP);
+            ''', (
+                id,
+                f"Pre-filled W-2 onboarding portal link dispatched to {emp_name} ({emp_dict.get('email') or 'direct link'}).",
+            ))
+            conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+
+            sms_meta = build_employee_sms_invite({
+                **emp_dict,
+                'onboarding_token': token,
+                'onboarding_url': full_url,
+            })
+            email_ok = False
+            email_detail = 'No email on file'
+            if emp_dict.get('email'):
+                try:
+                    email_ok, email_detail = send_employee_onboarding_invite_email({
+                        **emp_dict,
+                        'onboarding_token': token,
+                        'onboarding_url': full_url,
+                    })
+                except Exception as em_err:
+                    email_detail = str(em_err)
 
             return jsonify({
                 'status': 'success',
                 'employee_id': id,
-                'employee_number': emp.get('employee_number'),
+                'employee_number': emp_dict.get('employee_number'),
                 'onboarding_token': token,
+                'onboarding_token_expires_at': exp_ts.isoformat() if hasattr(exp_ts, 'isoformat') else str(exp_ts or ''),
                 'onboarding_path': portal_path,
                 'onboarding_url': full_url,
-                'message': f"Pre-filled W-2 onboarding link ready for {emp.get('first_name')} {emp.get('last_name')}."
+                'sms_body': sms_meta['sms_body'],
+                'sms_uri': sms_meta['sms_uri'],
+                'email_sent': email_ok,
+                'email_detail': email_detail,
+                'message': (
+                    f"Pre-filled W-2 onboarding link sent to {emp_dict.get('email')}!"
+                    if email_ok
+                    else f"Pre-filled W-2 onboarding link ready for {emp_name}."
+                ),
             })
     finally:
         if conn:

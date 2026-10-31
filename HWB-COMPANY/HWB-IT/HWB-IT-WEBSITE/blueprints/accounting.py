@@ -773,12 +773,16 @@ def api_restore_deleted_accounting_record():
             snap = json.loads(raw_val) if isinstance(raw_val, str) else (raw_val or {})
             tables = snap.get("tables") or {}
 
+            import re as _re
+            _valid_col_re = _re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]{0,62}$")
             for tbl_name in ("AccountingJournalEntries", "AccountingJournalLines", "ClientInvoices"):
                 rows = tables.get(tbl_name) or []
                 for rec in rows:
                     if not isinstance(rec, dict) or not rec:
                         continue
-                    cols = list(rec.keys())
+                    cols = [c for c in rec.keys() if isinstance(c, str) and _valid_col_re.match(c)]
+                    if not cols:
+                        continue
                     col_sql = ", ".join(f'"{c}"' for c in cols)
                     placeholders = ", ".join(["%s"] * len(cols))
                     vals = [
@@ -792,9 +796,9 @@ def api_restore_deleted_accounting_record():
             cur.execute('DELETE FROM "SystemSettings" WHERE key = %s;', (undo_token,))
         conn.commit()
         return jsonify({"status": "success", "message": "Invoice and Double-Entry Journal Entry restored."})
-    except Exception as exc:
+    except Exception:
         conn.rollback()
-        return jsonify({"status": "error", "message": str(exc)}), 400
+        return jsonify({"status": "error", "message": "Unable to restore accounting snapshot. Please verify snapshot state."}), 400
     finally:
         conn.close()
 
@@ -1412,9 +1416,23 @@ def api_import_quickbooks_csv():
 
     if "file" in request.files and request.files["file"].filename:
         f = request.files["file"]
-        csv_text = f.read().decode("utf-8-sig", errors="replace")
+        raw_csv_bytes = f.read()
+        from core.security import inspect_and_sanitize_file_upload, sanitize_csv_cell_value
+        airlock = inspect_and_sanitize_file_upload(
+            f.filename,
+            raw_csv_bytes,
+            allowed_extensions=(".csv", ".txt"),
+        )
+        if not airlock.get("allowed"):
+            return jsonify({
+                "status": "error",
+                "code": "SEC11_FILE_AIRLOCK_REJECTED",
+                "message": f"Security check blocked CSV upload: {airlock.get('rejection_reason')}",
+            }), 400
+        csv_text = raw_csv_bytes.decode("utf-8-sig", errors="replace")
         import_type = request.form.get("import_type", "transactions")
     else:
+        from core.security import sanitize_csv_cell_value
         payload = request.get_json(silent=True) or {}
         csv_text = str(payload.get("csv_text") or "").strip()
         import_type = str(payload.get("import_type") or "transactions").strip()
@@ -1440,7 +1458,7 @@ def api_import_quickbooks_csv():
     try:
         with conn.cursor() as cur:
             for row in reader:
-                norm_row = {str(k or "").strip().lower(): str(v or "").strip() for k, v in row.items() if k}
+                norm_row = {str(k or "").strip().lower(): sanitize_csv_cell_value(str(v or "")) for k, v in row.items() if k}
                 if not any(norm_row.values()):
                     continue
 

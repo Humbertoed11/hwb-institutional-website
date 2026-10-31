@@ -741,10 +741,11 @@
         quickUpdateLead(leadId, 'next_action_date', dateStr, btnElement);
     }
 
-    // --- SigmaFidelity™ Unified Grid Engine v2.0 (BUG-164 Universal All-Module Enterprise Hardening) ---
+    // --- SigmaFidelity™ Unified Grid Engine v2.1 (BUG-164 & BUG-169 Universal Column Sorting & Newest-First Date Standard) ---
     const DESC_FIRST_SORT_COLS = new Set([
-        'value', 'revenue', 'sqf', 'capacity', 'activities', 'last_contact',
-        'input_date', 'created', 'date', 'recent', 'updated', 'monthly'
+        'value', 'revenue', 'sqf', 'sqft', 'capacity', 'activities', 'last_contact',
+        'input_date', 'created', 'date', 'recent', 'updated', 'monthly',
+        'next_action', 'due_date', 'start_date', 'dates', 'pre_bid'
     ]);
 
     const SigmaGridEngine = {
@@ -948,20 +949,48 @@
             });
         },
         sort: function(view, col, defaultSort, defaultDir) {
+            if (Date.now() < (window._sigmaSuppressNextSortClickUntil || 0)) {
+                return;
+            }
             const url = new URL(window.location.href);
-            let currentSort = url.searchParams.get('sort') || (defaultSort || '');
-            let currentDir = (url.searchParams.get('dir') || (defaultDir || 'asc')).toLowerCase();
-            let newDir;
+            const savedGridState = (window.SERVER_GRID_STATE && window.SERVER_GRID_STATE[view]) ? window.SERVER_GRID_STATE[view] : {};
+            const rawUrlSort = url.searchParams.get('sort') || url.searchParams.get('sort_by') || '';
+            const rawUrlDir = url.searchParams.get('dir') || url.searchParams.get('sort_dir') || '';
+            let currentSort = (rawUrlSort && rawUrlSort !== 'default' && rawUrlSort !== 'reset')
+                ? rawUrlSort
+                : (savedGridState.sort_by || '');
+            let currentDir = (rawUrlDir || savedGridState.sort_dir || (defaultDir || 'desc')).toLowerCase();
+
+            const primaryDir = DESC_FIRST_SORT_COLS.has(String(col || '').toLowerCase()) ? 'desc' : 'asc';
+            const secondaryDir = (primaryDir === 'desc') ? 'asc' : 'desc';
+
             if (currentSort === col) {
-                newDir = (currentDir === 'asc') ? 'desc' : 'asc';
+                if (currentDir === primaryDir) {
+                    // 2nd click -> reverse direction
+                    url.searchParams.set('sort', col);
+                    url.searchParams.set('dir', secondaryDir);
+                } else {
+                    // 3rd click -> reset to default newest-to-oldest sort
+                    url.searchParams.set('sort', 'default');
+                    url.searchParams.delete('dir');
+                }
             } else {
-                newDir = DESC_FIRST_SORT_COLS.has(String(col || '').toLowerCase()) ? 'desc' : 'asc';
+                // 1st click -> primary direction (DESC for all dates/numbers, ASC for text)
+                url.searchParams.set('sort', col);
+                url.searchParams.set('dir', primaryDir);
             }
             url.searchParams.set('view', view);
-            url.searchParams.set('sort', col);
-            url.searchParams.set('dir', newDir);
             url.searchParams.set('page', '1');
             url.searchParams.delete('cols'); // Rely on server-persisted column order
+            window.location.href = url.href;
+        },
+        clearSort: function(view) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', view || url.searchParams.get('view') || 'leads');
+            url.searchParams.set('sort', 'default');
+            url.searchParams.delete('dir');
+            url.searchParams.set('page', '1');
+            url.searchParams.delete('cols');
             window.location.href = url.href;
         }
     };
@@ -980,8 +1009,8 @@
     function resetColumnsBids() { SigmaGridEngine.resetColumns('Commercial Construction Bids'); }
 
     function iscSortLeads(col) { SigmaGridEngine.sort('leads', col, 'input_date', 'desc'); }
-    function iscSortAcc(col) { SigmaGridEngine.sort('accounts', col, 'company', 'asc'); }
-    function iscSortBids(col) { SigmaGridEngine.sort('construction_bids', col, 'due_date', 'asc'); }
+    function iscSortAcc(col) { SigmaGridEngine.sort('accounts', col, 'start_date', 'desc'); }
+    function iscSortBids(col) { SigmaGridEngine.sort('construction_bids', col, 'due_date', 'desc'); }
 
     function toggleLeadFilter(key, val) {
         const url = new URL(window.location.href);
@@ -5046,11 +5075,13 @@
                 resizer.addEventListener('mousedown', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
+                    window._sigmaSuppressNextSortClickUntil = Date.now() + 500;
                     const startX = e.pageX;
                     const startWidth = th.getBoundingClientRect().width;
                     resizer.classList.add('is-resizing');
 
                     const onMouseMove = (moveEvt) => {
+                        window._sigmaSuppressNextSortClickUntil = Date.now() + 500;
                         const newWidth = Math.max(68, Math.min(850, Math.round(startWidth + (moveEvt.pageX - startX))));
                         th.style.width = `${newWidth}px`;
                         th.style.minWidth = `${newWidth}px`;
@@ -5058,6 +5089,7 @@
                     };
 
                     const onMouseUp = () => {
+                        window._sigmaSuppressNextSortClickUntil = Date.now() + 350;
                         resizer.classList.remove('is-resizing');
                         document.removeEventListener('mousemove', onMouseMove);
                         document.removeEventListener('mouseup', onMouseUp);
@@ -5074,6 +5106,48 @@
             });
         };
 
+        const decoratePrimarySortableHeaders = (headerEl, viewName) => {
+            if (!headerEl) return;
+            const ths = Array.from(headerEl.querySelectorAll('th'));
+            ths.forEach(th => {
+                const colKey = th.getAttribute('data-col');
+                const hasOnClick = Boolean(th.getAttribute('onclick'));
+                if (!colKey || !hasOnClick || th.classList.contains('no-drag') || th.classList.contains('sticky-cb')) return;
+                th.style.cursor = 'pointer';
+                th.style.userSelect = 'none';
+                const isDateOrNum = DESC_FIRST_SORT_COLS.has(colKey.toLowerCase());
+                th.title = isDateOrNum
+                    ? 'Click to sort (1st click: Newest / Highest ▼ • 2nd: Oldest / Lowest ▲ • 3rd: Reset) • Drag to reorder'
+                    : 'Click to sort (1st click: A–Z ▲ • 2nd: Z–A ▼ • 3rd: Reset) • Drag to reorder';
+                const rawText = (th.textContent || '').trim();
+                const isActivelySorted = rawText.includes('▲') || rawText.includes('▼');
+                if (isActivelySorted) {
+                    th.classList.add('sigma-sorted-th');
+                    th.style.backgroundColor = '#eff6ff';
+                    th.style.color = '#1e40af';
+                    const colLabel = rawText.replace(/[▲▼↕⇅]/g, '').trim();
+                    const dirSymbol = rawText.includes('▲') ? '▲' : '▼';
+                    const tableEl = headerEl.closest('table');
+                    if (tableEl && tableEl.parentElement && !tableEl.parentElement.querySelector('.sigma-active-sort-pill')) {
+                        const pillBar = document.createElement('div');
+                        pillBar.className = 'sigma-active-sort-pill';
+                        pillBar.style.cssText = 'display:inline-flex; align-items:center; gap:0.45rem; background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; padding:0.22rem 0.65rem; border-radius:6px; font-size:0.72rem; font-weight:800; margin-bottom:0.45rem;';
+                        pillBar.innerHTML = `<span><i class="fas fa-sort-amount-down" style="margin-right:4px;"></i>Sorted by: <strong>${colLabel} ${dirSymbol}</strong></span>`
+                            + `<button type="button" onclick="SigmaGridEngine.clearSort('${viewName}')" style="background:#dbeafe; border:1px solid #93c5fd; color:#1d4ed8; border-radius:4px; padding:1px 6px; font-size:0.68rem; font-weight:800; cursor:pointer;" title="Reset to default newest-first sort">× Reset</button>`;
+                        tableEl.parentElement.insertBefore(pillBar, tableEl);
+                    }
+                } else if (!th.querySelector('.sigma-idle-sort-ind')) {
+                    const idleInd = document.createElement('span');
+                    idleInd.className = 'sigma-idle-sort-ind';
+                    idleInd.style.cssText = 'margin-left:4px; font-size:0.66rem; color:#94a3b8; font-weight:600; pointer-events:none;';
+                    idleInd.textContent = '⇅';
+                    const resizer = th.querySelector('.sigma-col-resizer');
+                    if (resizer) th.insertBefore(idleInd, resizer);
+                    else th.appendChild(idleInd);
+                }
+            });
+        };
+
         const lHeader = document.getElementById('leads-header-row');
         if (lHeader) { 
             new Sortable(lHeader, { 
@@ -5082,12 +5156,15 @@
                 delayOnTouchOnly: true,
                 filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
+                onStart: () => { window._sigmaSuppressNextSortClickUntil = Date.now() + 1000; },
                 onEnd: (evt) => {
+                    window._sigmaSuppressNextSortClickUntil = Date.now() + 350;
                     syncColumns(evt, 'table-leads');
                     persistColumns('leads-header-row');
                 }
             }); 
             initColumnResizersAndDensity(document.getElementById('table-leads'), 'leads');
+            decoratePrimarySortableHeaders(lHeader, 'leads');
             SigmaGridEngine.refreshColumnMenuBadges('leads-col-form', 'leads');
             SigmaGridEngine.syncNavigationLinksCols('leads', '');
         }
@@ -5100,12 +5177,15 @@
                 delayOnTouchOnly: true,
                 filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
+                onStart: () => { window._sigmaSuppressNextSortClickUntil = Date.now() + 1000; },
                 onEnd: (evt) => {
+                    window._sigmaSuppressNextSortClickUntil = Date.now() + 350;
                     syncColumns(evt, 'table-accounts');
                     persistColumns('accounts-header-row');
                 }
             }); 
             initColumnResizersAndDensity(document.getElementById('table-accounts'), 'accounts');
+            decoratePrimarySortableHeaders(aHeader, 'accounts');
             SigmaGridEngine.refreshColumnMenuBadges('accounts-col-form', 'accounts');
             SigmaGridEngine.syncNavigationLinksCols('accounts', '');
         }
@@ -5118,12 +5198,15 @@
                 delayOnTouchOnly: true,
                 filter: '.no-drag, .sigma-col-resizer',
                 preventOnFilter: false,
+                onStart: () => { window._sigmaSuppressNextSortClickUntil = Date.now() + 1000; },
                 onEnd: (evt) => {
+                    window._sigmaSuppressNextSortClickUntil = Date.now() + 350;
                     syncColumns(evt, 'table-construction-bids');
                     persistColumns('bids-header-row');
                 }
             }); 
             initColumnResizersAndDensity(document.getElementById('table-construction-bids'), 'construction_bids');
+            decoratePrimarySortableHeaders(bHeader, 'construction_bids');
             SigmaGridEngine.refreshColumnMenuBadges('bids-col-form', 'construction_bids');
             SigmaGridEngine.syncNavigationLinksCols('construction_bids', '');
         }
@@ -5141,7 +5224,8 @@
                 { sel: '#table-workforce-payroll', id: 'workforce_payroll' },
                 { sel: '#table-workforce-training', id: 'workforce_training' },
                 { sel: '#table-dispatch-workorders', id: 'dispatch_workorders' },
-                { sel: '#view-safety table.sigma-table', id: 'safety_incidents' }
+                { sel: '#view-safety table.sigma-table', id: 'safety_incidents' },
+                { sel: '#view-accounting table', id: 'accounting_ledger' }
             ];
 
             const parseCellSortValue = (cellText) => {
@@ -5181,23 +5265,29 @@
                         if (!th.getAttribute('onclick')) {
                             th.style.cursor = 'pointer';
                             th.style.userSelect = 'none';
-                            th.title = 'Click to sort column • Drag to reorder';
+                            th.title = 'Click to sort column (Newest to Oldest first for dates) • Drag to reorder';
                             th.addEventListener('click', (e) => {
+                                if (Date.now() < (window._sigmaSuppressNextSortClickUntil || 0)) return;
                                 if (e.target.classList.contains('sigma-col-resizer')) return;
                                 const currentThs = Array.from(headerRow.querySelectorAll('th'));
                                 const colIdx = currentThs.indexOf(th);
                                 if (colIdx < 0) return;
 
-                                const isNumericHeader = /(value|amount|price|pay|rate|score|sqf|sqft|size|date|due|submitted|updated|total|count|hours)/i.test(labelText);
+                                const isNumericOrDateHeader = /(value|amount|price|pay|rate|score|sqf|sqft|size|date|due|deadline|schedule|start|created|next|follow|submitted|updated|total|count|hours|balance)/i.test(labelText);
+                                const primaryDir = isNumericOrDateHeader ? 'desc' : 'asc';
                                 const prevDir = th.getAttribute('data-sort-dir');
-                                const nextDir = prevDir ? (prevDir === 'asc' ? 'desc' : 'asc') : (isNumericHeader ? 'desc' : 'asc');
+                                const nextDir = prevDir ? (prevDir === 'asc' ? 'desc' : 'asc') : primaryDir;
 
                                 currentThs.forEach(h => {
                                     h.removeAttribute('data-sort-dir');
+                                    h.style.backgroundColor = '';
+                                    h.style.color = '';
                                     const ind = h.querySelector('.sigma-client-sort-ind');
                                     if (ind) ind.remove();
                                 });
                                 th.setAttribute('data-sort-dir', nextDir);
+                                th.style.backgroundColor = '#eff6ff';
+                                th.style.color = '#1e40af';
                                 const ind = document.createElement('span');
                                 ind.className = 'sigma-client-sort-ind';
                                 ind.style.cssText = 'margin-left:4px; font-size:0.7rem; color:#2563eb; font-weight:800;';
@@ -5219,9 +5309,42 @@
                                         : String(cB.val).localeCompare(String(cA.val), undefined, { numeric: true });
                                 });
                                 rows.forEach(r => tbody.appendChild(r));
+                                try {
+                                    const colKey = th.getAttribute('data-col');
+                                    localStorage.setItem(`sigma_grid_sort_${gridId}`, JSON.stringify({ col: colKey, dir: nextDir }));
+                                } catch (err) {}
                             });
                         }
                     });
+
+                    // Restore saved column order for secondary tables if present in localStorage
+                    try {
+                        const savedOrderRaw = localStorage.getItem(`sigma_grid_order_${gridId}`);
+                        if (savedOrderRaw) {
+                            const savedOrder = JSON.parse(savedOrderRaw);
+                            if (Array.isArray(savedOrder) && savedOrder.length > 1) {
+                                const currentThs = Array.from(headerRow.querySelectorAll('th'));
+                                const colMap = new Map(currentThs.map((h, i) => [h.getAttribute('data-col'), i]));
+                                const newIndices = [];
+                                savedOrder.forEach(colKey => {
+                                    if (colMap.has(colKey)) {
+                                        newIndices.push(colMap.get(colKey));
+                                        colMap.delete(colKey);
+                                    }
+                                });
+                                colMap.forEach(idx => newIndices.push(idx));
+                                if (newIndices.length === currentThs.length && newIndices.some((v, i) => v !== i)) {
+                                    newIndices.forEach(idx => headerRow.appendChild(currentThs[idx]));
+                                    Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+                                        if (row.children.length === currentThs.length) {
+                                            const cells = Array.from(row.children);
+                                            newIndices.forEach(idx => row.appendChild(cells[idx]));
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    } catch (err) {}
 
                     if (typeof Sortable !== 'undefined') {
                         new Sortable(headerRow, {
@@ -5230,7 +5353,9 @@
                             delayOnTouchOnly: true,
                             filter: '.no-drag, .sigma-col-resizer',
                             preventOnFilter: false,
+                            onStart: () => { window._sigmaSuppressNextSortClickUntil = Date.now() + 1000; },
                             onEnd: (evt) => {
+                                window._sigmaSuppressNextSortClickUntil = Date.now() + 350;
                                 syncColumns(evt, table);
                                 const colsArr = Array.from(headerRow.querySelectorAll('th'))
                                     .map(h => h.getAttribute('data-col'))

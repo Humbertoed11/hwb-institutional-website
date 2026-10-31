@@ -19,18 +19,35 @@ _MAX_CACHE_SIZE = 1024
 
 def calculate_hash_embedding(text: str) -> List[float]:
     """
-    Deterministic mathematical fallback projection into 1536 dimensions.
-    Guarantees 100% uptime if offline, rate-limited, or API key unavailable.
+    SEC-13 Layer 17 (@apalomeque.dev): Locality-Sensitive Token & Trigram Projection
+    into 1536 dimensions. Preserves semantic/lexical cosine similarity when offline
+    or rate-limited, unlike a flat whole-string SHA-256 hash.
     """
+    import math
+    import re
+
     embedding = [0.0] * 1536
-    if not text:
+    if not text or not text.strip():
         return embedding
-    sha = hashlib.sha256(text.encode("utf-8")).digest()
-    for i in range(1536):
-        byte_val = sha[i % len(sha)]
-        val = (byte_val - 128) / 128.0
-        embedding[i] = round(val, 6)
-    return embedding
+
+    clean = re.sub(r"\s+", " ", text.lower()).strip()
+    tokens = re.findall(r"[a-z0-9]{2,}", clean)
+    trigrams = [clean[i:i + 3] for i in range(max(0, len(clean) - 2))]
+    features = tokens * 2 + trigrams
+    if not features:
+        features = [clean]
+
+    for feat in features:
+        digest = hashlib.sha256(feat.encode("utf-8")).digest()
+        idx1 = int.from_bytes(digest[0:2], "big") % 1536
+        idx2 = int.from_bytes(digest[2:4], "big") % 1536
+        sign1 = 1.0 if (digest[4] & 1) == 0 else -1.0
+        sign2 = 1.0 if (digest[5] & 1) == 0 else -1.0
+        embedding[idx1] += sign1
+        embedding[idx2] += sign2 * 0.5
+
+    norm = math.sqrt(sum(v * v for v in embedding)) or 1.0
+    return [round(v / norm, 6) for v in embedding]
 
 
 def get_embedding(text: str) -> List[float]:

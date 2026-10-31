@@ -1712,6 +1712,103 @@ def subcontractor_onboarding_renew(token: str):
             conn.close()
 
 
+@public_bp.route('/onboard/subcontractor/<token>/download/<doc_type>', methods=['GET'], endpoint='subcontractor_onboarding_download_doc')
+def subcontractor_onboarding_download_doc(token: str, doc_type: str):
+    """
+    Token-authenticated self-service download of a subcontractor's recorded compliance documents
+    (Signed MSA & TX DWC-83 PDF, Signed IRS Form W-9 PDF, or Uploaded COI PDF) from the
+    Encrypted PostgreSQL Document Vault ("SubcontractorDocuments").
+    """
+    import io
+    from flask import send_file
+    from core.services.database import get_db
+    from core.services.security_logger import log_security_event
+    from database.schema_engine import ensure_subcontractor_onboarding_schema
+    from core.services.subcontractor_doc_extractor import retrieve_subcontractor_document_vault
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_subcontractor_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "SubcontractorPartners" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            sub = dict(row)
+            if _is_onboarding_token_expired(sub) and not sub.get('msa_signed'):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired. Please renew your link first.',
+                }), 410
+
+            sub_id = sub['id']
+            dt_low = (doc_type or '').strip().lower()
+            if dt_low == 'w9':
+                file_key = sub.get('w9_file_url')
+                dl_tag = 'W9'
+            elif dt_low in ('msa', 'dwc83', 'dwc'):
+                file_key = sub.get('msa_file_url') or sub.get('dwc83_file_url')
+                dl_tag = 'MSA_DWC83'
+                dt_low = 'msa'
+            elif dt_low == 'coi':
+                file_key = sub.get('coi_file_url')
+                dl_tag = 'COI'
+            else:
+                return jsonify({'status': 'error', 'message': 'Unsupported document type.'}), 400
+
+            vault_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vault', 'hr_documents'))
+            vault_doc = retrieve_subcontractor_document_vault(
+                conn=conn,
+                subcontractor_id=sub_id,
+                doc_type=dt_low,
+                file_key=file_key,
+                vault_dir=vault_dir,
+            )
+
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='SUBCONTRACTOR_PORTAL_DOC_DOWNLOAD',
+                severity='INFO',
+                details={
+                    'subcontractor_id': sub_id,
+                    'company_name': sub.get('company_name'),
+                    'doc_type': dt_low,
+                    'file_key': file_key,
+                },
+            )
+
+            safe_co = re.sub(r'[^A-Za-z0-9_-]+', '_', str(sub.get('company_name') or f'SUB_{sub_id}')).strip('_')
+            if vault_doc and vault_doc.get('bytes'):
+                ext = os.path.splitext(vault_doc.get('file_key') or file_key or '.pdf')[1] or '.pdf'
+                dl_name = f"{safe_co}_{dl_tag}_v{vault_doc.get('version_number', 1)}{ext}"
+                resp = send_file(
+                    io.BytesIO(vault_doc['bytes']),
+                    mimetype=vault_doc.get('mime_type') or 'application/pdf',
+                    as_attachment=True,
+                    download_name=dl_name,
+                )
+                resp.headers['X-Sigma-Vault-SHA256'] = vault_doc.get('sha256_checksum') or ''
+                resp.headers['X-Sigma-Vault-Verified'] = 'true' if vault_doc.get('checksum_verified') else 'false'
+                resp.headers['X-Sigma-Vault-Version'] = str(vault_doc.get('version_number', 1))
+                return resp
+
+            if file_key:
+                disk_path = os.path.join(vault_dir, file_key)
+                if os.path.exists(disk_path):
+                    ext = os.path.splitext(file_key)[1] or '.pdf'
+                    return send_file(
+                        disk_path,
+                        as_attachment=True,
+                        download_name=f"{safe_co}_{dl_tag}{ext}",
+                    )
+
+            return jsonify({'status': 'error', 'message': f'No recorded {dl_tag} document found on file yet.'}), 404
+    finally:
+        if conn:
+            conn.close()
+
+
 @public_bp.route('/onboard/subcontractor/<token>/extract-document', methods=['POST'], endpoint='subcontractor_onboarding_extract')
 def subcontractor_onboarding_extract(token: str):
     """
@@ -1751,6 +1848,15 @@ def subcontractor_onboarding_extract(token: str):
     raw_bytes = f_obj.read()
     if not raw_bytes:
         return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
+
+    from core.security import inspect_and_sanitize_file_upload
+    airlock = inspect_and_sanitize_file_upload(f_obj.filename, raw_bytes)
+    if not airlock.get('allowed'):
+        return jsonify({
+            'status': 'error',
+            'code': 'SEC11_FILE_AIRLOCK_REJECTED',
+            'message': f"Security check blocked file upload: {airlock.get('rejection_reason')}",
+        }), 400
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -1859,7 +1965,44 @@ def subcontractor_onboarding_extract(token: str):
                         sub_id,
                     ),
                 )
+                if already_signed:
+                    cur.execute(
+                        '''
+                        INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
+                        VALUES (%s, 'Subcontractor', 'Deferred COI Uploaded', %s, CURRENT_TIMESTAMP);
+                        ''',
+                        (
+                            sub_id,
+                            f"1099 Partner {partner.get('company_name')} (SUB-#{int(sub_id):04d}) uploaded deferred Certificate of Insurance (COI: {extracted.get('coi_carrier') or 'On File'}) via receipt portal. Stage advanced to Docs Under Review.",
+                        ),
+                    )
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+            if tag == 'COI' and partner.get('msa_signed'):
+                try:
+                    from core.services.notification_service import send_subcontractor_onboarding_completed_notifications
+                    send_subcontractor_onboarding_completed_notifications({
+                        'partner_id': sub_id,
+                        'company_name': partner.get('company_name'),
+                        'contact_name': partner.get('contact_name'),
+                        'email': partner.get('email'),
+                        'phone': partner.get('phone'),
+                        'street_address': partner.get('street_address'),
+                        'city': partner.get('city'),
+                        'state': partner.get('state'),
+                        'zip_code': partner.get('zip_code'),
+                        'tax_classification': partner.get('tax_classification'),
+                        'coi_status': 'File Uploaded (Review)',
+                        'onboarding_status': 'Docs Under Review',
+                        'msa_signer_name': partner.get('msa_signer_name') or partner.get('contact_name'),
+                        'onboarding_token': token.strip(),
+                    })
+                except Exception as notify_err:
+                    current_app.logger.warning(f"[DEFERRED_COI_NOTIFY_WARN] {notify_err}")
             return jsonify({
                 'status': 'success',
                 'doc_type': tag,
@@ -1868,6 +2011,7 @@ def subcontractor_onboarding_extract(token: str):
                 'vault_receipt': vault_receipt,
                 'onboarding_status': 'Docs Under Review' if (tag == 'COI' and partner.get('msa_signed')) else partner.get('onboarding_status'),
                 'coi_status': 'File Uploaded (Review)' if tag == 'COI' else partner.get('coi_status'),
+                'download_url': f"/onboard/subcontractor/{token.strip()}/download/{'w9' if tag == 'W9' else 'coi'}",
                 'rate_limit_remaining': remaining_quota,
             })
     except Exception as err:
@@ -1938,10 +2082,14 @@ def subcontractor_onboarding_submit(token: str):
             coi_ext_data = {}
 
             # Handle direct file attachments if not already uploaded via AJAX
+            from core.security import inspect_and_sanitize_file_upload
             if 'w9_file' in request.files and request.files['w9_file'].filename:
                 wf = request.files['w9_file']
                 w_bytes = wf.read()
                 if w_bytes:
+                    w_airlock = inspect_and_sanitize_file_upload(wf.filename, w_bytes)
+                    if not w_airlock.get('allowed'):
+                        return jsonify({'status': 'error', 'message': f"W-9 rejected by security airlock: {w_airlock.get('rejection_reason')}"}), 400
                     clean_wfn = secure_filename(wf.filename)
                     w9_file_url = f"sub_{sub_id}_W9_{int(dt_cls.now().timestamp())}_{clean_wfn}"
                     deposit_subcontractor_document_vault(
@@ -1964,6 +2112,9 @@ def subcontractor_onboarding_submit(token: str):
                 cf = request.files['coi_file']
                 c_bytes = cf.read()
                 if c_bytes:
+                    c_airlock = inspect_and_sanitize_file_upload(cf.filename, c_bytes)
+                    if not c_airlock.get('allowed'):
+                        return jsonify({'status': 'error', 'message': f"COI rejected by security airlock: {c_airlock.get('rejection_reason')}"}), 400
                     clean_cfn = secure_filename(cf.filename)
                     coi_file_url = f"sub_{sub_id}_COI_{int(dt_cls.now().timestamp())}_{clean_cfn}"
                     deposit_subcontractor_document_vault(
@@ -2239,6 +2390,11 @@ def subcontractor_onboarding_submit(token: str):
                 ),
             )
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
 
             notify_payload = {
                 'partner_id': sub_id,
@@ -2254,6 +2410,7 @@ def subcontractor_onboarding_submit(token: str):
                 'coi_status': new_coi_status,
                 'onboarding_status': new_onboarding_status,
                 'msa_signer_name': msa_signer_name,
+                'onboarding_token': token.strip(),
             }
             try:
                 from core.services.notification_service import send_subcontractor_onboarding_completed_notifications
@@ -2269,14 +2426,29 @@ def subcontractor_onboarding_submit(token: str):
                 'legal_entity_name': legal_entity_name,
                 'tax_classification': tax_classification,
                 'masked_tin': ein_or_ssn,
+                'street_address': street_address,
+                'city': city,
+                'state': state,
+                'zip_code': zip_code,
+                'contact_name': contact_name,
+                'email': email,
+                'phone': phone,
+                'coi_carrier': coi_carrier or '',
+                'coi_policy_number': coi_policy_number or '',
+                'coi_expiration_date': str(coi_expiration_date or ''),
                 'msa_signer_name': msa_signer_name,
                 'msa_signer_title': msa_signer_title,
                 'receipt_timestamp': signed_at_display,
                 'w9_status': 'Verified',
                 'onboarding_status': new_onboarding_status,
                 'coi_status': new_coi_status,
+                'has_coi_uploaded': bool(coi_file_url),
+                'coi_uploaded': bool(coi_file_url),
                 'msa_certificate_file': msa_pdf_filename,
                 'msa_signature_hash': sig_hash,
+                'w9_download_url': f"/onboard/subcontractor/{token.strip()}/download/w9",
+                'msa_download_url': f"/onboard/subcontractor/{token.strip()}/download/msa",
+                'coi_download_url': f"/onboard/subcontractor/{token.strip()}/download/coi" if coi_file_url else '',
                 'message': completion_msg,
             })
     except Exception as err:
@@ -2296,7 +2468,7 @@ def employee_onboarding_portal(token: str):
     """
     Renders the pre-filled 4-Stage Self-Service W-2 Employee Onboarding Portal
     (/onboard/employee/<token>) with Form W-4, Form I-9, State ID, Direct Deposit
-    auto-extraction, and ISO 9001 Clause 7.2 Job Description e-signature.
+    auto-extraction, and Job Description e-signature.
     """
     from database.schema_engine import ensure_employee_onboarding_schema
     conn = get_db(current_app.config['DATABASE_URL'])
@@ -2321,6 +2493,9 @@ def employee_onboarding_portal(token: str):
             if not emp:
                 return render_template('404.html'), 404
 
+            emp_dict = dict(emp)
+            token_expired = _is_onboarding_token_expired(emp_dict)
+
             cur.execute(
                 '''
                 SELECT id, document_type, file_name, version_number, sha256_checksum, created_at
@@ -2337,7 +2512,137 @@ def employee_onboarding_portal(token: str):
             employee=emp,
             current_docs=current_docs,
             token=token.strip(),
+            token_expired=token_expired,
         )
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/onboard/employee/<token>/renew', methods=['POST'], endpoint='employee_onboarding_renew')
+@public_bp.route('/onboard/employee/<token>/renew-link', methods=['POST'], endpoint='employee_onboarding_renew_link')
+def employee_onboarding_renew(token: str):
+    """Extends an expired W-2 employee onboarding magic link by 30 days and emails a fresh link."""
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.notification_service import build_canonical_portal_url, send_employee_onboarding_invite_email
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            emp = dict(row)
+            emp_id = emp['id']
+            cur.execute(
+                '''
+                UPDATE "Employees"
+                SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+                ''',
+                (emp_id,),
+            )
+            conn.commit()
+            canonical_url = build_canonical_portal_url(f"/onboard/employee/{token.strip()}", "/work-with-us")
+            if emp.get('email'):
+                try:
+                    send_employee_onboarding_invite_email({
+                        **emp,
+                        'onboarding_url': canonical_url,
+                    })
+                except Exception:
+                    pass
+            return jsonify({
+                'status': 'success',
+                'onboarding_url': canonical_url,
+                'message': 'Your W-2 onboarding link has been renewed for 30 days.',
+            })
+    finally:
+        if conn:
+            conn.close()
+
+
+@public_bp.route('/onboard/employee/<token>/download-packet', methods=['GET'], endpoint='employee_onboarding_download_packet')
+@public_bp.route('/onboard/employee/<token>/download/<int:doc_id>', methods=['GET'], endpoint='employee_onboarding_download_doc')
+def employee_onboarding_download_packet(token: str, doc_id: int = None):
+    """
+    Token-authenticated self-service download of a W-2 employee's signed Onboarding & Job Description
+    PDF packet (or any of their own uploaded documents) from "EmployeeDocuments".
+    """
+    import io
+    from flask import send_file
+    from core.services.security_logger import log_security_event
+    from database.schema_engine import ensure_employee_onboarding_schema
+    from core.services.employee_doc_extractor import retrieve_employee_document_vault
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        ensure_employee_onboarding_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            emp = dict(row)
+            if _is_onboarding_token_expired(emp) and not emp.get('onboarding_packet_signed'):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired. Please renew your link first.',
+                }), 410
+
+            emp_id = emp['id']
+            target_doc_id = doc_id
+            if not target_doc_id:
+                cur.execute(
+                    '''
+                    SELECT id FROM "EmployeeDocuments"
+                    WHERE employee_id = %s
+                      AND (document_type ILIKE '%%W-2 Packet%%' OR document_type ILIKE '%%Job Description%%')
+                    ORDER BY is_current DESC, created_at DESC
+                    LIMIT 1;
+                    ''',
+                    (emp_id,),
+                )
+                doc_row = cur.fetchone()
+                if doc_row:
+                    target_doc_id = doc_row['id']
+
+            if not target_doc_id:
+                return jsonify({'status': 'error', 'message': 'No signed W-2 packet found on file yet.'}), 404
+
+            cur.execute('SELECT employee_id FROM "EmployeeDocuments" WHERE id = %s LIMIT 1;', (target_doc_id,))
+            owner_row = cur.fetchone()
+            if not owner_row or int(owner_row['employee_id']) != int(emp_id):
+                return jsonify({'status': 'error', 'message': 'Document not found for this employee.'}), 404
+
+            doc_bundle = retrieve_employee_document_vault(conn, target_doc_id)
+            if not doc_bundle:
+                return jsonify({'status': 'error', 'message': 'Document payload not found.'}), 404
+
+            log_security_event(
+                event_category='DATA_LIFECYCLE',
+                event_action='EMPLOYEE_PORTAL_DOC_DOWNLOAD',
+                severity='INFO',
+                details={
+                    'employee_id': emp_id,
+                    'employee_number': emp.get('employee_number'),
+                    'document_id': target_doc_id,
+                    'document_type': doc_bundle.get('document_type'),
+                },
+            )
+
+            resp = send_file(
+                io.BytesIO(doc_bundle['raw_bytes']),
+                mimetype=doc_bundle.get('mime_type') or 'application/pdf',
+                as_attachment=True,
+                download_name=doc_bundle.get('file_name') or f"{emp.get('employee_number', 'W2')}_Packet.pdf",
+            )
+            resp.headers['X-Sigma-Vault-SHA256'] = doc_bundle.get('sha256_checksum') or ''
+            return resp
     finally:
         if conn:
             conn.close()
@@ -2366,6 +2671,15 @@ def api_employee_portal_upload_doc(token: str):
     if not raw_bytes:
         return jsonify({'status': 'error', 'message': 'Uploaded file is empty.'}), 400
 
+    from core.security import inspect_and_sanitize_file_upload
+    airlock = inspect_and_sanitize_file_upload(f_obj.filename, raw_bytes)
+    if not airlock.get('allowed'):
+        return jsonify({
+            'status': 'error',
+            'code': 'SEC11_FILE_AIRLOCK_REJECTED',
+            'message': f"Security check blocked file upload: {airlock.get('rejection_reason')}",
+        }), 400
+
     clean_fn = secure_filename(f_obj.filename)
     mime_type = f_obj.mimetype or 'application/pdf'
     signer_ip = extract_client_ip()
@@ -2378,6 +2692,12 @@ def api_employee_portal_upload_doc(token: str):
             emp = cur.fetchone()
             if not emp:
                 return jsonify({'status': 'error', 'message': 'Invalid or expired onboarding token.'}), 404
+            if _is_onboarding_token_expired(dict(emp)):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired after 30 days. Click Renew Link to continue.',
+                }), 410
 
             emp_id = emp['id']
             extracted = extract_employee_document_auto(doc_type, raw_bytes, clean_fn, mime_type)
@@ -2396,6 +2716,11 @@ def api_employee_portal_upload_doc(token: str):
                 uploaded_ip=signer_ip,
                 extracted_metadata=extracted,
             )
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
 
             safe_extracted = {
                 k: v for k, v in extracted.items()
@@ -2405,12 +2730,14 @@ def api_employee_portal_upload_doc(token: str):
                 'status': 'success',
                 'document_id': vault_receipt['document_id'],
                 'document_type': doc_type,
+                'file_name': clean_fn,
                 'version_number': vault_receipt['version_number'],
                 'sha256_checksum': vault_receipt['sha256_checksum'],
+                'download_url': f"/onboard/employee/{token.strip()}/download/{vault_receipt['document_id']}",
                 'extracted_fields': safe_extracted,
                 'extracted': safe_extracted,
                 'auto_populated_fields': updated_fields,
-                'message': f"{doc_type} encrypted in Vault (v{vault_receipt['version_number']})."
+                'message': f"{doc_type} saved to your personnel file (v{vault_receipt['version_number']})."
             })
     finally:
         if conn:
@@ -2423,12 +2750,13 @@ def api_employee_portal_complete(token: str):
     Finalizes the W-2 Employee Self-Service Onboarding Packet:
     1. Saves verified address, emergency contact, W-4 withholding, State ID, I-9, and Direct Deposit.
     2. Encrypts SSN and Direct Deposit Account with AES-256 Fernet if provided.
-    3. Generates locked ReportLab PDF for ISO 9001 Clause 7.2 Job Description & W-2 Packet
+    3. Generates locked ReportLab PDF for Job Description & W-2 Packet
        with SHA-256 cryptographic signature certificate and stores it in EmployeeDocuments.
     """
     import hashlib
-    from core.security import encrypt_pii, mask_account
+    from core.security import encrypt_pii, mask_account, mask_ssn
     from core.services.sanitizer import clean_zip, clean_routing_number
+    from core.services.security_logger import log_security_event
     from database.schema_engine import ensure_employee_onboarding_schema
     from core.services.employee_doc_extractor import (
         deposit_employee_document_vault,
@@ -2446,12 +2774,19 @@ def api_employee_portal_complete(token: str):
             emp = cur.fetchone()
             if not emp:
                 return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
+            if _is_onboarding_token_expired(dict(emp)):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'TOKEN_EXPIRED',
+                    'error_code': 'TOKEN_EXPIRED',
+                    'message': 'This onboarding link has expired after 30 days. Please renew your link to submit.',
+                }), 410
 
             emp_id = emp['id']
             first_name = (data.get('first_name') or emp.get('first_name') or '').strip()
             last_name = (data.get('last_name') or emp.get('last_name') or '').strip()
             phone = clean_phone(data.get('phone') or emp.get('phone') or '')
-            email = clean_email(data.get('email') or emp.get('email') or '')
+            email = clean_email(data.get('email') or emp.get('email') or '', allow_internal=True) or (data.get('email') or emp.get('email') or '').strip()
             address_street = (data.get('address_street') or emp.get('address_street') or '').strip()
             address_city = clean_city(data.get('address_city') or emp.get('address_city') or '')
             address_state = (data.get('address_state') or emp.get('address_state') or 'TX').strip().upper()[:2]
@@ -2509,6 +2844,7 @@ def api_employee_portal_complete(token: str):
                 job_pos = cur.fetchone()
 
             now_iso = dt_cls.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+            signed_at_display = dt_cls.now(timezone.utc).strftime('%m/%d/%Y %I:%M %p UTC')
             sig_seed = f"{emp_id}:{emp.get('employee_number')}:{signer_name}:{now_iso}:{signer_ip}"
             sig_hash = hashlib.sha256(sig_seed.encode('utf-8')).hexdigest()
 
@@ -2523,11 +2859,13 @@ def api_employee_portal_complete(token: str):
                 'address_state': address_state,
                 'address_zip': address_zip,
                 'w4_filing_status': w4_filing_status,
+                'w4_step2_multiple_jobs': w4_step2,
                 'w4_step3_dependents': w4_step3,
                 'w4_step4c_extra_withholding': w4_step4c,
                 'ssn_last_four': ssn_last_four,
                 'state_id_number': state_id_number,
                 'state_id_expiration': state_id_exp,
+                'i9_citizenship_status': i9_citizenship,
                 'direct_deposit_bank': dd_bank,
                 'direct_deposit_account_last_four': dd_acc_last_four,
             })
@@ -2608,6 +2946,36 @@ def api_employee_portal_complete(token: str):
                 ),
             )
 
+            disclosure_text_w2 = (
+                'W-2 Employee Onboarding, IRS Form W-4 Withholding, Form I-9 Attestation, '
+                'Direct Deposit Authorization & Official Job Description Electronic Signature'
+            )
+            log_security_event(
+                event_category='CONSENT_LEDGER',
+                event_action='W2_EMPLOYEE_ONBOARDING_SIGNED',
+                severity='INFO',
+                ip_address=signer_ip,
+                user_agent=request.headers.get('User-Agent', ''),
+                endpoint=request.path,
+                http_method='POST',
+                status_code=200,
+                details={
+                    'form_name': 'w2_employee_onboarding_portal',
+                    'email': email,
+                    'phone': phone,
+                    'employee_id': emp_id,
+                    'employee_number': emp_num,
+                    'signer_name': signer_name,
+                    'signature_hash': sig_hash,
+                    'document_id': vault_receipt['document_id'],
+                    'esign_consent': True,
+                    'terms_privacy_consent': True,
+                    'w4_direct_deposit_attestation': True,
+                    'policy_version': 'TERMS-v2.4.0|PRIVACY-v2.5.0',
+                    'disclosure_sha256': hashlib.sha256(disclosure_text_w2.encode('utf-8')).hexdigest(),
+                },
+            )
+
             cur.execute(
                 '''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description, timestamp)
@@ -2615,10 +2983,40 @@ def api_employee_portal_complete(token: str):
                 ''',
                 (
                     emp_id,
-                    f"W-2 Employee {first_name} {last_name} ({emp_num}) completed self-service onboarding & signed ISO 9001 Job Description PDF (SHA-256: {sig_hash[:12]}...).",
+                    f"W-2 Employee {first_name} {last_name} ({emp_num}) completed self-service onboarding & signed Job Description PDF (SHA-256: {sig_hash[:12]}...).",
                 ),
             )
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
+
+            try:
+                from core.services.notification_service import send_employee_onboarding_completed_notifications
+                send_employee_onboarding_completed_notifications({
+                    'id': emp_id,
+                    'employee_number': emp_num,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'email': email,
+                    'phone': phone,
+                    'primary_role': emp.get('primary_role') or 'Commercial Cleaning Technician',
+                    'address_street': address_street,
+                    'address_city': address_city,
+                    'address_state': address_state,
+                    'address_zip': address_zip,
+                    'w4_filing_status': w4_filing_status,
+                    'direct_deposit_bank': dd_bank,
+                    'signer_name': signer_name,
+                    'onboarding_token': token.strip(),
+                })
+            except Exception as notify_err:
+                current_app.logger.warning(f"[W2_ONBOARD_NOTIFY_WARN] {notify_err}")
+
+            ssn_masked_out = mask_ssn(last_four=ssn_last_four) if ssn_last_four else 'Pending SSN'
+            dd_masked_out = mask_account(last_four=dd_acc_last_four) if dd_acc_last_four else (dd_acc_masked or 'Not Provided')
 
             return jsonify({
                 'status': 'success',
@@ -2626,10 +3024,23 @@ def api_employee_portal_complete(token: str):
                 'employee_number': emp_num,
                 'document_id': vault_receipt['document_id'],
                 'signer_name': signer_name,
-                'receipt_timestamp': now_iso,
+                'receipt_timestamp': signed_at_display,
                 'onboarding_status': 'Active',
                 'signature_hash': sig_hash,
-                'message': f"Welcome aboard, {first_name}! Your W-2 onboarding packet and signed Job Description have been securely encrypted under {emp_num}."
+                'address_street': address_street,
+                'address_city': address_city,
+                'address_state': address_state,
+                'address_zip': address_zip,
+                'emergency_contact_name': emergency_name,
+                'emergency_contact_phone': emergency_phone,
+                'w4_filing_status': w4_filing_status,
+                'w4_step2_multiple_jobs': w4_step2,
+                'ssn_masked': ssn_masked_out,
+                'direct_deposit_bank': dd_bank or 'Standard Payroll',
+                'direct_deposit_account_masked': dd_masked_out,
+                'i9_citizenship_status': i9_citizenship,
+                'download_packet_url': f"/onboard/employee/{token.strip()}/download-packet",
+                'message': f"Welcome aboard, {first_name}! Your W-2 onboarding packet and signed Job Description have been recorded under {emp_num}."
             })
     except Exception as err:
         conn.rollback()

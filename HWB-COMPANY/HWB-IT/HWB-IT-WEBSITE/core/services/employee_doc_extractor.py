@@ -94,6 +94,13 @@ def _extract_pdf_text_and_fields(file_bytes: bytes) -> Tuple[str, Dict[str, str]
                 text_chunks.append(page_txt)
     except Exception as exc:
         print(f"[W2_DOC_EXTRACTOR] PDF parse notice: {exc}", flush=True)
+    if not text_chunks:
+        try:
+            decoded_fallback = file_bytes.decode("utf-8", errors="ignore")
+            if decoded_fallback.strip():
+                text_chunks.append(decoded_fallback)
+        except Exception:
+            pass
     return "\n".join(text_chunks), form_fields
 
 
@@ -794,6 +801,16 @@ def deposit_employee_document_vault(
        versions `is_current = FALSE`.
     """
     from database.schema_engine import ensure_employee_onboarding_schema
+    from core.security import inspect_and_sanitize_file_upload
+
+    airlock_res = inspect_and_sanitize_file_upload(
+        filename=original_filename or "document.pdf",
+        raw_bytes=raw_bytes,
+        allowed_extensions=(".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp"),
+    )
+    if not airlock_res.get("allowed"):
+        raise ValueError(f"SEC-11 File Upload Airlock blocked document: {airlock_res.get('rejection_reason')}")
+
     ensure_employee_onboarding_schema(conn)
 
     sha256_hash = hashlib.sha256(raw_bytes).hexdigest()

@@ -429,8 +429,22 @@ def admin_operations():
     search_q = request.args.get('q', '').strip()
     active_only = request.args.get('active_only') == 'true'
     worked_today = request.args.get('worked_today') == 'true'
-    sort_by = request.args.get('sort')
-    sort_dir = request.args.get('dir', '').upper()
+    raw_sort_arg = (
+        request.args.get('sort')
+        or request.args.get('sort_by')
+        or request.args.get('acc_sort_by')
+        or request.args.get('bid_sort')
+        or ''
+    ).strip()
+    raw_dir_arg = (
+        request.args.get('dir')
+        or request.args.get('sort_dir')
+        or request.args.get('acc_sort_dir')
+        or request.args.get('bid_dir')
+        or ''
+    ).strip().upper()
+    sort_by = raw_sort_arg if raw_sort_arg else None
+    sort_dir = raw_dir_arg
     campaign_filter = request.args.get('campaign_filter', '').strip()
     followup_filter = request.args.get('followup_filter', '').strip().lower()
     today_iso = datetime.date.today().strftime('%Y-%m-%d')
@@ -527,88 +541,114 @@ def admin_operations():
         "WHEN 'Corporate / Multi-Site Chain' THEN 4 "
         "ELSE 5 END"
     )
-    owner_sort_expr = "(SELECT COALESCE(u_sort.full_name, u_sort.username, 'ZZZZ') FROM \"Users\" u_sort WHERE u_sort.id = owner_id)"
+    owner_sort_expr = "(SELECT COALESCE(u_sort.full_name, u_sort.username) FROM \"Users\" u_sort WHERE u_sort.id = owner_id)"
     leads_sort_map = {
-        'company': 'center_name', 'industry': 'industry', 'input_date': 'input_date',
+        'company': "NULLIF(NULLIF(BTRIM(center_name), ''), 'None')",
+        'industry': "NULLIF(NULLIF(BTRIM(industry), ''), 'None')",
+        'input_date': 'input_date',
         'date': default_lead_sort_expr, 'recent': default_lead_sort_expr,
         'updated': 'COALESCE(updated_at, timestamp)',
-        'status': status_sort_expr, 'phone': 'phone', 'email': 'email', 'city': 'city',
-        'state': 'state', 'zip': 'zipcode', 'zipcode': 'zipcode',
-        'sqf': 'sqf', 'capacity': 'capacity', 'value': 'estimated_annual_value',
-        'priority': priority_sort_expr, 'facility': 'facility_type', 'building': 'facility_type',
-        'dm': 'decision_maker', 'contact': 'decision_maker',
-        'address': 'address', 'job_title': 'job_title', 'source': 'lead_source',
-        'frequency': 'traffic_cycle', 'interest': 'service_interest',
-        'next_action': 'next_action_date', 'owner': owner_sort_expr,
-        'activities': 'COALESCE(ga.activity_count, 0)',
+        'status': status_sort_expr,
+        'phone': "NULLIF(NULLIF(BTRIM(phone), ''), 'None')",
+        'email': "NULLIF(NULLIF(BTRIM(email), ''), 'None')",
+        'city': "NULLIF(NULLIF(BTRIM(city), ''), 'None')",
+        'state': "NULLIF(NULLIF(BTRIM(state), ''), 'None')",
+        'zip': "NULLIF(NULLIF(BTRIM(zipcode), ''), 'None')",
+        'zipcode': "NULLIF(NULLIF(BTRIM(zipcode), ''), 'None')",
+        'sqf': 'NULLIF(sqf, 0)',
+        'capacity': 'NULLIF(capacity, 0)',
+        'value': 'NULLIF(estimated_annual_value, 0)',
+        'priority': priority_sort_expr,
+        'facility': "NULLIF(NULLIF(BTRIM(facility_type), ''), 'None')",
+        'building': "NULLIF(NULLIF(BTRIM(facility_type), ''), 'None')",
+        'dm': "NULLIF(NULLIF(BTRIM(decision_maker), ''), 'None')",
+        'contact': "NULLIF(NULLIF(BTRIM(decision_maker), ''), 'None')",
+        'address': "NULLIF(NULLIF(BTRIM(address), ''), 'None')",
+        'job_title': "NULLIF(NULLIF(BTRIM(job_title), ''), 'None')",
+        'source': "NULLIF(NULLIF(BTRIM(lead_source), ''), 'None')",
+        'frequency': "NULLIF(NULLIF(BTRIM(traffic_cycle), ''), 'None')",
+        'interest': "NULLIF(NULLIF(BTRIM(service_interest), ''), 'None')",
+        'next_action': "NULLIF(NULLIF(BTRIM(next_action_date), ''), 'None')",
+        'owner': owner_sort_expr,
+        'activities': 'NULLIF(COALESCE(ga.activity_count, 0), 0)',
         'last_contact': 'ga.last_contact',
         'last_note': "COALESCE(ga.last_note, NULLIF(BTRIM(notes), ''))",
-        'umbrella': 'umbrella_name',
-        'cleaning_model': 'cleaning_delivery_model',
+        'umbrella': "NULLIF(NULLIF(BTRIM(umbrella_name), ''), 'None')",
+        'cleaning_model': "NULLIF(NULLIF(BTRIM(cleaning_delivery_model), ''), 'None')",
         'm_and_a': tier_sort_expr,
-        'ownership': 'ownership_type',
+        'ownership': "NULLIF(NULLIF(BTRIM(ownership_type), ''), 'None')",
         'commercial': 'is_commercial'
     }
+    default_account_sort_expr = 'COALESCE(c.created_at, c.start_date)'
     accounts_sort_map = {
-        'company': 'company_name', 'city': 'city', 'phone': 'phone',
-        'email': 'email', 'revenue': 'annual_revenue', 'status': 'status',
-        'address': 'company_address', 'contact': 'contact_person_name',
-        'facility': 'facility_type', 'building': 'facility_type', 'industry': 'industry',
-        'zip': 'zip', 'state': 'state', 'quote': 'quote_number',
-        'period': 'contract_period', 'cycle': 'contract_period', 'frequency': 'frequency',
-        'start_date': 'start_date', 'terms': 'payment_terms',
-        'sqf': 'cleanable_sqft', 'website': 'website',
-        'rep': '(SELECT COALESCE(u_s.full_name, u_s.username, \'ZZZZ\') FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
-        'owner': '(SELECT COALESCE(u_s.full_name, u_s.username, \'ZZZZ\') FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
-        'activities': 'COALESCE(ga.activity_count, 0)',
+        'company': "NULLIF(BTRIM(c.company_name), '')",
+        'city': "NULLIF(BTRIM(c.city), '')",
+        'phone': "NULLIF(BTRIM(c.phone), '')",
+        'email': "NULLIF(BTRIM(c.email), '')",
+        'revenue': 'NULLIF(c.annual_revenue, 0)',
+        'status': "NULLIF(BTRIM(c.status), '')",
+        'address': "NULLIF(BTRIM(c.company_address), '')",
+        'contact': "NULLIF(BTRIM(c.contact_person_name), '')",
+        'facility': "NULLIF(BTRIM(c.facility_type), '')",
+        'building': "NULLIF(BTRIM(c.facility_type), '')",
+        'industry': "NULLIF(BTRIM(c.industry), '')",
+        'zip': "NULLIF(BTRIM(c.zip), '')",
+        'state': "NULLIF(BTRIM(c.state), '')",
+        'quote': "NULLIF(BTRIM(c.quote_number), '')",
+        'period': "COALESCE(NULLIF(BTRIM(c.contract_period), ''), NULLIF(BTRIM(c.traffic_cycle), ''))",
+        'cycle': "COALESCE(NULLIF(BTRIM(c.traffic_cycle), ''), NULLIF(BTRIM(c.contract_period), ''))",
+        'frequency': "NULLIF(BTRIM(c.frequency), '')",
+        'start_date': 'c.start_date',
+        'date': default_account_sort_expr,
+        'created': 'c.created_at',
+        'terms': "NULLIF(BTRIM(c.payment_terms), '')",
+        'sqf': 'NULLIF(COALESCE(NULLIF(c.sqf, 0), NULLIF(c.cleanable_sqft, 0)), 0)',
+        'sqft': 'NULLIF(COALESCE(NULLIF(c.sqf, 0), NULLIF(c.cleanable_sqft, 0)), 0)',
+        'website': "NULLIF(BTRIM(c.website), '')",
+        'rep': '(SELECT COALESCE(u_s.full_name, u_s.username) FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
+        'owner': '(SELECT COALESCE(u_s.full_name, u_s.username) FROM "Users" u_s WHERE u_s.id = c.assigned_rep_id)',
+        'activities': 'NULLIF(COALESCE(ga.activity_count, 0), 0)',
         'last_contact': 'ga.last_contact',
-        'last_note': 'ga.last_note',
-        'umbrella': 'c.umbrella_name',
-        'cleaning_model': 'c.cleaning_delivery_model'
+        'last_note': "NULLIF(BTRIM(ga.last_note), '')",
+        'umbrella': "NULLIF(BTRIM(c.umbrella_name), '')",
+        'cleaning_model': "NULLIF(BTRIM(c.cleaning_delivery_model), '')"
     }
     bids_sort_map = {
-        'project': 'cb.project_name', 'gc': 'cb.gc_name', 'status': 'cb.status',
-        'due_date': 'cb.bid_due_date', 'sqf': 'cb.cleanable_sqft', 'value': 'cb.estimated_value',
-        'scope': 'cb.scope_phase', 'location': 'cb.city', 'address': 'cb.project_address',
-        'platform': 'cb.platform', 'estimator': 'cb.estimator_name', 'phone': 'cb.estimator_phone',
-        'email': 'cb.estimator_email', 'dates': 'cb.estimated_start_date', 'prequal': 'cb.prequal_status',
-        'special_reqs': 'cb.special_requirements', 'owner': 'cb.assigned_rep_id', 'rep': 'cb.assigned_rep_id',
-        'activities': 'COALESCE(ga.activity_count, 0)',
-        'last_contact': 'ga.last_contact', 'last_note': 'ga.last_note', 'created': 'cb.created_at'
+        'project': "NULLIF(BTRIM(cb.project_name), '')",
+        'gc': "NULLIF(BTRIM(cb.gc_name), '')",
+        'status': "NULLIF(BTRIM(cb.status), '')",
+        'due_date': 'cb.bid_due_date',
+        'sqf': 'NULLIF(cb.cleanable_sqft, 0)',
+        'sqft': 'NULLIF(cb.cleanable_sqft, 0)',
+        'value': 'NULLIF(cb.estimated_value, 0)',
+        'scope': "NULLIF(BTRIM(cb.scope_phase), '')",
+        'location': "NULLIF(BTRIM(cb.city), '')",
+        'address': "NULLIF(BTRIM(cb.project_address), '')",
+        'platform': "NULLIF(BTRIM(cb.platform), '')",
+        'estimator': "NULLIF(BTRIM(cb.estimator_name), '')",
+        'phone': "NULLIF(BTRIM(cb.estimator_phone), '')",
+        'email': "NULLIF(BTRIM(cb.estimator_email), '')",
+        'dates': 'cb.estimated_start_date',
+        'prequal': "NULLIF(BTRIM(cb.prequal_status), '')",
+        'special_reqs': "NULLIF(BTRIM(cb.special_requirements), '')",
+        'owner': '(SELECT COALESCE(u_s.full_name, u_s.username) FROM "Users" u_s WHERE u_s.id = cb.assigned_rep_id)',
+        'rep': '(SELECT COALESCE(u_s.full_name, u_s.username) FROM "Users" u_s WHERE u_s.id = cb.assigned_rep_id)',
+        'activities': 'NULLIF(COALESCE(ga.activity_count, 0), 0)',
+        'last_contact': 'ga.last_contact',
+        'last_note': "NULLIF(BTRIM(ga_last.description), '')",
+        'created': 'cb.created_at'
     }
     inst_sort_map = {
         'solicitation': 'ib.solicitation_number', 'agency': 'ib.agency_name', 'title': 'ib.title',
-        'status': 'ib.status', 'due_date': 'ib.bid_due_date', 'sqf': 'ib.cleanable_sqft',
-        'value': 'ib.hwb_bid_total', 'monthly': 'ib.monthly_base_rate', 'pre_bid': 'ib.pre_bid_datetime',
+        'status': 'ib.status', 'due_date': 'ib.bid_due_date', 'sqf': 'NULLIF(ib.cleanable_sqft, 0)',
+        'value': 'NULLIF(ib.hwb_bid_total, 0)', 'monthly': 'NULLIF(ib.monthly_base_rate, 0)', 'pre_bid': 'ib.pre_bid_datetime',
         'sector': 'ib.sector', 'officer': 'ib.procurement_officer', 'created': 'ib.created_at'
     }
-
-    ib_sort, ib_dir = 'ib.bid_due_date', 'ASC'
-    if active_view == 'leads':
-        l_sort = leads_sort_map.get(sort_by, default_lead_sort_expr)
-        l_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'DESC'
-        a_sort, a_dir = 'company_name', 'ASC'
-        b_sort, b_dir = 'cb.bid_due_date', 'ASC'
-    elif active_view == 'accounts':
-        a_sort = accounts_sort_map.get(sort_by, 'company_name')
-        a_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
-        l_sort, l_dir = 'input_date', 'DESC'
-        b_sort, b_dir = 'cb.bid_due_date', 'ASC'
-    elif active_view in ('construction_bids', 'gc_bids'):
-        b_sort = bids_sort_map.get(sort_by, 'cb.bid_due_date')
-        b_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
-        l_sort, l_dir = 'input_date', 'DESC'
-        a_sort, a_dir = 'company_name', 'ASC'
-    elif active_view == 'institutional_bids':
-        ib_sort = inst_sort_map.get(sort_by, 'ib.bid_due_date')
-        ib_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else 'ASC'
-        l_sort, l_dir = 'input_date', 'DESC'
-        a_sort, a_dir = 'company_name', 'ASC'
-        b_sort, b_dir = 'cb.bid_due_date', 'ASC'
-    else:
-        l_sort, l_dir = 'input_date', 'DESC'
-        a_sort, a_dir = 'company_name', 'ASC'
-        b_sort, b_dir = 'cb.bid_due_date', 'ASC'
+    desc_default_sort_cols = {
+        'value', 'revenue', 'sqf', 'sqft', 'capacity', 'activities', 'last_contact',
+        'input_date', 'created', 'date', 'recent', 'updated', 'monthly',
+        'next_action', 'due_date', 'start_date', 'dates', 'pre_bid'
+    }
 
     conn = get_db(current_app.config['DATABASE_URL'])
     user_grid_state = {}
@@ -617,6 +657,62 @@ def admin_operations():
         user_id_val = getattr(current_user, 'id', None)
         user_role = getattr(current_user, 'role', '')
         user_grid_state = _get_user_grid_state(conn, user_id_val, grid_key)
+
+        # BUG-169: Resolve & persist per-user sort_by / sort_dir across tab switches and page loads
+        if raw_sort_arg in ('default', 'reset'):
+            sort_by = None
+            sort_dir = ''
+            user_grid_state = _save_user_grid_state(
+                conn, user_id_val, getattr(current_user, 'username', ''),
+                getattr(current_user, 'full_name', ''), user_role, grid_key,
+                {'sort_by': '', 'sort_dir': ''}
+            )
+        elif sort_by:
+            default_col_dir = 'DESC' if sort_by.lower() in desc_default_sort_cols else 'ASC'
+            sort_dir = sort_dir if sort_dir in ('ASC', 'DESC') else default_col_dir
+            user_grid_state = _save_user_grid_state(
+                conn, user_id_val, getattr(current_user, 'username', ''),
+                getattr(current_user, 'full_name', ''), user_role, grid_key,
+                {'sort_by': sort_by, 'sort_dir': sort_dir}
+            )
+        else:
+            saved_sort_by = (user_grid_state.get('sort_by') or '').strip()
+            saved_sort_dir = (user_grid_state.get('sort_dir') or '').strip().upper()
+            if saved_sort_by and saved_sort_by not in ('default', 'reset'):
+                sort_by = saved_sort_by
+                default_col_dir = 'DESC' if sort_by.lower() in desc_default_sort_cols else 'ASC'
+                sort_dir = saved_sort_dir if saved_sort_dir in ('ASC', 'DESC') else default_col_dir
+
+        ib_sort, ib_dir = 'ib.bid_due_date', 'DESC'
+        if active_view == 'leads':
+            l_sort = leads_sort_map.get(sort_by, default_lead_sort_expr)
+            default_l_dir = ('DESC' if (not sort_by or sort_by.lower() in desc_default_sort_cols) else 'ASC')
+            l_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else default_l_dir
+            a_sort, a_dir = default_account_sort_expr, 'DESC'
+            b_sort, b_dir = 'cb.bid_due_date', 'DESC'
+        elif active_view == 'accounts':
+            a_sort = accounts_sort_map.get(sort_by, default_account_sort_expr)
+            default_a_dir = ('DESC' if (not sort_by or sort_by.lower() in desc_default_sort_cols) else 'ASC')
+            a_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else default_a_dir
+            l_sort, l_dir = default_lead_sort_expr, 'DESC'
+            b_sort, b_dir = 'cb.bid_due_date', 'DESC'
+        elif active_view in ('construction_bids', 'gc_bids'):
+            b_sort = bids_sort_map.get(sort_by, 'cb.bid_due_date')
+            default_b_dir = ('DESC' if (not sort_by or sort_by.lower() in desc_default_sort_cols) else 'ASC')
+            b_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else default_b_dir
+            l_sort, l_dir = default_lead_sort_expr, 'DESC'
+            a_sort, a_dir = default_account_sort_expr, 'DESC'
+        elif active_view == 'institutional_bids':
+            ib_sort = inst_sort_map.get(sort_by, 'ib.bid_due_date')
+            default_ib_dir = ('DESC' if (not sort_by or sort_by.lower() in desc_default_sort_cols) else 'ASC')
+            ib_dir = sort_dir if sort_dir in ['ASC', 'DESC'] else default_ib_dir
+            l_sort, l_dir = default_lead_sort_expr, 'DESC'
+            a_sort, a_dir = default_account_sort_expr, 'DESC'
+            b_sort, b_dir = 'cb.bid_due_date', 'DESC'
+        else:
+            l_sort, l_dir = default_lead_sort_expr, 'DESC'
+            a_sort, a_dir = default_account_sort_expr, 'DESC'
+            b_sort, b_dir = 'cb.bid_due_date', 'DESC'
 
         if 'cols' in request.args:
             raw_req_cols = (request.args.get('cols') or '').strip()
@@ -733,7 +829,7 @@ def admin_operations():
                             where_clauses.extend(s_clauses)
                             params.extend(s_params)
                         full_where = ("WHERE " + " AND ".join(where_clauses)) if where_clauses else ""
-                        cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir}", tuple(params))
+                        cur.execute(f"{account_sql_base} {full_where} ORDER BY {a_sort} {a_dir} NULLS LAST, c.customer_id DESC", tuple(params))
                         clients = cur.fetchall()
                     else:
                         # Lightweight customer lookup for Workforce/Dispatch select dropdowns
@@ -828,19 +924,19 @@ def admin_operations():
                         if followup_filter == 'overdue':
                             lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) < TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
                             if not sort_by:
-                                l_sort, l_dir = 'next_action_date', 'ASC'
+                                l_sort, l_dir = "NULLIF(NULLIF(BTRIM(next_action_date), ''), 'None')", 'DESC'
                         elif followup_filter == 'today':
                             lead_where_clauses.append("BTRIM(COALESCE(l.next_action_date, '')) = TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
                             if not sort_by:
-                                l_sort, l_dir = 'next_action_date', 'ASC'
+                                l_sort, l_dir = "NULLIF(NULLIF(BTRIM(next_action_date), ''), 'None')", 'DESC'
                         elif followup_filter == 'due':
                             lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) <= TO_CHAR(CURRENT_DATE + INTERVAL '3 days', 'YYYY-MM-DD')")
                             if not sort_by:
-                                l_sort, l_dir = 'next_action_date', 'ASC'
+                                l_sort, l_dir = "NULLIF(NULLIF(BTRIM(next_action_date), ''), 'None')", 'DESC'
                         elif followup_filter in ('upcoming', 'scheduled', 'week'):
                             lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NOT NULL AND BTRIM(l.next_action_date) >= TO_CHAR(CURRENT_DATE, 'YYYY-MM-DD')")
                             if not sort_by:
-                                l_sort, l_dir = 'next_action_date', 'ASC'
+                                l_sort, l_dir = "NULLIF(NULLIF(BTRIM(next_action_date), ''), 'None')", 'DESC'
                         elif followup_filter in ('none', 'missing'):
                             lead_where_clauses.append("NULLIF(BTRIM(COALESCE(l.next_action_date, '')), '') IS NULL")
 
@@ -1061,7 +1157,7 @@ def admin_operations():
                     if active_view in ('construction_bids', 'gc_bids'):
                         total_pages = (bids_count + per_page - 1) // per_page or 1
 
-                    nulls_clause = "NULLS LAST" if b_dir == 'ASC' else "NULLS FIRST"
+                    nulls_clause = "NULLS LAST"
                     cur.execute(f'''
                         SELECT cb.*,
                                COALESCE(ga.activity_count, 0) as activity_count,
@@ -1127,7 +1223,7 @@ def admin_operations():
                     if active_view == 'institutional_bids':
                         total_pages = (inst_bids_count + per_page - 1) // per_page or 1
 
-                    inst_nulls_clause = "NULLS LAST" if ib_dir == 'ASC' else "NULLS FIRST"
+                    inst_nulls_clause = "NULLS LAST"
                     cur.execute(f'''
                         SELECT ib.*,
                                COALESCE(ga.activity_count, 0) as activity_count,
@@ -1668,6 +1764,8 @@ def api_ui_grid_state():
             patch['active_cols'] = [c.strip() for c in default_cols.split(',') if c.strip()]
             patch['custom_configured'] = False
             patch['col_widths'] = {}
+            patch['sort_by'] = ''
+            patch['sort_dir'] = ''
         else:
             if 'active_cols' in payload or 'cols' in payload:
                 raw_cols = payload.get('active_cols') if 'active_cols' in payload else payload.get('cols')

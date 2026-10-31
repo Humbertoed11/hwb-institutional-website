@@ -69,8 +69,10 @@ services:
     image: python:3.12-slim
     container_name: hwb_traffic_director
     restart: always
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     command: python /app/proxy_gateway.py
     volumes:
       - ./scripts/proxy_gateway.py:/app/proxy_gateway.py

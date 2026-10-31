@@ -597,11 +597,17 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             if curr_can_end and next_can_start:
                 tokens_with_and.append(('AND', 'AND'))
 
-    # Recursive-Descent Parser
+    # Recursive-Descent Parser (SEC-13 Fuzz-Hardened with MAX_PARSE_DEPTH = 32)
+    MAX_PARSE_DEPTH = 32
+
     class QueryParser:
         def __init__(self, tok_list):
-            self.tokens = tok_list
+            self.tokens = [
+                (t[0], t[1].replace("\x00", "")) if len(t) > 1 and isinstance(t[1], str) else t
+                for t in (tok_list or [])
+            ]
             self.pos = 0
+            self.depth = 0
 
         def peek(self):
             if self.pos < len(self.tokens):
@@ -650,22 +656,34 @@ def parse_advanced_search(search_q: str, view: str = 'leads') -> Tuple[List[str]
             return left
 
         def parse_not(self):
+            if self.depth >= MAX_PARSE_DEPTH:
+                return None
             tok = self.peek()
             if tok and tok[0] == 'NOT':
                 self.consume()
-                operand = self.parse_not()
+                self.depth += 1
+                try:
+                    operand = self.parse_not()
+                finally:
+                    self.depth -= 1
                 if operand:
                     return ('NOT', operand)
                 return None
             return self.parse_primary()
 
         def parse_primary(self):
+            if self.depth >= MAX_PARSE_DEPTH:
+                return None
             tok = self.peek()
             if not tok:
                 return None
             if tok[0] == 'LPAREN':
                 self.consume()
-                sub = self.parse_or()
+                self.depth += 1
+                try:
+                    sub = self.parse_or()
+                finally:
+                    self.depth -= 1
                 if self.peek() and self.peek()[0] == 'RPAREN':
                     self.consume()
                 return sub

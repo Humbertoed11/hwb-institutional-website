@@ -3327,3 +3327,28 @@ CEO Humberto Dominguez identified that Matt Christou operates a **two-page funne
    - Docks a floating horizontal scrollbar at the bottom edge of the screen (`position: fixed; bottom: 0;`) matched to the exact width and horizontal position of the active overflowing table whenever the table's native bottom scrollbar is below the viewport fold, and automatically hides when the native bottom scrollbar scrolls into view.
 3. **Pillar 3 — Right-Edge Visual Bleed Shadow & Automatic `ResizeObserver` / `MutationObserver` Sync:**
    - Added `.has-right-overflow` inset edge shadow cues, high-contrast 11px enterprise scrollbar thumbs, and automatic `ResizeObserver` + `MutationObserver` + tab-click synchronization (`refreshAllScrollbars()`) across every screen in `HWB-IT-WEBSITE`.
+
+
+## BUG-169: 6-Pillar Enterprise Column Sorting & Newest-First Date Standard Across All Backoffice Tables (`DESC` Newest-to-Oldest Date Default, SQL Column Parity, Universal `NULLS LAST`, 3-State Sort Cycle, Per-User Sort Persistence, & Drag/Resize Click Guard)
+**Detected:** 10/29/2026
+**Status:** **RESOLVED** (10/29/2026 — Verified by `test_45_enterprise_column_sorting_and_newest_first_dates_bug_169` in `scripts/test_web_performance_rack_14.py` `45/45` passing)
+**Symptoms:**
+1. **Date Columns (`next_action`, `due_date`, `start_date`, `dates`, `pre_bid`) Defaulted to Oldest-First (`ASC`) Instead of Newest-to-Oldest (`DESC`):**
+   - `next_action`, `due_date`, `start_date`, `dates`, and `pre_bid` were omitted from `DESC_FIRST_SORT_COLS` in `static/js/backoffice_operations_core.js`, and `blueprints/operations.py` defaulted `followup_filter`, `accounts`, `construction_bids`, and `institutional_bids` to `ASC` instead of `DESC` (Newest Date $\rightarrow$ Older Date).
+2. **Broken SQL Sort Columns in Accounts & Commercial Construction Bids:**
+   - Sorting Accounts (`view=accounts`) by `facility` or `industry` threw `UndefinedColumn` (`facility_type` / `industry` missing on `"Customers"`) and returned `0` accounts; `sqf` sorted by `cleanable_sqft` instead of `COALESCE(NULLIF(c.sqf, 0), NULLIF(c.cleanable_sqft, 0))`; and `cycle` sorted by `contract_period` instead of `COALESCE(NULLIF(BTRIM(c.traffic_cycle), ''), NULLIF(BTRIM(c.contract_period), ''))`.
+   - Sorting Construction Bids (`view=construction_bids`) by `last_note` threw `column ga.last_note does not exist` (the lateral join alias is `ga_last.description`) and returned `0` bids, and `owner`/`rep` sorted by raw integer `cb.assigned_rep_id` instead of rep name.
+3. **`NULLS FIRST` on Descending Sort & `$0`/Blank Rows at Top of Page 1:**
+   - `ConstructionBids` (`line 1064`) and `InstitutionalBids` (`line 1130`) explicitly set `nulls_clause = "NULLS LAST" if dir == 'ASC' else "NULLS FIRST"`, and `Accounts` (`line 736`) omitted `NULLS LAST`, pushing `NULL` rows to the top of Page 1 on `DESC` sorts. In `Leads`, `0` and `'None'` values were not wrapped in `NULLIF`, appearing first on `ASC` sorts.
+4. **Sort State Forgotten on Tab Switch & Accidental Sort Trigger on Drag/Resize:**
+   - `blueprints/operations.py` resolved `sort_by` before loading `user_grid_state` and never persisted or restored `sort_by`/`sort_dir` from `"UserBehavioralProfiles"`.
+   - Releasing the mouse inside a `<th>` after dragging a column header (`SortableJS`) or dragging `.sigma-col-resizer` could fire the inline `onclick="iscSort*(...)"` handler.
+**Solution:**
+1. **Pillar 1 — Universal Newest-to-Oldest (`DESC`) Date Sorting Default (`blueprints/operations.py` & `static/js/backoffice_operations_core.js`):**
+   - Added `'next_action'`, `'due_date'`, `'start_date'`, `'dates'`, `'pre_bid'`, and `'sqft'` to `DESC_FIRST_SORT_COLS` in `static/js/backoffice_operations_core.js` and `desc_default_sort_cols` in `blueprints/operations.py`, and updated `followup_filter`, `accounts`, `construction_bids`, `institutional_bids`, and `upgradeUniversalSecondaryTables()` so all date columns and default table loads sort from **Newest Date to Older Date (`DESC`)** by default.
+2. **Pillar 2 — 100% SQL Sort Column Parity & Schema Healing (`database/schema_engine.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`):**
+   - Added `facility_type` and `industry` to `"Customers"` in `database/schema_engine.py`, fixed `accounts_sort_map` (`facility`, `industry`, `sqf`, `cycle`, `rep`, `activities`) and `bids_sort_map` (`last_note` $\rightarrow$ `NULLIF(BTRIM(ga_last.description), '')`, `owner`/`rep` $\rightarrow$ rep name subquery), and added `activities` and `last_note` columns to `#table-construction-bids`.
+3. **Pillar 3 — Universal `NULLS LAST` & Zero/Blank Normalization (`blueprints/operations.py`):**
+   - Enforced `NULLS LAST` in **both `ASC` and `DESC`** across `Leads`, `Accounts`, `ConstructionBids`, and `InstitutionalBids`, and wrapped numeric columns in `NULLIF(..., 0)` and text columns in `NULLIF(NULLIF(BTRIM(...), ''), 'None')`.
+4. **Pillars 4, 5, & 6 — 3-State Sort Cycle, Per-User Sort Persistence, & Drag/Resize Click Guard (`blueprints/operations.py` & `static/js/backoffice_operations_core.js`):**
+   - Persisted and restored `sort_by` and `sort_dir` in `"UserBehavioralProfiles"` (`_save_user_grid_state`), implemented a 3-click sort cycle (`1st: Primary Dir` $\rightarrow$ `2nd: Reverse Dir` $\rightarrow$ `3rd: Reset Default`) + `SigmaGridEngine.clearSort()` + `.sigma-active-sort-pill` toolbar badge, and added `window._sigmaSuppressNextSortClickUntil` to prevent accidental sort reloads after dragging or resizing columns.
