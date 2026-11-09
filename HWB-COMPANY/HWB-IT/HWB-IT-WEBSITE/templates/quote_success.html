@@ -201,19 +201,30 @@
 <script>
   window.addEventListener('load', function() {
     if (typeof gtag === 'function') {
-      var gadsTarget = window.HWB_GOOGLE_ADS_ID || 'AW-8622428739';
+      var refKey = 'hwb_conv_fired_{{ data.get("reference_code") or "quote" }}';
+      try {
+        if (sessionStorage.getItem(refKey) === '1') {
+          return;
+        }
+        sessionStorage.setItem(refKey, '1');
+      } catch (e) {}
+      var gadsTarget = window.HWB_GOOGLE_ADS_SEND_TO || window.HWB_GOOGLE_ADS_ID || 'AW-8622428739';
+      var rawSqft = parseInt(('{{ data.get("sqft", "0") }}').replace(/[^0-9]/g, ''), 10) || 0;
+      var convValue = rawSqft > 0 ? Math.max(150.00, Math.min(2500.00, Math.round(rawSqft * 0.12 * 100) / 100)) : 150.00;
       gtag('event', 'generate_lead', {
         'event_category': 'Engagement',
         'event_label': '{{ data.get("company", "Commercial Cleaning") | escape }}',
-        'value': 150.00,
-        'currency': 'USD'
+        'value': convValue,
+        'currency': 'USD',
+        'transaction_id': '{{ data.get("reference_code", "") | escape }}'
       });
       gtag('event', 'conversion', {
         'send_to': gadsTarget,
-        'value': 150.00,
-        'currency': 'USD'
+        'value': convValue,
+        'currency': 'USD',
+        'transaction_id': '{{ data.get("reference_code", "") | escape }}'
       });
-      console.log('[GA4 + Google Ads ' + gadsTarget + '] Dispatched generate_lead conversion event.');
+      console.log('[GA4 + Google Ads ' + gadsTarget + '] Dispatched generate_lead conversion event ($' + convValue + ').');
     }
   });
 

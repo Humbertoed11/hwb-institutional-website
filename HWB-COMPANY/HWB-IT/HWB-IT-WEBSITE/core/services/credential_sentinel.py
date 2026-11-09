@@ -244,8 +244,17 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
         "notes": "Configured in environment with billing quota controls"
     })
 
-    # 7. Gemini AI API Key
+    # 7. Gemini AI API Key (with HTTP 402 Prepayment Circuit-Breaker Telemetry)
     gemini_key = os.environ.get("GEMINI_API_KEY")
+    gemini_status = "ACTIVE (Quota & Zero-Cost Fallback Armed)"
+    gemini_notes = "Active with 60-minute HTTP 402 billing circuit breaker & deterministic SQL/Web fallback"
+    try:
+        from core.ai_employee import get_ai_employee
+        if get_ai_employee().is_gemini_billing_depleted():
+            gemini_status = "FALLBACK_ACTIVE (HTTP 402 Zero-Cost Engine)"
+            gemini_notes = "Google AI Studio prepayment credits depleted (HTTP 402); 100% answered via Zero-Cost Local Engine"
+    except Exception:
+        pass
     credentials.append({
         "name": "Gemini AI API Key",
         "service": "Google Gemini AI",
@@ -253,10 +262,10 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
         "configured": bool(gemini_key),
         "expiry_date": "Perpetual",
         "days_remaining": 999,
-        "status": "ACTIVE (Quota Monitored)",
+        "status": gemini_status,
         "badge": "🟢 Valid",
         "action_required": False,
-        "notes": "Active for LLM01 prompt defense & AI guardrails"
+        "notes": gemini_notes
     })
 
     # 8. LinkedIn OAuth Client Secret

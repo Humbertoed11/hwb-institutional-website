@@ -187,11 +187,27 @@ def site_analytics_audit():
         },
         "search_infrastructure": {
             "sitemap_url": "https://www.hwbcleaning.com/sitemap.xml",
-            "sitemap_priority_pages": 11,
+            "sitemap_priority_pages": 39,
+            "city_hubs_monitored": 18,
+            "seo_growth_employee": "Lauri Tells (#11 lauri_tells — 24/7 Autonomous Monitor)",
             "robots_txt_url": "https://www.hwbcleaning.com/robots.txt",
+            "llms_txt_url": "https://www.hwbcleaning.com/llms.txt",
+            "llms_full_txt_url": "https://www.hwbcleaning.com/llms-full.txt",
             "staging_shield": "ACTIVE (X-Robots-Tag: noindex, nofollow on non-production hosts)"
         },
         "internal_analytics": six_sigma_data
+    }), 200
+
+
+@telemetry_bp.route('/api/v1/telemetry/seo-employee')
+def seo_employee_telemetry_endpoint():
+    """Live 24/7 status, GA4 funnel metrics, and keyword radar for Lauri Tells (#11)."""
+    from core.ai_employee.seo_growth_engine import get_lauri_seo_employee
+    lauri = get_lauri_seo_employee()
+    patrol = lauri.run_seo_and_analytics_patrol(force_refresh=True)
+    return jsonify({
+        "status": "ok",
+        **patrol
     }), 200
 
 

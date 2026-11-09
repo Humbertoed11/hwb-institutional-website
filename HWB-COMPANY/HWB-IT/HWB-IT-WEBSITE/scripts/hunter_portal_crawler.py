@@ -396,6 +396,29 @@ def crawl_bonfire_portal(portal_info: Dict[str, str], headless: bool = True) -> 
                     })
 
             browser.close()
+    except ModuleNotFoundError:
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            resp = requests.get(url, timeout=12, headers={"User-Agent": "Mozilla/5.0 (compatible; HWBHunter/2.0)"})
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, "html.parser")
+                for row in soup.select("table tbody tr"):
+                    cells = [c.get_text(" ", strip=True) for c in row.select("td")]
+                    if len(cells) >= 4 and is_custodial_opportunity(cells[2]):
+                        opportunities.append({
+                            "solicitation_number": cells[1] or f"BONFIRE-{abs(hash(cells[2])) % 1000000}",
+                            "title": cells[2],
+                            "agency_name": agency_name,
+                            "region": region,
+                            "portal_name": portal_name,
+                            "status_badge": cells[0],
+                            "close_date_raw": cells[3],
+                            "rfp_url": url,
+                            "scouted_date": datetime.datetime.now().isoformat(),
+                        })
+        except Exception:
+            pass
     except Exception as e:
         print(f"[HUNTER BONFIRE] Error scouting {agency_name}: {e}")
 
@@ -462,6 +485,29 @@ def crawl_ionwave_portal(portal_info: Dict[str, str], headless: bool = True) -> 
                     })
 
             browser.close()
+    except ModuleNotFoundError:
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            resp = requests.get(url, timeout=12, headers={"User-Agent": "Mozilla/5.0 (compatible; HWBHunter/2.0)"})
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, "html.parser")
+                for row in soup.select("tr.rgRow, tr.rgAltRow"):
+                    cells = [c.get_text(" ", strip=True) for c in row.select("td")]
+                    if len(cells) >= 4 and is_custodial_opportunity(cells[2]):
+                        opportunities.append({
+                            "solicitation_number": cells[1] or f"IONWAVE-{abs(hash(cells[2])) % 1000000}",
+                            "title": cells[2],
+                            "agency_name": agency_name,
+                            "region": region,
+                            "portal_name": portal_name,
+                            "status_badge": "Open Sourcing Event",
+                            "close_date_raw": cells[6] if len(cells) > 6 else "",
+                            "rfp_url": url,
+                            "scouted_date": datetime.datetime.now().isoformat(),
+                        })
+        except Exception:
+            pass
     except Exception as e:
         print(f"[HUNTER IONWAVE] Error scouting {agency_name}: {e}")
 

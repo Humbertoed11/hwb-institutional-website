@@ -41,9 +41,11 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
 
     # Digital Visibility & Google Analytics / Search Console (Rack 10)
-    GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-8BX5Q7THYR")
-    GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION")
-    MICROSOFT_CLARITY_ID = os.getenv("MICROSOFT_CLARITY_ID", "q8x3j1k9wm")
+    GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID") or "G-8BX5Q7THYR"
+    GOOGLE_ADS_ID = os.getenv("GOOGLE_ADS_ID") or "AW-8622428739"
+    GOOGLE_ADS_CONVERSION_LABEL = os.getenv("GOOGLE_ADS_CONVERSION_LABEL") or ""
+    GOOGLE_SITE_VERIFICATION = os.getenv("GOOGLE_SITE_VERIFICATION") or "rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z"
+    MICROSOFT_CLARITY_ID = os.getenv("MICROSOFT_CLARITY_ID") or "q8x3j1k9wm"
 
 class DevelopmentConfig(Config):
     """Local Development Configuration."""

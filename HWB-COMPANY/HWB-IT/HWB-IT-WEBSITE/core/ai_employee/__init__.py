@@ -11,5 +11,11 @@ Provides the 10-Standard Fortune 500 Autonomous AI Employee Runtime:
 """
 
 from .engine import HWBEnterpriseAIEmployee, get_ai_employee
+from .seo_growth_engine import LauriTellsSearchGrowthEmployee, get_lauri_seo_employee
 
-__all__ = ["HWBEnterpriseAIEmployee", "get_ai_employee"]
+__all__ = [
+    "HWBEnterpriseAIEmployee",
+    "get_ai_employee",
+    "LauriTellsSearchGrowthEmployee",
+    "get_lauri_seo_employee",
+]

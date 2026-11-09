@@ -9648,6 +9648,14 @@
         });
     }
 
+    let _enrollPreflightState = {
+        playbooks: {},
+        campaignsById: {},
+        lastEnrolledCampaignId: null,
+        lastEnrolledOutboxIds: [],
+        lastEnrolledLeadIds: []
+    };
+
     function openEnrollSelectedLeadsModal() {
         const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
         if (!ids || ids.length === 0) {
@@ -9656,6 +9664,16 @@
         }
         const countLabel = document.getElementById('enroll-leads-count-label');
         if (countLabel) countLabel.innerText = ids.length;
+
+        // Reset modal view state (show form, hide post-enrollment hub)
+        const formEl = document.getElementById('form-enroll-selected-leads');
+        const hubEl = document.getElementById('enroll-success-action-hub');
+        if (formEl) formEl.style.display = 'block';
+        if (hubEl) hubEl.style.display = 'none';
+
+        const stageDraftsEl = document.getElementById('enroll-stage-drafts');
+        if (stageDraftsEl) stageDraftsEl.checked = true;
+
         const nameInput = document.getElementById('enroll-campaign-name');
         if (nameInput && !nameInput.value.trim()) {
             const today = new Date().toLocaleDateString('en-US');
@@ -9668,32 +9686,170 @@
             fetch('/api/v1/marketing/campaigns/list')
                 .then(res => res.json())
                 .then(data => {
-                    if (data.status === 'success' && Array.isArray(data.campaigns)) {
-                        data.campaigns.forEach(c => {
-                            if ((c.status || '').toLowerCase() !== 'completed') {
-                                const opt = document.createElement('option');
-                                opt.value = c.id;
-                                opt.textContent = `${c.campaign_code} — ${c.name} (${c.total_targets || 0} targets)`;
-                                selectEl.appendChild(opt);
-                            }
-                        });
-                        if (selectEl.options.length > 1) {
-                            selectEl.selectedIndex = 1;
+                    if (data.status === 'success') {
+                        if (data.playbooks) {
+                            _enrollPreflightState.playbooks = data.playbooks;
                         }
+                        _enrollPreflightState.campaignsById = {};
+                        if (Array.isArray(data.campaigns)) {
+                            data.campaigns.forEach(c => {
+                                if ((c.status || '').toLowerCase() !== 'completed') {
+                                    _enrollPreflightState.campaignsById[String(c.id)] = c;
+                                    const opt = document.createElement('option');
+                                    opt.value = c.id;
+                                    opt.textContent = `${c.campaign_code} — ${c.name} [${c.target_sector || 'Commercial'}] (${c.total_targets || 0} targets)`;
+                                    selectEl.appendChild(opt);
+                                }
+                            });
+                        }
+                        // Default to NEW so operator never accidentally drops Office/Construction leads into an existing Daycare campaign
+                        selectEl.value = 'NEW';
                         toggleEnrollNewCampaignName();
                     }
                 })
                 .catch(() => {});
         }
         toggleEnrollNewCampaignName();
+        runEnrollLeadsPreflight();
         openModal('modal-enroll-leads-campaign');
+    }
+
+    function runEnrollLeadsPreflight() {
+        const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
+        if (!ids || ids.length === 0) return;
+        const selectEl = document.getElementById('enroll-campaign-select');
+        const campaignVal = selectEl ? selectEl.value : 'NEW';
+        const campaignId = (campaignVal && campaignVal !== 'NEW') ? parseInt(campaignVal) : null;
+
+        const readyEl = document.getElementById('pf-ready-count');
+        const missingEl = document.getElementById('pf-missing-email-count');
+        const dncEl = document.getElementById('pf-dnc-count');
+        const dupEl = document.getElementById('pf-dup-count');
+        const pillEl = document.getElementById('enroll-detected-sector-pill');
+        const skipDetailsEl = document.getElementById('enroll-preflight-skipped-details');
+        const submitBtn = document.getElementById('btn-submit-enroll-leads');
+
+        if (readyEl) readyEl.innerText = '...';
+        fetch('/api/v1/marketing/campaign/preflight-check', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({ lead_ids: ids, campaign_id: campaignId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status !== 'success') return;
+            if (data.playbooks) {
+                _enrollPreflightState.playbooks = data.playbooks;
+            }
+            if (readyEl) readyEl.innerText = data.eligible_count;
+            if (missingEl) missingEl.innerText = data.missing_email_count;
+            if (dncEl) dncEl.innerText = data.suppressed_dnc_count;
+            if (dupEl) dupEl.innerText = data.duplicate_count;
+            if (pillEl) {
+                pillEl.innerText = `Auto-Detected: ${data.detected_sector_label || 'Commercial Outreach'}`;
+            }
+
+            // Auto-select detected playbook when creating a NEW campaign
+            const pbSelect = document.getElementById('enroll-playbook-select');
+            if (pbSelect && (!campaignId) && data.detected_playbook) {
+                pbSelect.value = data.detected_playbook;
+                onEnrollPlaybookChange();
+            }
+
+            // Show skipped breakdown details if any leads lack email or are DNC/duplicate
+            const skipNotes = [];
+            if (data.missing_email_count > 0 && Array.isArray(data.missing_email_leads)) {
+                const names = data.missing_email_leads.slice(0, 4).map(x => x.facility_name).join(', ');
+                skipNotes.push(`<strong>⚠️ ${data.missing_email_count} Missing Email:</strong> ${names}${data.missing_email_count > 4 ? '...' : ''} (will remain in Leads table for phone/enrichment follow-up).`);
+            }
+            if (data.suppressed_dnc_count > 0 && Array.isArray(data.suppressed_dnc_leads)) {
+                const names = data.suppressed_dnc_leads.slice(0, 4).map(x => `${x.facility_name} (${x.reason})`).join(', ');
+                skipNotes.push(`<strong>🚫 ${data.suppressed_dnc_count} Skipped (DNC / Opt-Out):</strong> ${names}${data.suppressed_dnc_count > 4 ? '...' : ''}.`);
+            }
+            if (data.duplicate_count > 0 && Array.isArray(data.duplicate_leads)) {
+                const names = data.duplicate_leads.slice(0, 4).map(x => x.facility_name).join(', ');
+                skipNotes.push(`<strong>🔁 ${data.duplicate_count} Duplicate / Already Enrolled:</strong> ${names}${data.duplicate_count > 4 ? '...' : ''}.`);
+            }
+            if (skipDetailsEl) {
+                if (skipNotes.length > 0) {
+                    skipDetailsEl.style.display = 'block';
+                    skipDetailsEl.innerHTML = skipNotes.join('<br>');
+                } else {
+                    skipDetailsEl.style.display = 'none';
+                    skipDetailsEl.innerHTML = '';
+                }
+            }
+
+            if (submitBtn) {
+                if (data.eligible_count === 0) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.55';
+                    submitBtn.innerHTML = '<i class="fas fa-ban"></i> 0 Eligible Leads (Add Email First)';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Enroll ${data.eligible_count} Eligible Lead(s)`;
+                }
+            }
+        })
+        .catch(() => {});
+    }
+
+    function onEnrollPlaybookChange() {
+        const pbSelect = document.getElementById('enroll-playbook-select');
+        const key = pbSelect ? pbSelect.value : 'general_commercial';
+        const pb = (_enrollPreflightState.playbooks && _enrollPreflightState.playbooks[key]) || null;
+        if (!pb) return;
+        const subjInput = document.getElementById('enroll-subject-template');
+        const bodyInput = document.getElementById('enroll-body-template');
+        const subjSummary = document.getElementById('enroll-subject-summary-text');
+        if (subjInput) subjInput.value = pb.subject || '';
+        if (bodyInput) bodyInput.value = pb.body || '';
+        if (subjSummary) subjSummary.innerText = pb.subject || '';
+    }
+
+    function syncEnrollSubjectSummary() {
+        const subjInput = document.getElementById('enroll-subject-template');
+        const subjSummary = document.getElementById('enroll-subject-summary-text');
+        if (subjInput && subjSummary) {
+            subjSummary.innerText = subjInput.value.trim() || 'Commercial Cleaning Proposal & Facility Walkthrough';
+        }
+    }
+
+    function toggleEnrollCopyPreview() {
+        const panel = document.getElementById('enroll-copy-preview-panel');
+        const label = document.getElementById('enroll-copy-toggle-label');
+        if (!panel) return;
+        const isHidden = panel.style.display === 'none' || !panel.style.display;
+        panel.style.display = isHidden ? 'block' : 'none';
+        if (label) label.innerText = isHidden ? 'Hide Copy Editor' : 'Inspect / Customize Copy';
     }
 
     function toggleEnrollNewCampaignName() {
         const selectEl = document.getElementById('enroll-campaign-select');
         const groupEl = document.getElementById('enroll-new-campaign-name-group');
+        const existingInfoEl = document.getElementById('enroll-existing-campaign-info');
         if (!selectEl || !groupEl) return;
-        groupEl.style.display = (selectEl.value === 'NEW') ? 'block' : 'none';
+        const isNew = (selectEl.value === 'NEW');
+        groupEl.style.display = isNew ? 'block' : 'none';
+
+        if (!isNew && existingInfoEl) {
+            const c = _enrollPreflightState.campaignsById[String(selectEl.value)];
+            if (c) {
+                existingInfoEl.style.display = 'block';
+                existingInfoEl.innerHTML = `<strong>Target Sector:</strong> ${c.target_sector || 'Commercial'} &nbsp;|&nbsp; <strong>Sender:</strong> ${c.sender_persona || 'Humberto Dominguez'}<br><strong>Subject:</strong> ${c.email_subject_template || 'Default Commercial Subject'}`;
+                const subjInput = document.getElementById('enroll-subject-template');
+                const subjSummary = document.getElementById('enroll-subject-summary-text');
+                if (subjInput && c.email_subject_template) subjInput.value = c.email_subject_template;
+                if (subjSummary && c.email_subject_template) subjSummary.innerText = c.email_subject_template;
+            } else {
+                existingInfoEl.style.display = 'none';
+            }
+        } else if (existingInfoEl) {
+            existingInfoEl.style.display = 'none';
+            onEnrollPlaybookChange();
+        }
+        runEnrollLeadsPreflight();
     }
 
     function submitEnrollSelectedLeads() {
@@ -9705,6 +9861,10 @@
         const selectEl = document.getElementById('enroll-campaign-select');
         const nameInput = document.getElementById('enroll-campaign-name');
         const stageDraftsEl = document.getElementById('enroll-stage-drafts');
+        const pbSelect = document.getElementById('enroll-playbook-select');
+        const personaSelect = document.getElementById('enroll-sender-persona');
+        const subjInput = document.getElementById('enroll-subject-template');
+        const bodyInput = document.getElementById('enroll-body-template');
         const submitBtn = document.getElementById('btn-submit-enroll-leads');
 
         const isNew = !selectEl || selectEl.value === 'NEW';
@@ -9714,7 +9874,7 @@
             return;
         }
 
-        if (submitBtn && window.spinAndLock) window.spinAndLock(submitBtn, 'Enrolling Leads...');
+        if (submitBtn && window.spinAndLock) window.spinAndLock(submitBtn, 'Enrolling & Staging...');
         fetch('/api/v1/marketing/campaign/enroll-leads', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
@@ -9722,26 +9882,111 @@
                 lead_ids: ids,
                 campaign_id: isNew ? null : parseInt(selectEl.value),
                 campaign_name: campaignName,
+                playbook_key: pbSelect ? pbSelect.value : 'general_commercial',
+                sender_persona: personaSelect ? personaSelect.value : 'Humberto Dominguez (Owner & Operator)',
+                email_subject_template: subjInput ? subjInput.value.trim() : '',
+                email_body_template: bodyInput ? bodyInput.value.trim() : '',
                 stage_drafts: stageDraftsEl ? stageDraftsEl.checked : true
             })
         })
         .then(res => res.json())
         .then(data => {
+            if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
             if (data.status === 'success') {
                 showToast(data.message, 'success');
-                closeModal('modal-enroll-leads-campaign');
-                setTimeout(() => {
-                    window.location.href = '/admin/operations?view=marketing&campaign_id=' + data.campaign_id;
-                }, 800);
+                _enrollPreflightState.lastEnrolledCampaignId = data.campaign_id;
+                _enrollPreflightState.lastEnrolledOutboxIds = data.outbox_ids || [];
+                _enrollPreflightState.lastEnrolledLeadIds = data.enrolled_lead_ids || ids;
+
+                // Update lead status badges in-place in the Leads table so staying on the table reflects 'In Email Outreach' immediately
+                (_enrollPreflightState.lastEnrolledLeadIds || []).forEach(lid => {
+                    const cb = document.querySelector(`.lead-row-checkbox[value="${lid}"]`);
+                    const row = cb ? cb.closest('tr') : null;
+                    if (row) {
+                        const statusBadge = row.querySelector('.status-badge, [data-status-badge]');
+                        if (statusBadge) {
+                            statusBadge.textContent = '📬 In Email Outreach';
+                        }
+                    }
+                });
+
+                const formEl = document.getElementById('form-enroll-selected-leads');
+                const hubEl = document.getElementById('enroll-success-action-hub');
+                const hubTitle = document.getElementById('enroll-hub-title');
+                const hubSub = document.getElementById('enroll-hub-subtitle');
+                const releaseBtn = document.getElementById('btn-enroll-hub-release-now');
+                if (formEl && hubEl) {
+                    formEl.style.display = 'none';
+                    hubEl.style.display = 'block';
+                    if (hubTitle) hubTitle.innerText = `${data.enrolled_count} Facility Lead(s) Enrolled in ${data.campaign_code}`;
+                    if (hubSub) {
+                        hubSub.innerText = data.drafts_created > 0
+                            ? `${data.drafts_created} personalized email draft(s) are staged in the Outbox. Choose your next step below:`
+                            : `Leads are staged in ${data.campaign_name}. Choose your next step below:`;
+                    }
+                    if (releaseBtn) {
+                        releaseBtn.style.display = (data.drafts_created > 0) ? 'inline-flex' : 'none';
+                        releaseBtn.innerHTML = `<i class="fas fa-paper-plane"></i> Approve & Send ${data.drafts_created} Staged Email(s) Now`;
+                    }
+                }
             } else {
                 showToast(data.message || 'Enrollment failed.', 'error');
-                if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
             }
         })
         .catch(err => {
             showToast('Error enrolling leads: ' + err, 'error');
             if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
         });
+    }
+
+    function approveStagedDraftsFromEnrollModal() {
+        const cid = _enrollPreflightState.lastEnrolledCampaignId;
+        const outboxIds = _enrollPreflightState.lastEnrolledOutboxIds || [];
+        const btn = document.getElementById('btn-enroll-hub-release-now');
+        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Sending via Microsoft Graph...');
+        fetch('/api/v1/marketing/outbox/batch-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({
+                action: 'approve',
+                campaign_id: cid,
+                email_ids: outboxIds,
+                limit: Math.max(outboxIds.length, 50)
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            if (data.status === 'success') {
+                showToast(data.message, 'success');
+                closeModal('modal-enroll-leads-campaign');
+            } else {
+                showToast(data.message || 'Batch release failed.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            showToast('Error releasing staged drafts: ' + err, 'error');
+        });
+    }
+
+    function goToEnrolledCampaignMarketingView() {
+        const cid = _enrollPreflightState.lastEnrolledCampaignId;
+        closeModal('modal-enroll-leads-campaign');
+        window.location.href = '/admin/operations?view=marketing' + (cid ? '&campaign_id=' + cid : '');
+    }
+
+    function openCopyStudioFromEnrollModal() {
+        const cid = _enrollPreflightState.lastEnrolledCampaignId;
+        closeModal('modal-enroll-leads-campaign');
+        if (cid && typeof openCampaignCopyStudio === 'function') {
+            openCampaignCopyStudio(cid);
+        }
+    }
+
+    function stayOnLeadsAfterEnrollment() {
+        closeModal('modal-enroll-leads-campaign');
+        showToast('Leads updated to In Email Outreach in place.', 'success');
     }
 
     function deleteCampaign(campaignId, code) {
@@ -11287,5 +11532,17 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
     window.scheduleAddLeadDuplicateCheck = scheduleAddLeadDuplicateCheck;
     window.openDetectedDuplicateLead = openDetectedDuplicateLead;
     window.submitAddLeadForm = submitAddLeadForm;
+    window.openEnrollSelectedLeadsModal = openEnrollSelectedLeadsModal;
+    window.runEnrollLeadsPreflight = runEnrollLeadsPreflight;
+    window.onEnrollPlaybookChange = onEnrollPlaybookChange;
+    window.syncEnrollSubjectSummary = syncEnrollSubjectSummary;
+    window.toggleEnrollCopyPreview = toggleEnrollCopyPreview;
+    window.toggleEnrollNewCampaignName = toggleEnrollNewCampaignName;
+    window.submitEnrollSelectedLeads = submitEnrollSelectedLeads;
+    window.approveStagedDraftsFromEnrollModal = approveStagedDraftsFromEnrollModal;
+    window.goToEnrolledCampaignMarketingView = goToEnrolledCampaignMarketingView;
+    window.openCopyStudioFromEnrollModal = openCopyStudioFromEnrollModal;
+    window.stayOnLeadsAfterEnrollment = stayOnLeadsAfterEnrollment;
+
 
 

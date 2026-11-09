@@ -2591,13 +2591,14 @@ def api_batch_lead_action():
                     cur.execute('DELETE FROM "Leads" WHERE duplicate_group_id = %s AND id != %s AND id = ANY(%s);', (gid, pri_id, lead_ids))
                     cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = %s;', (pri_id,))
             elif action == 'remove_from_campaign':
+                _ensure_campaign_recipients_reversible_columns(cur)
                 resolved_lead_ids = [int(x) for x in lead_ids if x is not None]
                 raw_recip_ids = [int(x) for x in recipient_ids if x is not None]
 
                 target_recips = []
                 if resolved_lead_ids:
                     cur.execute('''
-                        SELECT id, campaign_id, lead_id
+                        SELECT id, campaign_id, lead_id, previous_lead_status
                         FROM "CampaignRecipients"
                         WHERE lead_id = ANY(%s);
                     ''', (resolved_lead_ids,))
@@ -2605,7 +2606,7 @@ def api_batch_lead_action():
 
                 if raw_recip_ids:
                     cur.execute('''
-                        SELECT id, campaign_id, lead_id
+                        SELECT id, campaign_id, lead_id, previous_lead_status
                         FROM "CampaignRecipients"
                         WHERE id = ANY(%s);
                     ''', (raw_recip_ids,))
@@ -2617,6 +2618,12 @@ def api_batch_lead_action():
 
                 recip_ids = list(set([r[0] if isinstance(r, tuple) else r.get('id') for r in target_recips]))
                 affected_cids = list(set([r[1] if isinstance(r, tuple) else r.get('campaign_id') for r in target_recips if (r[1] if isinstance(r, tuple) else r.get('campaign_id'))]))
+                lead_prev_status_map = {}
+                for r in target_recips:
+                    lid = r[2] if isinstance(r, tuple) else r.get('lead_id')
+                    pstat = r[3] if isinstance(r, tuple) else r.get('previous_lead_status')
+                    if lid and pstat and pstat != 'In Campaign':
+                        lead_prev_status_map[int(lid)] = pstat
 
                 # 1. Purge or Cancel unsent drafts in PendingOutbox
                 if recip_ids:
@@ -2633,38 +2640,35 @@ def api_batch_lead_action():
                         WHERE id = ANY(%s);
                     ''', (recip_ids,))
 
-                # 3. Reset lead status back to 'New' (only if currently 'In Campaign')
+                # 3. Restore lead status to exact pre-campaign status (or 'New' if none stored)
                 if resolved_lead_ids:
-                    cur.execute('''
-                        UPDATE "Leads"
-                        SET status = 'New', updated_at = CURRENT_TIMESTAMP
-                        WHERE id = ANY(%s) AND status = 'In Campaign';
-                    ''', (resolved_lead_ids,))
+                    for lid in resolved_lead_ids:
+                        restored_stat = lead_prev_status_map.get(int(lid)) or 'New'
+                        cur.execute('''
+                            UPDATE "Leads"
+                            SET status = %s, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = %s AND status = 'In Campaign';
+                        ''', (restored_stat, lid))
 
                 # 4. Recalculate target and staged tallies for all affected campaigns
                 for cid in affected_cids:
-                    cur.execute('''
-                        UPDATE "MarketingCampaigns"
-                        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
-                            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
-                            updated_at = CURRENT_TIMESTAMP
-                        WHERE id = %s;
-                    ''', (cid, cid, cid))
+                    sync_campaign_telemetry_counts(cur, cid)
 
                 # 5. Insert permanent ISO 9001 audit record in GlobalActivities
                 user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
                 for lid in resolved_lead_ids:
+                    restored_stat = lead_prev_status_map.get(int(lid)) or 'New'
                     cur.execute('''
                         INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                         VALUES (%s, 'Lead', 'Marketing Outreach', %s);
-                    ''', (lid, f"Removed from marketing sequence by {user_label}. Unsent email drafts canceled."))
+                    ''', (lid, f"Removed from marketing sequence by {user_label}. Unsent email drafts canceled; status restored to '{restored_stat}'."))
 
                 conn.commit()
                 count_done = len(resolved_lead_ids) or len(recip_ids)
                 return jsonify({
                     'status': 'success',
                     'affected_count': count_done,
-                    'message': f"Removed {count_done} lead(s) from campaign sequences."
+                    'message': f"Removed {count_done} lead(s) from campaign sequences and restored prior status."
                 })
             else:
                 return jsonify({'status': 'error', 'message': f'Unknown action: {action}'}), 400
@@ -7758,11 +7762,225 @@ def sync_campaign_telemetry_counts(cur, campaign_id: int) -> None:
     ''', (campaign_id, campaign_id, campaign_id, campaign_id, campaign_id, campaign_id))
 
 
+CAMPAIGN_PLAYBOOK_PRESETS = {
+    'general_commercial': {
+        'label': '🏢 General Commercial Walkthrough & Flat-Rate Proposal',
+        'sector': 'Commercial Facilities',
+        'subject': 'Commercial Cleaning Proposal & Facility Walkthrough for {facility_name}',
+        'body': """<p>Hi {first_name},</p>
+<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
+<p>Still, running a clean, well-maintained facility in {city} and protecting your operating budget takes a reliable partner. HWB Cleaning Services LLC is my company, and here are three things I will put together for {facility_name} at zero cost:</p>
+<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li><strong>A Building Walkthrough Plan</strong> with your exact cleanable square footage and room-by-room scope.</li>
+    <li><strong>An Objective Cleanliness Inspection Score</strong> so you know where your building currently stands.</li>
+    <li><strong>A Locked-In Flat Monthly Quote</strong> you can keep in your back pocket whenever you need to compare or replace your current cleaning contract.</li>
+</ol>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you prefer not to receive commercial updates, please <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
+</p>
+<p>Would you have 5 minutes this Tuesday morning or Thursday afternoon? Or feel free to pick a time directly on my calendar here:<br />
+<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
+<p>Sincerely,<br />
+<strong>{sender_name}</strong><br />
+{sender_title} | HWB Cleaning Services LLC<br />
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
+    },
+    'daycare': {
+        'label': '🧸 Childcare & Daycare Safety + Floor Care Included',
+        'sector': 'Licensed Childcare',
+        'subject': 'Quick question regarding after-hours cleaning for {facility_name}',
+        'body': """<p>Hi {first_name},</p>
+<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
+<p>Still, you and I know that running a successful school and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
+<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li style="margin-bottom: 6px;"><strong>A Walkthrough Plan</strong> with your total cleanable square footage and classroom layout.</li>
+    <li style="margin-bottom: 6px;"><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
+    <li style="margin-bottom: 6px;"><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
+</ol>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
+</p>
+<p>Here is what our after-hours childcare service covers:</p>
+<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li style="margin-bottom: 6px;"><strong>Teachers Don't Stay Late:</strong> We handle all the heavy vacuuming and scrubbing after 6:30 PM so teachers never stay late after a full day with the kids.</li>
+    <li style="margin-bottom: 6px;"><strong>Classroom Rugs &amp; HEPA Filtration:</strong> Backpack vacuums with quiet HEPA filters that trap dust and allergens instead of blowing them around.</li>
+    <li style="margin-bottom: 6px;"><strong>Restrooms &amp; Low Sinks:</strong> Nightly deep scrubbing of toddler toilets, sinks, faucets, and high-touch door handles.</li>
+    <li style="margin-bottom: 6px;"><strong>Diaper Pails to Dumpster:</strong> All diaper bins emptied directly to the outside dumpster so your facility opens fresh and clean every morning.</li>
+    <li style="margin-bottom: 6px;"><strong>Morning Restock:</strong> Soap, paper towels, and toilet paper restocked every night so teachers are fully ready for the 6:30 AM drop-off.</li>
+    <li style="margin-bottom: 6px;"><strong>Floor Care Included:</strong> Stripping, waxing, and carpet cleaning twice a year included right in your regular monthly rate, with no surprise bills.</li>
+</ul>
+<p>Would you have 5 minutes this week to take a quick look at your layout? Or feel free to pick a time directly on my calendar here:<br />
+<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
+<p>Sincerely,<br />
+<strong>{sender_name}</strong><br />
+{sender_title} | HWB Cleaning Services LLC<br />
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
+    },
+    'office': {
+        'label': '🏙️ Corporate Office & Multi-Tenant Nightly Janitorial',
+        'sector': 'Commercial Offices',
+        'subject': 'After-hours commercial janitorial scope for {facility_name} in {city}',
+        'body': """<p>Hi {first_name},</p>
+<p>When managing a corporate office facility in {city}, keeping clean workspaces, spotless restrooms, and fresh breakrooms without micromanaging your night crew is critical to team morale and client first impressions.</p>
+<p>HWB Cleaning Services LLC provides dedicated after-hours janitorial service with flat monthly rates, zero surprise supply charges, and full commercial liability insurance.</p>
+<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li style="margin-bottom: 6px;"><strong>Restroom Deep Sanitization:</strong> Complete disinfection of toilets, urinals, mirrors, sinks, partitions, and floors every night.</li>
+    <li style="margin-bottom: 6px;"><strong>Breakrooms &amp; Kitchenettes:</strong> Wipe-down of tables, countertops, coffee stations, sinks, and appliance exteriors.</li>
+    <li style="margin-bottom: 6px;"><strong>Trash &amp; Recycling Removal:</strong> Nightly desk-side and common area collection taken directly to property dumpsters.</li>
+    <li style="margin-bottom: 6px;"><strong>High-Traffic Floor Care:</strong> Commercial HEPA backpack vacuuming across all carpeted offices and conference rooms, plus damp mopping on hard floors.</li>
+</ul>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you prefer not to receive commercial updates, please <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a>.
+</p>
+<p>Would you be open to a 5-minute building walkthrough this Tuesday or Thursday to get a flat-rate monthly quote for {facility_name}?</p>
+<p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Book a 5-Minute Walkthrough on Humberto's Calendar</a></p>
+<p>Sincerely,<br />
+<strong>{sender_name}</strong><br />
+{sender_title} | HWB Cleaning Services LLC<br />
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
+    },
+    'medical': {
+        'label': '🩺 Medical Clinic & Outpatient Terminal Disinfection',
+        'sector': 'Medical & Clinical',
+        'subject': 'Clinical terminal disinfection & after-hours cleaning for {facility_name}',
+        'body': """<p>Hi {first_name},</p>
+<p>Healthcare and clinical facilities in {city} require a significantly higher standard of sanitation than general office buildings. Cross-contamination prevention, EPA List N hospital-grade disinfectant dwell times, and documented inspections must be consistent every night.</p>
+<p>HWB Cleaning Services LLC provides specialized after-hours clinical cleaning for medical offices, dental practices, and outpatient centers across North Texas:</p>
+<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li style="margin-bottom: 6px;"><strong>Exam &amp; Procedure Rooms:</strong> Hospital-grade disinfection on exam tables, stools, counters, sinks, and door hardware.</li>
+    <li style="margin-bottom: 6px;"><strong>Waiting Rooms &amp; Reception:</strong> High-touch patient seating, check-in counters, glass partitions, and restroom sanitization.</li>
+    <li style="margin-bottom: 6px;"><strong>Color-Coded Microfiber &amp; HEPA Filtration:</strong> Strict zone separation so restroom tools never enter clinical or waiting areas.</li>
+</ul>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you prefer not to receive commercial updates, please <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a>.
+</p>
+<p>Would you have 5 minutes this week for a quick walkthrough and flat-rate monthly proposal for {facility_name}?</p>
+<p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
+<p>Sincerely,<br />
+<strong>{sender_name}</strong><br />
+{sender_title} | HWB Cleaning Services LLC<br />
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
+    },
+    'construction': {
+        'label': '🏗️ Post-Construction Rough/Final Clean & Subdivision Make-Ready',
+        'sector': 'Commercial & Residential Construction',
+        'subject': 'Post-construction rough/final clean & jobsite crew support for {facility_name}',
+        'body': """<p>Hi {first_name},</p>
+<p>Whether you are turning over a commercial build-out or keeping an active residential subdivision clean during home construction in {city}, having an OSHA-certified, insured cleaning crew on schedule keeps your superintendents focused on turnover deadlines.</p>
+<p>HWB Cleaning Services LLC ($2M GL / Workers' Comp, 0.43 EMR) supports General Contractors and Homebuilders across two divisions:</p>
+<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
+    <li style="margin-bottom: 6px;"><strong>Commercial CSI 01 74 23 (3-Phase Turnover):</strong> Phase 1 Rough Clean, Phase 2 Final Interior &amp; Glass Detailing, and Phase 3 Certificate of Occupancy Puff Clean.</li>
+    <li style="margin-bottom: 6px;"><strong>New-Home Subdivision &amp; Street Cleanup:</strong> Active build-phase trade trash/scrap haul-off, neighborhood street &amp; curb sweeping, and model/spec home buyer walk-through detailing.</li>
+</ul>
+<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
+    If you prefer not to receive commercial updates, please <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a>.
+</p>
+<p>Send over your plan set or subdivision lot schedule anytime for a 24-hour lump-sum quote, or grab 5 minutes on my calendar here:</p>
+<p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Book a 5-Minute Project Review with Humberto</a></p>
+<p>Sincerely,<br />
+<strong>{sender_name}</strong><br />
+{sender_title} | HWB Cleaning Services LLC<br />
+(214) 586-0257 | sales@hwbcleaning.com</p>"""
+    }
+}
+
+
+_CAMPAIGN_RECIPIENTS_COLS_ENSURED = False
+
+
+def _ensure_campaign_recipients_reversible_columns(cur) -> None:
+    """
+    Ensures CampaignRecipients has previous_lead_status and skip_reason columns
+    for zero-loss reversible lead status restoration without acquiring DDL locks on every call.
+    """
+    global _CAMPAIGN_RECIPIENTS_COLS_ENSURED
+    if _CAMPAIGN_RECIPIENTS_COLS_ENSURED:
+        return
+    cur.execute('''
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'CampaignRecipients'
+          AND column_name IN ('previous_lead_status', 'skip_reason');
+    ''')
+    existing = {r[0] if isinstance(r, tuple) else r.get('column_name') for r in cur.fetchall()}
+    if 'previous_lead_status' not in existing:
+        cur.execute('ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS previous_lead_status VARCHAR(64);')
+    if 'skip_reason' not in existing:
+        cur.execute('ALTER TABLE "CampaignRecipients" ADD COLUMN IF NOT EXISTS skip_reason VARCHAR(128);')
+    _CAMPAIGN_RECIPIENTS_COLS_ENSURED = True
+
+
+def _log_campaign_worm_audit(cur, event_action: str, actor: str, payload: dict) -> str:
+    """
+    Writes a cryptographic WORM SHA-256 receipt into SecurityAuditLogs.
+    """
+    canonical = json.dumps(payload, sort_keys=True, default=str)
+    digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+    details_json = json.dumps({**payload, 'worm_sha256': digest}, sort_keys=True, default=str)
+    cur.execute('''
+        INSERT INTO "SecurityAuditLogs" (
+            event_category, event_action, username, ip_address,
+            endpoint, http_method, status_code, severity, details
+        )
+        VALUES ('MARKETING_WORM', %s, %s, '127.0.0.1', '/api/v1/marketing/campaign', 'POST', 200, 'INFO', %s::jsonb);
+    ''', (event_action[:50], (actor or 'Executive')[:100], details_json))
+    return digest
+
+
+def detect_leads_sector_playbook(leads_rows: list) -> str:
+    """
+    Automatically classifies bulk-selected leads into the best-matching commercial playbook
+    based on center_name, industry, and facility_type keywords.
+    """
+    counts = {'daycare': 0, 'medical': 0, 'construction': 0, 'office': 0}
+    for row in leads_rows or []:
+        text = " ".join([
+            str(row.get('center_name') or ''),
+            str(row.get('industry') or ''),
+            str(row.get('facility_type') or '')
+        ]).lower()
+        if any(k in text for k in ('child', 'daycare', 'montessori', 'preschool', 'academy', 'kids', 'learning', 'school', 'toddler', 'nursery')):
+            counts['daycare'] += 1
+        elif any(k in text for k in ('medical', 'clinic', 'dental', 'ortho', 'health', 'hospital', 'urgent care', 'pediatric', 'surgery', 'physician')):
+            counts['medical'] += 1
+        elif any(k in text for k in ('construct', 'builder', 'contractor', 'homes', 'development', 'grading', 'framing', 'roofing', 'architect')):
+            counts['construction'] += 1
+        elif any(k in text for k in ('office', 'corporate', 'tower', 'plaza', 'suite', 'financial', 'law', 'realty', 'insurance', 'bank', 'accounting', 'consulting')):
+            counts['office'] += 1
+
+    best_key, best_val = max(counts.items(), key=lambda kv: kv[1])
+    total = len(leads_rows or [])
+    if best_val > 0 and best_val >= max(1, int(total * 0.35)):
+        return best_key
+    return 'general_commercial'
+
+
+def get_playbook_for_sector(target_sector: str = '', playbook_key: str = '') -> dict:
+    """
+    Resolves the canonical playbook dictionary from either an explicit playbook_key
+    or the campaign's target_sector label. Never falls back to daycare copy for non-daycare sectors.
+    """
+    pk = (playbook_key or '').strip().lower()
+    if pk in CAMPAIGN_PLAYBOOK_PRESETS:
+        return CAMPAIGN_PLAYBOOK_PRESETS[pk]
+    sec = (target_sector or '').strip().lower()
+    if any(k in sec for k in ('child', 'daycare', 'school', 'montessori')):
+        return CAMPAIGN_PLAYBOOK_PRESETS['daycare']
+    if any(k in sec for k in ('medical', 'clinic', 'health', 'dental')):
+        return CAMPAIGN_PLAYBOOK_PRESETS['medical']
+    if any(k in sec for k in ('construct', 'builder', 'gc', 'subdivision')):
+        return CAMPAIGN_PLAYBOOK_PRESETS['construction']
+    if any(k in sec for k in ('office', 'corporate', 'tenant')):
+        return CAMPAIGN_PLAYBOOK_PRESETS['office']
+    return CAMPAIGN_PLAYBOOK_PRESETS['general_commercial']
+
+
 @crm_api_bp.route('/api/v1/marketing/campaigns/list', methods=['GET'])
 @login_required
 def api_marketing_campaigns_list():
     """
-    Returns active and paused marketing campaigns for the Enroll Selected Leads modal.
+    Returns active and paused marketing campaigns plus playbook presets for the Enroll Selected Leads modal.
     """
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
@@ -7771,13 +7989,177 @@ def api_marketing_campaigns_list():
         with conn.cursor() as cur:
             cur.execute('''
                 SELECT id, campaign_code, name, target_sector, target_geo, status,
+                       sender_persona, daily_throttle_limit, email_subject_template,
                        total_targets, staged_count, sent_count, opened_count, walkthroughs_booked
                 FROM "MarketingCampaigns"
                 ORDER BY (CASE WHEN LOWER(status) = 'active' THEN 0 WHEN LOWER(status) = 'paused' THEN 1 ELSE 2 END),
                          id DESC;
             ''')
             rows = [serialize_row(r) for r in cur.fetchall()]
-            return jsonify({'status': 'success', 'campaigns': rows})
+            return jsonify({
+                'status': 'success',
+                'campaigns': rows,
+                'playbooks': CAMPAIGN_PLAYBOOK_PRESETS
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/marketing/campaign/preflight-check', methods=['POST'])
+@login_required
+def api_marketing_campaign_preflight_check():
+    """
+    Performs a real-time pre-enrollment eligibility check on bulk-selected lead_ids
+    before the operator submits the Send to Campaign modal.
+    Returns exact counts and facility names for:
+      - eligible_leads (valid email, TX geofence, not DNC/Unsubscribed/Suppressed, not duplicate)
+      - missing_email_leads (no email on file)
+      - suppressed_dnc_leads (DNC, Unsubscribed, Out-of-State, or EmailSuppressionList)
+      - duplicate_leads (already enrolled in the selected campaign_id or duplicate inbox in selection)
+      - detected_playbook & playbooks dictionary
+    """
+    data = request.get_json() or {}
+    raw_lead_ids = data.get('lead_ids') or []
+    lead_ids = [int(x) for x in raw_lead_ids if str(x).isdigit()]
+    campaign_id = data.get('campaign_id')
+
+    if not lead_ids:
+        return jsonify({'status': 'error', 'message': 'No leads selected for pre-flight check.'}), 400
+
+    db_url = current_app.config.get('DATABASE_URL')
+    conn = None
+    try:
+        conn = get_db(db_url)
+        with conn.cursor() as cur:
+            _ensure_campaign_recipients_reversible_columns(cur)
+            cur.execute('''
+                SELECT id, center_name, director, email, phone, city, county, state,
+                       capacity, sqf, is_dnc, status, email_hygiene_status,
+                       industry, facility_type
+                FROM "Leads"
+                WHERE id = ANY(%s)
+                ORDER BY capacity DESC NULLS LAST, id ASC;
+            ''', (lead_ids,))
+            leads_rows = [dict(r) for r in cur.fetchall()]
+
+            existing_campaign_emails = set()
+            if campaign_id and str(campaign_id).isdigit():
+                cur.execute('''
+                    SELECT LOWER(TRIM(recipient_email))
+                    FROM "CampaignRecipients"
+                    WHERE campaign_id = %s AND recipient_email IS NOT NULL;
+                ''', (int(campaign_id),))
+                for erow in cur.fetchall():
+                    val = erow[0] if isinstance(erow, tuple) else erow.get('lower')
+                    if val:
+                        existing_campaign_emails.add(val)
+
+            candidate_emails = list({
+                (r.get('email') or '').strip().lower()
+                for r in leads_rows
+                if (r.get('email') or '').strip() and '@' in (r.get('email') or '')
+            })
+            suppressed_emails = set()
+            if candidate_emails:
+                cur.execute('''
+                    SELECT email_lower FROM "EmailSuppressionList"
+                    WHERE email_lower = ANY(%s);
+                ''', (candidate_emails,))
+                for srow in cur.fetchall():
+                    sval = srow[0] if isinstance(srow, tuple) else srow.get('email_lower')
+                    if sval:
+                        suppressed_emails.add(sval)
+
+            eligible_leads = []
+            missing_email_leads = []
+            suppressed_dnc_leads = []
+            duplicate_leads = []
+            seen_batch_emails = set()
+
+            for lrow in leads_rows:
+                lid = lrow['id']
+                fname = lrow.get('center_name') or f'Lead #{lid}'
+                raw_email = (lrow.get('email') or '').strip().lower()
+                lstate = (lrow.get('state') or 'TX').strip().upper()
+                lstatus = (lrow.get('status') or '').strip()
+                is_dnc = bool(lrow.get('is_dnc'))
+                hygiene = (lrow.get('email_hygiene_status') or '').strip()
+
+                if not raw_email or '@' not in raw_email:
+                    missing_email_leads.append({
+                        'id': lid,
+                        'facility_name': fname,
+                        'city': lrow.get('city') or 'TX',
+                        'phone': lrow.get('phone') or '',
+                        'reason': 'Missing email address'
+                    })
+                    continue
+
+                if raw_email in existing_campaign_emails or raw_email in seen_batch_emails:
+                    duplicate_leads.append({
+                        'id': lid,
+                        'facility_name': fname,
+                        'email': raw_email,
+                        'reason': 'Already in campaign' if raw_email in existing_campaign_emails else 'Duplicate inbox in selection'
+                    })
+                    continue
+
+                if (
+                    raw_email in suppressed_emails
+                    or not is_email_compliance_eligible(
+                        raw_email,
+                        raw_state=lstate,
+                        is_dnc=is_dnc,
+                        status=lstatus,
+                        hygiene_status=hygiene
+                    )
+                ):
+                    reason = 'Suppression list / Unsubscribed'
+                    if is_dnc or lstatus == 'Do Not Call (DNC)':
+                        reason = 'Marked Do Not Call (DNC)'
+                    elif lstate in COMPLIANCE_BLOCKED_STATES:
+                        reason = f'Restricted State ({lstate})'
+                    elif any(raw_email.endswith(sfx) for sfx in COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES):
+                        reason = 'Public / Government Domain'
+                    suppressed_dnc_leads.append({
+                        'id': lid,
+                        'facility_name': fname,
+                        'email': raw_email,
+                        'reason': reason
+                    })
+                    continue
+
+                seen_batch_emails.add(raw_email)
+                eligible_leads.append({
+                    'id': lid,
+                    'facility_name': fname,
+                    'director': lrow.get('director') or 'Facility Director',
+                    'email': raw_email,
+                    'city': lrow.get('city') or 'North Texas',
+                    'status': lstatus or 'New'
+                })
+
+            detected_key = detect_leads_sector_playbook(leads_rows)
+            detected_pb = CAMPAIGN_PLAYBOOK_PRESETS.get(detected_key, CAMPAIGN_PLAYBOOK_PRESETS['general_commercial'])
+
+            return jsonify({
+                'status': 'success',
+                'total_selected': len(leads_rows),
+                'eligible_count': len(eligible_leads),
+                'missing_email_count': len(missing_email_leads),
+                'suppressed_dnc_count': len(suppressed_dnc_leads),
+                'duplicate_count': len(duplicate_leads),
+                'eligible_leads': eligible_leads[:15],
+                'missing_email_leads': missing_email_leads[:15],
+                'suppressed_dnc_leads': suppressed_dnc_leads[:15],
+                'duplicate_leads': duplicate_leads[:15],
+                'missing_email_ids': [x['id'] for x in missing_email_leads],
+                'detected_playbook': detected_key,
+                'detected_sector_label': detected_pb['label'],
+                'playbooks': CAMPAIGN_PLAYBOOK_PRESETS
+            })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
@@ -7789,8 +8171,12 @@ def api_marketing_campaigns_list():
 def api_marketing_campaign_enroll_leads():
     """
     Enrolls specific checked lead_ids from the Leads module into an existing or newly created
-    MarketingCampaign, enforces CAN-SPAM / DNC / Geofence suppression, updates Leads.status to
-    'In Campaign', and optionally generates personalized PendingOutbox drafts immediately.
+    MarketingCampaign:
+      1. Enforces CAN-SPAM / DNC / Geofence suppression and blocks creating empty 0-lead campaigns.
+      2. Snapshots previous_lead_status on CampaignRecipients for zero-loss reversible rollback.
+      3. Persists sector-matched Playbook subject & body templates so generate-drafts never falls back to daycare copy on non-daycare leads.
+      4. Updates Leads.status to 'In Campaign' ('In Email Outreach') across all non-converted stages.
+      5. Logs a cryptographic WORM SHA-256 enrollment receipt in SecurityAuditLogs.
     """
     data = request.get_json() or {}
     raw_lead_ids = data.get('lead_ids') or []
@@ -7801,15 +8187,31 @@ def api_marketing_campaign_enroll_leads():
     campaign_id = data.get('campaign_id')
     campaign_name = (data.get('campaign_name') or '').strip()
     stage_drafts = bool(data.get('stage_drafts', True))
+    playbook_key = (data.get('playbook_key') or '').strip().lower()
+    sender_persona = (data.get('sender_persona') or 'Humberto Dominguez (Owner & Operator)').strip()
+    custom_subject = (data.get('email_subject_template') or '').strip()
+    custom_body = (data.get('email_body_template') or '').strip()
 
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
+            _ensure_campaign_recipients_reversible_columns(cur)
             user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
 
-            if campaign_id and str(campaign_id).isdigit():
+            cur.execute('''
+                SELECT id, center_name, director, email, city, county, state, capacity, sqf,
+                       is_dnc, status, email_hygiene_status, industry, facility_type
+                FROM "Leads"
+                WHERE id = ANY(%s)
+                ORDER BY capacity DESC NULLS LAST, id ASC;
+            ''', (lead_ids,))
+            leads_rows = [dict(r) for r in cur.fetchall()]
+
+            is_existing_campaign = bool(campaign_id and str(campaign_id).isdigit())
+            seen_emails = set()
+            if is_existing_campaign:
                 campaign_id = int(campaign_id)
                 cur.execute('SELECT * FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
                 campaign = cur.fetchone()
@@ -7817,87 +8219,117 @@ def api_marketing_campaign_enroll_leads():
                     return jsonify({'status': 'error', 'message': 'Selected campaign not found.'}), 404
                 campaign_code = campaign['campaign_code']
                 campaign_name = campaign['name']
-            else:
+                sender_persona = campaign.get('sender_persona') or sender_persona
+                cur.execute('SELECT LOWER(TRIM(recipient_email)) FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
+                for erow in cur.fetchall():
+                    val = erow[0] if isinstance(erow, tuple) else erow.get('lower')
+                    if val:
+                        seen_emails.add(val)
+
+            # Pre-validate leads before creating any new campaign record so 0-eligible selections never spawn orphan campaigns
+            eligible_rows = []
+            skipped_missing_email = 0
+            skipped_suppressed_dnc = 0
+            skipped_duplicate = 0
+
+            for lrow in leads_rows:
+                raw_email = (lrow.get('email') or '').strip().lower()
+                lstate = (lrow.get('state') or 'TX').strip().upper()
+                lstatus = (lrow.get('status') or '').strip()
+                if not raw_email or '@' not in raw_email:
+                    skipped_missing_email += 1
+                    continue
+                if raw_email in seen_emails:
+                    skipped_duplicate += 1
+                    continue
+                if not is_email_compliance_eligible(
+                    raw_email,
+                    raw_state=lstate,
+                    is_dnc=bool(lrow.get('is_dnc')),
+                    status=lstatus,
+                    hygiene_status=(lrow.get('email_hygiene_status') or '')
+                ):
+                    skipped_suppressed_dnc += 1
+                    continue
+                cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (raw_email,))
+                if cur.fetchone():
+                    skipped_suppressed_dnc += 1
+                    continue
+                seen_emails.add(raw_email)
+                eligible_rows.append(lrow)
+
+            skipped_count = skipped_missing_email + skipped_suppressed_dnc + skipped_duplicate
+            if not eligible_rows:
+                reasons = []
+                if skipped_missing_email:
+                    reasons.append(f"{skipped_missing_email} missing email address")
+                if skipped_suppressed_dnc:
+                    reasons.append(f"{skipped_suppressed_dnc} DNC/Unsubscribed/Restricted")
+                if skipped_duplicate:
+                    reasons.append(f"{skipped_duplicate} already enrolled in this campaign")
+                reason_str = ", ".join(reasons) or "none had a valid email address"
+                return jsonify({
+                    'status': 'error',
+                    'enrolled_count': 0,
+                    'skipped_count': skipped_count,
+                    'skipped_breakdown': {
+                        'missing_email': skipped_missing_email,
+                        'suppressed_dnc': skipped_suppressed_dnc,
+                        'duplicate': skipped_duplicate
+                    },
+                    'message': f"Cannot enroll leads: 0 of the {len(leads_rows)} selected lead(s) are eligible for email outreach ({reason_str})."
+                }), 400
+
+            auto_pb_key = playbook_key if playbook_key in CAMPAIGN_PLAYBOOK_PRESETS else detect_leads_sector_playbook(eligible_rows)
+            selected_playbook = get_playbook_for_sector(playbook_key=auto_pb_key)
+
+            if not is_existing_campaign:
                 if not campaign_name:
                     campaign_name = f"Targeted Commercial Outreach ({datetime.datetime.now().strftime('%m/%d/%Y')})"
                 campaign_code = f"CMP-{datetime.datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:4].upper()}"
-                default_subj = "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
+                subject_tmpl = custom_subject or selected_playbook['subject']
+                body_tmpl = custom_body or selected_playbook['body']
+                target_sector = selected_playbook['sector']
                 cur.execute('''
                     INSERT INTO "MarketingCampaigns" (
                         campaign_code, name, target_sector, target_geo, cadence_type,
                         sender_persona, status, daily_throttle_limit,
-                        email_subject_template, created_by
-                    ) VALUES (%s, %s, 'Selected CRM Leads', 'Texas Targeted', '1-Step Intro with Calendar Link',
-                              'Humberto Dominguez (Owner & Operator)', 'Active', 50, %s, %s)
+                        email_subject_template, email_body_template, created_by
+                    ) VALUES (%s, %s, %s, 'Texas Targeted', '1-Step Intro with Calendar Link',
+                              %s, 'Active', 50, %s, %s, %s)
                     RETURNING *;
-                ''', (campaign_code, campaign_name, default_subj, user_label))
+                ''', (campaign_code, campaign_name, target_sector, sender_persona, subject_tmpl, body_tmpl, user_label))
                 campaign = cur.fetchone()
                 campaign_id = campaign['id']
-
-            cur.execute('''
-                SELECT id, center_name, director, email, city, county, state, capacity, sqf,
-                       is_dnc, status, email_hygiene_status
-                FROM "Leads"
-                WHERE id = ANY(%s)
-                ORDER BY capacity DESC NULLS LAST, id ASC;
-            ''', (lead_ids,))
-            leads_rows = cur.fetchall()
+            else:
+                fallback_pb = get_playbook_for_sector(target_sector=campaign.get('target_sector'), playbook_key=auto_pb_key)
+                subject_tmpl = custom_subject or (campaign.get('email_subject_template') or '').strip() or fallback_pb['subject']
+                body_tmpl = custom_body or (campaign.get('email_body_template') or '').strip() or fallback_pb['body']
+                if custom_subject or custom_body or not (campaign.get('email_body_template') or '').strip():
+                    cur.execute('''
+                        UPDATE "MarketingCampaigns"
+                        SET email_subject_template = %s,
+                            email_body_template = %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                    ''', (subject_tmpl, body_tmpl, campaign_id))
 
             enrolled_count = 0
-            skipped_count = 0
             drafts_created = 0
+            enrolled_lead_ids = []
+            created_outbox_ids = []
 
-            subject_tmpl = (campaign.get('email_subject_template') or '').strip() or "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
-            body_tmpl = (campaign.get('email_body_template') or '').strip() or """<p>Hi {first_name},</p>
-<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
-<p>Still, you and I know that running a successful facility and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
-<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
-    <li><strong>A Walkthrough Plan</strong> with your total cleanable square footage and room layout.</li>
-    <li><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
-    <li><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
-</ol>
-<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
-    If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
-</p>
-<p>Would you have 5 minutes this Tuesday morning or Thursday afternoon? Or feel free to pick a time directly on my calendar here:<br />
-<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
-<p>Sincerely,<br />
-<strong>Humberto Dominguez</strong><br />
-Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(214) 586-0257 | sales@hwbcleaning.com</p>"""
+            is_lauri = 'lauri' in (sender_persona or '').lower()
+            sender_name_val = 'Lauri Tells' if is_lauri else 'Humberto Dominguez'
+            sender_title_val = 'VP of Sales & Marketing' if is_lauri else 'Owner & Operator'
 
-            seen_emails = set()
-            cur.execute('SELECT LOWER(TRIM(recipient_email)) FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
-            for erow in cur.fetchall():
-                val = erow[0] if isinstance(erow, tuple) else erow.get('lower')
-                if val:
-                    seen_emails.add(val)
-
-            for lrow in leads_rows:
+            for lrow in eligible_rows:
                 lid = lrow['id']
                 raw_email = (lrow.get('email') or '').strip().lower()
-                lstate = (lrow.get('state') or 'TX').strip().upper()
-                lstatus = (lrow.get('status') or '').strip()
+                prev_status = (lrow.get('status') or 'New').strip() or 'New'
+                if prev_status == 'In Campaign':
+                    prev_status = 'New'
 
-                if (
-                    not is_email_compliance_eligible(
-                        raw_email,
-                        raw_state=lstate,
-                        is_dnc=bool(lrow.get('is_dnc')),
-                        status=lstatus,
-                        hygiene_status=(lrow.get('email_hygiene_status') or '')
-                    )
-                    or raw_email in seen_emails
-                ):
-                    skipped_count += 1
-                    continue
-
-                cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (raw_email,))
-                if cur.fetchone():
-                    skipped_count += 1
-                    continue
-
-                seen_emails.add(raw_email)
                 token = uuid.uuid4().hex
                 director_name = (lrow.get('director') or '').strip()
                 if not director_name or director_name.lower() in ('none', 'unknown', '--'):
@@ -7912,12 +8344,13 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                     INSERT INTO "CampaignRecipients" (
                         campaign_id, lead_id, recipient_email, recipient_name,
                         facility_name, city, county, capacity, sqf,
-                        current_step, status, tracking_token
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s)
+                        current_step, status, tracking_token, previous_lead_status
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s, %s)
                     RETURNING id;
-                ''', (campaign_id, lid, raw_email, director_name, center_name, city, county, cap, sqf, token))
+                ''', (campaign_id, lid, raw_email, director_name, center_name, city, county, cap, sqf, token, prev_status))
                 recip_id = cur.fetchone()[0]
                 enrolled_count += 1
+                enrolled_lead_ids.append(lid)
 
                 if stage_drafts:
                     recip_dict = {
@@ -7927,10 +8360,13 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                         'city': city,
                         'county': county,
                         'capacity': cap,
-                        'sqf': sqf
+                        'sqf': sqf,
+                        'sender_name': sender_name_val,
+                        'sender_title': sender_title_val
                     }
                     rendered_subject = replace_email_tokens(subject_tmpl, recip_dict, token)
                     rendered_body = replace_email_tokens(body_tmpl, recip_dict, token)
+                    rendered_body = rendered_body.replace('{sender_name}', sender_name_val).replace('{sender_title}', sender_title_val)
                     full_html = format_marketing_letterhead(rendered_body, token)
 
                     cur.execute('''
@@ -7940,6 +8376,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                         RETURNING id;
                     ''', (raw_email, rendered_subject, full_html, token, campaign_id, recip_id))
                     outbox_id = cur.fetchone()[0]
+                    created_outbox_ids.append(outbox_id)
 
                     cur.execute('''
                         UPDATE "CampaignRecipients"
@@ -7951,7 +8388,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 cur.execute('''
                     UPDATE "Leads"
                     SET last_campaigned_at = CURRENT_TIMESTAMP,
-                        status = CASE WHEN status IN ('New', 'NEW') OR status IS NULL THEN 'In Campaign' ELSE status END,
+                        status = CASE WHEN COALESCE(status, '') IN ('Won', 'Active Client', 'Converted') THEN status ELSE 'In Campaign' END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (lid,))
@@ -7959,20 +8396,47 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 cur.execute('''
                     INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                     VALUES (%s, 'Lead', 'Marketing Outreach', %s);
-                ''', (lid, f"Enrolled in marketing campaign '{campaign_name}' ({campaign_code}) by {user_label}. Status set to 'In Email Outreach'."))
+                ''', (lid, f"Enrolled in marketing campaign '{campaign_name}' ({campaign_code}) by {user_label} (Prior status: '{prev_status}' -> 'In Email Outreach')."))
 
             sync_campaign_telemetry_counts(cur, campaign_id)
+            worm_hash = _log_campaign_worm_audit(cur, 'CAMPAIGN_ENROLLMENT_WORM', user_label, {
+                'campaign_id': campaign_id,
+                'campaign_code': campaign_code,
+                'playbook_key': auto_pb_key,
+                'enrolled_lead_ids': enrolled_lead_ids,
+                'drafts_created': drafts_created,
+                'skipped_breakdown': {
+                    'missing_email': skipped_missing_email,
+                    'suppressed_dnc': skipped_suppressed_dnc,
+                    'duplicate': skipped_duplicate
+                }
+            })
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
 
+            skip_note = f" ({skipped_count} skipped)" if skipped_count else ""
             return jsonify({
                 'status': 'success',
                 'campaign_id': campaign_id,
                 'campaign_code': campaign_code,
                 'campaign_name': campaign_name,
+                'playbook_key': auto_pb_key,
                 'enrolled_count': enrolled_count,
+                'enrolled_lead_ids': enrolled_lead_ids,
                 'drafts_created': drafts_created,
+                'outbox_ids': created_outbox_ids,
                 'skipped_count': skipped_count,
-                'message': f"Enrolled {enrolled_count} lead(s) into {campaign_code}" + (f" and staged {drafts_created} Outbox draft(s) for CEO review." if stage_drafts else ".")
+                'skipped_breakdown': {
+                    'missing_email': skipped_missing_email,
+                    'suppressed_dnc': skipped_suppressed_dnc,
+                    'duplicate': skipped_duplicate
+                },
+                'worm_sha256': worm_hash,
+                'message': f"Enrolled {enrolled_count} lead(s) into {campaign_code}{skip_note}" + (f" and staged {drafts_created} Outbox draft(s) for CEO review." if stage_drafts else ".")
             })
     except Exception as e:
         if conn: conn.rollback()
@@ -7987,7 +8451,7 @@ def api_marketing_campaign_complete(campaign_id):
     """
     Completes an email marketing campaign:
     1. Cancels any unsent drafts in PendingOutbox for this campaign.
-    2. Returns leads whose emails were never sent (STAGED / AWAITING_APPROVAL) back to 'New'.
+    2. Restores leads whose emails were never sent (STAGED / AWAITING_APPROVAL) to their exact previous_lead_status (or 'New').
     3. Advances leads who received the email (SENT) but never opened/clicked from 'In Campaign' to 'Contacted'
        so they enter the phone follow-up pool instead of remaining stuck in 'In Campaign'.
     4. Preserves all leads who already advanced to 'Engaged' (opened), 'Qualified' (clicked), or 'Unsubscribed'.
@@ -7998,6 +8462,7 @@ def api_marketing_campaign_complete(campaign_id):
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
+            _ensure_campaign_recipients_reversible_columns(cur)
             cur.execute('SELECT id, campaign_code, name, status FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
             campaign = cur.fetchone()
             if not campaign:
@@ -8015,16 +8480,16 @@ def api_marketing_campaign_complete(campaign_id):
             ''', (campaign_id,))
             cancelled_drafts = cur.rowcount
 
-            # 2. Identify recipients who were never sent an email (STAGED / AWAITING_APPROVAL)
+            # 2. Identify recipients who were never sent an email (STAGED / AWAITING_APPROVAL) and restore previous_lead_status
             cur.execute('''
-                SELECT DISTINCT lead_id
+                SELECT lead_id, previous_lead_status
                 FROM "CampaignRecipients"
                 WHERE campaign_id = %s
                   AND status IN ('STAGED', 'AWAITING_APPROVAL', 'CANCELLED', 'REJECTED')
                   AND sent_at IS NULL
                   AND lead_id IS NOT NULL;
             ''', (campaign_id,))
-            unsent_lead_ids = [r[0] if isinstance(r, tuple) else r['lead_id'] for r in cur.fetchall()]
+            unsent_rows = cur.fetchall()
 
             cur.execute('''
                 UPDATE "CampaignRecipients"
@@ -8033,13 +8498,18 @@ def api_marketing_campaign_complete(campaign_id):
             ''', (campaign_id,))
 
             reverted_to_new = 0
-            if unsent_lead_ids:
-                cur.execute('''
-                    UPDATE "Leads"
-                    SET status = 'New', updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ANY(%s) AND status = 'In Campaign';
-                ''', (unsent_lead_ids,))
-                reverted_to_new = cur.rowcount
+            for r in unsent_rows:
+                lid = r[0] if isinstance(r, tuple) else r.get('lead_id')
+                prev_stat = (r[1] if isinstance(r, tuple) else r.get('previous_lead_status')) or 'New'
+                if prev_stat == 'In Campaign':
+                    prev_stat = 'New'
+                if lid:
+                    cur.execute('''
+                        UPDATE "Leads"
+                        SET status = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND status = 'In Campaign';
+                    ''', (prev_stat, lid))
+                    reverted_to_new += cur.rowcount
 
             # 3. Advance leads who WERE sent the email (status='SENT' or sent_at IS NOT NULL) and are still 'In Campaign' -> 'Contacted'
             cur.execute('''
@@ -8079,7 +8549,7 @@ def api_marketing_campaign_complete(campaign_id):
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (1, 'System', 'Marketing Campaign Completed', %s);
-            ''', (f"Campaign '{name}' ({code}) completed by {user_label}. {advanced_to_contacted} sent leads advanced to 'Contacted', {reverted_to_new} unsent leads returned to 'New', {cancelled_drafts} pending drafts cancelled.",))
+            ''', (f"Campaign '{name}' ({code}) completed by {user_label}. {advanced_to_contacted} sent leads advanced to 'Contacted', {reverted_to_new} unsent leads restored to prior status, {cancelled_drafts} pending drafts cancelled.",))
 
             conn.commit()
             return jsonify({
@@ -8089,7 +8559,7 @@ def api_marketing_campaign_complete(campaign_id):
                 'advanced_to_contacted': advanced_to_contacted,
                 'reverted_to_new': reverted_to_new,
                 'cancelled_drafts': cancelled_drafts,
-                'message': f"Campaign {code} marked Completed: {advanced_to_contacted} sent lead(s) moved to 'Contacted' for phone follow-up; {reverted_to_new} unsent lead(s) returned to 'New'."
+                'message': f"Campaign {code} marked Completed: {advanced_to_contacted} sent lead(s) moved to 'Contacted' for phone follow-up; {reverted_to_new} unsent lead(s) restored to their prior status."
             })
     except Exception as e:
         if conn: conn.rollback()
@@ -8140,14 +8610,15 @@ def api_marketing_campaign_toggle_status(campaign_id):
 @login_required
 def api_marketing_campaign_delete(campaign_id):
     """
-    Deletes a marketing campaign, removes associated unsent drafts, and reverts
-    enrolled leads with status 'In Campaign' back to 'New'.
+    Deletes a marketing campaign, removes associated unsent drafts, and restores
+    enrolled leads with status 'In Campaign' back to their exact previous_lead_status (or 'New').
     """
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
+            _ensure_campaign_recipients_reversible_columns(cur)
             cur.execute('SELECT id, campaign_code, name FROM "MarketingCampaigns" WHERE id = %s', (campaign_id,))
             campaign = cur.fetchone()
             if not campaign:
@@ -8156,24 +8627,28 @@ def api_marketing_campaign_delete(campaign_id):
             code = campaign['campaign_code'] if isinstance(campaign, dict) else campaign[1]
             name = campaign['name'] if isinstance(campaign, dict) else campaign[2]
 
-            # 1. Identify enrolled leads for this campaign
+            # 1. Identify enrolled leads and their pre-campaign status
             cur.execute('''
-                SELECT DISTINCT lead_id 
-                FROM "CampaignRecipients" 
+                SELECT lead_id, previous_lead_status
+                FROM "CampaignRecipients"
                 WHERE campaign_id = %s AND lead_id IS NOT NULL;
             ''', (campaign_id,))
             lead_rows = cur.fetchall()
-            lead_ids = [r[0] if isinstance(r, tuple) else r['lead_id'] for r in lead_rows]
 
-            # 2. Reset lead status back to 'New' if currently 'In Campaign'
+            # 2. Restore lead status back to exact prior status (or 'New') if currently 'In Campaign'
             reset_count = 0
-            if lead_ids:
-                cur.execute('''
-                    UPDATE "Leads"
-                    SET status = 'New', updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ANY(%s) AND status = 'In Campaign';
-                ''', (lead_ids,))
-                reset_count = cur.rowcount
+            for r in lead_rows:
+                lid = r[0] if isinstance(r, tuple) else r.get('lead_id')
+                prev_stat = (r[1] if isinstance(r, tuple) else r.get('previous_lead_status')) or 'New'
+                if prev_stat == 'In Campaign':
+                    prev_stat = 'New'
+                if lid:
+                    cur.execute('''
+                        UPDATE "Leads"
+                        SET status = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND status = 'In Campaign';
+                    ''', (prev_stat, lid))
+                    reset_count += cur.rowcount
 
             # 3. Purge unsent drafts from PendingOutbox
             cur.execute('''
@@ -8190,7 +8665,7 @@ def api_marketing_campaign_delete(campaign_id):
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (1, 'System', 'Marketing Campaign Deleted', %s);
-            ''', (f"Campaign '{name}' ({code}) deleted by {user_label}. {reset_count} leads returned to 'New', {purged_drafts} drafts removed.",))
+            ''', (f"Campaign '{name}' ({code}) deleted by {user_label}. {reset_count} leads restored to prior status, {purged_drafts} drafts removed.",))
 
             conn.commit()
             return jsonify({
@@ -8199,7 +8674,7 @@ def api_marketing_campaign_delete(campaign_id):
                 'campaign_code': code,
                 'leads_reset': reset_count,
                 'drafts_purged': purged_drafts,
-                'message': f"Campaign {code} was deleted successfully. {reset_count} leads were returned to 'New'."
+                'message': f"Campaign {code} was deleted successfully. {reset_count} leads were restored to their prior status."
             })
     except Exception as e:
         if conn: conn.rollback()
@@ -8212,15 +8687,31 @@ def api_marketing_campaign_delete(campaign_id):
 @login_required
 def api_marketing_campaign_reset_all():
     """
-    Deletes all marketing campaigns, purges all campaign drafts, and resets all
-    enrolled leads back to 'New' status for a clean slate.
+    Deletes all marketing campaigns, purges all campaign drafts, and restores all
+    enrolled leads back to their exact previous_lead_status (or 'New') for a clean slate.
     """
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
-            # 1. Reset all leads with status 'In Campaign' back to 'New'
+            _ensure_campaign_recipients_reversible_columns(cur)
+            cur.execute('''
+                SELECT lead_id, previous_lead_status
+                FROM "CampaignRecipients"
+                WHERE lead_id IS NOT NULL AND previous_lead_status IS NOT NULL;
+            ''')
+            for r in cur.fetchall():
+                lid = r[0] if isinstance(r, tuple) else r.get('lead_id')
+                pstat = (r[1] if isinstance(r, tuple) else r.get('previous_lead_status')) or 'New'
+                if pstat != 'In Campaign':
+                    cur.execute('''
+                        UPDATE "Leads"
+                        SET status = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s AND status = 'In Campaign';
+                    ''', (pstat, lid))
+
+            # Fallback for any remaining leads in 'In Campaign'
             cur.execute('''
                 UPDATE "Leads"
                 SET status = 'New', updated_at = CURRENT_TIMESTAMP
@@ -8244,7 +8735,7 @@ def api_marketing_campaign_reset_all():
             cur.execute('''
                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                 VALUES (1, 'System', 'Marketing Suite Reset', %s);
-            ''', (f"Marketing suite reset by {user_label}: {campaigns_deleted} campaigns deleted, {drafts_purged} drafts purged, {leads_reset} leads returned to 'New'.",))
+            ''', (f"Marketing suite reset by {user_label}: {campaigns_deleted} campaigns deleted, {drafts_purged} drafts purged, {leads_reset} leads restored.",))
 
             conn.commit()
             return jsonify({
@@ -8252,7 +8743,7 @@ def api_marketing_campaign_reset_all():
                 'campaigns_deleted': campaigns_deleted,
                 'leads_reset': leads_reset,
                 'drafts_purged': drafts_purged,
-                'message': f"Marketing suite reset complete: {campaigns_deleted} campaigns deleted, {leads_reset} leads returned to 'New'."
+                'message': f"Marketing suite reset complete: {campaigns_deleted} campaigns deleted, {leads_reset} leads restored."
             })
     except Exception as e:
         if conn: conn.rollback()
@@ -8454,7 +8945,8 @@ def api_marketing_test_send_proof(campaign_id):
 @login_required
 def api_marketing_generate_drafts(campaign_id):
     """
-    Generates personalized HWB-COM-001 drafts into PendingOutbox for staged recipients.
+    Generates personalized HWB-COM-001 drafts into PendingOutbox for staged recipients,
+    using the campaign's saved template or its sector-matched Playbook (never defaulting to daycare copy for non-daycare sectors).
     """
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
@@ -8466,45 +8958,9 @@ def api_marketing_generate_drafts(campaign_id):
             if not campaign:
                 return jsonify({'status': 'error', 'message': 'Campaign not found.'}), 404
 
-            subject_tmpl = campaign.get('email_subject_template') or "Commercial Cleaning Proposal & Facility Walkthrough | HWB Cleaning Services"
-            body_tmpl = campaign.get('email_body_template') or """<p>Hi {first_name},</p>
-
-<p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
-
-<p>Still, you and I know that running a successful facility and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
-
-<ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
-    <li><strong>A Walkthrough Plan</strong> with your total cleanable square footage and room layout.</li>
-    <li><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
-    <li><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
-</ol>
-
-<p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
-    If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
-</p>
-
-<p>But if having a solid backup plan will save your school headaches, protect your budget, and keep your staff from burning out, here is what our service covers:</p>
-
-<ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
-    <li><strong>Teachers Don't Stay Late:</strong> We handle all the heavy vacuuming and scrubbing after 6:30 PM so your teachers don't have to stay late after a full day with the kids.</li>
-    <li><strong>Classroom Rugs &amp; HEPA Filtration:</strong> Backpack vacuums with quiet HEPA filters that trap dust and dirt instead of blowing it around, plus fresh mopping on all hard floors.</li>
-    <li><strong>Restrooms &amp; Low Sinks:</strong> Nightly deep scrubbing of toddler toilets, sinks, faucets, and door handles.</li>
-    <li><strong>Diaper Pails to Dumpster:</strong> All diaper bins emptied directly to the outside dumpster so your facility opens fresh and clean every morning.</li>
-    <li><strong>Morning Restock:</strong> Soap, paper towels, and toilet paper restocked every night so teachers are fully ready for the 6:30 AM drop-off.</li>
-    <li><strong>Floor Care Included (No Surprise Bills):</strong> Stripping, waxing, and carpet cleaning twice a year included right in your regular monthly rate, with no extra fees.</li>
-</ul>
-
-<p>If you're open to it, I can swing by for just 5 minutes this week to take a quick look at your layout and get these three items ready for you.</p>
-
-<p>Would you have 5 minutes this Tuesday morning or Thursday afternoon? Or feel free to pick a time directly on my calendar here:<br />
-<a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
-
-<p>Thank you for everything you and your team do for our local kids every day.</p>
-
-<p>Sincerely,<br />
-<strong>Humberto Dominguez</strong><br />
-Owner &amp; Operator | HWB Cleaning Services LLC<br />
-(214) 586-0257 | sales@hwbcleaning.com</p>"""
+            sector_playbook = get_playbook_for_sector(target_sector=campaign.get('target_sector'))
+            subject_tmpl = (campaign.get('email_subject_template') or '').strip() or sector_playbook['subject']
+            body_tmpl = (campaign.get('email_body_template') or '').strip() or sector_playbook['body']
 
             limit = 50
             if request.is_json and request.json:
@@ -8524,7 +8980,6 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 if not recip_email or '@' not in recip_email:
                     continue
 
-                # Multi-Jurisdictional Geofence & Domain Compliance Shield (CAN-SPAM, CA/WA, CASL/GDPR, Public Sector)
                 if not is_email_compliance_eligible(recip_email):
                     cur.execute("UPDATE \"CampaignRecipients\" SET status = 'GEOFENCE_BLOCKED', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (recip['id'],))
                     continue
@@ -8573,13 +9028,7 @@ Owner &amp; Operator | HWB Cleaning Services LLC<br />
                 ''', (outbox_id, recip['id']))
                 drafts_created += 1
 
-            cur.execute('''
-                UPDATE "MarketingCampaigns"
-                SET staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s;
-            ''', (campaign_id, campaign_id))
-
+            sync_campaign_telemetry_counts(cur, campaign_id)
             conn.commit()
             return jsonify({
                 'status': 'success',
@@ -8671,11 +9120,17 @@ def api_marketing_update_outbox(email_id):
 @login_required
 def api_marketing_outbox_batch():
     """
-    Batch release or reject queued emails via Microsoft Graph API.
+    Batch release or reject queued emails via Microsoft Graph API with:
+      1. Optional campaign_id scoping so campaigns never bleed into each other.
+      2. Daily throttle circuit breaker per campaign (daily_throttle_limit).
+      3. Pre-send suppression & DNC re-verification gate right before transmission.
+      4. Reversible previous_lead_status restoration on reject/cancel.
+      5. Cryptographic WORM SHA-256 dispatch receipt in SecurityAuditLogs.
     """
     data = request.get_json() or request.form
-    action = data.get('action') # 'approve' or 'reject'
+    action = data.get('action')  # 'approve' or 'reject'
     email_ids = data.get('email_ids', [])
+    campaign_id_filter = data.get('campaign_id')
     limit = int(data.get('limit') or 10)
 
     db_url = current_app.config.get('DATABASE_URL')
@@ -8683,30 +9138,94 @@ def api_marketing_outbox_batch():
     try:
         conn = get_db(db_url)
         with conn.cursor() as cur:
-            if not email_ids:
+            _ensure_campaign_recipients_reversible_columns(cur)
+            user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
+
+            if email_ids:
                 cur.execute('''
-                    SELECT id, recipient, subject, body, tracking_token, campaign_id
+                    SELECT id, recipient, subject, body, tracking_token, campaign_id, recipient_id
+                    FROM "PendingOutbox"
+                    WHERE id = ANY(%s) AND UPPER(status) = 'PENDING'
+                    ORDER BY id ASC;
+                ''', (email_ids,))
+                pending_msgs = cur.fetchall()
+            elif campaign_id_filter and str(campaign_id_filter).isdigit():
+                cur.execute('''
+                    SELECT id, recipient, subject, body, tracking_token, campaign_id, recipient_id
+                    FROM "PendingOutbox"
+                    WHERE campaign_id = %s AND UPPER(status) = 'PENDING'
+                    ORDER BY id ASC
+                    LIMIT %s;
+                ''', (int(campaign_id_filter), limit))
+                pending_msgs = cur.fetchall()
+            else:
+                cur.execute('''
+                    SELECT id, recipient, subject, body, tracking_token, campaign_id, recipient_id
                     FROM "PendingOutbox"
                     WHERE UPPER(status) = 'PENDING'
                     ORDER BY id ASC
                     LIMIT %s;
                 ''', (limit,))
                 pending_msgs = cur.fetchall()
-            else:
-                cur.execute('''
-                    SELECT id, recipient, subject, body, tracking_token, campaign_id
-                    FROM "PendingOutbox"
-                    WHERE id = ANY(%s) AND UPPER(status) = 'PENDING';
-                ''', (email_ids,))
-                pending_msgs = cur.fetchall()
+
+            # Pre-load campaign daily throttle counters
+            campaign_throttle_map = {}
+            cur.execute('''
+                SELECT mc.id, COALESCE(mc.daily_throttle_limit, 50) AS daily_limit,
+                       (SELECT COUNT(*) FROM "CampaignRecipients" cr
+                        WHERE cr.campaign_id = mc.id AND cr.sent_at::date = CURRENT_DATE) AS sent_today
+                FROM "MarketingCampaigns" mc;
+            ''')
+            for trow in cur.fetchall():
+                cid_val = trow[0] if isinstance(trow, tuple) else trow.get('id')
+                dlim = trow[1] if isinstance(trow, tuple) else trow.get('daily_limit')
+                stoday = trow[2] if isinstance(trow, tuple) else trow.get('sent_today')
+                if cid_val:
+                    campaign_throttle_map[int(cid_val)] = {'limit': int(dlim or 50), 'sent_today': int(stoday or 0)}
 
             affected_campaigns = set()
-            success_count, error_count = 0, 0
+            success_count, error_count, throttled_count, suppressed_count = 0, 0, 0, 0
+            dispatched_ids = []
+
             for msg in pending_msgs:
                 eid = msg['id']
-                if msg.get('campaign_id'):
-                    affected_campaigns.add(int(msg['campaign_id']))
+                cid = int(msg['campaign_id']) if msg.get('campaign_id') else None
+                if cid:
+                    affected_campaigns.add(cid)
+
                 if action == 'approve':
+                    # 1. Check daily throttle circuit breaker
+                    if cid and cid in campaign_throttle_map:
+                        tinfo = campaign_throttle_map[cid]
+                        if tinfo['sent_today'] >= tinfo['limit']:
+                            throttled_count += 1
+                            continue
+
+                    # 2. Final pre-send suppression & DNC re-verification
+                    recip_addr = (msg.get('recipient') or '').strip().lower()
+                    cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (recip_addr,))
+                    is_suppressed = bool(cur.fetchone())
+                    if not is_suppressed and msg.get('recipient_id'):
+                        cur.execute('''
+                            SELECT l.is_dnc, l.status
+                            FROM "CampaignRecipients" cr
+                            JOIN "Leads" l ON cr.lead_id = l.id
+                            WHERE cr.id = %s;
+                        ''', (msg['recipient_id'],))
+                        lchk = cur.fetchone()
+                        if lchk and (lchk.get('is_dnc') or (lchk.get('status') or '') in ('Do Not Call (DNC)', 'Unsubscribed')):
+                            is_suppressed = True
+
+                    if is_suppressed:
+                        cur.execute("UPDATE \"PendingOutbox\" SET status = 'CANCELLED' WHERE id = %s;", (eid,))
+                        cur.execute('''
+                            UPDATE "CampaignRecipients"
+                            SET status = 'UNSUBSCRIBED', updated_at = CURRENT_TIMESTAMP
+                            WHERE outbox_id = %s OR tracking_token = %s;
+                        ''', (eid, msg.get('tracking_token')))
+                        suppressed_count += 1
+                        continue
+
                     ok, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
                     if ok:
                         cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT' WHERE id = %s", (eid,))
@@ -8725,7 +9244,10 @@ def api_marketing_outbox_batch():
                                     INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                                     VALUES (%s, 'Lead', 'Email Sent', %s);
                                 ''', (ret_recip['lead_id'], f"Marketing outreach email sent to {msg['recipient']}: '{msg['subject']}'"))
+                        if cid and cid in campaign_throttle_map:
+                            campaign_throttle_map[cid]['sent_today'] += 1
                         success_count += 1
+                        dispatched_ids.append(eid)
                     else:
                         error_count += 1
                 elif action in ('reject', 'cancel'):
@@ -8734,32 +9256,55 @@ def api_marketing_outbox_batch():
                         UPDATE "CampaignRecipients"
                         SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
                         WHERE outbox_id = %s OR tracking_token = %s
-                        RETURNING campaign_id, lead_id;
+                        RETURNING campaign_id, lead_id, previous_lead_status;
                     ''', (eid, msg.get('tracking_token')))
                     ret_cancel = cur.fetchone()
                     if ret_cancel:
                         if ret_cancel.get('campaign_id'):
                             affected_campaigns.add(int(ret_cancel['campaign_id']))
                         if ret_cancel.get('lead_id'):
+                            prev_stat = (ret_cancel.get('previous_lead_status') or 'New').strip() or 'New'
+                            if prev_stat == 'In Campaign':
+                                prev_stat = 'New'
                             cur.execute('''
                                 UPDATE "Leads"
-                                SET status = 'New', updated_at = CURRENT_TIMESTAMP
+                                SET status = %s, updated_at = CURRENT_TIMESTAMP
                                 WHERE id = %s AND status = 'In Campaign';
-                            ''', (ret_cancel['lead_id'],))
+                            ''', (prev_stat, ret_cancel['lead_id']))
                     success_count += 1
+                    dispatched_ids.append(eid)
 
             for cid in affected_campaigns:
                 sync_campaign_telemetry_counts(cur, cid)
 
+            worm_hash = _log_campaign_worm_audit(cur, 'CAMPAIGN_DISPATCH_WORM', user_label, {
+                'action': action,
+                'campaign_id_filter': campaign_id_filter,
+                'dispatched_ids': dispatched_ids,
+                'successful': success_count,
+                'errors': error_count,
+                'throttled': throttled_count,
+                'suppressed': suppressed_count
+            })
+
             conn.commit()
-            action_desc = "cancelled" if action in ('reject', 'cancel') else "processed"
+            action_desc = "cancelled" if action in ('reject', 'cancel') else "released"
+            extra_notes = []
+            if throttled_count:
+                extra_notes.append(f"{throttled_count} held by daily throttle limit")
+            if suppressed_count:
+                extra_notes.append(f"{suppressed_count} blocked by DNC/Suppression")
+            note_suffix = f" ({', '.join(extra_notes)})" if extra_notes else ""
             return jsonify({
                 'status': 'success',
                 'action': action,
                 'processed': len(pending_msgs),
                 'successful': success_count,
                 'errors': error_count,
-                'message': f"Batch completed: {success_count} queued messages {action_desc} successfully."
+                'throttled': throttled_count,
+                'suppressed': suppressed_count,
+                'worm_sha256': worm_hash,
+                'message': f"Batch completed: {success_count} queued message(s) {action_desc} successfully{note_suffix}."
             })
     except Exception as e:
         if conn: conn.rollback()

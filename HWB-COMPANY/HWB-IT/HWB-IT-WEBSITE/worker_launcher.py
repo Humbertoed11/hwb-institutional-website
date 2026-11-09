@@ -47,11 +47,13 @@ def launch_agents():
                     print(f"[WORKER] CRITICAL: Agent {AGENTS[i][1]} died (attempt {restart_counts[i]}/{MAX_RESTARTS}). Restarting...", flush=True)
                     processes[i] = subprocess.Popen(AGENTS[i])
                     last_start_times[i] = time.time()
-            # 24/7 Dead-Man's Switch: Verify AIEmployeeHeartbeat liveness for telegram_listener.py
+            # 24/7 Dead-Man's Switch: Verify AIEmployeeHeartbeat liveness for telegram_listener.py & Lauri Tells
             try:
-                from core.ai_employee import get_ai_employee
+                from core.ai_employee import get_ai_employee, get_lauri_seo_employee
                 emp = get_ai_employee()
                 emp.record_heartbeat("hwb_worker_supervisor", {"supervised_agents": len(processes)})
+                lauri = get_lauri_seo_employee()
+                lauri.record_heartbeat_pulse({"supervised_by": "worker_launcher"})
             except Exception:
                 pass
             time.sleep(10)

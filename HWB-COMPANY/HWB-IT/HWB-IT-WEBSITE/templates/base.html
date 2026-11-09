@@ -86,6 +86,7 @@
  }
  </script>
  <link rel="alternate" type="text/plain" href="https://www.hwbcleaning.com/llms.txt" title="HWB Cleaning Services LLC AI Fact Sheet">
+ <link rel="alternate" type="text/plain" href="https://www.hwbcleaning.com/llms-full.txt" title="HWB Cleaning Services LLC Complete AI Reference Guide">
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}</title>
@@ -115,7 +116,7 @@
  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
  
   <!-- Google Search Console Verification -->
-  <meta name="google-site-verification" content="{{ config.get('GOOGLE_SITE_VERIFICATION', 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z') }}">
+  <meta name="google-site-verification" content="{{ config.get('GOOGLE_SITE_VERIFICATION') or 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z' }}">
 
   <!-- SigmaFidelity™ WCAG 2.2 AA Focus & Skip-Link Architecture -->
   <style>
@@ -192,10 +193,11 @@
     }
   </style>
 
-  <!-- SigmaFidelity™ CIPA § 631 & CPRA Affirmative Consent Analytics Gate -->
-  <!-- Tracking scripts remain inert until visitor clicks Accept -->
+  <!-- SigmaFidelity™ CIPA § 631, CPRA & Google Consent Mode v2 Analytics Gate -->
+  <!-- Default consent state is denied (cookieless pings only) until visitor clicks Accept -->
   {% set ga_id = config.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR' %}
   {% set gads_id = config.get('GOOGLE_ADS_ID') or 'AW-8622428739' %}
+  {% set gads_label = config.get('GOOGLE_ADS_CONVERSION_LABEL') or '' %}
   {% set clarity_id = config.get('MICROSOFT_CLARITY_ID') or 'q8x3j1k9wm' %}
   {% if not current_user.is_authenticated %}
   <script type="text/plain" data-consent-category="analytics" data-type="ga" data-id="{{ ga_id }}"></script>
@@ -204,25 +206,51 @@
   {% endif %}
   <script>
     window.HWB_GOOGLE_ADS_ID = '{{ gads_id }}';
+    window.HWB_GOOGLE_ADS_CONVERSION_LABEL = '{{ gads_label }}';
+    window.HWB_GOOGLE_ADS_SEND_TO = '{{ gads_id ~ ("/" ~ gads_label if gads_label else "") }}';
     window.HWB_GOOGLE_ADS_ACCOUNT = '862-242-8739';
-    function triggerCompliantTelemetry() {
-      {% if not current_user.is_authenticated %}
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    {% if not current_user.is_authenticated %}
+    // Initialize Google Consent Mode v2 (privacy-safe cookieless modeling by default)
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'ad_user_data': 'denied',
+      'ad_personalization': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+    gtag('set', 'ads_data_redaction', true);
+    gtag('set', 'url_passthrough', true);
+    (function loadGtagConsentModeV2() {
+      if (navigator.globalPrivacyControl === true) return;
       var gaScript = document.createElement('script');
       gaScript.async = true;
       gaScript.src = "https://www.googletagmanager.com/gtag/js?id={{ ga_id }}";
       document.head.appendChild(gaScript);
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '{{ ga_id }}');
+      gtag('config', '{{ ga_id }}', { 'anonymize_ip': true });
       gtag('config', '{{ gads_id }}');
+    })();
+    {% endif %}
+    function triggerCompliantTelemetry() {
+      {% if not current_user.is_authenticated %}
+      gtag('consent', 'update', {
+        'ad_storage': 'granted',
+        'ad_user_data': 'granted',
+        'ad_personalization': 'granted',
+        'analytics_storage': 'granted'
+      });
 
       {% if not request.path.startswith('/admin') and not request.path.startswith('/login') %}
-      (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "{{ clarity_id }}");
+      if (!window.__hwbClarityLoaded) {
+        window.__hwbClarityLoaded = true;
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "{{ clarity_id }}");
+      }
       {% endif %}
       {% endif %}
     }
@@ -236,6 +264,12 @@
 
     function declineCookieConsent() {
       localStorage.setItem('hwb_telemetry_consent', 'declined');
+      gtag('consent', 'update', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied'
+      });
       var b = document.getElementById('hwb-cookie-banner');
       if (b) b.style.display = 'none';
     }
@@ -330,16 +364,28 @@
                     </ul>
                 </div>
 
-                <!-- Column 4: Service Areas -->
+                <!-- Column 4: Service Areas (All 18 North Texas Hubs) -->
                 <div class="footer-column">
                     <h4>Service Areas</h4>
-                    <ul class="footer-links">
+                    <ul class="footer-links" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 1rem;">
                         <li><a href="{{ url_for('location_page', city='dallas') }}">Dallas</a></li>
                         <li><a href="{{ url_for('location_page', city='plano') }}">Plano</a></li>
-                        <li><a href="{{ url_for('location_page', city='fort-worth') }}">Fort Worth</a></li>
-                        <li><a href="{{ url_for('location_page', city='waxahachie') }}">Waxahachie</a></li>
                         <li><a href="{{ url_for('location_page', city='frisco') }}">Frisco</a></li>
                         <li><a href="{{ url_for('location_page', city='mckinney') }}">McKinney</a></li>
+                        <li><a href="{{ url_for('location_page', city='prosper') }}">Prosper</a></li>
+                        <li><a href="{{ url_for('location_page', city='celina') }}">Celina</a></li>
+                        <li><a href="{{ url_for('location_page', city='allen') }}">Allen</a></li>
+                        <li><a href="{{ url_for('location_page', city='richardson') }}">Richardson</a></li>
+                        <li><a href="{{ url_for('location_page', city='addison') }}">Addison</a></li>
+                        <li><a href="{{ url_for('location_page', city='irving') }}">Irving</a></li>
+                        <li><a href="{{ url_for('location_page', city='denton') }}">Denton</a></li>
+                        <li><a href="{{ url_for('location_page', city='rockwall') }}">Rockwall</a></li>
+                        <li><a href="{{ url_for('location_page', city='southlake') }}">Southlake</a></li>
+                        <li><a href="{{ url_for('location_page', city='fort-worth') }}">Fort Worth</a></li>
+                        <li><a href="{{ url_for('location_page', city='arlington') }}">Arlington</a></li>
+                        <li><a href="{{ url_for('location_page', city='grand-prairie') }}">Grand Prairie</a></li>
+                        <li><a href="{{ url_for('location_page', city='mansfield') }}">Mansfield</a></li>
+                        <li><a href="{{ url_for('location_page', city='waxahachie') }}">Waxahachie</a></li>
                     </ul>
                 </div>
 

@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ data.title }}{% endblock %}
+{% block title %}{{ data.title | replace('&amp;', '&') | safe }}{% endblock %}
+{% block og_title %}{{ data.title | replace('&amp;', '&') }}{% endblock %}
 {% block og_description %}{{ data.meta_desc }}{% endblock %}
 
 {% block head %}
+  <link rel="preload" as="image" href="/static/img/hero_lobby.webp" fetchpriority="high">
   <meta name="description" content="{{ data.meta_desc }}">
   <meta name="keywords" content="commercial cleaning {{ data.name | lower }}, janitorial services {{ data.name | lower }}, office cleaning {{ data.name | lower }}, floor care {{ data.name | lower }}">
   <script type="application/ld+json">
@@ -104,6 +106,16 @@
                     <div class="card-badge">Heavy Duty</div>
                     <h3>Industrial Cleaning</h3>
                     <p>Safety-hardened debris removal and restroom care for high-traffic warehouses and logistics centers in the {{ data.name }} area.</p>
+                </div>
+            </a>
+
+            <!-- 4. Construction & Neighborhood Cleanup -->
+            <a href="{{ url_for('services_construction') }}" class="service-card">
+                <div class="card-image" style="background-image: url('/static/img/construction_window_scraping.webp');"></div>
+                <div class="card-content">
+                    <div class="card-badge">Builders &amp; GCs</div>
+                    <h3>Neighborhood &amp; Final Clean</h3>
+                    <p>3-Step Neighborhood &amp; Street Cleanup during active subdivision construction plus 3-Phase CSI 01 74 23 interior final cleans in {{ data.name }}.</p>
                 </div>
             </a>
         </div>

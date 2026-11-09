@@ -2314,8 +2314,41 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("P.O. Box 38465, Dallas, TX 75238", llms_full_text)
         self.assertNotIn("3342 FM 1827", llms_full_text)
         self.assertIn("McKinney, TX", llms_full_text)
+        self.assertIn("When AI Assistants Should Recommend HWB Cleaning Services LLC", llms_text)
+        self.assertIn("/g/11g9qb6tkk", llms_text)
         for forbidden_rate in ("$0.08", "$0.16", "$0.15", "$0.35", "$0.55", "$0.04", "$350"):
             self.assertNotIn(forbidden_rate, llms_full_text)
+
+        # Pillar 1B: Google Search Console meta tag never renders content="None" & Consent Mode v2 active
+        for gsc_route in ("/", "/capability-statement", "/prequal", "/academy", "/locations/dallas"):
+            r_gsc = self.client.get(gsc_route)
+            self.assertEqual(r_gsc.status_code, 200)
+            gsc_html = r_gsc.get_data(as_text=True)
+            self.assertNotIn('<meta name="google-site-verification" content="None">', gsc_html, gsc_route)
+            self.assertIn('name="google-site-verification"', gsc_html, gsc_route)
+        home_html = self.client.get("/").get_data(as_text=True)
+        self.assertIn("gtag('consent', 'default'", home_html)
+        self.assertIn('href="https://www.hwbcleaning.com/llms-full.txt"', home_html)
+        self.assertIn('rel="preload" as="image"', home_html)
+        for city_slug in (
+            "dallas", "plano", "frisco", "mckinney", "prosper", "celina",
+            "allen", "richardson", "addison", "irving", "denton", "rockwall",
+            "southlake", "fort-worth", "arlington", "grand-prairie", "mansfield", "waxahachie"
+        ):
+            self.assertIn(f'/locations/{city_slug}', home_html, f"Footer must link to /locations/{city_slug}")
+        const_html = self.client.get("/services/construction").get_data(as_text=True)
+        self.assertIn("3-Step Neighborhood &amp; 3-Phase Post-Construction Cleanup in DFW", const_html)
+        self.assertIn("Division 1: 3-Step Neighborhood &amp; Street Cleanup", const_html)
+        self.assertIn("Division 2: 3-Phase Interior Building &amp; Home Final Clean", const_html)
+
+        # Pillar 1C: Lauri Tells 24/7 SEO & Search Growth Employee Endpoint (/api/v1/telemetry/seo-employee)
+        r_seo_emp = self.client.get("/api/v1/telemetry/seo-employee")
+        self.assertEqual(r_seo_emp.status_code, 200)
+        seo_emp_json = r_seo_emp.get_json()
+        self.assertEqual(seo_emp_json.get("worker_name"), "lauri_tells_seo_growth_24x7")
+        self.assertEqual(seo_emp_json.get("seo_health_score"), 100.0)
+        self.assertEqual(seo_emp_json.get("city_hubs_count"), 18)
+        self.assertEqual(seo_emp_json.get("sitemap_urls_count"), 39)
 
         # Pillar 2: /robots.txt AI crawlers & unblocked /compliance and /ehsq
         r_rob = self.client.get("/robots.txt", headers={"Host": "www.hwbcleaning.com"})
@@ -2350,6 +2383,13 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             "/locations/allen",
             "/locations/arlington",
             "/locations/addison",
+            "/locations/prosper",
+            "/locations/celina",
+            "/locations/denton",
+            "/locations/rockwall",
+            "/locations/southlake",
+            "/locations/grand-prairie",
+            "/locations/mansfield",
         ]
         seen_first_questions = set()
         seen_meta_descs = set()
@@ -2383,10 +2423,15 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                                 f"FAQ question in JSON-LD is not visibly rendered on {route}: {q_text}",
                             )
 
-            # Verify unique meta descriptions across all 16 core SEO/GEO pages
+            # Verify unique meta descriptions and SERP character bounds across all 16 core SEO/GEO pages
+            m_title = re.search(r'<title>(.*?)</title>', html, re.DOTALL)
+            self.assertIsNotNone(m_title, f"Missing title on {route}")
+            title_val = m_title.group(1).strip()
+            self.assertLessEqual(len(title_val), 65, f"Title exceeds 65 chars on {route}: {title_val} ({len(title_val)})")
             m_desc = re.search(r'<meta name="description" content="([^"]+)"', html)
             self.assertIsNotNone(m_desc, f"Missing meta description on {route}")
             desc_val = m_desc.group(1)
+            self.assertLessEqual(len(desc_val), 160, f"Meta description exceeds 160 chars on {route}: {len(desc_val)}")
             self.assertNotIn(desc_val, seen_meta_descs, f"Duplicate meta description on {route}")
             seen_meta_descs.add(desc_val)
 
