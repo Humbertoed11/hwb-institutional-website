@@ -9658,12 +9658,17 @@
 
     function openEnrollSelectedLeadsModal() {
         const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
-        if (!ids || ids.length === 0) {
+        const isAllMatching = (typeof _selectAllMatchingFilterLeads !== 'undefined' && _selectAllMatchingFilterLeads);
+        const bulkControls = document.getElementById('leads-bulk-controls');
+        const totalMatching = bulkControls ? parseInt(bulkControls.getAttribute('data-total-matching') || '0', 10) : 0;
+        const effectiveCount = (isAllMatching && totalMatching > 0) ? totalMatching : ids.length;
+
+        if (effectiveCount === 0) {
             showToast('Please select at least one lead in the table first.', 'warning');
             return;
         }
         const countLabel = document.getElementById('enroll-leads-count-label');
-        if (countLabel) countLabel.innerText = ids.length;
+        if (countLabel) countLabel.innerText = effectiveCount.toLocaleString();
 
         // Reset modal view state (show form, hide post-enrollment hub)
         const formEl = document.getElementById('form-enroll-selected-leads');
@@ -9679,6 +9684,9 @@
             const today = new Date().toLocaleDateString('en-US');
             nameInput.value = `Selected Commercial Leads (${today})`;
         }
+
+        // Open the modal immediately so the user gets 0ms visual feedback while pre-flight check runs
+        openModal('modal-enroll-leads-campaign');
 
         const selectEl = document.getElementById('enroll-campaign-select');
         if (selectEl) {
@@ -9710,13 +9718,12 @@
                 .catch(() => {});
         }
         toggleEnrollNewCampaignName();
-        runEnrollLeadsPreflight();
-        openModal('modal-enroll-leads-campaign');
     }
 
     function runEnrollLeadsPreflight() {
         const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
-        if (!ids || ids.length === 0) return;
+        const isAllMatching = Boolean(typeof _selectAllMatchingFilterLeads !== 'undefined' && _selectAllMatchingFilterLeads);
+        if ((!ids || ids.length === 0) && !isAllMatching) return;
         const selectEl = document.getElementById('enroll-campaign-select');
         const campaignVal = selectEl ? selectEl.value : 'NEW';
         const campaignId = (campaignVal && campaignVal !== 'NEW') ? parseInt(campaignVal) : null;
@@ -9733,7 +9740,12 @@
         fetch('/api/v1/marketing/campaign/preflight-check', {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
-            body: JSON.stringify({ lead_ids: ids, campaign_id: campaignId })
+            body: JSON.stringify({
+                lead_ids: ids,
+                select_all_matching: isAllMatching,
+                filter_params: (isAllMatching && typeof getActiveLeadsFilterSnapshot === 'function') ? getActiveLeadsFilterSnapshot() : {},
+                campaign_id: campaignId
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -9854,7 +9866,8 @@
 
     function submitEnrollSelectedLeads() {
         const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
-        if (!ids || ids.length === 0) {
+        const isAllMatching = Boolean(typeof _selectAllMatchingFilterLeads !== 'undefined' && _selectAllMatchingFilterLeads);
+        if ((!ids || ids.length === 0) && !isAllMatching) {
             showToast('No leads selected.', 'error');
             return;
         }
@@ -9880,6 +9893,8 @@
             headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
             body: JSON.stringify({
                 lead_ids: ids,
+                select_all_matching: isAllMatching,
+                filter_params: (isAllMatching && typeof getActiveLeadsFilterSnapshot === 'function') ? getActiveLeadsFilterSnapshot() : {},
                 campaign_id: isNew ? null : parseInt(selectEl.value),
                 campaign_name: campaignName,
                 playbook_key: pbSelect ? pbSelect.value : 'general_commercial',
@@ -9898,17 +9913,34 @@
                 _enrollPreflightState.lastEnrolledOutboxIds = data.outbox_ids || [];
                 _enrollPreflightState.lastEnrolledLeadIds = data.enrolled_lead_ids || ids;
 
-                // Update lead status badges in-place in the Leads table so staying on the table reflects 'In Email Outreach' immediately
+                // Update lead status dropdowns & badges in-place in the Leads table so staying on the table reflects 'In Email Outreach' immediately
                 (_enrollPreflightState.lastEnrolledLeadIds || []).forEach(lid => {
-                    const cb = document.querySelector(`.lead-row-checkbox[value="${lid}"]`);
-                    const row = cb ? cb.closest('tr') : null;
+                    const row = document.querySelector(`.leads-row[data-id="${lid}"]`) || (function() {
+                        const cb = document.querySelector(`.lead-row-select[value="${lid}"], .lead-row-checkbox[value="${lid}"]`);
+                        return cb ? cb.closest('tr') : null;
+                    })();
                     if (row) {
-                        const statusBadge = row.querySelector('.status-badge, [data-status-badge]');
-                        if (statusBadge) {
-                            statusBadge.textContent = '📬 In Email Outreach';
+                        const statusTd = row.querySelector('.sticky-2');
+                        const statusSelect = statusTd ? statusTd.querySelector('select') : row.querySelector('select[onchange*="updateLeadStatus"]');
+                        if (statusSelect) {
+                            statusSelect.value = 'In Campaign';
+                            statusSelect.setAttribute('data-prev-value', 'In Campaign');
+                            if (typeof applyLeadStatusSelectStyle === 'function') {
+                                applyLeadStatusSelectStyle(statusSelect, 'In Campaign');
+                            }
+                        } else {
+                            const statusBadge = row.querySelector('.status-badge, [data-status-badge]');
+                            if (statusBadge) {
+                                statusBadge.textContent = '📬 In Email Outreach';
+                            }
                         }
                     }
                 });
+
+                // Clear bulk selection checkboxes and cross-page selection state now that enrollment succeeded
+                if (typeof clearCrossPageLeadSelection === 'function') {
+                    clearCrossPageLeadSelection();
+                }
 
                 const formEl = document.getElementById('form-enroll-selected-leads');
                 const hubEl = document.getElementById('enroll-success-action-hub');

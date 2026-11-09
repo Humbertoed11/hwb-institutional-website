@@ -4730,6 +4730,47 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             finally:
                 conn.close()
 
+    def test_48_enterprise_leads_send_to_campaign_modal_dom_and_preflight(self) -> None:
+        """
+        Verifies the 4-Layer Fortune 500 Send to Campaign workflow from the Leads view:
+        1. GET /admin/operations?view=leads renders #modal-enroll-leads-campaign, #modal-campaign-copy-studio, and #modal-review-email in the DOM.
+        2. Static JS assets (backoffice_operations_core.js, sigma_button_lock.js) include automatic ?v=<sha256_8> content hashes.
+        3. /api/v1/marketing/campaign/preflight-check resolves both explicit lead_ids and cross-page select_all_matching filter cohorts.
+        """
+        with self.client.session_transaction() as sess:
+            sess["_user_id"] = "1"
+            sess["_fresh"] = True
+
+        r_leads = self.client.get("/admin/operations?view=leads")
+        self.assertEqual(r_leads.status_code, 200)
+        html = r_leads.get_data(as_text=True)
+
+        # 1. Verify campaign modals are rendered on the Leads view
+        self.assertIn('id="modal-enroll-leads-campaign"', html)
+        self.assertIn('id="modal-campaign-copy-studio"', html)
+        self.assertIn('id="modal-review-email"', html)
+        self.assertIn('id="enroll-preflight-banner"', html)
+        self.assertIn('id="enroll-playbook-select"', html)
+
+        # 2. Verify automatic static asset SHA-256 cache-busting query string (?f=<sha256_8>)
+        self.assertIn('/static/js/backoffice_operations_core.js?f=', html)
+        self.assertIn('/static/js/sigma_button_lock.js?f=', html)
+
+        # 3. Verify preflight-check with select_all_matching + filter_params
+        r_pf = self.client.post(
+            "/api/v1/marketing/campaign/preflight-check",
+            json={
+                "lead_ids": [],
+                "select_all_matching": True,
+                "filter_params": {"q": "Dallas"},
+            },
+        )
+        self.assertEqual(r_pf.status_code, 200, r_pf.get_data(as_text=True))
+        pf_data = r_pf.get_json()
+        self.assertEqual(pf_data["status"], "success")
+        self.assertIn("eligible_count", pf_data)
+        self.assertIn("playbooks", pf_data)
+
 
 if __name__ == "__main__":
     unittest.main()

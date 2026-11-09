@@ -2282,67 +2282,8 @@ def api_batch_lead_action():
                 return jsonify({'status': 'error', 'message': 'This bulk action is restricted for Sales personnel.'}), 403
 
             # Resolve 'select_all_matching' across all pages using the active filter criteria
-            if select_all_matching and not lead_ids:
-                where_parts = ['l.is_converted = FALSE', 'l.is_commercial = TRUE']
-                where_vals = []
-                q_str = (filter_params.get('q') or '').strip()
-                owner_filter = str(filter_params.get('owner_id') or '').strip()
-                m_and_a_flag = str(filter_params.get('m_and_a') or '').lower() == 'true'
-                dup_flag = str(filter_params.get('duplicates_only') or '').lower() == 'true'
-                camp_flag = str(filter_params.get('campaign_filter') or '').strip()
-                active_flag = str(filter_params.get('active_only') or '').lower() == 'true'
-
-                if dup_flag:
-                    where_parts.append('COALESCE(l.is_duplicate, FALSE) = TRUE')
-                else:
-                    where_parts.append('COALESCE(l.is_duplicate, FALSE) = FALSE')
-
-                if m_and_a_flag:
-                    where_parts.append("l.acquisition_tier IN ('Tier 1 Prime (10k+ SF)', 'Tier 2 Growth (5k-10k SF)', 'Tier 3 Bolt-On (<5k SF)')")
-
-                if camp_flag == 'in_campaign':
-                    where_parts.append("(l.status = 'In Campaign' OR EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND UPPER(COALESCE(cr.status, '')) IN ('SENT', 'OPENED', 'CLICKED', 'REPLIED', 'STAGED', 'QUEUED', 'ENROLLED')))")
-                elif camp_flag == 'ready_not_enrolled':
-                    where_parts.append("l.campaign_ready = TRUE AND COALESCE(l.is_dnc, FALSE) = FALSE AND COALESCE(l.status, '') != 'In Campaign'")
-
-                if owner_filter:
-                    if owner_filter.lower() in ('unassigned', 'none', 'null', '0'):
-                        where_parts.append('l.owner_id IS NULL')
-                    elif owner_filter.isdigit():
-                        where_parts.append('l.owner_id = %s')
-                        where_vals.append(int(owner_filter))
-
-                if active_flag:
-                    where_parts.append('''EXISTS (
-                        SELECT 1 FROM "GlobalActivities" ga_f
-                        WHERE ga_f.parent_type = 'Lead' AND ga_f.parent_id = l.id
-                          AND COALESCE(ga_f.description, '') NOT ILIKE '%%Auto-ingested%%'
-                          AND COALESCE(ga_f.description, '') NOT ILIKE '%%Bulk Import%%'
-                    )''')
-
-                if q_str:
-                    search_map = {
-                        'company': 'l.center_name', 'name': 'l.center_name',
-                        'contact': 'l.decision_maker', 'dm': 'l.decision_maker',
-                        'city': 'l.city', 'state': 'l.state', 'zip': 'l.zipcode',
-                        'status': 'l.status', 'industry': 'l.industry',
-                        'facility': 'l.facility_type', 'source': 'l.lead_source',
-                        'priority': 'l.priority_level', 'phone': 'l.phone',
-                        'email': 'l.email', 'sqf': 'l.sqf', 'value': 'l.estimated_annual_value',
-                        'owner': 'l.owner_id', 'rep': 'l.owner_id', 'assigned': 'l.owner_id'
-                    }
-                    s_sql, s_params = parse_advanced_search(
-                        q_str,
-                        search_map,
-                        ['l.center_name', 'l.decision_maker', 'l.city', 'l.status', 'l.phone', 'l.email', 'l.address', 'l.zipcode', 'l.umbrella_name']
-                    )
-                    if s_sql:
-                        where_parts.append(s_sql.lstrip().removeprefix('AND ').strip())
-                        where_vals.extend(s_params)
-
-                sql_match = f'SELECT l.id FROM "Leads" l WHERE {" AND ".join(where_parts)} ORDER BY l.id ASC LIMIT 5000;'
-                cur.execute(sql_match, tuple(where_vals))
-                lead_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
+            if select_all_matching:
+                lead_ids = _resolve_bulk_selected_lead_ids(cur, lead_ids, select_all_matching, filter_params)
 
             if is_sales_user and lead_ids:
                 cur.execute('SELECT id FROM "Leads" WHERE id = ANY(%s) AND owner_id = %s;', (lead_ids, current_user.id))
@@ -8007,6 +7948,66 @@ def api_marketing_campaigns_list():
         if conn: conn.close()
 
 
+def _resolve_bulk_selected_lead_ids(cur, raw_lead_ids: list, select_all_matching: bool = False, filter_params: dict = None) -> list:
+    """
+    Resolves either explicit lead_ids or cross-page select_all_matching filter criteria
+    into a deduplicated list of integer Lead IDs.
+    """
+    explicit_ids = [int(x) for x in (raw_lead_ids or []) if str(x).isdigit()]
+    if not select_all_matching:
+        return explicit_ids
+
+    fp = filter_params or {}
+    where_parts = ['is_converted = FALSE', 'is_commercial = TRUE']
+    where_vals = []
+    q_str = (fp.get('q') or '').strip()
+    owner_filter = str(fp.get('owner_id') or '').strip()
+    m_and_a_flag = str(fp.get('m_and_a') or '').lower() == 'true'
+    dup_flag = str(fp.get('duplicates_only') or '').lower() == 'true'
+    camp_flag = str(fp.get('campaign_filter') or '').strip()
+    active_flag = str(fp.get('active_only') or '').lower() == 'true'
+
+    if dup_flag:
+        where_parts.append('COALESCE(is_duplicate, FALSE) = TRUE')
+    else:
+        where_parts.append('COALESCE(is_duplicate, FALSE) = FALSE')
+
+    if m_and_a_flag:
+        where_parts.append("acquisition_tier IN ('Tier 1 Prime (10k+ SF)', 'Tier 2 Growth (5k-10k SF)', 'Tier 3 Bolt-On (<5k SF)')")
+
+    if camp_flag == 'in_campaign':
+        where_parts.append("(status = 'In Campaign' OR EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = \"Leads\".id AND UPPER(COALESCE(cr.status, '')) IN ('SENT', 'OPENED', 'CLICKED', 'REPLIED', 'STAGED', 'QUEUED', 'ENROLLED')))")
+    elif camp_flag == 'ready_not_enrolled':
+        where_parts.append("campaign_ready = TRUE AND COALESCE(is_dnc, FALSE) = FALSE AND COALESCE(status, '') != 'In Campaign'")
+
+    if owner_filter:
+        if owner_filter.lower() in ('unassigned', 'none', 'null', '0'):
+            where_parts.append('owner_id IS NULL')
+        elif owner_filter.isdigit():
+            where_parts.append('owner_id = %s')
+            where_vals.append(int(owner_filter))
+
+    if active_flag:
+        where_parts.append('''EXISTS (
+            SELECT 1 FROM "GlobalActivities" ga_f
+            WHERE ga_f.parent_type = 'Lead' AND ga_f.parent_id = "Leads".id
+              AND COALESCE(ga_f.description, '') NOT ILIKE '%%Auto-ingested%%'
+              AND COALESCE(ga_f.description, '') NOT ILIKE '%%Bulk Import%%'
+        )''')
+
+    if q_str:
+        s_clauses, s_params = parse_advanced_search(q_str, 'leads')
+        if s_clauses:
+            where_parts.extend(s_clauses)
+            where_vals.extend(s_params)
+
+    sql_match = f'SELECT id FROM "Leads" WHERE {" AND ".join(where_parts)} ORDER BY id ASC LIMIT 5000;'
+    cur.execute(sql_match, tuple(where_vals))
+    matched_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
+    combined = list(dict.fromkeys(matched_ids + explicit_ids))
+    return combined
+
+
 @crm_api_bp.route('/api/v1/marketing/campaign/preflight-check', methods=['POST'])
 @login_required
 def api_marketing_campaign_preflight_check():
@@ -8022,11 +8023,9 @@ def api_marketing_campaign_preflight_check():
     """
     data = request.get_json() or {}
     raw_lead_ids = data.get('lead_ids') or []
-    lead_ids = [int(x) for x in raw_lead_ids if str(x).isdigit()]
+    select_all_matching = bool(data.get('select_all_matching', False))
+    filter_params = data.get('filter_params') or {}
     campaign_id = data.get('campaign_id')
-
-    if not lead_ids:
-        return jsonify({'status': 'error', 'message': 'No leads selected for pre-flight check.'}), 400
 
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
@@ -8034,6 +8033,9 @@ def api_marketing_campaign_preflight_check():
         conn = get_db(db_url)
         with conn.cursor() as cur:
             _ensure_campaign_recipients_reversible_columns(cur)
+            lead_ids = _resolve_bulk_selected_lead_ids(cur, raw_lead_ids, select_all_matching, filter_params)
+            if not lead_ids:
+                return jsonify({'status': 'error', 'message': 'No leads selected for pre-flight check.'}), 400
             cur.execute('''
                 SELECT id, center_name, director, email, phone, city, county, state,
                        capacity, sqf, is_dnc, status, email_hygiene_status,
@@ -8180,9 +8182,8 @@ def api_marketing_campaign_enroll_leads():
     """
     data = request.get_json() or {}
     raw_lead_ids = data.get('lead_ids') or []
-    lead_ids = [int(x) for x in raw_lead_ids if str(x).isdigit()]
-    if not lead_ids:
-        return jsonify({'status': 'error', 'message': 'Please select at least one lead to enroll.'}), 400
+    select_all_matching = bool(data.get('select_all_matching', False))
+    filter_params = data.get('filter_params') or {}
 
     campaign_id = data.get('campaign_id')
     campaign_name = (data.get('campaign_name') or '').strip()
@@ -8198,6 +8199,9 @@ def api_marketing_campaign_enroll_leads():
         conn = get_db(db_url)
         with conn.cursor() as cur:
             _ensure_campaign_recipients_reversible_columns(cur)
+            lead_ids = _resolve_bulk_selected_lead_ids(cur, raw_lead_ids, select_all_matching, filter_params)
+            if not lead_ids:
+                return jsonify({'status': 'error', 'message': 'Please select at least one lead to enroll.'}), 400
             user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
 
             cur.execute('''
