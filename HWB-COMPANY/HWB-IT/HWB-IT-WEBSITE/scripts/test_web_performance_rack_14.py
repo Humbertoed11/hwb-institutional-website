@@ -4734,9 +4734,33 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         """
         Verifies the 4-Layer Fortune 500 Send to Campaign workflow from the Leads view:
         1. GET /admin/operations?view=leads renders #modal-enroll-leads-campaign, #modal-campaign-copy-studio, and #modal-review-email in the DOM.
-        2. Static JS assets (backoffice_operations_core.js, sigma_button_lock.js) include automatic ?v=<sha256_8> content hashes.
-        3. /api/v1/marketing/campaign/preflight-check resolves both explicit lead_ids and cross-page select_all_matching filter cohorts.
+        2. Static JS assets (backoffice_operations_core.js, sigma_button_lock.js) include automatic ?f=<sha256_8> content hashes.
+        3. AST compiler gate: zero cur.fetchone()[0] integer subscripts exist anywhere in blueprints/crm_api.py.
+        4. /api/v1/marketing/campaign/preflight-check and /api/v1/marketing/campaign/enroll-leads stage drafts cleanly and roll back via /delete.
         """
+        import ast
+        import uuid
+
+        crm_api_path = os.path.join(app.root_path, "blueprints", "crm_api.py")
+        with open(crm_api_path, "r", encoding="utf-8") as f:
+            crm_tree = ast.parse(f.read())
+        fetchone_int_subscripts = []
+        for node in ast.walk(crm_tree):
+            if (
+                isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Attribute)
+                and node.value.func.attr == "fetchone"
+                and isinstance(node.slice, ast.Constant)
+                and isinstance(node.slice.value, int)
+            ):
+                fetchone_int_subscripts.append(node.lineno)
+        self.assertEqual(
+            fetchone_int_subscripts,
+            [],
+            f"Found forbidden cur.fetchone()[int] on RealDictCursor in blueprints/crm_api.py at lines: {fetchone_int_subscripts}",
+        )
+
         with self.client.session_transaction() as sess:
             sess["_user_id"] = "1"
             sess["_fresh"] = True
@@ -4770,6 +4794,67 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertEqual(pf_data["status"], "success")
         self.assertIn("eligible_count", pf_data)
         self.assertIn("playbooks", pf_data)
+
+        # 4. Verify end-to-end enrollment & draft staging + clean rollback
+        uid = uuid.uuid4().hex[:8]
+        test_email = f"enroll.audit.{uid}@example.com"
+        test_lead_id = None
+        test_campaign_id = None
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    INSERT INTO "Leads" (center_name, director, email, city, county, state, status, is_dnc, capacity, sqf)
+                    VALUES (%s, %s, %s, 'Plano', 'Collin', 'TX', 'New', FALSE, 120, 8500)
+                    RETURNING id;
+                    ''',
+                    (f"Audit Enrollment Center {uid}", "Sarah Jenkins", test_email),
+                )
+                row = cur.fetchone()
+                test_lead_id = row["id"] if isinstance(row, dict) else row[0]
+            conn.commit()
+        finally:
+            conn.close()
+
+        try:
+            r_enroll = self.client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={
+                    "lead_ids": [test_lead_id],
+                    "select_all_matching": False,
+                    "campaign_id": None,
+                    "campaign_name": f"Audit Test Campaign {uid}",
+                    "playbook_key": "daycare",
+                    "sender_persona": "Humberto Dominguez (Owner & Operator)",
+                    "stage_drafts": True,
+                },
+            )
+            self.assertEqual(r_enroll.status_code, 200, r_enroll.get_data(as_text=True))
+            enroll_data = r_enroll.get_json()
+            self.assertEqual(enroll_data["status"], "success")
+            self.assertEqual(enroll_data["enrolled_count"], 1)
+            self.assertEqual(enroll_data["drafts_created"], 1)
+            self.assertEqual(len(enroll_data["outbox_ids"]), 1)
+            self.assertTrue(enroll_data.get("worm_sha256"))
+            test_campaign_id = enroll_data["campaign_id"]
+
+            r_del = self.client.post(f"/api/v1/marketing/campaign/{test_campaign_id}/delete")
+            self.assertEqual(r_del.status_code, 200, r_del.get_data(as_text=True))
+            test_campaign_id = None
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    if test_campaign_id:
+                        cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (test_campaign_id,))
+                        cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (test_campaign_id,))
+                    if test_lead_id:
+                        cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = %s;', (test_lead_id,))
+                        cur.execute('DELETE FROM "Leads" WHERE id = %s;', (test_lead_id,))
+                conn.commit()
+            finally:
+                conn.close()
 
 
 if __name__ == "__main__":

@@ -9904,10 +9904,10 @@
                 stage_drafts: stageDraftsEl ? stageDraftsEl.checked : true
             })
         })
-        .then(res => res.json())
+        .then(res => res.json().catch(() => ({status: 'error', message: `Server returned HTTP ${res.status}`})))
         .then(data => {
             if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
-            if (data.status === 'success') {
+            if (data && data.status === 'success') {
                 showToast(data.message, 'success');
                 _enrollPreflightState.lastEnrolledCampaignId = data.campaign_id;
                 _enrollPreflightState.lastEnrolledOutboxIds = data.outbox_ids || [];
@@ -9962,12 +9962,14 @@
                     }
                 }
             } else {
-                showToast(data.message || 'Enrollment failed.', 'error');
+                const rawMsg = (data && data.message) ? String(data.message) : '';
+                const cleanMsg = (rawMsg && rawMsg !== '0') ? rawMsg : 'Unable to enroll selected leads. Please verify your selection and try again.';
+                showToast(cleanMsg, 'error');
             }
         })
         .catch(err => {
-            showToast('Error enrolling leads: ' + err, 'error');
             if (submitBtn && window.restoreButton) window.restoreButton(submitBtn);
+            showToast('Error enrolling leads: ' + (err && err.message ? err.message : err), 'error');
         });
     }
 

@@ -53,6 +53,20 @@ def serialize_row(row):
     return d
 
 
+def _row_val(row, key: str, idx: int = 0, default=None):
+    """Safely extracts a value from either a RealDictRow/dict or a positional tuple/list."""
+    if not row:
+        return default
+    if isinstance(row, dict):
+        if key in row:
+            return row[key]
+        vals = list(row.values())
+        return vals[idx] if 0 <= idx < len(vals) else default
+    if isinstance(row, (tuple, list)):
+        return row[idx] if 0 <= idx < len(row) else default
+    return default
+
+
 try:
     from core.services.embedding import get_embedding as calculate_query_embedding
 except ImportError:
@@ -3882,8 +3896,8 @@ def trigger_lead_sync_endpoint():
                 execute_values(cur, query, values, page_size=1000)
                 conn.commit()
                 
-                cur.execute('SELECT COUNT(*) FROM "Leads";')
-                final_count = cur.fetchone()[0]
+                cur.execute('SELECT COUNT(*) AS cnt FROM "Leads";')
+                final_count = _row_val(cur.fetchone(), 'cnt', 0, 0)
                 
         return jsonify({
             'status': 'SUCCESS',
@@ -3946,15 +3960,15 @@ def hybrid_kb_search():
             results = []
             for r in rows:
                 results.append({
-                    'id': r[0],
-                    'description': r[1],
-                    'category': r[2],
-                    'status': r[3],
-                    'impact_level': r[4],
-                    'root_cause': r[5],
-                    'implemented_fix': r[6],
-                    'preventative_rule': r[7],
-                    'rrf_score': round(float(r[8]), 6)
+                    'id': _row_val(r, 'id', 0),
+                    'description': _row_val(r, 'description', 1),
+                    'category': _row_val(r, 'category', 2),
+                    'status': _row_val(r, 'status', 3),
+                    'impact_level': _row_val(r, 'impact_level', 4),
+                    'root_cause': _row_val(r, 'root_cause', 5),
+                    'implemented_fix': _row_val(r, 'implemented_fix', 6),
+                    'preventative_rule': _row_val(r, 'preventative_rule', 7),
+                    'rrf_score': round(float(_row_val(r, 'rrf_score', 8, 0.0) or 0.0), 6)
                 })
 
         return jsonify({
@@ -4041,23 +4055,23 @@ def api_kb_preflight():
             guardrails = []
 
             for r in rows:
-                impact = r[4] or 1
+                impact = _row_val(r, 'impact_level', 4) or 1
                 if impact > max_impact:
                     max_impact = impact
-                rule = (r[7] or "").strip()
+                rule = (_row_val(r, 'preventative_rule', 7) or "").strip()
                 if rule and rule not in guardrails:
                     guardrails.append(rule)
 
                 scars.append({
-                    'id': r[0],
-                    'description': r[1],
-                    'category': r[2],
-                    'status': r[3],
+                    'id': _row_val(r, 'id', 0),
+                    'description': _row_val(r, 'description', 1),
+                    'category': _row_val(r, 'category', 2),
+                    'status': _row_val(r, 'status', 3),
                     'impact_level': impact,
-                    'root_cause': r[5],
-                    'implemented_fix': r[6],
-                    'preventative_rule': r[7],
-                    'rrf_score': round(float(r[8]), 6)
+                    'root_cause': _row_val(r, 'root_cause', 5),
+                    'implemented_fix': _row_val(r, 'implemented_fix', 6),
+                    'preventative_rule': _row_val(r, 'preventative_rule', 7),
+                    'rrf_score': round(float(_row_val(r, 'rrf_score', 8, 0.0) or 0.0), 6)
                 })
 
         risk_map = {1: "LOW", 2: "MEDIUM", 3: "HIGH", 4: "CRITICAL"}
@@ -4120,9 +4134,10 @@ def api_compare_duplicates():
             elif lead_id:
                 cur.execute('SELECT duplicate_group_id FROM "Leads" WHERE id = %s;', (lead_id,))
                 row = cur.fetchone()
-                if not row or not row[0]:
+                dup_gid = _row_val(row, 'duplicate_group_id', 0)
+                if not dup_gid:
                     return jsonify({'status': 'error', 'message': 'Lead is not part of a duplicate group'}), 404
-                cur.execute('SELECT * FROM "Leads" WHERE duplicate_group_id = %s ORDER BY id ASC;', (row[0],))
+                cur.execute('SELECT * FROM "Leads" WHERE duplicate_group_id = %s ORDER BY id ASC;', (dup_gid,))
             else:
                 return jsonify({'status': 'error', 'message': 'group_id or lead_id required'}), 400
             
@@ -4130,7 +4145,7 @@ def api_compare_duplicates():
             colnames = [desc[0] for desc in cur.description]
             leads_list = []
             for r in rows:
-                row_dict = dict(zip(colnames, r))
+                row_dict = dict(r) if isinstance(r, dict) else dict(zip(colnames, r))
                 for k, v in row_dict.items():
                     if isinstance(v, (datetime.date, datetime.datetime)):
                         row_dict[k] = v.isoformat()
@@ -4170,8 +4185,8 @@ def api_merge_duplicates():
             
             if pri_row and sec_row:
                 colnames = [desc[0] for desc in cur.description]
-                pri = dict(zip(colnames, pri_row))
-                sec = dict(zip(colnames, sec_row))
+                pri = dict(pri_row) if isinstance(pri_row, dict) else dict(zip(colnames, pri_row))
+                sec = dict(sec_row) if isinstance(sec_row, dict) else dict(zip(colnames, sec_row))
                 
                 updates = {}
                 for field in ['phone', 'email', 'decision_maker', 'job_title', 'sqf', 'capacity', 'estimated_annual_value', 'lead_source']:
@@ -4185,10 +4200,11 @@ def api_merge_duplicates():
             cur.execute('DELETE FROM "Leads" WHERE id = %s;', (secondary_id,))
             
             if pri_row:
-                pri_group_id = dict(zip(colnames, pri_row)).get('duplicate_group_id')
+                pri_dict = dict(pri_row) if isinstance(pri_row, dict) else dict(zip([desc[0] for desc in cur.description], pri_row))
+                pri_group_id = pri_dict.get('duplicate_group_id')
                 if pri_group_id:
-                    cur.execute('SELECT COUNT(*) FROM "Leads" WHERE duplicate_group_id = %s;', (pri_group_id,))
-                    rem_count = cur.fetchone()[0]
+                    cur.execute('SELECT COUNT(*) AS cnt FROM "Leads" WHERE duplicate_group_id = %s;', (pri_group_id,))
+                    rem_count = _row_val(cur.fetchone(), 'cnt', 0, 0)
                     if rem_count <= 1:
                         cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE duplicate_group_id = %s;', (pri_group_id,))
                     
@@ -4405,7 +4421,7 @@ def api_workforce_apply():
                 ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id;
             ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, status, notes, job_position_id))
-            new_id = cur.fetchone()[0]
+            new_id = _row_val(cur.fetchone(), 'id', 0)
 
             # Stage official email alert in PendingOutbox
             is_sales = any(k in (desired_role or '').lower() for k in ['sales', 'account executive', 'business development', 'growth', 'appointment setter'])
@@ -7420,9 +7436,17 @@ def replace_email_tokens(template: str, recipient: dict, tracking_token: str = N
     city = recipient.get('city') or "North Texas"
     county = (recipient.get('county') or "Texas").title()
     cap = recipient.get('capacity')
-    capacity_str = f"{cap} enrolled students" if cap else "your student body"
+    try:
+        cap_int = int(float(cap)) if cap not in (None, '') else 0
+    except Exception:
+        cap_int = 0
+    capacity_str = f"{cap_int} enrolled students" if cap_int > 0 else "your student body"
     sqf = recipient.get('sqf')
-    sqf_str = f"{sqf:,} SF" if sqf else ""
+    try:
+        sqf_int = int(float(sqf)) if sqf not in (None, '') else 0
+    except Exception:
+        sqf_int = 0
+    sqf_str = f"{sqf_int:,} SF" if sqf_int > 0 else ""
 
     content = template
     replacements = {
@@ -7500,15 +7524,16 @@ def api_marketing_leads_preview_count():
         conn = get_db(db_url)
         with conn.cursor() as cur:
             cur.execute(f'''
-                SELECT COUNT(*), COALESCE(SUM(estimated_annual_value), 0),
-                       COUNT(DISTINCT LOWER(TRIM(email)))
+                SELECT COUNT(*) AS total_facilities,
+                       COALESCE(SUM(estimated_annual_value), 0) AS est_value,
+                       COUNT(DISTINCT LOWER(TRIM(email))) AS unique_inboxes
                 FROM "Leads"
                 {where_sql}
             ''', tuple(params))
             row = cur.fetchone()
-            total_facilities = row[0] if row else 0
-            est_value = float(row[1]) if row and row[1] else 0.0
-            unique_inboxes = row[2] if row and len(row) > 2 else total_facilities
+            total_facilities = int(_row_val(row, 'total_facilities', 0, 0) or 0)
+            est_value = float(_row_val(row, 'est_value', 1, 0.0) or 0.0)
+            unique_inboxes = int(_row_val(row, 'unique_inboxes', 2, total_facilities) or 0)
 
             cur.execute(f'''
                 SELECT center_name, director, city, county, capacity, sqf, email, email_inbox_type
@@ -7582,7 +7607,7 @@ def api_marketing_campaign_create():
                 sender_persona, daily_throttle, subject_tmpl, body_tmpl,
                 f"{current_user.username if hasattr(current_user, 'username') else 'Executive'}"
             ))
-            campaign_id = cur.fetchone()[0]
+            campaign_id = _row_val(cur.fetchone(), 'id', 0)
 
             staged_count = 0
             if stage_leads:
@@ -7629,7 +7654,17 @@ def api_marketing_campaign_create():
                 matched_leads = cur.fetchall()
 
                 for lead in matched_leads:
-                    lid, center, director, email, city, county, cap, sqf = lead
+                    if isinstance(lead, dict):
+                        lid = lead.get('id')
+                        center = lead.get('center_name')
+                        director = lead.get('director')
+                        email = lead.get('email')
+                        city = lead.get('city')
+                        county = lead.get('county')
+                        cap = lead.get('capacity')
+                        sqf = lead.get('sqf')
+                    else:
+                        lid, center, director, email, city, county, cap, sqf = lead
                     token = uuid.uuid4().hex
                     director_name = director.strip() if director and director.strip() and director.strip().lower() not in ('none', 'unknown', '--') else "Facility Director"
                     clean_addr = email.strip().lower()
@@ -8215,20 +8250,46 @@ def api_marketing_campaign_enroll_leads():
 
             is_existing_campaign = bool(campaign_id and str(campaign_id).isdigit())
             seen_emails = set()
+            if not is_existing_campaign and campaign_name:
+                # Idempotent retry guard: if an active campaign with the exact same name was created in the last 10 minutes, reuse it
+                cur.execute('''
+                    SELECT * FROM "MarketingCampaigns"
+                    WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))
+                      AND status = 'Active'
+                      AND created_at >= (CURRENT_TIMESTAMP - INTERVAL '10 minutes')
+                    ORDER BY id DESC
+                    LIMIT 1;
+                ''', (campaign_name,))
+                existing_recent = cur.fetchone()
+                if existing_recent:
+                    is_existing_campaign = True
+                    campaign = existing_recent
+                    campaign_id = _row_val(campaign, 'id', 0)
+
             if is_existing_campaign:
                 campaign_id = int(campaign_id)
                 cur.execute('SELECT * FROM "MarketingCampaigns" WHERE id = %s;', (campaign_id,))
                 campaign = cur.fetchone()
                 if not campaign:
                     return jsonify({'status': 'error', 'message': 'Selected campaign not found.'}), 404
-                campaign_code = campaign['campaign_code']
-                campaign_name = campaign['name']
-                sender_persona = campaign.get('sender_persona') or sender_persona
-                cur.execute('SELECT LOWER(TRIM(recipient_email)) FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
+                campaign_code = _row_val(campaign, 'campaign_code', 1)
+                campaign_name = _row_val(campaign, 'name', 2)
+                sender_persona = (campaign.get('sender_persona') if isinstance(campaign, dict) else None) or sender_persona
+                cur.execute('SELECT LOWER(TRIM(recipient_email)) AS email_lower FROM "CampaignRecipients" WHERE campaign_id = %s;', (campaign_id,))
                 for erow in cur.fetchall():
-                    val = erow[0] if isinstance(erow, tuple) else erow.get('lower')
+                    val = _row_val(erow, 'email_lower', 0)
                     if val:
                         seen_emails.add(val)
+
+            # Pre-fetch all suppressed emails in 1 set-based SQL query instead of N per-row queries
+            candidate_emails = list({(r.get('email') or '').strip().lower() for r in leads_rows if (r.get('email') or '').strip()})
+            suppressed_set = set()
+            if candidate_emails:
+                cur.execute('SELECT email_lower FROM "EmailSuppressionList" WHERE email_lower = ANY(%s);', (candidate_emails,))
+                for srow in cur.fetchall():
+                    sval = _row_val(srow, 'email_lower', 0)
+                    if sval:
+                        suppressed_set.add(sval.strip().lower())
 
             # Pre-validate leads before creating any new campaign record so 0-eligible selections never spawn orphan campaigns
             eligible_rows = []
@@ -8246,17 +8307,13 @@ def api_marketing_campaign_enroll_leads():
                 if raw_email in seen_emails:
                     skipped_duplicate += 1
                     continue
-                if not is_email_compliance_eligible(
+                if raw_email in suppressed_set or not is_email_compliance_eligible(
                     raw_email,
                     raw_state=lstate,
                     is_dnc=bool(lrow.get('is_dnc')),
                     status=lstatus,
                     hygiene_status=(lrow.get('email_hygiene_status') or '')
                 ):
-                    skipped_suppressed_dnc += 1
-                    continue
-                cur.execute('SELECT 1 FROM "EmailSuppressionList" WHERE email_lower = %s LIMIT 1;', (raw_email,))
-                if cur.fetchone():
                     skipped_suppressed_dnc += 1
                     continue
                 seen_emails.add(raw_email)
@@ -8352,7 +8409,7 @@ def api_marketing_campaign_enroll_leads():
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1, 'STAGED', %s, %s)
                     RETURNING id;
                 ''', (campaign_id, lid, raw_email, director_name, center_name, city, county, cap, sqf, token, prev_status))
-                recip_id = cur.fetchone()[0]
+                recip_id = _row_val(cur.fetchone(), 'id', 0)
                 enrolled_count += 1
                 enrolled_lead_ids.append(lid)
 
@@ -8379,7 +8436,7 @@ def api_marketing_campaign_enroll_leads():
                         ) VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s, %s, %s)
                         RETURNING id;
                     ''', (raw_email, rendered_subject, full_html, token, campaign_id, recip_id))
-                    outbox_id = cur.fetchone()[0]
+                    outbox_id = _row_val(cur.fetchone(), 'id', 0)
                     created_outbox_ids.append(outbox_id)
 
                     cur.execute('''
@@ -8390,17 +8447,18 @@ def api_marketing_campaign_enroll_leads():
                     drafts_created += 1
 
                 cur.execute('''
+                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                    VALUES (%s, 'Lead', 'Marketing Outreach', %s);
+                ''', (lid, f"Enrolled in marketing campaign '{campaign_name}' ({campaign_code}) by {user_label} (Prior status: '{prev_status}' -> 'In Email Outreach')."))
+
+            if enrolled_lead_ids:
+                cur.execute('''
                     UPDATE "Leads"
                     SET last_campaigned_at = CURRENT_TIMESTAMP,
                         status = CASE WHEN COALESCE(status, '') IN ('Won', 'Active Client', 'Converted') THEN status ELSE 'In Campaign' END,
                         updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s;
-                ''', (lid,))
-
-                cur.execute('''
-                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
-                    VALUES (%s, 'Lead', 'Marketing Outreach', %s);
-                ''', (lid, f"Enrolled in marketing campaign '{campaign_name}' ({campaign_code}) by {user_label} (Prior status: '{prev_status}' -> 'In Email Outreach')."))
+                    WHERE id = ANY(%s);
+                ''', (enrolled_lead_ids,))
 
             sync_campaign_telemetry_counts(cur, campaign_id)
             worm_hash = _log_campaign_worm_audit(cur, 'CAMPAIGN_ENROLLMENT_WORM', user_label, {
@@ -9023,7 +9081,7 @@ def api_marketing_generate_drafts(campaign_id):
                     ) VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s, %s, %s)
                     RETURNING id;
                 ''', (recip['recipient_email'], rendered_subject, full_html, token, campaign_id, recip['id']))
-                outbox_id = cur.fetchone()[0]
+                outbox_id = _row_val(cur.fetchone(), 'id', 0)
 
                 cur.execute('''
                     UPDATE "CampaignRecipients"
