@@ -136,23 +136,30 @@ def transmit_email(*args, **kwargs):
         print("[GRAPH] API Error: Missing configuration (Tenant/Client/Secret)", flush=True)
         return False, "Missing Credentials"
 
-    # Enterprise Outbound Suppression Gate: Check permanent EmailSuppressionList AND Leads DNC/Unsubscribed flags
+    # Enterprise Outbound Suppression Gate (CAN-SPAM 16 CFR § 316.3 Stream Isolation):
+    # - Enforces EmailSuppressionList + Leads DNC/Unsubscribed/DO_NOT_EMAIL on marketing/default streams.
+    # - Explicit stream_type='transactional' (user-requested receipts, onboarding links, password resets, and internal executive alerts)
+    #   bypasses cold-marketing Leads DNC flags so user-initiated confirmations are never blocked.
     is_test_proof = str(subject or "").strip().startswith("[TEST PROOF]")
+    explicit_stream = str(kwargs.get('stream_type') or '').strip().lower()
+    is_transactional_stream = (
+        explicit_stream == 'transactional'
+        and not campaign_mode
+        and '/unsubscribe' not in str(body_html or '')
+    )
     try:
         db_url = (config.get("DATABASE_URL") if hasattr(config, 'get') else None) or os.environ.get("DATABASE_URL")
-        if db_url and recipient and not is_test_proof:
+        if db_url and recipient and not is_test_proof and not is_transactional_stream:
             import psycopg2
             raw_addrs = recipient if isinstance(recipient, list) else str(recipient).split(',')
             clean_addrs = [str(r).strip().lower() for r in raw_addrs if r and '@' in str(r)]
             if clean_addrs:
+                suppressed_reasons = {}
                 s_conn = psycopg2.connect(db_url)
                 with s_conn.cursor() as s_cur:
-                    s_cur.execute('SELECT email_lower, reason FROM "EmailSuppressionList" WHERE email_lower = ANY(%s) LIMIT 1;', (clean_addrs,))
-                    sup_row = s_cur.fetchone()
-                    if sup_row:
-                        s_conn.close()
-                        print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email to {sup_row[0]} ({sup_row[1]})", flush=True)
-                        return False, f"Suppressed ({sup_row[1]}): {sup_row[0]}"
+                    s_cur.execute('SELECT email_lower, reason FROM "EmailSuppressionList" WHERE email_lower = ANY(%s);', (clean_addrs,))
+                    for sup_row in s_cur.fetchall():
+                        suppressed_reasons[str(sup_row[0]).strip().lower()] = f"Suppressed ({sup_row[1]}): {sup_row[0]}"
 
                     s_cur.execute('''
                         SELECT LOWER(TRIM(email)), status, COALESCE(is_dnc, FALSE), COALESCE(email_hygiene_status, '')
@@ -162,16 +169,27 @@ def transmit_email(*args, **kwargs):
                               COALESCE(is_dnc, FALSE) = TRUE
                               OR status IN ('Do Not Call (DNC)', 'Unsubscribed')
                               OR UPPER(COALESCE(email_hygiene_status, '')) = 'DO_NOT_EMAIL'
-                          )
-                        LIMIT 1;
+                          );
                     ''', (clean_addrs,))
-                    lead_sup = s_cur.fetchone()
-                    if lead_sup:
-                        s_conn.close()
-                        reason_lbl = lead_sup[1] or ('DNC' if lead_sup[2] else lead_sup[3]) or 'DO_NOT_EMAIL'
-                        print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email to CRM-suppressed lead {lead_sup[0]} ({reason_lbl})", flush=True)
-                        return False, f"Suppressed (CRM {reason_lbl}): {lead_sup[0]}"
+                    for lead_sup in s_cur.fetchall():
+                        em_low = str(lead_sup[0]).strip().lower()
+                        if em_low not in suppressed_reasons:
+                            reason_lbl = lead_sup[1] or ('DNC' if lead_sup[2] else lead_sup[3]) or 'DO_NOT_EMAIL'
+                            suppressed_reasons[em_low] = f"Suppressed (CRM {reason_lbl}): {lead_sup[0]}"
                 s_conn.close()
+
+                if suppressed_reasons:
+                    surviving = [
+                        str(r).strip()
+                        for r in raw_addrs
+                        if r and '@' in str(r) and str(r).strip().lower() not in suppressed_reasons
+                    ]
+                    first_blocked_msg = next(iter(suppressed_reasons.values()))
+                    if not surviving:
+                        print(f"[GRAPH SUPPRESSION GATE] Blocked outbound email — {first_blocked_msg}", flush=True)
+                        return False, first_blocked_msg
+                    print(f"[GRAPH SUPPRESSION GATE] Filtered suppressed address(es) ({list(suppressed_reasons.keys())}); delivering to {surviving}", flush=True)
+                    recipient = surviving
     except Exception as sup_err:
         print(f"[GRAPH SUPPRESSION CHECK NOTICE] {sup_err}", flush=True)
 

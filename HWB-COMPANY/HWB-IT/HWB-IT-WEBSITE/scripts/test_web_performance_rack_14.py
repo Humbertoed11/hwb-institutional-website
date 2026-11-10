@@ -1654,7 +1654,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertEqual(d_enr["enrolled_count"], 1)
             self.assertEqual(d_enr["skipped_count"], 4)
 
-            # Verify Dual-Table Suppression Gate in transmit_email blocks the CRM-Unsubscribed lead even before Graph auth
+            # Verify Dual-Table Suppression Gate in transmit_email blocks the CRM-Unsubscribed lead on default/marketing stream
             ok_sup, reason_sup = transmit_email(
                 {"DATABASE_URL": self.db_url, "GRAPH_TENANT_ID": "test", "GRAPH_CLIENT_ID": "test", "GRAPH_CLIENT_SECRET": "test"},
                 lead_emails[4],
@@ -1663,6 +1663,21 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             )
             self.assertFalse(ok_sup)
             self.assertIn("Suppressed", reason_sup)
+
+            # Verify CAN-SPAM 16 CFR § 316.3 Stream Isolation: explicit stream_type='transactional' (e.g. subcontractor receipt)
+            # is NOT blocked by a cold-marketing DNC/Unsubscribed row in Leads
+            from unittest.mock import patch
+            with patch("core.services.email_service.msal.ConfidentialClientApplication") as mock_msal:
+                mock_msal.return_value.acquire_token_for_client.return_value = {"error_description": "MockAuthCheck"}
+                ok_tx, reason_tx = transmit_email(
+                    {"DATABASE_URL": self.db_url, "GRAPH_TENANT_ID": "test", "GRAPH_CLIENT_ID": "test", "GRAPH_CLIENT_SECRET": "test"},
+                    lead_emails[4],
+                    "HWB Cleaning Services — Trade Partner Registration Confirmed",
+                    "<p>Receipt</p>",
+                    stream_type="transactional"
+                )
+                self.assertNotIn("Suppressed", reason_tx)
+                self.assertIn("MockAuthCheck", reason_tx)
 
             # Verify RFC 8058 Automated One-Click POST to /unsubscribe/<token> (with List-Unsubscribe=One-Click and NO email field)
             with conn.cursor() as cur:

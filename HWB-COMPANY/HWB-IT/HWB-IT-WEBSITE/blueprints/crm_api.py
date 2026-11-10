@@ -4681,16 +4681,18 @@ def api_workforce_subcontractor():
             ''', (onboarding_token, auto_invite_active, new_id))
             onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
 
-            # Stage official email alert in PendingOutbox
+            # Stage official email alert in PendingOutbox (updated to SENT after verified Graph delivery)
             cur.execute('''
                 INSERT INTO "PendingOutbox" (recipient, subject, body, status, created_at)
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+                RETURNING id;
             ''', (
                 'hdominguez@hwbcleaning.com, sales@hwbcleaning.com',
                 f"ACTION REQUIRED: New 1099 Subcontractor Crew - {company_name} ({crew_size} Cleaners)",
                 f"Subcontractor {company_name} (Contact: {contact_name}) registered in {city}, TX. Phone: {phone}, Email: {email}, Crew Size: {crew_size}, Hourly Rate: {hourly_rate}. Onboarding Stage: {initial_onboarding_status}.",
-                'SENT'
+                'QUEUED'
             ))
+            outbox_id = _row_val(cur.fetchone(), 'id', 0)
 
             cur.execute('''
                 INSERT INTO "SigmaInteractionLog" (user_prompt, agent_explanation, tools_used, status)
@@ -4706,6 +4708,7 @@ def api_workforce_subcontractor():
             # Enqueue asynchronous real-time dispatch (Telegram + Graph Email)
             partner_payload = {
                 'partner_id': new_id,
+                'outbox_id': outbox_id,
                 'company_name': company_name,
                 'contact_name': contact_name,
                 'phone': phone,
@@ -4919,12 +4922,44 @@ def api_get_or_create_subcontractors():
                 except Exception:
                     pass
                 onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
+                if email:
+                    backoffice_payload = {
+                        'partner_id': new_id,
+                        'company_name': company_name,
+                        'contact_name': contact_name,
+                        'phone': phone,
+                        'email': email,
+                        'city': city,
+                        'crew_size': crew_size,
+                        'specialties': specialties,
+                        'hourly_rate_range': hourly_rate_range,
+                        'dwc83_agreed': dwc83_signed,
+                        'dwc83_signed': dwc83_signed,
+                        'notes': notes or 'Added via Backoffice Workforce Hub.',
+                        'is_repeat': False,
+                        'auto_invite': (init_onb_status == 'Invited'),
+                        'onboarding_url': onboarding_url,
+                        'review_mode': 'Backoffice Operations Direct Invite',
+                        'registered_date': datetime.date.today().strftime('%m/%d/%Y'),
+                        'partner_status': status,
+                    }
+                    try:
+                        from core.services.task_queue import task_queue
+                        from core.services.notification_service import dispatch_subcontractor_notifications
+                        task_queue.enqueue(
+                            dispatch_subcontractor_notifications,
+                            backoffice_payload,
+                            name=f"subcontractor_backoffice_notify_{new_id}"
+                        )
+                    except Exception as q_err:
+                        current_app.logger.warning(f"[WORKFORCE_WARN] Backoffice subcontractor notification enqueue error: {q_err}")
                 return jsonify({
                     'status': 'success',
                     'subcontractor_id': new_id,
                     'onboarding_token': onboarding_token,
                     'onboarding_url': onboarding_url,
                     'onboarding_status': init_onb_status,
+                    'email_queued': bool(email),
                     'message': f"Trade Partner '{company_name}' onboarded successfully."
                 }), 201
 

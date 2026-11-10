@@ -208,7 +208,7 @@ def send_lead_email_alert(lead_data: Dict[str, Any]) -> Tuple[bool, str]:
     </div>
     """
 
-    return transmit_email(recipients, subject, body_html)
+    return transmit_email(recipients, subject, body_html, stream_type="transactional")
 
 
 def send_lead_receipt_email(lead_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
@@ -261,7 +261,7 @@ def send_lead_receipt_email(lead_data: Dict[str, Any], is_repeat: bool = False) 
         </p>
     </div>
     """
-    return transmit_email([client_email], subject, body_html)
+    return transmit_email([client_email], subject, body_html, stream_type="transactional")
 
 
 def dispatch_lead_notifications(lead_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -498,7 +498,7 @@ def send_applicant_email_alert(applicant_data: Dict[str, Any]) -> Tuple[bool, st
         </div>
     </div>
     """
-    return transmit_email(recipients, subject, body_html)
+    return transmit_email(recipients, subject, body_html, stream_type="transactional")
 
 
 def send_applicant_receipt_email(applicant_data: Dict[str, Any], is_repeat: bool = False) -> Tuple[bool, str]:
@@ -575,7 +575,7 @@ def send_applicant_receipt_email(applicant_data: Dict[str, Any], is_repeat: bool
         </div>
     </div>
     """
-    return transmit_email([email], subject, body_html)
+    return transmit_email([email], subject, body_html, stream_type="transactional")
 
 
 def dispatch_applicant_notifications(applicant_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -784,7 +784,7 @@ def send_subcontractor_email_alert(partner_data: Dict[str, Any]) -> Tuple[bool, 
         </div>
     </div>
     """
-    return transmit_email(recipients, subject, body_html)
+    return transmit_email(recipients, subject, body_html, stream_type="transactional")
 
 
 def build_canonical_portal_url(url_or_path: str, fallback_path: str = "/work-with-us") -> str:
@@ -1200,11 +1200,27 @@ def dispatch_subcontractor_notifications(partner_data: Dict[str, Any]) -> Dict[s
     if auto_invite and partner_data.get("onboarding_url"):
         inv_ok, inv_msg = send_subcontractor_onboarding_invite_email(partner_data)
         results["onboarding_invite"] = {"success": inv_ok, "detail": inv_msg}
+        partner_email_ok = inv_ok
     else:
         rc_ok, rc_msg = send_subcontractor_receipt_email(partner_data, is_repeat=is_repeat)
         results["partner_receipt"] = {"success": rc_ok, "detail": rc_msg}
+        partner_email_ok = rc_ok
 
-    print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}", flush=True)
+    outbox_id = partner_data.get("outbox_id")
+    db_url = os.environ.get("DATABASE_URL")
+    if outbox_id and db_url:
+        try:
+            import psycopg2
+            conn = psycopg2.connect(db_url)
+            with conn.cursor() as cur:
+                final_status = "SENT" if (results.get("email", {}).get("success") or partner_email_ok) else "FAILED"
+                cur.execute('UPDATE "PendingOutbox" SET status = %s WHERE id = %s;', (final_status, int(outbox_id)))
+            conn.commit()
+            conn.close()
+        except Exception as ob_err:
+            print(f"[NOTIFY_WARN] PendingOutbox status update skipped: {ob_err}", flush=True)
+
+    print(f"[NOTIFY] Subcontractor dispatch finished. Repeat: {is_repeat}, Results: {results}", flush=True)
     return results
 
 
