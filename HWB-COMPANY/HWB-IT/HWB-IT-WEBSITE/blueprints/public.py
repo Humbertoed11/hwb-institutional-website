@@ -1783,9 +1783,44 @@ def bosanna_onboarding():
     return render_template('bosanna_onboarding.html')
 
 
+def _mask_partner_email_hint(raw_email: str) -> str:
+    """Returns a privacy-masked email hint (e.g., 'j***g@gmail.com') for the expired-link lock screen."""
+    e = str(raw_email or '').strip()
+    if '@' not in e:
+        return 'your registered email inbox'
+    local, domain = e.split('@', 1)
+    if len(local) <= 2:
+        masked_local = f"{local[:1]}***"
+    else:
+        masked_local = f"{local[0]}***{local[-1]}"
+    return f"{masked_local}@{domain}"
+
+
 def _is_onboarding_token_expired(partner_row: dict) -> bool:
-    """Checks whether the 30-day rolling TTL on onboarding_token_expires_at has elapsed."""
-    from datetime import datetime as dt_cls, timezone
+    """
+    Enforces the Fortune 500 Dual-Stage Onboarding Link Expiration Policy (SEC-004):
+    1. Unopened Invite Window (7 Days): If onboarding_first_opened_at IS NULL and the link has not
+       been signed, an unopened invitation expires 7 days after onboarding_invited_at.
+    2. Explicit / Active Window (14 Days after first open, or explicit onboarding_token_expires_at):
+       Any link whose onboarding_token_expires_at is in the past is expired.
+    """
+    from datetime import datetime as dt_cls, timedelta, timezone
+
+    # 1. Check 7-day unopened invitation TTL if never opened and not yet signed
+    if not partner_row.get('onboarding_first_opened_at') and not partner_row.get('msa_signed'):
+        inv_val = partner_row.get('onboarding_invited_at')
+        if inv_val:
+            if isinstance(inv_val, str):
+                try:
+                    inv_val = dt_cls.fromisoformat(inv_val.replace('Z', '+00:00'))
+                except Exception:
+                    inv_val = None
+            if inv_val is not None:
+                now_inv = dt_cls.now(timezone.utc) if getattr(inv_val, 'tzinfo', None) else dt_cls.now()
+                if (inv_val + timedelta(days=7)) < now_inv:
+                    return True
+
+    # 2. Check explicit onboarding_token_expires_at timestamp
     exp_val = partner_row.get('onboarding_token_expires_at')
     if not exp_val:
         return False
@@ -1800,7 +1835,7 @@ def _is_onboarding_token_expired(partner_row: dict) -> bool:
 
 @public_bp.route('/onboard/subcontractor/<token>', methods=['GET'], endpoint='subcontractor_onboarding')
 def subcontractor_onboarding(token: str):
-    """Pre-filled 1099 Subcontractor Partner Self-Service Onboarding Portal (HWB-QMS-7.6 / BUG-139 / SEC-002)."""
+    """Pre-filled 1099 Subcontractor Partner Self-Service Onboarding Portal (HWB-QMS-7.6 / BUG-139 / SEC-002 / SEC-004)."""
     import hashlib
     from core.services.database import get_db
     from core.services.security_logger import log_security_event
@@ -1814,25 +1849,57 @@ def subcontractor_onboarding(token: str):
             if not row:
                 return render_template('404.html'), 404
             partner = dict(row)
-            ref_code = f"SUB-#{int(partner['id']):04d}"
+            sub_id = partner['id']
+            ref_code = f"SUB-#{int(sub_id):04d}"
+            token_expired = _is_onboarding_token_expired(partner)
+
+            # Stamp onboarding_first_opened_at on first valid visit and set 14-day active compliance window
+            if not token_expired and not partner.get('onboarding_first_opened_at'):
+                try:
+                    cur.execute(
+                        '''
+                        UPDATE "SubcontractorPartners"
+                        SET onboarding_first_opened_at = CURRENT_TIMESTAMP,
+                            onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '14 days'
+                        WHERE id = %s;
+                        ''',
+                        (sub_id,),
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+
             submitted = (
                 bool(request.args.get('submitted'))
                 or bool(partner.get('msa_signed'))
                 or bool(partner.get('onboarding_completed_at'))
             )
-            token_expired = _is_onboarding_token_expired(partner)
+
+            # SEC-004 Zero-Data Lock Screen on Expired Links:
+            # Never pass pre-filled PII, address, phone, email, or TIN to Jinja2 when a link is expired.
+            if token_expired:
+                masked_email = _mask_partner_email_hint(partner.get('email') or '')
+                partner = {
+                    'id': sub_id,
+                    'company_name': partner.get('company_name') or 'Registered Trade Partner',
+                    'masked_email': masked_email,
+                    'onboarding_token': token,
+                }
+                submitted = False
+
             try:
                 log_security_event(
                     event_category='DATA_LIFECYCLE',
-                    event_action='SUBCONTRACTOR_PORTAL_VIEWED',
-                    severity='INFO',
+                    event_action='SUBCONTRACTOR_EXPIRED_PORTAL_LOCKED' if token_expired else 'SUBCONTRACTOR_PORTAL_VIEWED',
+                    severity='WARNING' if token_expired else 'INFO',
                     endpoint='/onboard/subcontractor/[REDACTED_TOKEN]',
                     details={
-                        'subcontractor_id': partner['id'],
+                        'subcontractor_id': sub_id,
                         'reference_code': ref_code,
                         'token_sha256_prefix': hashlib.sha256(token.encode('utf-8')).hexdigest()[:16],
                         'submitted': submitted,
                         'token_expired': token_expired,
+                        'pii_scrubbed': bool(token_expired),
                     },
                 )
             except Exception:
@@ -1852,12 +1919,12 @@ def subcontractor_onboarding(token: str):
 @public_bp.route('/onboard/subcontractor/<token>/renew-link', methods=['POST'], endpoint='subcontractor_onboarding_renew')
 def subcontractor_onboarding_renew(token: str):
     """
-    Renews an onboarding magic link for 30 days (SEC-002):
+    Renews an onboarding magic link (SEC-002 / SEC-004):
     - Protected by sliding-window rate limiting per token and client IP.
     - When a token has expired (or rotation is requested), rotates onboarding_token to a fresh
-      cryptographic token (secrets.token_urlsafe(24)) and delivers the new link exclusively to
-      the subcontractor's registered email inbox so a leaked expired URL cannot be reactivated
-      in-place by an unauthorized third party.
+      cryptographic token (secrets.token_urlsafe(24)), resets onboarding_first_opened_at = NULL
+      with a fresh 7-day unopened invite window, and delivers the new link exclusively to the
+      subcontractor's registered email inbox.
     """
     import hashlib
     import secrets
@@ -1890,20 +1957,34 @@ def subcontractor_onboarding_renew(token: str):
             should_rotate = bool(was_expired or force_rotate)
             active_token = f"sub_{sub_id}_{secrets.token_urlsafe(24)}" if should_rotate else token
 
-            cur.execute(
-                '''
-                UPDATE "SubcontractorPartners"
-                SET onboarding_token = %s,
-                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s;
-                ''',
-                (active_token, sub_id),
-            )
+            if should_rotate:
+                cur.execute(
+                    '''
+                    UPDATE "SubcontractorPartners"
+                    SET onboarding_token = %s,
+                        onboarding_first_opened_at = NULL,
+                        onboarding_invited_at = CURRENT_TIMESTAMP,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (active_token, sub_id),
+                )
+            else:
+                cur.execute(
+                    '''
+                    UPDATE "SubcontractorPartners"
+                    SET onboarding_token = %s,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '14 days',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (active_token, sub_id),
+                )
             conn.commit()
             onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{active_token}"
             email_sent = False
-            if partner.get('email'):
+            if partner.get('email') and not current_app.config.get('TESTING'):
                 try:
                     from core.services.notification_service import send_subcontractor_onboarding_invite_email
                     email_sent, _ = send_subcontractor_onboarding_invite_email({
@@ -1912,7 +1993,7 @@ def subcontractor_onboarding_renew(token: str):
                         'contact_name': partner.get('contact_name'),
                         'email': partner.get('email'),
                         'onboarding_url': onboarding_url,
-                        'review_mode': '30-Day Security Link Rotation & Renewal' if should_rotate else '30-Day Link Renewal',
+                        'review_mode': 'Security Link Rotation & Renewal' if should_rotate else '14-Day Link Renewal',
                     })
                 except Exception:
                     pass
@@ -1932,18 +2013,20 @@ def subcontractor_onboarding_renew(token: str):
                 )
             except Exception:
                 pass
+            masked_email = _mask_partner_email_hint(partner.get('email') or '')
             if should_rotate:
                 return jsonify({
                     'status': 'success',
                     'token_rotated': True,
                     'email_sent': email_sent,
-                    'message': 'For your security, a fresh 30-day onboarding link has been sent to your registered email inbox.',
+                    'masked_email': masked_email,
+                    'message': f'For your security, a fresh onboarding link has been sent to {masked_email}.',
                 })
             return jsonify({
                 'status': 'success',
                 'token_rotated': False,
                 'email_sent': email_sent,
-                'message': 'Your onboarding link has been renewed for 30 days.',
+                'message': 'Your onboarding link has been renewed for 14 days.',
             })
     finally:
         if conn:

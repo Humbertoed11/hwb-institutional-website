@@ -4911,7 +4911,8 @@ def api_get_or_create_subcontractors():
                 cur.execute('''
                     UPDATE "SubcontractorPartners"
                     SET onboarding_token = %s,
-                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                        onboarding_first_opened_at = NULL,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
                         onboarding_invited_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (onboarding_token, new_id))
@@ -5477,7 +5478,8 @@ def api_send_subcontractor_onboarding(id):
             cur.execute('''
                 UPDATE "SubcontractorPartners"
                 SET onboarding_token = %s,
-                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    onboarding_first_opened_at = NULL,
+                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
                     onboarding_status = CASE
                         WHEN onboarding_status IN ('Docs Under Review', 'Approved / Active', 'Pending COI') THEN onboarding_status
                         ELSE 'Invited'

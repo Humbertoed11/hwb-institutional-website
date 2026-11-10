@@ -2045,7 +2045,8 @@ def ensure_subcontractor_onboarding_schema(conn: Any) -> None:
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS msa_signed_at TIMESTAMP WITH TIME ZONE;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS msa_signer_ip VARCHAR(64);
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_token VARCHAR(128);
-                ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_token_expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days');
+                ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_token_expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '7 days');
+                ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_first_opened_at TIMESTAMP WITH TIME ZONE;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_status VARCHAR(50) DEFAULT 'Initial Review';
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_invited_at TIMESTAMP WITH TIME ZONE;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMP WITH TIME ZONE;

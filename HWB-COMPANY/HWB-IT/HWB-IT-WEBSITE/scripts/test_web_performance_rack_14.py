@@ -5052,8 +5052,10 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertEqual(r_tamper.status_code, 403)
             self.assertEqual(r_tamper.get_json().get("code"), "CONTRACT_ALREADY_EXECUTED_LOCKED")
 
-            # Expire token and verify /download/w9 returns 410 even though msa_signed=TRUE,
-            # and /renew-link rotates token without leaking the new token in JSON
+            # Expire token and verify:
+            # (a) GET /onboard/subcontractor/<token> renders ONLY the locked expired security gate and ZERO PII/address/phone/TIN,
+            # (b) /download/w9 returns 410 even though msa_signed=TRUE,
+            # (c) /renew-link rotates token without leaking the new token in JSON
             with conn.cursor() as cur:
                 cur.execute(
                     '''
@@ -5064,6 +5066,17 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     (sub_id,),
                 )
             conn.commit()
+
+            r_get_exp = anon_client.get(f"/onboard/subcontractor/{tok}")
+            self.assertEqual(r_get_exp.status_code, 200)
+            exp_html = r_get_exp.get_data(as_text=True)
+            self.assertIn('id="onboarding-expired-banner"', exp_html)
+            self.assertNotIn('id="form-subcontractor-onboarding"', exp_html)
+            self.assertNotIn('id="onboarding-receipt-card"', exp_html)
+            self.assertNotIn("900 Main St", exp_html)
+            self.assertNotIn("2145550188", exp_html)
+            self.assertNotIn(f"sec002.{uid}@example.com", exp_html)
+            self.assertNotIn("**-***0455", exp_html)
 
             r_dl_exp = anon_client.get(f"/onboard/subcontractor/{tok}/download/w9")
             self.assertEqual(r_dl_exp.status_code, 410)
@@ -5077,10 +5090,23 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertNotIn("onboarding_url", ren_json)
 
             with conn.cursor() as cur:
-                cur.execute('SELECT onboarding_token FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                cur.execute('SELECT onboarding_token, onboarding_first_opened_at FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
                 r_tok_new = cur.fetchone()
                 new_db_tok = r_tok_new["onboarding_token"] if isinstance(r_tok_new, dict) else r_tok_new[0]
+                first_open_val = r_tok_new["onboarding_first_opened_at"] if isinstance(r_tok_new, dict) else r_tok_new[1]
             self.assertNotEqual(new_db_tok, tok, "Expired link renewal must rotate onboarding_token in DB")
+            self.assertIsNone(first_open_val, "Rotated link must reset onboarding_first_opened_at to NULL")
+
+            # Verify 7-Day Unopened Invite TTL (_is_onboarding_token_expired)
+            from datetime import datetime as dt_cls, timedelta, timezone
+            from blueprints.public import _is_onboarding_token_expired
+            unopened_8_days = {
+                "onboarding_first_opened_at": None,
+                "msa_signed": False,
+                "onboarding_invited_at": dt_cls.now(timezone.utc) - timedelta(days=8),
+                "onboarding_token_expires_at": dt_cls.now(timezone.utc) + timedelta(days=10),
+            }
+            self.assertTrue(_is_onboarding_token_expired(unopened_8_days), "Unopened invite > 7 days old must expire")
         finally:
             if sub_id:
                 with conn.cursor() as cur:

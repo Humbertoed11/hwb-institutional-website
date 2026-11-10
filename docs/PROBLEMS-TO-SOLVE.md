@@ -3387,3 +3387,19 @@ CEO Humberto Dominguez identified that Matt Christou operates a **two-page funne
    - Updated `subcontractor_onboarding_extract()` to inspect uploaded W-9 PDFs *before* vault storage: if a W-9 contains a personal SSN (`XXX-XX-XXXX` / `tax_id_mode == 'ssn'`), the SSN is stripped and the SSN-bearing W-9 PDF is never stored in PostgreSQL (`ssn_rejected_policy: True`), while non-sensitive business name and address fields are still auto-filled.
    - Updated `subcontractor_onboarding_submit()` to reject personal SSN submissions (`HTTP 400 SSN_NOT_PERMITTED_EIN_REQUIRED`) and validate all 1099 subcontractor Tax IDs strictly as 9-digit Federal Business EINs (`XX-XXXXXXX`).
 
+## SEC-004 (BUG-172): Dual-Stage Onboarding Link Expiration (7-Day Unopened / 14-Day Active) & Zero-Data Expired Lock Screen
+**Detected:** 11/10/2026
+**Status:** **RESOLVED** (11/10/2026 — Verified by `test_49_subcontractor_onboarding_security_headers_token_rotation_and_contract_lock_sec_002` in `scripts/test_web_performance_rack_14.py`)
+**Symptoms:**
+1. **Expired Onboarding Links Still Rendered Pre-Filled Partner Data on `GET /onboard/subcontractor/<token>` (`HIGH`):**
+   - When `token_expired` was `True`, `subcontractor_onboarding.html` rendered the amber expiration banner at the top of the page while still outputting `#onboarding-receipt-card` and `#form-subcontractor-onboarding` containing the subcontractor's pre-filled street address, phone number, email address, and masked EIN in the HTML response body.
+2. **Unopened Onboarding Invitations Remained Active for 30 Days Instead of 7 Days (`MEDIUM-HIGH`):**
+   - Newly issued onboarding links remained valid for 30 days even if never opened by the recipient.
+**Solution:**
+1. **Dual-Stage Expiration Engine (`database/schema_engine.py`, `blueprints/public.py`, `blueprints/crm_api.py`):**
+   - Added `onboarding_first_opened_at TIMESTAMPTZ` to `"SubcontractorPartners"`.
+   - Enforced a **7-day unopened invite TTL** (`onboarding_invited_at + INTERVAL '7 days'` when `onboarding_first_opened_at IS NULL` and `msa_signed = FALSE`), and stamped `onboarding_first_opened_at = CURRENT_TIMESTAMP` with a **14-day active compliance window** on first valid visit.
+2. **Server-Side Dict Scrubbing & DOM Exclusion on Expired Links (`blueprints/public.py`, `templates/subcontractor_onboarding.html`):**
+   - When `token_expired` is `True`, `subcontractor_onboarding()` replaces `partner` in Python with a scrubbed dictionary containing only `id`, `company_name`, `masked_email`, and `onboarding_token` (stripping `street_address`, `phone`, `email`, `ein_or_ssn`, `w9_ein_last4`, `legal_entity_name`, `msa_signer_name`, and `msa_signature_hash`), and `templates/subcontractor_onboarding.html` omits `#onboarding-receipt-card` and `#form-subcontractor-onboarding` from the DOM, rendering only the locked `#onboarding-expired-banner` security gate.
+
+
