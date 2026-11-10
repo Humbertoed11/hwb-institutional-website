@@ -4871,6 +4871,181 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             finally:
                 conn.close()
 
+    def test_49_subcontractor_onboarding_security_headers_token_rotation_and_contract_lock_sec_002(self):
+        """
+        SEC-002 (BUG-170): Verifies the 4-Layer Fortune 500 Security Hardening on /onboard/subcontractor/<token>:
+        1. Zero-Cache & Zero-Tracker Perimeter: Cache-Control: no-store, Referrer-Policy: no-referrer,
+           X-Robots-Tag: noindex, nofollow, noarchive, and zero Google Analytics / Clarity / canonical token leaks.
+        2. Breadcrumb Token Redaction: static/js/sigma_breadcrumbs.js redacts /onboard/subcontractor/<token> to [REDACTED_TOKEN].
+        3. HTML Escaping in Compliance Certificate: generate_signed_msa_dwc83_certificate_html escapes script/HTML payloads.
+        4. Masked W-9 Download & Expired Token Enforcement: unauthenticated /download/w9 serves TIN-masked Substitute W-9 PDF
+           (X-Sigma-TIN-Redacted: true, never raw 9-digit SSN/EIN), and expired tokens return 410 Gone even after msa_signed=TRUE.
+        5. Post-Signing Contract Lock & Expired Token Rotation: once msa_signed=TRUE, unauthenticated overwrite of legal_entity_name,
+           company_name, msa_signer_name, or ein_or_ssn returns 403 CONTRACT_ALREADY_EXECUTED_LOCKED, and /renew-link on an
+           expired token rotates onboarding_token without leaking the new URL in the unauthenticated JSON response.
+        """
+        import io
+        import secrets
+        from flask import Flask
+        from core.services.database import get_db
+        from core.services.subcontractor_doc_extractor import generate_signed_msa_dwc83_certificate_html
+
+        # 1. Verify HTML Certificate Escaping
+        xss_cert = generate_signed_msa_dwc83_certificate_html(
+            partner={"id": 999, "company_name": "<script>alert(1)</script>", "legal_entity_name": "<b>Test</b>"},
+            signer_name="<img src=x onerror=alert(2)>",
+            signer_title="Owner",
+            signer_ip="127.0.0.1",
+            signed_at_display="11/10/2026 10:30 AM CST",
+        )
+        self.assertNotIn("<script>alert(1)</script>", xss_cert)
+        self.assertIn("&lt;script&gt;alert(1)&lt;/script&gt;", xss_cert)
+        self.assertNotIn("<img src=x onerror=alert(2)>", xss_cert)
+
+        # 2. Verify sigma_breadcrumbs.js redacts token paths
+        root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        bc_path = os.path.join(root_dir, "static", "js", "sigma_breadcrumbs.js")
+        with open(bc_path, "r", encoding="utf-8") as f:
+            bc_js = f.read()
+        self.assertIn("redactTokenPath", bc_js)
+        self.assertIn("[REDACTED_TOKEN]", bc_js)
+
+        # 3. End-to-End Portal Security Lifecycle Test
+        uid = int(time.time() * 1000) % 1000000
+        sub_id = None
+        tok = f"sub_sec002_{uid}_{secrets.token_urlsafe(24)}"
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    INSERT INTO "SubcontractorPartners" (
+                        company_name, contact_name, phone, email, city, state,
+                        crew_size, status, onboarding_status, onboarding_token,
+                        onboarding_token_expires_at
+                    ) VALUES (
+                        %s, 'Elena Security', '(214)-555-0188', %s, 'Dallas', 'TX',
+                        3, 'Vetting', 'Invited', %s, CURRENT_TIMESTAMP + INTERVAL '30 days'
+                    ) RETURNING id;
+                    ''',
+                    (f"Sec002 Test Partner {uid} LLC", f"sec002.{uid}@example.com", tok),
+                )
+                r = cur.fetchone()
+                sub_id = r["id"] if isinstance(r, dict) else r[0]
+            conn.commit()
+
+            # Use an unauthenticated test client to verify anonymous portal headers & tracker suppression
+            anon_client = app.test_client()
+            r_get = anon_client.get(f"/onboard/subcontractor/{tok}")
+            self.assertEqual(r_get.status_code, 200)
+            cc = r_get.headers.get("Cache-Control", "")
+            self.assertIn("no-store", cc)
+            self.assertNotIn("public", cc)
+            self.assertEqual(r_get.headers.get("Referrer-Policy"), "no-referrer")
+            self.assertIn("noindex", r_get.headers.get("X-Robots-Tag", ""))
+            html_body = r_get.get_data(as_text=True)
+            self.assertNotIn("googletagmanager.com/gtag/js", html_body)
+            self.assertNotIn("clarity.ms/tag/", html_body)
+            self.assertNotIn(f'rel="canonical" href="https://www.hwbcleaning.com/onboard/subcontractor/{tok}"', html_body)
+
+            # Submit initial valid W-9 & MSA
+            r_sub = anon_client.post(
+                f"/onboard/subcontractor/{tok}/submit",
+                data={
+                    "w9_mode": "digital",
+                    "company_name": f"Sec002 Test Partner {uid} LLC",
+                    "legal_entity_name": "Elena Security",
+                    "contact_name": "Elena Security",
+                    "email": f"sec002.{uid}@example.com",
+                    "phone": "2145550188",
+                    "tax_classification": "LLC",
+                    "tax_id_mode": "ein",
+                    "ein_or_ssn": "84-2910455",
+                    "street_address": "900 Main St",
+                    "city": "Dallas",
+                    "state": "TX",
+                    "zip_code": "75201",
+                    "msa_signer_name": "Elena Security",
+                    "msa_signer_title": "Managing Member",
+                    "msa_agreed": "true",
+                    "dwc83_agreed": "true",
+                },
+            )
+            self.assertEqual(r_sub.status_code, 200, r_sub.get_data(as_text=True))
+
+            # Verify unauthenticated /download/w9 serves TIN-masked Substitute W-9 PDF with no-store
+            r_dl = anon_client.get(f"/onboard/subcontractor/{tok}/download/w9")
+            self.assertEqual(r_dl.status_code, 200)
+            self.assertIn("no-store", r_dl.headers.get("Cache-Control", ""))
+            self.assertEqual(r_dl.headers.get("X-Sigma-TIN-Redacted"), "true")
+            self.assertNotIn(b"84-2910455", r_dl.data)
+            self.assertIn(b"**-***0455", r_dl.data)
+            r_dl.close()
+
+            # Verify Post-Signing Contract Lock blocks anonymous overwrite of company_name / signer / TIN
+            r_tamper = anon_client.post(
+                f"/onboard/subcontractor/{tok}/submit",
+                data={
+                    "w9_mode": "digital",
+                    "company_name": "Hijacked Attacker Entity LLC",
+                    "legal_entity_name": "Attacker Name",
+                    "contact_name": "Elena Security",
+                    "email": f"sec002.{uid}@example.com",
+                    "phone": "2145550188",
+                    "tax_classification": "LLC",
+                    "tax_id_mode": "ein",
+                    "ein_or_ssn": "82-7741902",
+                    "street_address": "900 Main St",
+                    "city": "Dallas",
+                    "state": "TX",
+                    "zip_code": "75201",
+                    "msa_signer_name": "Attacker Signer",
+                    "msa_signer_title": "Owner",
+                    "msa_agreed": "true",
+                    "dwc83_agreed": "true",
+                },
+            )
+            self.assertEqual(r_tamper.status_code, 403)
+            self.assertEqual(r_tamper.get_json().get("code"), "CONTRACT_ALREADY_EXECUTED_LOCKED")
+
+            # Expire token and verify /download/w9 returns 410 even though msa_signed=TRUE,
+            # and /renew-link rotates token without leaking the new token in JSON
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    UPDATE "SubcontractorPartners"
+                    SET onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL '2 days'
+                    WHERE id = %s;
+                    ''',
+                    (sub_id,),
+                )
+            conn.commit()
+
+            r_dl_exp = anon_client.get(f"/onboard/subcontractor/{tok}/download/w9")
+            self.assertEqual(r_dl_exp.status_code, 410)
+
+            from unittest.mock import patch
+            with patch("core.services.notification_service.send_subcontractor_onboarding_invite_email", return_value=(True, "Sent")):
+                r_ren_exp = anon_client.post(f"/onboard/subcontractor/{tok}/renew-link")
+            self.assertEqual(r_ren_exp.status_code, 200)
+            ren_json = r_ren_exp.get_json()
+            self.assertTrue(ren_json.get("token_rotated"))
+            self.assertNotIn("onboarding_url", ren_json)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT onboarding_token FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                r_tok_new = cur.fetchone()
+                new_db_tok = r_tok_new["onboarding_token"] if isinstance(r_tok_new, dict) else r_tok_new[0]
+            self.assertNotEqual(new_db_tok, tok, "Expired link renewal must rotate onboarding_token in DB")
+        finally:
+            if sub_id:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sub_id,))
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Subcontractor\' AND parent_id = %s;', (sub_id,))
+                    cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

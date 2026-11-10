@@ -3352,3 +3352,24 @@ CEO Humberto Dominguez identified that Matt Christou operates a **two-page funne
    - Enforced `NULLS LAST` in **both `ASC` and `DESC`** across `Leads`, `Accounts`, `ConstructionBids`, and `InstitutionalBids`, and wrapped numeric columns in `NULLIF(..., 0)` and text columns in `NULLIF(NULLIF(BTRIM(...), ''), 'None')`.
 4. **Pillars 4, 5, & 6 — 3-State Sort Cycle, Per-User Sort Persistence, & Drag/Resize Click Guard (`blueprints/operations.py` & `static/js/backoffice_operations_core.js`):**
    - Persisted and restored `sort_by` and `sort_dir` in `"UserBehavioralProfiles"` (`_save_user_grid_state`), implemented a 3-click sort cycle (`1st: Primary Dir` $\rightarrow$ `2nd: Reverse Dir` $\rightarrow$ `3rd: Reset Default`) + `SigmaGridEngine.clearSort()` + `.sigma-active-sort-pill` toolbar badge, and added `window._sigmaSuppressNextSortClickUntil` to prevent accidental sort reloads after dragging or resizing columns.
+
+
+## SEC-002 (BUG-170): 1099 Subcontractor Onboarding Portal (`/onboard/subcontractor/<token>`) Security & PII Exposure Audit
+**Detected:** 11/10/2026
+**Status:** **RESOLVED** (11/10/2026 — Verified by `test_49_subcontractor_onboarding_security_headers_token_rotation_and_contract_lock_sec_002` in `scripts/test_web_performance_rack_14.py`)
+**Symptoms:**
+1. **Public CDN & Shared Proxy Caching of Subcontractor PII & Signed Compliance PDFs (`CRITICAL`):**
+   - `apply_application_security_headers()` in `main_app.py` (`line 292`) excluded `('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/partner', '/academy', '/manual')` from Cloudflare public edge caching, omitting `'/onboard'`, `'/portal'`, and `'/reset-password'`.
+   - Live HTTP inspection of `https://www.hwbcleaning.com/onboard/subcontractor/<token>` and `GET /onboard/subcontractor/<token>/download/<doc_type>` confirmed `Cache-Control: public, max-age=300, s-maxage=3600, stale-while-revalidate=86400`, instructing edge caches and shared proxies to cache pre-filled partner PII and signed W-9/MSA PDFs.
+2. **Bearer Token & PII Leakage to Third-Party Trackers, Breadcrumb Logs, and Meta Tags (`HIGH`):**
+   - `templates/base.html` (`lines 95, 101, 225-255`) loaded Google Analytics (`gtag.js`), Google Ads, and Microsoft Clarity session replay on `/onboard/subcontractor/<token>`, and rendered `<link rel="canonical">` and `<meta property="og:url">` containing the raw bearer token.
+   - `static/js/sigma_breadcrumbs.js` (`lines 71, 97`) transmitted the raw secret `/onboard/subcontractor/<token>` path in plaintext into `"ClientBreadcrumbs"`, and `main_app.py` (`line 248`) sent `Referrer-Policy: strict-origin-when-cross-origin` instead of `no-referrer` on token-bearing URLs.
+3. **Unredacted Raw 9-Digit TIN Returned in `/extract-document` JSON & Perpetual Raw W-9 PDF Download Without Step-Up Verification (`HIGH`):**
+   - `extract_subcontractor_document_metadata()` in `core/services/subcontractor_doc_extractor.py` (`line 396`) computed `ein_masked` but left the raw 9-digit SSN/EIN in `extracted["ein_or_ssn"]`, which `subcontractor_onboarding_extract()` (`blueprints/public.py` `line 2178`) echoed back in the JSON response.
+   - `subcontractor_onboarding_download_doc()` (`blueprints/public.py` `line 1906`) bypassed token expiration whenever `msa_signed = TRUE` (`if _is_onboarding_token_expired(sub) and not sub.get('msa_signed'):`), allowing anyone holding an old link to download the subcontractor's raw uploaded W-9 PDF indefinitely without step-up verification (last-4 phone/TIN check).
+4. **Unauthenticated Post-Execution Contract Overwrite & Self-Service Link Renewal Without Email Inbox Proof (`HIGH`):**
+   - `subcontractor_onboarding_submit()` (`blueprints/public.py` `lines 2231-2548`) allowed anyone with the link to re-submit and overwrite an already-executed (`msa_signed = TRUE` or `Approved / Active`) legal contract, Tax ID, and signer identity in place without re-authentication or state lock.
+   - `subcontractor_onboarding_renew()` (`blueprints/public.py` `lines 1834-1881`) lacked rate limiting and extended the expired token in place (`SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days'`), immediately unlocking the page in the caller's browser without requiring the user to click a rotated token delivered to the registered email inbox.
+5. **Unescaped HTML Interpolation in Compliance Certificate & Raw Exception Leakage (`MEDIUM-HIGH`):**
+   - `generate_signed_msa_dwc83_certificate_html()` in `core/services/subcontractor_doc_extractor.py` (`lines 520-636`) interpolated user-supplied fields directly into HTML without `html.escape()`.
+   - `subcontractor_onboarding_extract()` (`line 2187`) and `subcontractor_onboarding_submit()` (`line 2624`) lacked rate limiting on `/submit` and returned raw `str(err)` database/internal exceptions to unauthenticated clients, and tokens prefixed sequential database IDs (`sub_37_...`).

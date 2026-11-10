@@ -528,24 +528,35 @@ def generate_signed_msa_dwc83_certificate_html(
     """
     Generates a tamper-evident HTML compliance certificate combining the executed
     HWB Master Subcontractor Agreement (MSA) and Texas DWC Form-83 Independent Contractor Affirmation.
+    All dynamic fields are strictly HTML-escaped (SEC-002) to prevent stored HTML/XSS injection.
     """
+    import html as html_lib
+
+    def _esc(val: Any) -> str:
+        return html_lib.escape(str(val or ""), quote=True)
+
     partner_id = partner.get("id") or 0
-    ref_code = f"SUB-#{int(partner_id):04d}"
-    company_name = partner.get("company_name") or "Subcontractor"
-    legal_name = partner.get("legal_entity_name") or partner.get("contact_name") or signer_name
-    tax_class = partner.get("tax_classification") or "Independent Trade Entity"
-    ein_masked = partner.get("ein_or_ssn") or "On File"
-    street = partner.get("street_address") or "Address On File"
-    city = partner.get("city") or "DFW"
-    state = partner.get("state") or "TX"
-    zip_code = partner.get("zip_code") or ""
-    phone = partner.get("phone") or ""
-    email = partner.get("email") or ""
-    specialties = partner.get("specialties") or "Commercial Cleaning"
-    rate_range = partner.get("hourly_rate_range") or "$22 - $28/hr"
-    sig_hash = signature_hash or compute_msa_signature_hash(
+    ref_code = _esc(f"SUB-#{int(partner_id):04d}")
+    company_name = _esc(partner.get("company_name") or "Subcontractor")
+    legal_name = _esc(partner.get("legal_entity_name") or partner.get("contact_name") or signer_name)
+    tax_class = _esc(partner.get("tax_classification") or "Independent Trade Entity")
+    ein_masked = _esc(partner.get("ein_or_ssn") or "On File")
+    street = _esc(partner.get("street_address") or "Address On File")
+    city = _esc(partner.get("city") or "DFW")
+    state = _esc(partner.get("state") or "TX")
+    zip_code = _esc(partner.get("zip_code") or "")
+    phone = _esc(partner.get("phone") or "")
+    email = _esc(partner.get("email") or "")
+    specialties = _esc(partner.get("specialties") or "Commercial Cleaning")
+    rate_range = _esc(partner.get("hourly_rate_range") or "$22 - $28/hr")
+    raw_sig_hash = signature_hash or compute_msa_signature_hash(
         partner, signer_name, signer_title, signer_ip, signed_at_display
     )
+    sig_hash = _esc(raw_sig_hash)
+    signer_name = _esc(signer_name)
+    signer_title = _esc(signer_title)
+    signer_ip = _esc(signer_ip)
+    signed_at_display = _esc(signed_at_display)
 
     return f"""<!DOCTYPE html>
 <html lang="en">

@@ -30,6 +30,14 @@
     // 2. Sensitive PII Pattern Guard (Poka-Yoke / TDPSA Compliance)
     const SENSITIVE_PATTERN = /(pass|ssn|tax|card|cvv|account|secret|token)/i;
 
+    function redactTokenPath(rawPath) {
+        if (!rawPath) return '';
+        return String(rawPath)
+            .replace(/(\/onboard\/(?:subcontractor|employee)\/)[^/?#]+/gi, '$1[REDACTED_TOKEN]')
+            .replace(/(\/reset-password\/)[^/?#]+/gi, '$1[REDACTED_TOKEN]')
+            .substring(0, 255);
+    }
+
     function sanitizeText(str) {
         if (!str) return '';
         return String(str).trim().replace(/\s+/g, ' ').substring(0, 100);
@@ -68,7 +76,7 @@
 
         queue.push({
             event_type: eventType,
-            page_url: window.location.pathname.substring(0, 255),
+            page_url: redactTokenPath(window.location.pathname),
             element_tag: tag,
             element_id: elId,
             element_class: elClass,
@@ -78,7 +86,7 @@
         });
 
         // Mirror high-priority friction events to Microsoft Clarity (Cartridge UX-06)
-        if (typeof window.clarity === 'function') {
+        if (typeof window.clarity === 'function' && !/^\/(onboard|portal|reset-password)\b/i.test(window.location.pathname || '')) {
             try {
                 window.clarity('event', String(eventType || 'interaction').toLowerCase());
             } catch (e) {}
@@ -94,7 +102,7 @@
         if (queue.length === 0) return;
         const payload = JSON.stringify({
             session_id: sessionId,
-            page_url: window.location.pathname,
+            page_url: redactTokenPath(window.location.pathname),
             events: queue.splice(0, queue.length)
         });
 

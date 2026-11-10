@@ -289,7 +289,7 @@ def apply_application_security_headers(response):
         and not session.get('user_id')
         and not session.get('_user_id')
         and not current_user.is_authenticated
-        and not request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/partner', '/academy', '/manual'))
+        and not request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/partner', '/academy', '/manual', '/onboard', '/portal', '/reset-password'))
     ):
         response.headers['Cache-Control'] = 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
         request._is_anonymous_public_cacheable = True
@@ -300,10 +300,13 @@ def apply_application_security_headers(response):
                 response.headers['Vary'] = ', '.join(vary_tokens)
             else:
                 del response.headers['Vary']
-    # Backoffice Desks, APIs, and Auth Routes: Strict zero-cache protection
-    elif request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout')):
+    # Backoffice Desks, APIs, Auth Routes, and Token-Authenticated Onboarding Portals (SEC-002): Strict zero-cache protection
+    elif request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/onboard', '/portal', '/reset-password')):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
         response.headers['Pragma'] = 'no-cache'
+        if request.path.startswith(('/onboard', '/portal', '/reset-password')):
+            response.headers['Referrer-Policy'] = 'no-referrer'
+            response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
 
     # Permanent Enterprise Responsive & Adaptive Table Guardrail (BUG-137):
     # Guarantees that any future HTML page or standalone module added to the website

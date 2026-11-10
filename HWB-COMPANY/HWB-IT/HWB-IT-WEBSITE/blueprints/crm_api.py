@@ -4922,7 +4922,10 @@ def api_get_or_create_subcontractors():
                 except Exception:
                     pass
                 onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
-                if email:
+                is_synthetic_test_email = any(
+                    clean_e.endswith(dom) for dom in ('@example.com', '@example.org', '@example.net', '@test.com', '@localhost')
+                )
+                if email and not is_synthetic_test_email and not current_app.config.get('TESTING'):
                     backoffice_payload = {
                         'partner_id': new_id,
                         'company_name': company_name,

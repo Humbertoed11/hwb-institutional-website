@@ -314,16 +314,18 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label for="onb-company-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Business / DBA Name (W-9 Line 2) *</label>
-                        <input type="text" id="onb-company-name" name="company_name" required value="{{ partner.company_name or '' }}" oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="text" id="onb-company-name" name="company_name" required value="{{ partner.company_name or '' }}" {% if partner.msa_signed %}readonly{% endif %} oninput="syncContractPreview()" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
                     </div>
                     <div>
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem;">
                             <label for="onb-legal-name" id="onb-legal-entity-label" style="font-size: 0.78rem; font-weight: 700; color: #334155; margin: 0;">Legal Entity / Taxpayer Name (W-9 Line 1) *</label>
+                            {% if not partner.msa_signed %}
                             <button type="button" onclick="copyBusinessNameToLegalName()" style="background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.5rem; border-radius: 4px; cursor: pointer;">
                                 Same as Business Name
                             </button>
+                            {% endif %}
                         </div>
-                        <input type="text" id="onb-legal-name" name="legal_entity_name" required value="{{ partner.legal_entity_name or partner.contact_name or '' }}" oninput="syncContractPreview()" placeholder="Legal Name on W-9 Line 1" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
+                        <input type="text" id="onb-legal-name" name="legal_entity_name" required value="{{ partner.legal_entity_name or partner.contact_name or '' }}" {% if partner.msa_signed %}readonly{% endif %} oninput="syncContractPreview()" placeholder="Legal Name on W-9 Line 1" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; box-sizing: border-box;">
                         <div id="onb-legal-entity-hint" style="font-size: 0.71rem; color: #64748b; margin-top: 0.25rem;">
                             Must match Line 1 of your IRS Form W-9 for 1099-NEC filing.
                         </div>
@@ -538,7 +540,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                     <div>
                         <label for="onb-signer-name" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Type Full Legal Name to E-Sign *</label>
-                        <input type="text" id="onb-signer-name" name="msa_signer_name" required value="{{ partner.msa_signer_name or partner.contact_name or '' }}" placeholder="Full Legal Name" class="sigma-input" style="width: 100%; height: 42px; border: 1.5px solid #7c3aed; border-radius: 6px; padding: 0 0.85rem; font-size: 0.92rem; font-weight: 700; background: #faf5ff; box-sizing: border-box;">
+                        <input type="text" id="onb-signer-name" name="msa_signer_name" required value="{{ partner.msa_signer_name or partner.contact_name or '' }}" {% if partner.msa_signed %}readonly{% endif %} placeholder="Full Legal Name" class="sigma-input" style="width: 100%; height: 42px; border: 1.5px solid #7c3aed; border-radius: 6px; padding: 0 0.85rem; font-size: 0.92rem; font-weight: 700; background: #faf5ff; box-sizing: border-box;">
                     </div>
                     <div>
                         <label for="onb-signer-title" style="display: block; font-size: 0.78rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">Signer Title *</label>
@@ -877,7 +879,7 @@ async function handleDocumentAutoExtract(docType, fileInput) {
 async function renewExpiredOnboardingLink(btn) {
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renewing...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Fresh Link...';
     }
     try {
         const res = await fetch(`/onboard/subcontractor/${encodeURIComponent(ONBOARDING_TOKEN)}/renew-link`, {
@@ -886,6 +888,16 @@ async function renewExpiredOnboardingLink(btn) {
         const data = await res.json();
         if (res.ok && data.status === 'success') {
             const expBanner = document.getElementById('onboarding-expired-banner');
+            if (data.token_rotated && expBanner) {
+                expBanner.style.background = '#ecfdf5';
+                expBanner.style.borderColor = '#16a34a';
+                expBanner.innerHTML = `
+                    <div style="font-size: 0.9rem; font-weight: 800; color: #065f46;">
+                        <i class="fas fa-envelope-open-text"></i> ${data.message || 'A fresh 30-day onboarding link has been emailed to your registered inbox.'}
+                    </div>
+                `;
+                return;
+            }
             if (expBanner) expBanner.style.display = 'none';
             window.location.reload();
         }

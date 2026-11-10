@@ -1800,8 +1800,10 @@ def _is_onboarding_token_expired(partner_row: dict) -> bool:
 
 @public_bp.route('/onboard/subcontractor/<token>', methods=['GET'], endpoint='subcontractor_onboarding')
 def subcontractor_onboarding(token: str):
-    """Pre-filled 1099 Subcontractor Partner Self-Service Onboarding Portal (HWB-QMS-7.6 / BUG-139)."""
+    """Pre-filled 1099 Subcontractor Partner Self-Service Onboarding Portal (HWB-QMS-7.6 / BUG-139 / SEC-002)."""
+    import hashlib
     from core.services.database import get_db
+    from core.services.security_logger import log_security_event
     from database.schema_engine import ensure_subcontractor_onboarding_schema
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -1819,6 +1821,22 @@ def subcontractor_onboarding(token: str):
                 or bool(partner.get('onboarding_completed_at'))
             )
             token_expired = _is_onboarding_token_expired(partner)
+            try:
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='SUBCONTRACTOR_PORTAL_VIEWED',
+                    severity='INFO',
+                    endpoint='/onboard/subcontractor/[REDACTED_TOKEN]',
+                    details={
+                        'subcontractor_id': partner['id'],
+                        'reference_code': ref_code,
+                        'token_sha256_prefix': hashlib.sha256(token.encode('utf-8')).hexdigest()[:16],
+                        'submitted': submitted,
+                        'token_expired': token_expired,
+                    },
+                )
+            except Exception:
+                pass
             return render_template(
                 'subcontractor_onboarding.html',
                 partner=partner,
@@ -1833,9 +1851,30 @@ def subcontractor_onboarding(token: str):
 
 @public_bp.route('/onboard/subcontractor/<token>/renew-link', methods=['POST'], endpoint='subcontractor_onboarding_renew')
 def subcontractor_onboarding_renew(token: str):
-    """Extends an expired onboarding magic link by 30 days and emails a fresh link to the partner."""
+    """
+    Renews an onboarding magic link for 30 days (SEC-002):
+    - Protected by sliding-window rate limiting per token and client IP.
+    - When a token has expired (or rotation is requested), rotates onboarding_token to a fresh
+      cryptographic token (secrets.token_urlsafe(24)) and delivers the new link exclusively to
+      the subcontractor's registered email inbox so a leaked expired URL cannot be reactivated
+      in-place by an unauthorized third party.
+    """
+    import hashlib
+    import secrets
     from core.services.database import get_db
+    from core.services.security_logger import extract_client_ip, log_security_event
+    from core.services.subcontractor_doc_extractor import check_extraction_rate_limit
     from database.schema_engine import ensure_subcontractor_onboarding_schema
+
+    client_ip = extract_client_ip()
+    allowed, _ = check_extraction_rate_limit(f"renew:{token}:{client_ip}", limit=5, window_seconds=600)
+    if not allowed:
+        return jsonify({
+            'status': 'error',
+            'code': 'RATE_LIMIT_EXCEEDED',
+            'message': 'Too many link renewal attempts. Please wait 10 minutes and try again.',
+        }), 429
+
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         ensure_subcontractor_onboarding_schema(conn)
@@ -1846,33 +1885,64 @@ def subcontractor_onboarding_renew(token: str):
                 return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
             partner = dict(row)
             sub_id = partner['id']
+            was_expired = _is_onboarding_token_expired(partner)
+            force_rotate = str(request.args.get('rotate') or request.form.get('rotate') or '').lower() in ('1', 'true', 'yes')
+            should_rotate = bool(was_expired or force_rotate)
+            active_token = f"sub_{sub_id}_{secrets.token_urlsafe(24)}" if should_rotate else token
+
             cur.execute(
                 '''
                 UPDATE "SubcontractorPartners"
-                SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                SET onboarding_token = %s,
+                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s;
                 ''',
-                (sub_id,),
+                (active_token, sub_id),
             )
             conn.commit()
-            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{token}"
+            onboarding_url = f"{request.host_url.rstrip('/')}/onboard/subcontractor/{active_token}"
+            email_sent = False
             if partner.get('email'):
                 try:
                     from core.services.notification_service import send_subcontractor_onboarding_invite_email
-                    send_subcontractor_onboarding_invite_email({
+                    email_sent, _ = send_subcontractor_onboarding_invite_email({
                         'partner_id': sub_id,
                         'company_name': partner.get('company_name'),
                         'contact_name': partner.get('contact_name'),
                         'email': partner.get('email'),
                         'onboarding_url': onboarding_url,
-                        'review_mode': '30-Day Link Renewal',
+                        'review_mode': '30-Day Security Link Rotation & Renewal' if should_rotate else '30-Day Link Renewal',
                     })
                 except Exception:
                     pass
+            try:
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='SUBCONTRACTOR_LINK_RENEWED',
+                    severity='INFO',
+                    endpoint='/onboard/subcontractor/[REDACTED_TOKEN]/renew-link',
+                    details={
+                        'subcontractor_id': sub_id,
+                        'was_expired': was_expired,
+                        'token_rotated': should_rotate,
+                        'email_sent': email_sent,
+                        'old_token_sha256_prefix': hashlib.sha256(token.encode('utf-8')).hexdigest()[:16],
+                    },
+                )
+            except Exception:
+                pass
+            if should_rotate:
+                return jsonify({
+                    'status': 'success',
+                    'token_rotated': True,
+                    'email_sent': email_sent,
+                    'message': 'For your security, a fresh 30-day onboarding link has been sent to your registered email inbox.',
+                })
             return jsonify({
                 'status': 'success',
-                'onboarding_url': onboarding_url,
+                'token_rotated': False,
+                'email_sent': email_sent,
                 'message': 'Your onboarding link has been renewed for 30 days.',
             })
     finally:
@@ -1884,15 +1954,30 @@ def subcontractor_onboarding_renew(token: str):
 def subcontractor_onboarding_download_doc(token: str, doc_type: str):
     """
     Token-authenticated self-service download of a subcontractor's recorded compliance documents
-    (Signed MSA & TX DWC-83 PDF, Signed IRS Form W-9 PDF, or Uploaded COI PDF) from the
-    Encrypted PostgreSQL Document Vault ("SubcontractorDocuments").
+    (Signed MSA & TX DWC-83 PDF, Masked IRS Substitute Form W-9 Receipt PDF, or Uploaded COI PDF)
+    from the Encrypted PostgreSQL Document Vault ("SubcontractorDocuments") (SEC-002).
     """
+    import hashlib
     import io
     from flask import send_file
+    from flask_login import current_user
     from core.services.database import get_db
-    from core.services.security_logger import log_security_event
+    from core.services.security_logger import extract_client_ip, log_security_event
     from database.schema_engine import ensure_subcontractor_onboarding_schema
-    from core.services.subcontractor_doc_extractor import retrieve_subcontractor_document_vault
+    from core.services.subcontractor_doc_extractor import (
+        check_extraction_rate_limit,
+        generate_signed_substitute_w9_pdf,
+        retrieve_subcontractor_document_vault,
+    )
+
+    client_ip = extract_client_ip()
+    allowed, _ = check_extraction_rate_limit(f"dl:{token}:{client_ip}", limit=20, window_seconds=600)
+    if not allowed:
+        return jsonify({
+            'status': 'error',
+            'code': 'RATE_LIMIT_EXCEEDED',
+            'message': 'Too many document download requests. Please wait a few minutes and try again.',
+        }), 429
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -1903,11 +1988,11 @@ def subcontractor_onboarding_download_doc(token: str, doc_type: str):
             if not row:
                 return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
             sub = dict(row)
-            if _is_onboarding_token_expired(sub) and not sub.get('msa_signed'):
+            if _is_onboarding_token_expired(sub):
                 return jsonify({
                     'status': 'error',
                     'code': 'TOKEN_EXPIRED',
-                    'message': 'This onboarding link has expired. Please renew your link first.',
+                    'message': 'This 30-day onboarding link has expired. Please request a fresh link to download recorded documents.',
                 }), 410
 
             sub_id = sub['id']
@@ -1925,6 +2010,59 @@ def subcontractor_onboarding_download_doc(token: str, doc_type: str):
             else:
                 return jsonify({'status': 'error', 'message': 'Unsupported document type.'}), 400
 
+            safe_co = re.sub(r'[^A-Za-z0-9_-]+', '_', str(sub.get('company_name') or f'SUB_{sub_id}')).strip('_')
+
+            # SEC-002 Protection: On unauthenticated self-service W-9 downloads, always serve a TIN-masked
+            # Substitute Form W-9 PDF (**-***1234 / ***-**-1234) so raw 9-digit SSN/EIN scans are never exposed
+            # over a magic link. Authenticated backoffice admins use /api/v1/workforce/subcontractors/<id>/download/w9.
+            is_admin_session = bool(getattr(current_user, 'is_authenticated', False))
+            if dt_low == 'w9' and not is_admin_session and (file_key or sub.get('w9_ein_last4') or sub.get('ein_or_ssn')):
+                masked_partner = dict(sub)
+                raw_ein_col = str(sub.get('ein_or_ssn') or '')
+                last4_col = str(sub.get('w9_ein_last4') or '')
+                if '*' not in raw_ein_col:
+                    digits_only = re.sub(r'\D', '', raw_ein_col)
+                    last4_val = last4_col or (digits_only[-4:] if len(digits_only) >= 4 else 'XXXX')
+                    is_ssn_mode = 'individual' in str(sub.get('tax_classification') or '').lower() or raw_ein_col.startswith('***-')
+                    masked_partner['ein_or_ssn'] = f"***-**-{last4_val}" if is_ssn_mode else f"**-***{last4_val}"
+                signed_dt_str = (
+                    sub['msa_signed_at'].strftime('%m/%d/%Y %I:%M %p CST')
+                    if sub.get('msa_signed_at') and hasattr(sub.get('msa_signed_at'), 'strftime')
+                    else str(sub.get('msa_signed_at') or 'Recorded On File')
+                )
+                masked_w9_bytes = generate_signed_substitute_w9_pdf(
+                    masked_partner,
+                    sub.get('msa_signer_name') or sub.get('contact_name') or sub.get('company_name') or 'Authorized Signer',
+                    sub.get('msa_signer_title') or 'Owner / Authorized Principal',
+                    sub.get('msa_signer_ip') or '127.0.0.1',
+                    signed_dt_str,
+                    signature_hash=sub.get('msa_signature_hash') or '',
+                )
+                w9_sha = hashlib.sha256(masked_w9_bytes).hexdigest()
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='SUBCONTRACTOR_PORTAL_DOC_DOWNLOAD',
+                    severity='INFO',
+                    endpoint=f'/onboard/subcontractor/[REDACTED_TOKEN]/download/{dt_low}',
+                    details={
+                        'subcontractor_id': sub_id,
+                        'company_name': sub.get('company_name'),
+                        'doc_type': 'w9_masked_substitute',
+                        'file_key': file_key,
+                    },
+                )
+                resp = send_file(
+                    io.BytesIO(masked_w9_bytes),
+                    mimetype='application/pdf',
+                    as_attachment=True,
+                    download_name=f"{safe_co}_W9_Masked_Receipt.pdf",
+                )
+                resp.headers['X-Sigma-Vault-SHA256'] = w9_sha
+                resp.headers['X-Sigma-Vault-Verified'] = 'true'
+                resp.headers['X-Sigma-Vault-Version'] = '1'
+                resp.headers['X-Sigma-TIN-Redacted'] = 'true'
+                return resp
+
             vault_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vault', 'hr_documents'))
             vault_doc = retrieve_subcontractor_document_vault(
                 conn=conn,
@@ -1938,6 +2076,7 @@ def subcontractor_onboarding_download_doc(token: str, doc_type: str):
                 event_category='DATA_LIFECYCLE',
                 event_action='SUBCONTRACTOR_PORTAL_DOC_DOWNLOAD',
                 severity='INFO',
+                endpoint=f'/onboard/subcontractor/[REDACTED_TOKEN]/download/{dt_low}',
                 details={
                     'subcontractor_id': sub_id,
                     'company_name': sub.get('company_name'),
@@ -2171,11 +2310,16 @@ def subcontractor_onboarding_extract(token: str):
                     })
                 except Exception as notify_err:
                     current_app.logger.warning(f"[DEFERRED_COI_NOTIFY_WARN] {notify_err}")
+            safe_extracted = (
+                {**extracted, 'ein_or_ssn': extracted.get('ein_masked') or extracted.get('ein_or_ssn') or ''}
+                if tag == 'W9'
+                else extracted
+            )
             return jsonify({
                 'status': 'success',
                 'doc_type': tag,
                 'file_name': safe_name,
-                'extracted': extracted,
+                'extracted': safe_extracted,
                 'vault_receipt': vault_receipt,
                 'onboarding_status': 'Docs Under Review' if (tag == 'COI' and partner.get('msa_signed')) else partner.get('onboarding_status'),
                 'coi_status': 'File Uploaded (Review)' if tag == 'COI' else partner.get('coi_status'),
@@ -2184,7 +2328,8 @@ def subcontractor_onboarding_extract(token: str):
             })
     except Exception as err:
         conn.rollback()
-        return jsonify({'status': 'error', 'message': str(err)}), 500
+        current_app.logger.error(f"[SUBCONTRACTOR_EXTRACT_ERROR] {err}")
+        return jsonify({'status': 'error', 'message': 'Unable to process uploaded document. Please verify the file and try again.'}), 500
     finally:
         if conn:
             conn.close()
@@ -2193,15 +2338,17 @@ def subcontractor_onboarding_extract(token: str):
 @public_bp.route('/onboard/subcontractor/<token>/submit', methods=['POST'], endpoint='subcontractor_onboarding_submit')
 def subcontractor_onboarding_submit(token: str):
     """
-    Finalizes the pre-filled 1099 Subcontractor Onboarding submission:
+    Finalizes the pre-filled 1099 Subcontractor Onboarding submission (SEC-002 hardened):
     1. Saves verified/extracted W-9 business address, encrypted 9-digit Tax ID, and classification.
-    2. Handles COI upload or holds status at 'Pending COI' per executive policy.
-    3. Generates both locked PDF and HTML tamper-evident signed Master Subcontractor Agreement (MSA)
+    2. Locks executed legal entity, Tax ID, and signer identity once msa_signed = TRUE against anonymous overwrite.
+    3. Handles COI upload or holds status at 'Pending COI' per executive policy.
+    4. Generates both locked PDF and HTML tamper-evident signed Master Subcontractor Agreement (MSA)
        + Texas DWC-83 certificates with SHA-256 cryptographic signature hash.
-    4. Dispatches executive & partner notifications.
+    5. Dispatches executive & partner notifications.
     """
     import json
     from datetime import datetime as dt_cls
+    from flask_login import current_user
     from werkzeug.utils import secure_filename
     from core.services.database import get_db
     from core.services.sanitizer import (
@@ -2212,9 +2359,10 @@ def subcontractor_onboarding_submit(token: str):
         clean_ein_or_ssn,
         validate_federal_tax_id,
     )
-    from core.services.security_logger import extract_client_ip
+    from core.services.security_logger import extract_client_ip, log_security_event
     from database.schema_engine import ensure_subcontractor_onboarding_schema
     from core.services.subcontractor_doc_extractor import (
+        check_extraction_rate_limit,
         extract_subcontractor_document_metadata,
         generate_signed_msa_dwc83_certificate_html,
         generate_signed_msa_dwc83_certificate_pdf,
@@ -2223,6 +2371,15 @@ def subcontractor_onboarding_submit(token: str):
         encrypt_and_mask_subcontractor_tin,
         deposit_subcontractor_document_vault,
     )
+
+    client_ip = extract_client_ip()
+    allowed, _ = check_extraction_rate_limit(f"submit:{token}:{client_ip}", limit=10, window_seconds=600)
+    if not allowed:
+        return jsonify({
+            'status': 'error',
+            'code': 'RATE_LIMIT_EXCEEDED',
+            'message': 'Too many onboarding submission attempts. Please wait a few minutes and try again.',
+        }), 429
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -2375,6 +2532,49 @@ def subcontractor_onboarding_submit(token: str):
                     'message': 'You must agree to both the Master Subcontractor Agreement and the Texas DWC Form-83 affirmation.'
                 }), 400
 
+            # SEC-002 Post-Execution Contract & Tax ID Immutability Lock:
+            # Once msa_signed = TRUE, unauthenticated portal callers cannot overwrite the executed
+            # legal entity name, business name, signer name, or verified Tax ID.
+            is_admin_override = bool(getattr(current_user, 'is_authenticated', False))
+            if bool(partner.get('msa_signed')) and not is_admin_override:
+                locked_co = (partner.get('company_name') or '').strip()
+                locked_legal = (partner.get('legal_entity_name') or '').strip()
+                locked_signer = (partner.get('msa_signer_name') or '').strip()
+                locked_last4 = (partner.get('w9_ein_last4') or '').strip()
+                tamper_fields = []
+                if locked_co and company_name.lower() != locked_co.lower():
+                    tamper_fields.append('company_name')
+                if locked_legal and legal_entity_name.lower() != locked_legal.lower():
+                    tamper_fields.append('legal_entity_name')
+                if locked_signer and msa_signer_name.lower() != locked_signer.lower():
+                    tamper_fields.append('msa_signer_name')
+                if locked_last4 and last4_tin and last4_tin != locked_last4:
+                    tamper_fields.append('ein_or_ssn')
+                if tamper_fields:
+                    try:
+                        log_security_event(
+                            event_category='INTEGRITY_SHIELD',
+                            event_action='SUBCONTRACTOR_POST_SIGN_TAMPER_BLOCKED',
+                            severity='WARNING',
+                            endpoint='/onboard/subcontractor/[REDACTED_TOKEN]/submit',
+                            status_code=403,
+                            details={
+                                'subcontractor_id': sub_id,
+                                'tamper_fields': tamper_fields,
+                                'ip': extract_client_ip(),
+                            },
+                        )
+                    except Exception:
+                        pass
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'CONTRACT_ALREADY_EXECUTED_LOCKED',
+                        'message': (
+                            'Your Master Subcontractor Agreement and Form W-9 have already been executed and locked. '
+                            'To update your legal entity name, Tax ID, or authorized signer, please contact HWB Operations.'
+                        ),
+                    }), 403
+
             signer_ip = extract_client_ip()
             now_dt = dt_cls.now()
             ts_int = int(now_dt.timestamp())
@@ -2453,9 +2653,18 @@ def subcontractor_onboarding_submit(token: str):
                 vault_dir=vault_dir,
             )
 
-            # Determine COI & Onboarding Status per CEO Directive A2
+            # Determine COI & Onboarding Status per CEO Directive A2 (never downgrade Approved / Active)
             has_coi_file = bool(coi_file_url)
-            if has_coi_file:
+            already_approved = (partner.get('onboarding_status') == 'Approved / Active')
+            if already_approved:
+                new_coi_status = 'Verified' if partner.get('coi_status') == 'Verified' else ('File Uploaded (Review)' if has_coi_file else partner.get('coi_status') or 'Pending')
+                new_onboarding_status = 'Approved / Active'
+                new_partner_status = 'Active Partner'
+                completion_msg = (
+                    f"Your updated compliance details for <strong>SUB-#{int(sub_id):04d}</strong> have been saved. "
+                    f"Your partner status remains <strong>Approved / Active</strong>."
+                )
+            elif has_coi_file:
                 new_coi_status = 'File Uploaded (Review)'
                 new_onboarding_status = 'Docs Under Review'
                 new_partner_status = 'Docs Submitted'
@@ -2580,11 +2789,16 @@ def subcontractor_onboarding_submit(token: str):
                 'msa_signer_name': msa_signer_name,
                 'onboarding_token': token.strip(),
             }
-            try:
-                from core.services.notification_service import send_subcontractor_onboarding_completed_notifications
-                send_subcontractor_onboarding_completed_notifications(notify_payload)
-            except Exception as notify_err:
-                current_app.logger.warning(f"[ONBOARDING_NOTIFY_WARN] {notify_err}")
+            is_test_email = any(
+                str(email or '').lower().endswith(dom)
+                for dom in ('@example.com', '@example.org', '@example.net', '@test.com', '@localhost')
+            )
+            if not current_app.config.get('TESTING') and not is_test_email:
+                try:
+                    from core.services.notification_service import send_subcontractor_onboarding_completed_notifications
+                    send_subcontractor_onboarding_completed_notifications(notify_payload)
+                except Exception as notify_err:
+                    current_app.logger.warning(f"[ONBOARDING_NOTIFY_WARN] {notify_err}")
 
             return jsonify({
                 'status': 'success',
@@ -2621,7 +2835,8 @@ def subcontractor_onboarding_submit(token: str):
             })
     except Exception as err:
         conn.rollback()
-        return jsonify({'status': 'error', 'message': str(err)}), 500
+        current_app.logger.error(f"[SUBCONTRACTOR_SUBMIT_ERROR] {err}")
+        return jsonify({'status': 'error', 'message': 'Unable to complete onboarding submission. Please verify your entries and try again.'}), 500
     finally:
         if conn:
             conn.close()
@@ -3212,7 +3427,8 @@ def api_employee_portal_complete(token: str):
             })
     except Exception as err:
         conn.rollback()
-        return jsonify({'status': 'error', 'message': str(err)}), 500
+        current_app.logger.error(f"[SUBCONTRACTOR_SUBMIT_ERROR] {err}")
+        return jsonify({'status': 'error', 'message': 'Unable to complete onboarding submission. Please verify your entries and try again.'}), 500
     finally:
         if conn:
             conn.close()

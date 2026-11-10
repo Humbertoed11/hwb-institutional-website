@@ -91,6 +91,11 @@
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>{% block title %}HWB Cleaning Services LLC | North Texas Commercial Cleaning Experts{% endblock %}</title>
  
+ {% set is_token_sensitive_portal = request.path.startswith('/onboard') or request.path.startswith('/portal') or request.path.startswith('/reset-password') %}
+ {% if is_token_sensitive_portal %}
+ <meta name="robots" content="noindex, nofollow, noarchive">
+ <meta name="referrer" content="no-referrer">
+ {% else %}
  <!-- SigmaFidelity™ SEO Hardening -->
  <link rel="canonical" href="https://www.hwbcleaning.com{{ request.path }}">
  
@@ -101,6 +106,7 @@
  <meta property="og:url" content="https://www.hwbcleaning.com{{ request.path }}">
  <meta property="og:type" content="website">
  <meta name="twitter:card" content="summary_large_image">
+ {% endif %}
 
  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
  <!-- 
@@ -199,7 +205,7 @@
   {% set gads_id = config.get('GOOGLE_ADS_ID') or 'AW-8622428739' %}
   {% set gads_label = config.get('GOOGLE_ADS_CONVERSION_LABEL') or '' %}
   {% set clarity_id = config.get('MICROSOFT_CLARITY_ID') or 'q8x3j1k9wm' %}
-  {% if not current_user.is_authenticated %}
+  {% if not current_user.is_authenticated and not is_token_sensitive_portal %}
   <script type="text/plain" data-consent-category="analytics" data-type="ga" data-id="{{ ga_id }}"></script>
   <script type="text/plain" data-consent-category="analytics" data-type="gads" data-id="{{ gads_id }}" data-account="862-242-8739"></script>
   <script type="text/plain" data-consent-category="analytics" data-type="clarity" data-id="{{ clarity_id }}"></script>
@@ -211,7 +217,7 @@
     window.HWB_GOOGLE_ADS_ACCOUNT = '862-242-8739';
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    {% if not current_user.is_authenticated %}
+    {% if not current_user.is_authenticated and not is_token_sensitive_portal %}
     // Initialize Google Consent Mode v2 (privacy-safe cookieless modeling by default)
     gtag('consent', 'default', {
       'ad_storage': 'denied',
@@ -234,7 +240,7 @@
     })();
     {% endif %}
     function triggerCompliantTelemetry() {
-      {% if not current_user.is_authenticated %}
+      {% if not current_user.is_authenticated and not is_token_sensitive_portal %}
       gtag('consent', 'update', {
         'ad_storage': 'granted',
         'ad_user_data': 'granted',
@@ -242,7 +248,7 @@
         'analytics_storage': 'granted'
       });
 
-      {% if not request.path.startswith('/admin') and not request.path.startswith('/login') %}
+      {% if not request.path.startswith('/admin') and not request.path.startswith('/login') and not is_token_sensitive_portal %}
       if (!window.__hwbClarityLoaded) {
         window.__hwbClarityLoaded = true;
         (function(c,l,a,r,i,t,y){
