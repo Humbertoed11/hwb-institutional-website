@@ -2,9 +2,18 @@
 
 {% block title %}Industrial & Warehouse Floor Scrubbing in DFW | HWB Cleaning{% endblock %}
 {% block og_description %}Heavy-duty industrial warehouse floor scrubbing, 24/7 distribution center sanitation, and high-bay dusting across McKinney, Frisco, Plano, Dallas & Fort Worth.{% endblock %}
+{% block og_image %}https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp{% endblock %}
+{% block twitter_image %}https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp{% endblock %}
+{% block og_image_meta %}
+  <meta property="og:image:alt" content="PPE and PIT-trained HWB Cleaning technician operating a floor scrubber down a debris-free DFW warehouse concrete aisle">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="1376">
+  <meta property="og:image:height" content="768">
+  <meta name="twitter:image:alt" content="PPE and PIT-trained HWB Cleaning technician operating a floor scrubber down a debris-free DFW warehouse concrete aisle">
+{% endblock %}
 
 {% block head %}
- <link rel="preload" as="image" href="/static/img/industrial_hero_ppe_aisles.webp" fetchpriority="high">
+ <link rel="preload" as="image" href="/static/img/industrial_hero_ppe_aisles.webp" imagesrcset="/static/img/industrial_hero_ppe_aisles-640w.webp 640w, /static/img/industrial_hero_ppe_aisles-1024w.webp 1024w, /static/img/industrial_hero_ppe_aisles.webp 1408w" imagesizes="100vw" fetchpriority="high">
  <meta name="description" content="Heavy-duty industrial warehouse floor scrubbing, 24/7 distribution center sanitation, and high-bay dusting across McKinney, Frisco, Plano, Dallas & Fort Worth.">
  <meta name="keywords" content="Industrial cleaning McKinney, warehouse floor scrubbing Dallas, logistics center cleaning Fort Worth, industrial janitorial Plano, auto scrubber DFW">
  <script type="application/ld+json">
@@ -12,15 +21,53 @@
    "@context": "https://schema.org",
    "@graph": [
      {
+       "@type": "WebPage",
+       "@id": "https://www.hwbcleaning.com/services/industrial#webpage",
+       "url": "https://www.hwbcleaning.com/services/industrial",
+       "name": "Industrial & Warehouse Floor Scrubbing in DFW | HWB Cleaning",
+       "description": "Heavy-duty industrial warehouse floor scrubbing, 24/7 distribution center sanitation, and high-bay dusting across McKinney, Frisco, Plano, Dallas & Fort Worth.",
+       "primaryImageOfPage": {
+         "@id": "https://www.hwbcleaning.com/services/industrial#primaryimage"
+       }
+     },
+     {
+       "@type": "ImageObject",
+       "@id": "https://www.hwbcleaning.com/services/industrial#primaryimage",
+       "url": "https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp",
+       "contentUrl": "https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp",
+       "name": "Industrial & Warehouse Floor Scrubbing in DFW — PPE & PIT Trained Crews",
+       "caption": "Debris-free concrete floor scrubbing that protects forklift tires, shift restroom cleaning, and an in-house Safety Department.",
+       "description": "PPE and PIT-trained HWB Cleaning technician operating a floor scrubber down a debris-free DFW warehouse concrete aisle",
+       "encodingFormat": "image/webp",
+       "width": 1376,
+       "height": 768,
+       "contentLocation": {
+         "@type": "Place",
+         "name": "Dallas-Fort Worth, TX, USA"
+       },
+       "creator": {
+         "@type": "Organization",
+         "name": "HWB Cleaning Services LLC",
+         "@id": "https://www.hwbcleaning.com"
+       },
+       "copyrightNotice": "Copyright 2026 HWB Cleaning Services LLC. All Rights Reserved.",
+       "license": "https://www.hwbcleaning.com/terms",
+       "acquireLicensePage": "https://www.hwbcleaning.com/get-quote",
+       "creditText": "HWB Cleaning Services LLC"
+     },
+     {
        "@type": "Service",
        "name": "Industrial & Warehouse Cleaning Services",
        "serviceType": "Industrial Cleaning",
+       "image": {
+         "@id": "https://www.hwbcleaning.com/services/industrial#primaryimage"
+       },
        "provider": {
          "@type": "LocalBusiness",
          "name": "HWB Cleaning Services LLC",
          "@id": "https://www.hwbcleaning.com"
        },
-       "areaServed": ["McKinney", "Frisco", "Plano", "Dallas", "Fort Worth", "Irving", "Richardson", "Allen", "Arlington", "Addison", "Waxahachie"],
+       "areaServed": ["Dallas", "Plano", "Frisco", "McKinney", "Prosper", "Celina", "Allen", "Richardson", "Addison", "Irving", "Denton", "Rockwall", "Southlake", "Fort Worth", "Arlington", "Grand Prairie", "Mansfield", "Waxahachie"],
        "description": "Heavy-duty industrial and warehouse cleaning, auto-scrubber concrete degreasing, high-bay HEPA dusting, and OSHA-compliant facility sanitation."
      },
      {
@@ -38,7 +85,7 @@
            "name": "What equipment does HWB use for industrial warehouse concrete floor scrubbing?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "We deploy industrial ride-on and walk-behind scrubber-sweepers (including Tennant M20-class equipment) paired with low-foam industrial degreasers to remove forklift tire marks, hydraulic oils, pallet debris, and warehouse dust from sealed and unsealed concrete."
+             "text": "HWB deploys industrial ride-on and walk-behind scrubber-sweepers (including Tennant M20-class equipment) paired with low-foam industrial degreasers to remove forklift tire marks, hydraulic oils, pallet debris, and warehouse dust from sealed and unsealed concrete."
            }
          },
          {
@@ -46,15 +93,15 @@
            "name": "Can HWB service 24/7 distribution centers and manufacturing plants without disrupting shifts?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "Yes. Our OSHA-certified industrial crews coordinate aisle-by-aisle scrubbing, loading dock debris clearing, and high-volume locker room and restroom sanitization around active forklift traffic and shift handovers."
+             "text": "Yes. Backed by HWB’s in-house Safety Department, PPE and PIT-trained industrial crews coordinate aisle-by-aisle scrubbing, loading dock debris clearing, and high-volume locker room and restroom sanitization around active forklift traffic and shift handovers."
            }
          },
          {
            "@type": "Question",
-           "name": "How do you quote industrial warehouse floor scrubbing in DFW?",
+           "name": "How is industrial warehouse floor scrubbing quoted in DFW?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "We walk the warehouse with your facility manager to check the open bay and aisle square footage, the amount of tire marks or oil buildup on the concrete, and whether you need a one-time deep scrub or regular scheduled visits."
+             "text": "A supervisor walks the warehouse with facility management to check the open bay and aisle square footage, the amount of tire marks or oil buildup on the concrete, and whether a one-time deep scrub or regular scheduled visits are needed. A clear written quote will be provided."
            }
          }
        ]
@@ -67,8 +114,21 @@
 {% block content %}
 <section class="services-view">
     <!-- High-Fidelity Industrial Hero (Original Graphic Preserved) -->
-    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/industrial_hero_ppe_aisles.webp');">
-        <div class="content-wrapper" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+    <div class="services-hero dark-variant" style="position: relative; overflow: hidden; background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/industrial_hero_ppe_aisles.webp');">
+        <picture style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.001;">
+            <source type="image/webp" srcset="/static/img/industrial_hero_ppe_aisles-640w.webp 640w, /static/img/industrial_hero_ppe_aisles-1024w.webp 1024w, /static/img/industrial_hero_ppe_aisles.webp 1408w" sizes="100vw">
+            <img src="/static/img/industrial_hero_ppe_aisles.webp"
+                 srcset="/static/img/industrial_hero_ppe_aisles-640w.webp 640w, /static/img/industrial_hero_ppe_aisles-1024w.webp 1024w, /static/img/industrial_hero_ppe_aisles.webp 1408w"
+                 sizes="100vw"
+                 alt="PPE and PIT-trained HWB Cleaning technicians maintaining an active Dallas-Fort Worth warehouse aisle"
+                 title="Industrial & Warehouse Floor Scrubbing in DFW — PPE & PIT Trained Crews"
+                 width="1408"
+                 height="768"
+                 fetchpriority="high"
+                 decoding="async"
+                 style="width: 100%; height: 100%; object-fit: cover;">
+        </picture>
+        <div class="content-wrapper" style="position: relative; z-index: 2; max-width: 1000px; margin: 0 auto; text-align: center;">
             <h1>Industrial and Warehouse Cleaning</h1>
             <p class="subtitle">Reliable floor scrubbing and debris removal for high-volume logistics and distribution centers. We keep North Texas industrial environments clean and ready for work around the clock.</p>
             <div class="hero-ctas">
@@ -146,15 +206,15 @@
                     <div style="display: grid; gap: 1rem; max-width: 900px; margin: 0 auto;">
                         <details open style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
                             <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">What equipment does HWB use for industrial warehouse concrete floor scrubbing?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">We deploy industrial ride-on and walk-behind scrubber-sweepers (including Tennant M20-class equipment) paired with low-foam industrial degreasers to remove forklift tire marks, hydraulic oils, pallet debris, and warehouse dust from sealed and unsealed concrete.</p>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">HWB deploys industrial ride-on and walk-behind scrubber-sweepers (including Tennant M20-class equipment) paired with low-foam industrial degreasers to remove forklift tire marks, hydraulic oils, pallet debris, and warehouse dust from sealed and unsealed concrete.</p>
                         </details>
                         <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
                             <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">Can HWB service 24/7 distribution centers and manufacturing plants without disrupting shifts?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Yes. Our OSHA-certified industrial crews coordinate aisle-by-aisle scrubbing, loading dock debris clearing, and high-volume locker room and restroom sanitization around active forklift traffic and shift handovers.</p>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Yes. Backed by HWB’s in-house Safety Department, PPE and PIT-trained industrial crews coordinate aisle-by-aisle scrubbing, loading dock debris clearing, and high-volume locker room and restroom sanitization around active forklift traffic and shift handovers.</p>
                         </details>
                         <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
-                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">How do you quote industrial warehouse floor scrubbing in DFW?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">We walk the warehouse with your facility manager to check the open bay and aisle square footage, the amount of tire marks or oil buildup on the concrete, and whether you need a one-time deep scrub or regular scheduled visits.</p>
+                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">How is industrial warehouse floor scrubbing quoted in DFW?</summary>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">A supervisor walks the warehouse with facility management to check the open bay and aisle square footage, the amount of tire marks or oil buildup on the concrete, and whether a one-time deep scrub or regular scheduled visits are needed. A clear written quote will be provided.</p>
                         </details>
                     </div>
                 </div>

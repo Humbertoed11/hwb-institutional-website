@@ -41,11 +41,11 @@ LOCATIONS_DATA = {
             },
             {
                 'q': 'What types of commercial buildings does HWB clean in McKinney?',
-                'a': 'We clean corporate offices in Craig Ranch, medical and dental clinics along SH-121 and Eldorado Parkway, accredited child care centers and private schools, industrial warehouses near McKinney National Airport, and new commercial construction projects.'
+                'a': 'HWB Cleaning Services LLC cleans corporate offices in Craig Ranch, medical and dental clinics along SH-121 and Eldorado Parkway, child care centers and private schools, industrial warehouses near McKinney National Airport, and new commercial construction projects.'
             },
             {
-                'q': 'How do you price commercial office cleaning in McKinney, TX?',
-                'a': 'We do not use one-size-fits-all square-foot rates. Because our headquarters is right here in McKinney, we meet with you at your building for a quick walkthrough to review your offices, restrooms, floors, and weekly schedule, then deliver a clear written quote within 24 hours.'
+                'q': 'How is commercial office cleaning priced in McKinney, TX?',
+                'a': 'HWB Cleaning does not use one-size-fits-all square-foot rates. Because headquarters is located in McKinney, a supervisor meets on-site for a walkthrough to review the offices, restrooms, floors, and weekly schedule, and a clear written quote will be provided.'
             }
         ]
     },
@@ -60,16 +60,16 @@ LOCATIONS_DATA = {
         'desc': 'Supporting fast-growing corporate campuses in Hall Park and Frisco Station, medical offices along the Dallas North Tollway, private academies, and new retail build-outs near PGA Parkway with background-checked nightly crews and day porters.',
         'faqs': [
             {
-                'q': 'Do you provide commercial cleaning for Hall Park and Dallas North Tollway offices in Frisco?',
+                'q': 'Does HWB provide commercial cleaning for Hall Park and Dallas North Tollway offices in Frisco?',
                 'a': 'Yes. HWB Cleaning Services LLC provides nightly janitorial, day porter staffing, carpet extraction, and hard-floor care for Class-A office suites, medical plazas, and corporate campuses throughout Hall Park, Frisco Station, Stonebriar, and the Dallas North Tollway corridor (75034, 75035).'
             },
             {
                 'q': 'Does HWB handle 3-phase post-construction cleanup for new builds in Frisco, TX?',
-                'a': 'Yes. Our OSHA-10/30 trained construction cleaning crews execute CSI Division 01 74 23 Rough Clean, Final Detail Clean, and White-Glove Touch-Up for General Contractors building medical offices, schools, retail centers, and corporate finish-outs across Frisco.'
+                'a': 'Yes. Backed by HWB’s in-house Safety Department, PPE and PIT-trained construction cleaning crews execute Rough Clean, Final Detail Clean, and Final Touch-Up for General Contractors building medical offices, schools, retail centers, and corporate finish-outs across Frisco.'
             },
             {
                 'q': 'Are HWB cleaning crews background-checked for Frisco schools and medical clinics?',
-                'a': 'Every technician is vetted, badged, and trained in our color-coded microfiber cloth system and EPA List N hospital-grade disinfection procedures suitable for Frisco pediatric clinics, dental offices, and private schools.'
+                'a': 'Every technician is vetted, badged, and trained in the 4-color microfiber cloth system and safe disinfection procedures suitable for Frisco pediatric clinics, dental offices, and private schools.'
             }
         ]
     },
@@ -85,15 +85,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'Which Plano commercial districts does HWB Cleaning Services LLC cover?',
-                'a': 'We serve all of Plano including Legacy West, Granite Park, Legacy Business Park (75024, 75093), Central Plano along Preston Road and Coit Road (75023, 75025, 75075), and East Plano technology and industrial corridors along US-75 and Plano Parkway (75074).'
+                'a': 'HWB Cleaning Services LLC serves all of Plano including Legacy West, Granite Park, Legacy Business Park (75024, 75093), Central Plano along Preston Road and Coit Road (75023, 75025, 75075), and East Plano technology and industrial corridors along US-75 and Plano Parkway (75074).'
             },
             {
                 'q': 'Can HWB provide both daytime porters and nightly janitorial crews for Plano office buildings?',
-                'a': 'Yes. We staff uniformed Day Porters for high-traffic lobbies, restrooms, and conference room resets during business hours, paired with after-hours Night Crews for full trash removal, HEPA vacuuming, and clinical restroom sanitization.'
+                'a': 'Yes. HWB staffs uniformed Day Porters for high-traffic lobbies, restrooms, and conference room resets during business hours, paired with after-hours Night Crews for full trash removal, HEPA vacuuming, and clinical restroom sanitization.'
             },
             {
                 'q': 'What specialty floor care services are available in Plano, TX?',
-                'a': 'We provide VCT tile stripping, sealing, and 4-coat waxing, high-speed burnishing, natural stone and terrazzo polishing, ceramic tile and grout scrubbing, and commercial hot-water carpet extraction.'
+                'a': 'HWB provides VCT tile stripping, sealing, and 4-coat waxing, high-speed burnishing, natural stone and terrazzo polishing, ceramic tile and grout scrubbing, and commercial hot-water carpet extraction.'
             }
         ]
     },
@@ -109,15 +109,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'What areas of Dallas does HWB Cleaning Services LLC cover?',
-                'a': 'We cover Downtown Dallas (75201, 75202), Uptown and Oak Lawn (75204, 75219), the Stemmons Corridor and Design District (75207, 75247), North Dallas and LBJ Freeway (75234, 75240, 75243, 75287), and industrial corridors throughout Dallas County.'
+                'a': 'HWB Cleaning Services LLC covers Downtown Dallas (75201, 75202), Uptown and Oak Lawn (75204, 75219), the Stemmons Corridor and Design District (75207, 75247), North Dallas and LBJ Freeway (75234, 75240, 75243, 75287), and industrial corridors throughout Dallas County.'
             },
             {
                 'q': 'Does HWB provide commercial post-construction final cleaning in Dallas?',
-                'a': 'Yes. We partner with commercial General Contractors across Dallas for CSI Division 01 74 23 three-phase construction cleanup—Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 White-Glove Touch-Up prior to tenant occupancy.'
+                'a': 'Yes. Backed by an in-house Safety Department, HWB partners with commercial General Contractors across Dallas for three-phase construction cleanup—Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 Final Touch-Up prior to tenant occupancy.'
             },
             {
                 'q': 'How quickly can HWB prepare a commercial cleaning quote in Dallas?',
-                'a': 'Submit your building details at hwbcleaning.com/get-quote or call (214) 586-0257. We schedule an on-site walkthrough with you and deliver a clear written proposal within 24 hours.'
+                'a': 'Building details can be submitted at hwbcleaning.com/get-quote or by calling (214) 586-0257. HWB schedules an on-site walkthrough with facility management to build a custom scope of work, and a clear written quote will be provided.'
             }
         ]
     },
@@ -132,16 +132,16 @@ LOCATIONS_DATA = {
         'desc': 'Built for Fort Worth commercial offices, Near Southside medical facilities, Centreport corporate hubs, and heavy-duty 3PL logistics centers along the AllianceTexas I-35W industrial corridor.',
         'faqs': [
             {
-                'q': 'Do you provide industrial warehouse floor scrubbing in AllianceTexas and Fort Worth?',
-                'a': 'Yes. HWB deploys heavy-duty auto-scrubbers and OSHA-certified crews for concrete floor degreasing, dock bay sweeping, high-bay dusting, and 24/7 restroom sanitation across AllianceTexas (76177), Centreport (76155), and Fort Worth industrial parks.'
+                'q': 'Does HWB provide industrial warehouse floor scrubbing in AllianceTexas and Fort Worth?',
+                'a': 'Yes. Backed by an in-house Safety Department, HWB deploys heavy-duty auto-scrubbers and PPE and PIT-trained crews for concrete floor degreasing, dock bay sweeping, high-bay dusting, and 24/7 restroom sanitation across AllianceTexas (76177), Centreport (76155), and Fort Worth industrial parks.'
             },
             {
                 'q': 'Can HWB service medical offices in the Fort Worth Near Southside Medical District?',
-                'a': 'Yes. Our crews use EPA List N hospital-grade disinfectants, HEPA filtration vacuums, and color-coded microfiber cloths for medical clinics, surgical centers, and professional offices in 76104 and Downtown Fort Worth (76102).'
+                'a': 'Yes. HWB crews use safe, proper-dilution disinfectants, HEPA filtration vacuums, and 4-color microfiber cloths for medical clinics, dental offices, and professional suites in 76104 and Downtown Fort Worth (76102).'
             },
             {
-                'q': 'Do you offer post-construction cleanup for new commercial buildings in Tarrant County?',
-                'a': 'Yes. We execute 3-phase Rough, Final, and Touch-Up construction cleaning for commercial, retail, industrial, and institutional projects across Fort Worth and Tarrant County.'
+                'q': 'Does HWB offer post-construction cleanup for new commercial buildings in Tarrant County?',
+                'a': 'Yes. HWB executes 3-phase Rough, Final, and Touch-Up construction cleaning for commercial, retail, industrial, and institutional projects across Fort Worth and Tarrant County.'
             }
         ]
     },
@@ -157,15 +157,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'What types of facilities does HWB clean in Waxahachie and Ellis County?',
-                'a': 'We service manufacturing and distribution facilities along I-35E and US-287, medical and dental offices, private schools and daycares, banks, and municipal/commercial office buildings in Waxahachie (75165).'
+                'a': 'HWB services manufacturing and distribution facilities along I-35E and US-287, medical and dental offices, private schools and daycares, banks, and municipal/commercial office buildings in Waxahachie (75165).'
             },
             {
                 'q': 'Does HWB provide industrial floor scrubbing and VCT waxing in Waxahachie?',
-                'a': 'Yes. We provide machine auto-scrubbing for warehouse concrete floors as well as VCT strip, seal, and wax services for commercial lobbies, breakrooms, and corridors in Ellis County.'
+                'a': 'Yes. HWB provides machine auto-scrubbing for warehouse concrete floors as well as VCT strip, seal, and wax services for commercial lobbies, breakrooms, and corridors in Ellis County.'
             },
             {
-                'q': 'How do I schedule a site walkthrough in Waxahachie?',
-                'a': 'Submit your building square footage at hwbcleaning.com/get-quote or call (214) 586-0257 to schedule a complimentary on-site scope walkthrough.'
+                'q': 'How is a site walkthrough scheduled in Waxahachie?',
+                'a': 'Facility details can be submitted at hwbcleaning.com/get-quote or by calling (214) 586-0257 to schedule a complimentary on-site scope walkthrough.'
             }
         ]
     },
@@ -180,16 +180,16 @@ LOCATIONS_DATA = {
         'desc': 'Delivering clinical-grade nightly janitorial, day porter staffing, and specialty floor care for corporate headquarters, medical plazas, and logistics hubs across Irving, Las Colinas, and DFW Airport corridors.',
         'faqs': [
             {
-                'q': 'Do you service corporate offices in Las Colinas and Valley Ranch?',
+                'q': 'Does HWB service corporate offices in Las Colinas and Valley Ranch?',
                 'a': 'Yes. HWB Cleaning Services LLC provides nightly janitorial, executive restroom detailing, day porter services, and carpet care for corporate offices across Las Colinas (75038, 75039) and Valley Ranch (75063).'
             },
             {
                 'q': 'Does HWB clean airfreight and logistics warehouses near DFW Airport in Irving?',
-                'a': 'Yes. We provide industrial concrete scrubbing, breakroom/locker room sanitization, and 24/7 shift janitorial for logistics and distribution centers along the Freeport Parkway and SH-114/SH-161 corridors.'
+                'a': 'Yes. HWB provides industrial concrete scrubbing, breakroom/locker room sanitization, and 24/7 shift janitorial for logistics and distribution centers along the Freeport Parkway and SH-114/SH-161 corridors.'
             },
             {
                 'q': 'Can HWB provide Certificate of Insurance (COI) for Class-A property managers in Las Colinas?',
-                'a': 'Yes. We issue property-specific Certificates of Insurance with Additional Insured and Waiver of Subrogation endorsements required by Class-A commercial property management firms.'
+                'a': 'Yes. HWB issues property-specific Certificates of Insurance with Additional Insured and Waiver of Subrogation endorsements required by Class-A commercial property management firms.'
             }
         ]
     },
@@ -205,15 +205,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'Does HWB serve technology campuses and offices in CityLine and the Richardson Telecom Corridor?',
-                'a': 'Yes. We provide vetted, badged nightly janitorial and day porter crews for corporate buildings, engineering labs, and medical offices across CityLine (75082), Campbell Road (75080), and the US-75 Telecom Corridor (75081).'
+                'a': 'Yes. HWB provides vetted, badged nightly janitorial and day porter crews for corporate buildings, engineering labs, and medical offices across CityLine (75082), Campbell Road (75080), and the US-75 Telecom Corridor (75081).'
             },
             {
-                'q': 'What dust-control methods do you use for tech and electronics facilities in Richardson?',
-                'a': 'We use CRI-certified HEPA backpack vacuums, damp microfiber dust capture, and zero-residue neutral floor cleaners to protect sensitive server rooms, labs, and office equipment.'
+                'q': 'What dust-control methods does HWB use for tech and electronics facilities in Richardson?',
+                'a': 'HWB uses HEPA backpack vacuums, damp microfiber dust capture, and properly diluted neutral floor cleaners that never leave sticky buildup to protect sensitive server rooms, labs, and office equipment.'
             },
             {
-                'q': 'Do you offer flexible after-hours cleaning schedules in Richardson?',
-                'a': 'Yes. We customize cleaning schedules for 1x to 7x per week, including evening, overnight, and weekend windows tailored to your building security protocols.'
+                'q': 'Are flexible after-hours cleaning schedules available in Richardson?',
+                'a': 'Yes. Cleaning schedules are customized for 1x to 7x per week, including evening, overnight, and weekend windows tailored to building security protocols.'
             }
         ]
     },
@@ -229,15 +229,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'How close is HWB Cleaning Services LLC to commercial buildings in Allen, TX?',
-                'a': 'Our headquarters in neighboring McKinney is less than 10 minutes north on US-75, allowing rapid daily supervision, supply restocking, and emergency response for all commercial properties in Allen (75002, 75013).'
+                'a': 'HWB headquarters in neighboring McKinney is less than 10 minutes north on US-75, allowing rapid daily supervision, supply restocking, and emergency response for all commercial properties in Allen (75002, 75013).'
             },
             {
-                'q': 'Do you clean child care centers, Montessori schools, and medical offices in Allen?',
-                'a': 'Yes. We specialize in pediatric-safe, EPA List N disinfection and color-coded microfiber cloths for Allen daycares, private schools, dental clinics, and professional office suites along Exchange Parkway, McDermott Drive, and Watters Creek.'
+                'q': 'Does HWB clean child care centers, Montessori schools, and medical offices in Allen?',
+                'a': 'Yes. HWB specializes in child-safe disinfection, 4-color microfiber cloth separation, and non-sticky floor care for Allen daycares, private schools, dental clinics, and professional office suites along Exchange Parkway, McDermott Drive, and Watters Creek.'
             },
             {
-                'q': 'Can we bundle nightly janitorial with periodic carpet and floor waxing in Allen?',
-                'a': 'Yes. We offer integrated maintenance programs combining nightly janitorial with quarterly VCT scrubbing/burnishing, carpet extraction, and interior/exterior glass cleaning.'
+                'q': 'Can nightly janitorial be bundled with periodic carpet and floor waxing in Allen?',
+                'a': 'Yes. HWB offers integrated maintenance programs combining nightly janitorial with quarterly VCT scrubbing/burnishing, carpet extraction, and interior/exterior glass cleaning.'
             }
         ]
     },
@@ -252,16 +252,16 @@ LOCATIONS_DATA = {
         'desc': 'Engineered for high-volume manufacturing plants, distribution centers in the Great Southwest Industrial District, medical offices, and commercial venues across Arlington and the Mid-Cities corridor.',
         'faqs': [
             {
-                'q': 'Do you service warehouses in the Great Southwest Industrial District in Arlington?',
-                'a': 'Yes. HWB provides ride-on and walk-behind auto-scrubber floor cleaning, high-volume employee restroom sanitization, breakroom cleaning, and trash handling across the SH-360 Great Southwest Industrial District (76010, 76011).'
+                'q': 'Does HWB service warehouses in the Great Southwest Industrial District in Arlington?',
+                'a': 'Yes. Backed by an in-house Safety Department, HWB provides ride-on and walk-behind auto-scrubber floor cleaning, high-volume employee restroom sanitization, breakroom cleaning, and trash handling across the SH-360 Great Southwest Industrial District (76010, 76011).'
             },
             {
                 'q': 'Does HWB provide commercial office and medical cleaning in North and South Arlington?',
-                'a': 'Yes. We service corporate offices near I-30 (76006, 76011) as well as medical plazas, clinics, and educational facilities along Cooper Street and I-20 (76014, 76017).'
+                'a': 'Yes. HWB services corporate offices near I-30 (76006, 76011) as well as medical plazas, clinics, and educational facilities along Cooper Street and I-20 (76014, 76017).'
             },
             {
-                'q': 'Are your crews OSHA-trained for industrial and construction sites in Arlington?',
-                'a': 'Yes. Our field supervisors hold OSHA 10/30 certifications and our company maintains a verified 0.00 TRIR safety record with full SDS chemical compliance.'
+                'q': 'Are HWB crews safety-trained for industrial and construction sites in Arlington?',
+                'a': 'Yes. HWB maintains an in-house Safety Department, field supervisors hold OSHA 10/30 certifications, and crews are trained in full PPE and PIT (forklift/powered industrial truck) traffic safety with a verified 0.00 TRIR safety record.'
             }
         ]
     },
@@ -277,11 +277,11 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'What types of businesses does HWB clean in Addison, TX (75001)?',
-                'a': 'We clean executive office suites, financial and legal firms along Quorum Drive and the Dallas North Tollway, corporate hangars and offices at Addison Airport, and commercial plazas along Belt Line Road and Midway Road.'
+                'a': 'HWB cleans executive office suites, financial and legal firms along Quorum Drive and the Dallas North Tollway, corporate hangars and offices at Addison Airport, and commercial plazas along Belt Line Road and Midway Road.'
             },
             {
                 'q': 'Can HWB provide high-detail executive suite and conference room cleaning in Addison?',
-                'a': 'Yes. Our Addison crews specialize in streak-free interior glass partition cleaning, conference table and leather/wood care, breakroom appliance sanitization, and white-glove restroom maintenance.'
+                'a': 'Yes. Addison crews specialize in streak-free interior glass partition cleaning, conference table and leather/wood care, breakroom appliance sanitization, and white-glove restroom maintenance.'
             },
             {
                 'q': 'How are quality inspections handled for Addison office accounts?',
@@ -300,16 +300,16 @@ LOCATIONS_DATA = {
         'desc': 'Supporting Prosper commercial plazas, medical clinics, private academies, and active master-planned residential subdivisions along US-380, Preston Road, and the Dallas North Tollway with nightly janitorial, 3-Step Neighborhood & Street Cleanup, and 3-Phase interior final cleans.',
         'faqs': [
             {
-                'q': 'Do you provide 3-Step Neighborhood Cleanup for homebuilders in Prosper, TX?',
-                'a': 'Yes. HWB Cleaning Services LLC partners with residential builders and developers across Prosper (75078) to remove crew trash and lot debris during active home construction, sweep and wash subdivision streets and gutters, and deliver model-ready community presentation.'
+                'q': 'Does HWB provide 3-Step Neighborhood Cleanup for homebuilders in Prosper, TX?',
+                'a': 'Yes. Backed by an in-house Safety Department, HWB Cleaning Services LLC partners with residential builders and developers across Prosper (75078) to remove crew trash and lot debris during active construction, sweep mud and gravel from subdivision streets and gutters so transit lines pass City Inspection, and power wash streets and sidewalks.'
             },
             {
                 'q': 'Does HWB clean medical offices, daycares, and retail centers along US-380 and Gates of Prosper?',
-                'a': 'Yes. Our background-checked crews provide nightly janitorial, pediatric-safe EPA List N disinfection, and hard-floor care for clinics, early childhood academies, and commercial offices along US-380 and Preston Road.'
+                'a': 'Yes. Background-checked crews provide nightly janitorial, 4-color microfiber cloth separation, and non-sticky floor care for clinics, early childhood academies, and commercial offices along US-380 and Preston Road.'
             },
             {
                 'q': 'Can HWB handle 3-phase interior final cleans for new homes and commercial buildings in Prosper?',
-                'a': 'Yes. We execute CSI Division 01 74 23 Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 White-Glove Touch-Up for both newly built homes and commercial finish-outs in Prosper.'
+                'a': 'Yes. PPE and PIT-trained crews execute Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 Final Touch-Up for commercial finish-outs and newly built properties in Prosper.'
             }
         ]
     },
@@ -325,15 +325,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'How does HWB help residential builders keep active subdivisions clean in Celina, TX?',
-                'a': 'Our 3-Step Neighborhood Cleanup crews patrol active Celina communities (75009) during construction to clear trade debris and blown trash, sweep mud and gravel from streets and curbs, and power wash model-home corridors.'
+                'a': 'Backed by HWB’s in-house Safety Department, 3-Step Neighborhood Cleanup crews patrol active Celina communities (75009) during construction to clear trade debris and blown trash, sweep mud and gravel from streets and curbs so transit lines stay ready for City Inspectors, and power wash model-home corridors.'
             },
             {
-                'q': 'Do you provide commercial cleaning for offices, schools, and daycares in Celina?',
-                'a': 'Yes. Located nearby in Collin County, our supervised night crews provide daily janitorial, restroom sanitization, and floor care for Celina medical clinics, daycares, churches, and commercial suites along Preston Road.'
+                'q': 'Does HWB provide commercial cleaning for offices, schools, and daycares in Celina?',
+                'a': 'Yes. Located nearby in Collin County, supervised night crews provide daily janitorial, restroom sanitization, and floor care for Celina medical clinics, daycares, churches, and commercial suites along Preston Road.'
             },
             {
                 'q': 'How quickly can HWB start a construction or commercial cleaning scope in Celina?',
-                'a': 'Submit your project details at hwbcleaning.com/get-quote or call (214) 586-0257. We perform an on-site walkthrough and provide a clear written proposal within 24 hours.'
+                'a': 'Project details can be submitted at hwbcleaning.com/get-quote or by calling (214) 586-0257. HWB performs an on-site walkthrough to build a custom scope of work, and a clear written quote will be provided.'
             }
         ]
     },
@@ -348,16 +348,16 @@ LOCATIONS_DATA = {
         'desc': 'Serving manufacturing and distribution centers along I-35E/I-35W and Denton Enterprise Airport, medical offices, schools, and fast-growing residential developments across Denton County with insured, OSHA-trained crews.',
         'faqs': [
             {
-                'q': 'Do you provide industrial warehouse floor scrubbing in Denton, TX?',
+                'q': 'Does HWB provide industrial warehouse floor scrubbing in Denton, TX?',
                 'a': 'Yes. HWB deploys heavy-duty auto-scrubbers for concrete warehouse floors, shipping docks, and plant restrooms across the Denton Enterprise Airport industrial park and I-35E/I-35W logistics corridors (76205, 76207).'
             },
             {
                 'q': 'Does HWB offer 3-Step Neighborhood Cleanup and 3-Phase Final Cleaning in Denton County?',
-                'a': 'Yes. We support residential subdivision builders and commercial general contractors throughout Denton (76201, 76208, 76210) with active lot/street debris cleanup and CSI 01 74 23 interior rough, final, and touch-up cleaning.'
+                'a': 'Yes. Backed by an in-house Safety Department, HWB supports residential subdivision builders and commercial general contractors throughout Denton (76201, 76208, 76210) with active lot/street debris cleanup for City Inspections and 3-Phase interior rough, final, and touch-up cleaning.'
             },
             {
                 'q': 'Can HWB service medical clinics and educational facilities in Denton?',
-                'a': 'Yes. Our vetted technicians use EPA List N hospital-grade disinfectants, HEPA vacuums, and color-coded microfiber cloths for Denton medical plazas, dental offices, and private schools.'
+                'a': 'Yes. Vetted technicians use safe, proper-dilution disinfectants, HEPA vacuums, and 4-color microfiber cloths for Denton medical plazas, dental offices, and private schools.'
             }
         ]
     },
@@ -373,14 +373,14 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'Which commercial areas in Rockwall does HWB Cleaning Services LLC cover?',
-                'a': 'We cover the I-30 commercial corridor, Rockwall Technology Park, Ridge Road and Horizon Road medical and professional plazas, and new residential developments across 75087 and 75032.'
+                'a': 'HWB covers the I-30 commercial corridor, Rockwall Technology Park, Ridge Road and Horizon Road medical and professional plazas, and new residential developments across 75087 and 75032.'
             },
             {
-                'q': 'Do you provide post-construction final cleaning and subdivision cleanup in Rockwall County?',
-                'a': 'Yes. We provide both 3-Step Neighborhood & Street Cleanup for active homebuilding communities and 3-Phase CSI 01 74 23 interior final cleans for new commercial and medical build-outs in Rockwall.'
+                'q': 'Does HWB provide post-construction final cleaning and subdivision cleanup in Rockwall County?',
+                'a': 'Yes. Backed by an in-house Safety Department, HWB provides both 3-Step Neighborhood & Street Cleanup to keep transit lines free of debris for City Inspectors and 3-Phase interior final cleans for new commercial and medical build-outs in Rockwall.'
             },
             {
-                'q': 'Are your Rockwall cleaning crews insured and background-checked?',
+                'q': 'Are Rockwall cleaning crews insured and background-checked?',
                 'a': 'Yes. Every technician is background-checked and covered by full Commercial General Liability and Workers Compensation insurance.'
             }
         ]
@@ -397,15 +397,15 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'Does HWB clean executive offices and medical suites along SH-114 and Southlake Blvd?',
-                'a': 'Yes. We provide detail-focused nightly janitorial, day porter coverage, streak-free glass partition cleaning, and clinical sanitization for corporate offices, wealth management suites, and medical clinics across Southlake (76092).'
+                'a': 'Yes. HWB provides detail-focused nightly janitorial, day porter coverage, streak-free glass partition cleaning, and clinical sanitization for corporate offices, wealth management suites, and medical clinics across Southlake (76092).'
             },
             {
-                'q': 'Can HWB handle luxury retail and custom residential/commercial post-construction final cleans in Southlake?',
-                'a': 'Yes. Our OSHA-trained final clean specialists perform 3-phase rough, detail, and white-glove touch-up cleaning for high-end retail finish-outs, medical clinics, and custom residential communities in Southlake.'
+                'q': 'Can HWB handle luxury retail and commercial post-construction final cleans in Southlake?',
+                'a': 'Yes. Safety-trained final clean specialists perform 3-phase rough, detail, and touch-up cleaning for high-end retail finish-outs, medical clinics, and commercial build-outs in Southlake.'
             },
             {
                 'q': 'What specialty floor maintenance is available for Southlake commercial buildings?',
-                'a': 'We offer marble, travertine, and terrazzo polishing, commercial hot-water carpet extraction, ceramic tile and grout restoration, and VCT strip and wax programs.'
+                'a': 'HWB offers marble, travertine, and terrazzo polishing, commercial hot-water carpet extraction, ceramic tile and grout restoration, and VCT strip and wax programs.'
             }
         ]
     },
@@ -420,16 +420,16 @@ LOCATIONS_DATA = {
         'desc': 'Engineered for high-volume 3PL distribution centers, manufacturing plants in the Great Southwest Industrial District, corporate offices along SH-161, and new construction projects throughout Grand Prairie.',
         'faqs': [
             {
-                'q': 'Do you provide warehouse floor scrubbing in the Grand Prairie Great Southwest Industrial District?',
+                'q': 'Does HWB provide warehouse floor scrubbing in the Grand Prairie Great Southwest Industrial District?',
                 'a': 'Yes. HWB deploys ride-on and walk-behind auto-scrubbers for concrete warehouse floors, dock bays, and high-traffic plant restrooms and breakrooms across 75050, 75051, and 75052.'
             },
             {
                 'q': 'Does HWB offer 3-phase post-construction cleanup for new warehouses and offices in Grand Prairie?',
-                'a': 'Yes. We partner with general contractors along SH-161, I-30, and I-20 for CSI Division 01 74 23 Rough Clean, Final Detail Clean, and White-Glove Touch-Up.'
+                'a': 'Yes. Backed by an in-house Safety Department, HWB partners with general contractors along SH-161, I-30, and I-20 for 3-Phase Rough Clean, Final Detail Clean, and Final Touch-Up.'
             },
             {
                 'q': 'Can HWB staff both day porters and night janitorial crews for Grand Prairie facilities?',
-                'a': 'Yes. We provide flexible 1x to 7x weekly schedules including daytime shift porters and overnight cleaning crews tailored to 24/7 manufacturing and distribution operations.'
+                'a': 'Yes. HWB provides flexible 1x to 7x weekly schedules including daytime shift porters and overnight cleaning crews tailored to 24/7 manufacturing and distribution operations.'
             }
         ]
     },
@@ -445,15 +445,312 @@ LOCATIONS_DATA = {
         'faqs': [
             {
                 'q': 'Does HWB provide 3-Step Neighborhood & Street Cleanup for builders in Mansfield, TX?',
-                'a': 'Yes. We support residential builders across Mansfield (76063) with ongoing builder trash and debris removal during home construction, street and gutter sweeping, and final community washdowns.'
+                'a': 'Yes. Backed by an in-house Safety Department, HWB supports residential builders across Mansfield (76063) with ongoing builder trash and debris removal during construction, street and gutter sweeping so transit lines pass City Inspection, and final community washdowns.'
             },
             {
-                'q': 'Do you clean medical offices, daycares, and commercial buildings along US-287 and SH-360?',
-                'a': 'Yes. Our background-checked crews provide nightly janitorial, EPA List N disinfection, and floor care for Mansfield clinics, pediatric centers, schools, and corporate offices.'
+                'q': 'Does HWB clean medical offices, daycares, and commercial buildings along US-287 and SH-360?',
+                'a': 'Yes. Background-checked crews provide nightly janitorial, 4-color microfiber cloth separation, and non-sticky floor care for Mansfield clinics, pediatric centers, schools, and corporate offices.'
             },
             {
-                'q': 'Can HWB perform 3-phase interior final cleans for new commercial and residential builds in Mansfield?',
-                'a': 'Yes. We execute Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 White-Glove Touch-Up so new properties pass superintendent and buyer walkthroughs on the first inspection.'
+                'q': 'Can HWB perform 3-phase interior final cleans for new commercial buildings in Mansfield?',
+                'a': 'Yes. PPE and PIT-trained crews execute Phase 1 Rough Clean, Phase 2 Final Detail Clean, and Phase 3 Final Touch-Up so newly built properties pass superintendent and city inspections on the first walkthrough.'
+            }
+        ]
+    }
+}
+
+FACILITIES_DATA = {
+    'daycare-childcare': {
+        'slug': 'daycare-childcare',
+        'name': 'Daycares & Early Learning Centers',
+        'short_name': 'Daycares & Preschools',
+        'crm_facility_type': 'Child Care Center',
+        'crm_industry': 'Child Care',
+        'db_leads_count': 8463,
+        'icon': 'fa-children',
+        'badge': 'Safe, Reliable Daycare & Preschool Cleaning',
+        'regulatory_standard': 'Custom Room-by-Room Checklists • Proper Chemical Dilution (No Sticky Floors) • Strict Nightly Lock-Up Security',
+        'hero_image': '/static/img/hero_facility_daycare.webp',
+        'title': 'Daycare & Child Care Cleaning in DFW, TX | HWB Cleaning',
+        'h1': 'Daycare, Preschool & Early Learning Center Cleaning in DFW',
+        'meta_desc': 'Custom nightly cleaning for DFW daycares and preschools—properly diluted child-safe cleaners, residue-free floors (never sticky), and strict security.',
+        'desc': 'Parents notice the cleanliness of a childcare center the moment morning drop-off begins. HWB Cleaning builds a custom room-by-room cleaning plan covering classrooms, infant rooms, and toddler restrooms—using properly measured child-safe cleaners, leaving floors clean and never sticky, and locking up the building securely every single night.',
+        'highlights': [
+            'Cleaning From the Parent & Director Perspective (Fingerprint-free entry glass, fresh-smelling toddler restrooms, clean cubbies & spotless infant floors at 6:30 AM)',
+            'No Sticky Floors — Proper Chemical Dilution & Clean Microfiber Pads So Classroom Floors Feel Smooth, Dry & Residue-Free',
+            'Correct Chemical Usage & 4-Color Microfiber System (Red for toilets, Yellow for sinks, Green for food areas, Blue for classrooms & toys)',
+            'Strict Facility Security & Lock-Up Protocol (Background-checked crews who never prop doors open, check every door/window & arm the building alarm)',
+            'Custom Scope of Work Built Around Each Center (Tailored to infant rooms, nap areas, playground restrooms & weekly schedules)'
+        ],
+        'faqs': [
+            {
+                'q': 'Why do some cleaning crews leave daycare floors feeling sticky, and how does HWB prevent it?',
+                'a': 'Sticky floors happen when cleaners pour too much soap into a bucket or reuse dirty mop water, leaving a chemical film that traps dirt where infants crawl. HWB measures the exact dilution of neutral floor cleaner and uses fresh microfiber flat-mop pads for each classroom so floors stay clean, smooth, and completely residue-free.'
+            },
+            {
+                'q': 'How does HWB keep a daycare building secure and ensure the right chemicals are used?',
+                'a': 'Every technician is background-checked and trained on proper chemical usage and the 4-Color Microfiber System (Red for toilets, Yellow for sinks, Green for kitchens, Blue for classrooms). At the end of each shift, the crew checks all exterior doors, never props doors open, and arms the building security alarm.'
+            },
+            {
+                'q': 'Can the cleaning checklist be customized for infant rooms, toddler restrooms, and center budgets?',
+                'a': 'Yes. HWB walks the daycare with the center director to review what matters most to staff and parents—from entry door glass and diaper-changing areas to classroom floors and breakrooms—to build a custom scope of work, and a clear written quote will be provided.'
+            }
+        ]
+    },
+    'schools-education': {
+        'slug': 'schools-education',
+        'name': 'Private Schools, K-12 Academies & Campuses',
+        'short_name': 'Schools & Campuses',
+        'crm_facility_type': 'School',
+        'crm_industry': 'Education',
+        'db_leads_count': 2150,
+        'icon': 'fa-graduation-cap',
+        'badge': 'Safe, Dependable School & Campus Cleaning',
+        'regulatory_standard': 'Custom Campus Checklists • Proper Chemical Dilution • Strict Nightly Campus Lock-Up',
+        'hero_image': '/static/img/hero_facility_school.webp',
+        'title': 'Private School & K-12 Campus Cleaning in DFW | HWB Cleaning',
+        'h1': 'Private School, Charter & Campus Janitorial Services in DFW',
+        'meta_desc': 'Custom nightly cleaning for DFW private and charter schools—background-checked crews, clean classrooms and gyms, and strict campus security.',
+        'desc': 'Principals, teachers, and parents notice right away when a school is truly clean. HWB walks the campus with school leadership to build a custom cleaning plan around the bell schedule and after-school activities—using properly measured cleaners (no sticky hallway or classroom floors), keeping student restrooms fresh, and securing every building door and alarm each night.',
+        'highlights': [
+            'Campus Security & Background-Checked Crews (Uniformed, badged personnel who lock every classroom door, never prop exterior doors open & set the campus alarm)',
+            'Clean From the Student, Teacher & Parent Perspective (Spotless front entry glass, wiped student desks & whiteboards, fresh student restrooms & clean gyms)',
+            'Correct Chemical Usage & No Sticky Hallway Floors (Proper neutral cleaner dilution plus 4-Color Microfiber Cloths so restroom cloths never touch desks or lunch tables)',
+            'Scheduled Around After-School Activities & School Breaks (Nightly care during the school year plus floor stripping, waxing & carpet cleaning over breaks)',
+            'Custom Scope of Work Built Around Each Campus (Tailored to classrooms, cafeterias, athletic facilities & weekly schedules)'
+        ],
+        'faqs': [
+            {
+                'q': 'How does HWB keep a school campus secure during evening cleaning?',
+                'a': 'All school cleaning personnel are background-checked, uniformed, and trained on campus lock-up procedures. Crews check classroom windows, lock interior classroom doors as each wing is completed, never prop exterior doors open, and set the campus security alarm at the end of the shift.'
+            },
+            {
+                'q': 'How does HWB prevent restroom germs from spreading to student desks and cafeteria tables?',
+                'a': 'Every technician is trained on proper chemical dilution and follows the 4-Color Microfiber Cloth System: Red cloths are used only for toilets and urinals, Yellow for restroom sinks, Green for cafeteria and breakroom areas, and Blue only for classroom desks, doors, and glass. Neutral floor cleaners are diluted at the exact ratio so hallway and classroom floors are never sticky.'
+            },
+            {
+                'q': 'Can the cleaning plan be customized for both the school year and summer break floor care?',
+                'a': 'Yes. HWB walks the campus with school administration to build a custom scope of work covering nightly classroom, restroom, cafeteria, and gym cleaning during the school year, plus scheduled floor stripping, waxing, and carpet extraction during holiday and summer breaks.'
+            }
+        ]
+    },
+    'medical-dental': {
+        'slug': 'medical-dental',
+        'name': 'Medical, Dental & Outpatient Clinics',
+        'short_name': 'Medical & Dental Clinics',
+        'crm_facility_type': 'Medical',
+        'crm_industry': 'Healthcare / Medical',
+        'db_leads_count': 445,
+        'icon': 'fa-user-doctor',
+        'badge': 'Detailed Medical & Dental Office Cleaning',
+        'regulatory_standard': 'Patient-First Cleanliness • 4-Color Cloth Separation • Strict Privacy & Suite Security',
+        'hero_image': '/static/img/hero_facility_medical.webp',
+        'title': 'Medical, Dental & Clinic Cleaning in DFW, TX | HWB Cleaning',
+        'h1': 'Medical, Dental & Outpatient Clinic Cleaning in DFW',
+        'meta_desc': 'Detailed nightly cleaning for DFW medical and dental offices—spotless waiting rooms and exam areas, residue-free floors, and strict suite security.',
+        'desc': 'Patients judge the quality of a medical or dental practice by how clean the waiting room, exam rooms, and patient restrooms look and smell. HWB walks the clinic with practice management to build a custom nightly cleaning plan—using the right surface cleaners, leaving clinic floors clean and never sticky, and securing the suite and alarm every night.',
+        'highlights': [
+            'Cleaning From the Patient\'s Perspective (Smudge-free check-in glass, dust-free baseboards, spotless exam room sinks & fresh patient restrooms)',
+            'Strict 4-Color Microfiber Separation (Red for toilets, Yellow for sinks, Green for breakrooms, Blue for waiting rooms & exam/dental rooms)',
+            'Correct Chemical Usage & No Sticky Clinic Floors (Safe surface care for medical/dental chairs plus properly diluted neutral floor cleaner)',
+            'Suite Security, Patient Privacy & Nightly Lock-Up (Background-checked crews who respect patient files, lock all doors & arm the suite alarm)',
+            'Custom Scope of Work Built Around Each Practice (Tailored to reception lobbies, exam rooms, dental operatories & patient restrooms)'
+        ],
+        'faqs': [
+            {
+                'q': 'How does HWB prevent restroom germs from spreading to waiting rooms and exam or dental rooms?',
+                'a': 'Every crew follows the 4-Color Microfiber Cloth System: Red cloths are restricted to toilets, Yellow to restroom sinks, Green to staff breakrooms, and Blue exclusively to waiting rooms, check-in desks, and exam rooms. Fresh microfiber mop pads and properly diluted neutral floor cleaner ensure clinic floors stay clean and never sticky.'
+            },
+            {
+                'q': 'How are patient privacy and sensitive equipment protected in a medical or dental office?',
+                'a': 'All technicians assigned to medical and dental offices are background-checked and trained to respect patient privacy (never touching charts, monitors, or clinical instruments) and follow a strict nightly lock-up and alarm checklist before leaving the suite.'
+            },
+            {
+                'q': 'Can the cleaning plan be customized around clinic hours and specific treatment rooms?',
+                'a': 'Yes. HWB walks the clinic with practice management to build a custom scope of work covering the lobby, check-in counter, patient restrooms, exam rooms, dental operatories, and staff breakroom, and a clear written quote will be provided.'
+            }
+        ]
+    },
+    'corporate-offices': {
+        'slug': 'corporate-offices',
+        'name': 'Corporate Offices & Class-A Buildings',
+        'short_name': 'Corporate Offices',
+        'crm_facility_type': 'Office',
+        'crm_industry': 'Corporate / Office',
+        'db_leads_count': 9589,
+        'icon': 'fa-building',
+        'badge': 'Dependable Nightly Office & Building Cleaning',
+        'regulatory_standard': 'Custom Office Checklists • Respect for Desks & Security • Local Crews Within 10 Minutes',
+        'hero_image': '/static/img/hero_facility_corporate.webp',
+        'title': 'Corporate Office & Building Cleaning in DFW | HWB Cleaning',
+        'h1': 'Corporate Office & Commercial Building Cleaning in DFW',
+        'meta_desc': 'Dependable nightly office cleaning and day porters in DFW—spotless lobbies, breakrooms, and restrooms, residue-free floors, and strict security.',
+        'desc': 'Employees and visiting clients notice right away when lobby glass is smudged, a breakroom sink is dirty, or a restroom is out of paper towels. HWB walks the office with facility management to build a custom cleaning plan—using the right cleaners for every surface (no sticky lobby or breakroom floors), respecting every workstation, and locking up the building securely every night.',
+        'highlights': [
+            'Cleaning From the Client & Employee Perspective (Streak-free entry glass, dust-free conference tables, spotless breakrooms & stocked restrooms)',
+            'Strict Office Security & Respect for Workstations (Background-checked crews who never disturb papers or laptops on desks, re-lock offices & set alarms)',
+            'Correct Chemical Usage & No Sticky Lobby or Breakroom Floors (Proper cleaners for wood, glass & stainless steel plus measured neutral floor cleaner)',
+            '4-Color Microfiber System (Red for toilets, Yellow for restroom sinks, Green for breakrooms, Blue for office desks & conference rooms)',
+            'Custom Scope of Work & Local Crews Within 10 Minutes (Tailored 1x–7x/week schedule with nearby cleaners so nights are never missed)'
+        ],
+        'faqs': [
+            {
+                'q': 'How does HWB prevent missed cleanings or crew no-shows in office buildings?',
+                'a': 'HWB assigns background-checked cleaning technicians who live within 5 to 10 minutes of the office building, backed by a dedicated local supervisor and digital clock-in verification so the property is never left uncovered.'
+            },
+            {
+                'q': 'How are confidential documents on desks protected and how is the building secured at night?',
+                'a': 'Crews are trained never to move papers, files, or electronics on employee desks. Technicians clean around active workstations, re-lock private offices and server/supply doors, never prop exterior doors open, and arm the building alarm at the end of every shift.'
+            },
+            {
+                'q': 'How does HWB keep restroom germs out of breakrooms and conference rooms, and prevent sticky floors?',
+                'a': 'HWB enforces a strict 4-Color Microfiber System (Red for toilets, Yellow for restroom sinks, Green for breakrooms, Blue for desks and conference rooms) and measures the exact dilution of neutral floor cleaner so breakroom and lobby floors are always smooth, clean, and never sticky.'
+            }
+        ]
+    },
+    'auto-dealerships': {
+        'slug': 'auto-dealerships',
+        'name': 'Auto Dealerships & Service Centers',
+        'short_name': 'Auto Dealerships',
+        'crm_facility_type': 'Automotive',
+        'crm_industry': 'Automotive',
+        'db_leads_count': 5415,
+        'icon': 'fa-car-side',
+        'badge': 'Showroom, Customer Lounge & Service Bay Cleaning',
+        'regulatory_standard': 'Streak-Free Showroom Floors & Glass • Separate Shop & Showroom Tools • Strict Nightly Security',
+        'hero_image': '/static/img/hero_facility_dealership.webp',
+        'title': 'Auto Dealership Showroom & Service Cleaning DFW | HWB',
+        'h1': 'Auto Dealership Showroom & Service Bay Cleaning in DFW',
+        'meta_desc': 'Nightly DFW auto dealership cleaning after closing—streak-free showroom glass and tile (never sticky), customer lounges, and service bays.',
+        'desc': 'First impressions sell vehicles and keep service customers coming back. HWB walks the dealership with general management to build a custom nightly cleaning plan after closing hours—keeping showroom glass and high-gloss tile spotless without sticky soap haze, detailing customer waiting lounges and restrooms, scrubbing service drives, and locking up the showroom securely every night.',
+        'highlights': [
+            'Cleaning From the Car Buyer & Service Customer Perspective (Spotless showroom glass, bright tile floors, clean coffee lounges & fresh restrooms)',
+            'No Sticky or Hazy Showroom Tile (Properly measured neutral floor cleaner so glossy showroom floors stay mirror-bright without footprint haze)',
+            'Separate Tools for the Service Drive vs. the Showroom (Heavy-duty shop scrubbers kept strictly separate from showroom & lounge microfiber tools)',
+            'Showroom Vehicle Care, F&I Privacy & Dealership Security (Careful work around showroom cars, locked F&I offices & full alarm lock-up after closing)',
+            'Custom Scope of Work Built Around Dealership Hours (Tailored to the new-car showroom, pre-owned building, customer lounge & service bays)'
+        ],
+        'faqs': [
+            {
+                'q': 'Why do glossy dealership showroom floors sometimes look cloudy or feel sticky after mopping, and how does HWB prevent it?',
+                'a': 'Cloudy, sticky showroom tile happens when crews use too much soap or mop with dirty water, leaving a film that shows every footprint under bright showroom lights. HWB uses properly diluted neutral pH floor cleaner and clean microfiber pads so showroom tile stays bright, dry, and residue-free.'
+            },
+            {
+                'q': 'How does HWB keep service-department grease out of the sales showroom and protect vehicles and F&I offices at night?',
+                'a': 'Service-bay scrubbing equipment is kept completely separate from showroom floor tools, and the 4-Color Microfiber System is used inside the building. Background-checked crews are trained to work safely around showroom vehicles, respect locked Finance (F&I) offices and key boxes, and lock and alarm the dealership every night.'
+            },
+            {
+                'q': 'Can crews clean after late showroom closing hours (8:00 PM or 9:00 PM) with a customized scope for multiple buildings?',
+                'a': 'Yes. HWB walks the dealership with management to build a custom scope of work scheduled after sales and service departments close, so the showroom, customer lounge, glass, and restrooms are spotless before morning sales meetings.'
+            }
+        ]
+    },
+    'churches-nonprofits': {
+        'slug': 'churches-nonprofits',
+        'name': 'Churches, Sanctuaries & Places of Worship',
+        'short_name': 'Churches & Worship',
+        'crm_facility_type': 'Church',
+        'crm_industry': 'Religious / Nonprofit',
+        'db_leads_count': 438,
+        'icon': 'fa-place-of-worship',
+        'badge': 'Sanctuary, Nursery & Church Campus Cleaning',
+        'regulatory_standard': 'Sunday-Ready Sanctuaries • Child-Safe Nurseries (No Sticky Floors) • Full Campus Lock-Up',
+        'hero_image': '/static/img/hero_facility_church.webp',
+        'title': 'Church, Sanctuary & Campus Cleaning in DFW, TX | HWB',
+        'h1': 'Church, Sanctuary & Religious Campus Cleaning in DFW',
+        'meta_desc': 'Flexible DFW church cleaning around worship schedules—welcoming sanctuaries, child-safe nurseries, residue-free floors, and full campus lock-up.',
+        'desc': 'Visiting families and members notice right away when the lobby glass is clean, the sanctuary is fresh, and the children\'s nursery feels safe and welcoming. HWB walks the church campus with facility leadership to build a custom cleaning plan around the worship calendar—using child-safe cleaners in nurseries, leaving fellowship hall and classroom floors clean and never sticky, and locking every door across the campus securely.',
+        'highlights': [
+            'Cleaning From a Visiting Family\'s Perspective (Spotless entry glass, neat lobby coffee area, vacuumed sanctuary seating & fresh restrooms on Sunday morning)',
+            'Child-Safe Nursery Care & No Sticky Floors (Gentle low-odor cleaners, properly measured floor cleaner & 4-Color Microfiber Cloth separation)',
+            'Respect for Sanctuary Stage Equipment & Campus Security (Careful work around stage sound/video gear, locked church offices & full perimeter door lock-up)',
+            'Scheduled Around Sunday Services, Wednesday Nights & Weekday Preschools (Flexible 1x–5x/week cleaning built around the ministry calendar)',
+            'Custom Scope of Work Built Around the Stewardship Budget (Clear room-by-room checklist covering sanctuary, nursery, fellowship hall & classrooms)'
+        ],
+        'faqs': [
+            {
+                'q': 'How does HWB keep church nurseries safe for infants and prevent sticky fellowship hall or classroom floors?',
+                'a': 'HWB uses gentle, low-odor cleaning products in nurseries and children\'s rooms, enforces the 4-Color Microfiber System so restroom cloths never touch cribs, tables, or toys, and measures the exact dilution of neutral floor cleaner so nursery and fellowship hall floors are smooth, clean, and never sticky.'
+            },
+            {
+                'q': 'How is a multi-door church campus kept secure and how is sanctuary sound and video equipment protected?',
+                'a': 'All technicians are background-checked and trained never to touch stage soundboards, microphones, instruments, or lighting gear. At the end of each visit, the crew walks the perimeter to verify every exterior door is latched, private offices are locked, and the church security alarm is armed.'
+            },
+            {
+                'q': 'Can the cleaning schedule be customized around Sunday services, Wednesday nights, and special events?',
+                'a': 'Yes. HWB walks the campus with church leadership to build a custom scope of work around the worship and event calendar—whether 1x–2x per week for Sunday and mid-week services or 5x per week for churches with weekday preschools.'
+            }
+        ]
+    },
+    'warehouses-industrial': {
+        'slug': 'warehouses-industrial',
+        'name': 'Warehouses, 3PL Logistics & Manufacturing',
+        'short_name': 'Warehouses & 3PL',
+        'crm_facility_type': 'Warehouse',
+        'crm_industry': 'Industrial / Logistics',
+        'db_leads_count': 105,
+        'icon': 'fa-warehouse',
+        'badge': 'In-House Safety Dept • PIT & PPE Trained Crews',
+        'regulatory_standard': 'Debris-Free Concrete Floors, Clean Shift Restrooms & In-House Safety Department',
+        'hero_image': '/static/img/hero_facility_warehouse.webp',
+        'title': 'Warehouse & 3PL Distribution Floor Scrubbing DFW | HWB',
+        'h1': 'Warehouse, 3PL Logistics & Industrial Cleaning in DFW',
+        'meta_desc': 'Debris-free concrete floor scrubbing, clean shift restrooms and breakrooms, PIT & PPE trained crews, and an in-house Safety Department for DFW warehouses.',
+        'desc': 'HWB keeps busy warehouses, 3PL distribution centers, and manufacturing plants across Dallas-Fort Worth clean, safe, and running smoothly. When drivers, shift workers, and visiting clients walk through the facility, they see clean shipping offices, fresh locker rooms and breakrooms, and concrete floors free of pallet splinters, loose nails, and oil slicks. Backed by HWB’s own in-house Safety Department, an on-site walkthrough builds a custom scope of work around 1st, 2nd, or 3rd shift operations.',
+        'highlights': [
+            'Clean Shipping Offices, Shift Restrooms & Breakrooms: High-traffic warehouse restrooms, locker rooms, driver lounges, and shipping offices are heavily used across shifts. HWB keeps them scrubbed, odor-free, and fully stocked so the workforce and visiting clients walk into a clean facility every day.',
+            'Debris-Free Concrete Floors (Protecting Forklift Tires & Preventing Accidents): Loose pallet nails, wood splinters, metal banding, and grit on concrete floors crack expensive forklift and reach-truck tires and create slip-and-trip hazards. HWB sweeps loading docks and scrubs concrete aisles so equipment and personnel stay safe—while keeping shipping office floors free of sticky buildup.',
+            'Correct Chemical Usage & 4-Color Microfiber System: HWB uses the right degreaser for warehouse bays and the right neutral cleaner for office floors, plus strict 4-color microfiber cloth separation (Red for toilets/urinals, Yellow for locker room sinks, Green for breakroom tables/microwaves, Blue for shipping offices and glass) so restroom germs never reach breakroom tables.',
+            'In-House Safety Department, PIT & PPE Trained Crews + Dock Security: HWB has its own in-house Safety Department. Every warehouse crew is trained in PPE (Personal Protective Equipment) safety—high-visibility vests, steel-toe boots, and eye/ear protection—and PIT (Powered Industrial Truck) safety whenever operating a forklift or ride-on machine around active forklift lanes, while strictly following dock-door, badge, and inventory security rules.'
+        ],
+        'faqs': [
+            {
+                'q': 'How does HWB help protect forklift tires and prevent floor accidents?',
+                'a': 'Loose wood splinters, pallet nails, bolts, and grit can quickly chunk or crack expensive cushion and pneumatic forklift tires and cause worker slips. HWB sweeps dock bays and staging lanes and runs industrial floor scrubbers to keep concrete aisles clean, dry, and free of debris—while mopping shipping offices with proper dilution so floors are never sticky.'
+            },
+            {
+                'q': 'How are crews trained for safety inside active forklift and industrial facilities?',
+                'a': 'HWB has its own in-house Safety Department. Before stepping onto the warehouse floor, crews are trained in PPE safety (high-vis vests, safety glasses, steel-toe footwear) and PIT (Powered Industrial Truck) safety when riding a forklift or operating ride-on equipment around active forklift aisles and loading docks.'
+            },
+            {
+                'q': 'Can a custom scope of work be built around shift schedules and facility security rules?',
+                'a': 'Yes. Every warehouse operates differently. HWB walks the building with operations management to build a custom scope of work—covering daily restroom and breakroom cleaning across multiple shifts, scheduled concrete floor scrubbing, and strict badge, gate, and lock-up security around high-value inventory.'
+            }
+        ]
+    },
+    'construction-subdivisions': {
+        'slug': 'construction-subdivisions',
+        'name': 'Post-Construction & 3-Step Neighborhood Cleanup',
+        'short_name': 'Construction & Subdivisions',
+        'crm_facility_type': 'Post-Construction',
+        'crm_industry': 'Construction',
+        'db_leads_count': 1540,
+        'icon': 'fa-helmet-safety',
+        'badge': 'In-House Safety Dept • 3-Step Street & 3-Phase Interior Clean',
+        'regulatory_standard': 'Clear Transit Lines for City Inspections, PPE & PIT Safety & Custom Scope of Work',
+        'hero_image': '/static/img/hero_facility_construction.webp',
+        'title': '3-Step Subdivision & Post-Construction Clean DFW | HWB',
+        'h1': '3-Step Neighborhood & 3-Phase Post-Construction Cleanup in DFW',
+        'meta_desc': '3-Step subdivision street and transit line cleanup for land developers plus 3-Phase interior final cleans for General Contractors across DFW.',
+        'desc': 'HWB supports land developers, builders, and commercial General Contractors across Dallas-Fort Worth with two dedicated construction cleanup divisions backed by HWB’s own in-house Safety Department. Whether City Inspectors and municipal departments are inspecting active subdivision streets and storm drains, or a project superintendent is preparing a new commercial building for final inspection and handover, PPE and PIT trained crews follow a strict custom scope of work and all site safety rules from start to finish.',
+        'highlights': [
+            'Division 1 — 3-Step Subdivision & Transit Line Cleanup (For Land Developers & Builders): During active subdivision development, City Inspectors and municipal departments inspect streets, right-of-ways, and storm drains. HWB follows a strict custom scope of work to keep transit lines, streets, and gutters clear of mud, gravel, and construction debris so city inspections pass without delays or citations: Step 1: clearing construction trash and lot debris; Step 2: sweeping streets, curbs, and transit lanes; and Step 3: power washing streets and sidewalks.',
+            'Division 2 — 3-Phase Interior Building Final Clean (For General Contractors): HWB takes new commercial buildings from active jobsites to inspection-ready across three stages: Phase 1 (Rough Clean) to clear construction debris and sweep subfloors; Phase 2 (Final Detail Clean) to remove drywall dust from vents, cabinets, fixtures, glass, and floors; and Phase 3 (Final Touch-Up) right before final inspection and Certificate of Occupancy.',
+            'Safe Glass Detailing, Correct Chemicals & No Sticky or Cloudy Floors: New surfaces are easy to damage with the wrong tools or harsh chemicals. In Division 2 interior cleans, crews safely remove manufacturer stickers and paint overspray without scratching tempered glass, use properly diluted neutral cleaners so new tile, luxury vinyl, and sealed concrete never dry with a sticky or cloudy film, and use strict 4-color microfiber cloth separation in all new restrooms and breakrooms.',
+            'In-House Safety Department, PPE & PIT Trained Crews + Site Security: HWB has its own in-house Safety Department. Every crew member on a subdivision or commercial jobsite is trained in PPE safety (hard hats, high-visibility vests, safety glasses, steel-toe boots), PIT (Powered Industrial Truck) safety around heavy equipment and forklifts, and site-specific safety and lock-up rules—with project-specific Certificates of Insurance (COI) issued promptly.'
+        ],
+        'faqs': [
+            {
+                'q': 'What do land developers and project managers care about most in Division 1 (3-Step Subdivision Cleanup)?',
+                'a': 'During active development, City Inspectors and other city departments inspect streets, storm drains, and right-of-ways. Developers rely on HWB to follow a strict custom scope of work, keep transit lines and streets free of mud, nails, and construction debris so city inspections pass smoothly, and operate safely around heavy equipment with full PPE and PIT safety training.'
+            },
+            {
+                'q': 'How do HWB crews handle safety and heavy equipment on active jobsites?',
+                'a': 'HWB has its own in-house Safety Department. Before entering any subdivision or commercial construction site, crews are trained in full PPE safety (hard hats, high-vis vests, steel-toe boots, eye/ear protection), PIT safety when operating forklifts or working around heavy machinery, and the superintendent’s specific site safety and lock-up rules.'
+            },
+            {
+                'q': 'How are new glass and floors protected during Division 2 (3-Phase Interior Final Cleans)?',
+                'a': 'Crews HEPA-vacuum fine drywall dust before wet mopping, use safe non-scratch techniques to remove window stickers and paint specs, and mop with properly diluted neutral floor cleaners and fresh microfiber pads so new floors are never sticky, cloudy, or hazy.'
             }
         ]
     }
@@ -1320,12 +1617,13 @@ def trust_center():
 
 @public_bp.route('/locations/<city>', endpoint='location_page')
 def location_page(city):
+    from core.services.seo_media_engine import SEOMediaEngine
     city_lower = city.lower().strip()
     if city_lower in LOCATIONS_DATA:
-        data = LOCATIONS_DATA[city_lower]
+        raw_data = LOCATIONS_DATA[city_lower]
     elif re.match(r'^[a-z0-9\-]+$', city_lower):
         clean_name = city_lower.replace('-', ' ').title()
-        data = {
+        raw_data = {
             'name': clean_name,
             'title': f'Commercial Cleaning & Janitorial Services in {clean_name} | HWB Cleaning',
             'h1': f'Commercial Cleaning & Janitorial Services in {clean_name}',
@@ -1334,7 +1632,35 @@ def location_page(city):
         }
     else:
         abort(404)
-    return render_template('location.html', data=data)
+    static_dir = current_app.static_folder
+    data = SEOMediaEngine.enrich_location_media(city_lower, raw_data, static_dir)
+    enriched_facilities = [
+        SEOMediaEngine.enrich_facility_media(f, static_dir)
+        for f in FACILITIES_DATA.values()
+    ]
+    return render_template('location.html', data=data, facilities_list=enriched_facilities)
+
+
+@public_bp.route('/facilities/<facility_slug>', endpoint='facility_page')
+def facility_page(facility_slug: str):
+    """Dedicated SEO & AI Search (GEO) Facility Hub with statutory citations and inline walkthrough capture."""
+    from core.services.seo_media_engine import SEOMediaEngine
+    slug_clean = (facility_slug or '').lower().strip()
+    if slug_clean not in FACILITIES_DATA:
+        abort(404)
+    static_dir = current_app.static_folder
+    data = SEOMediaEngine.enrich_facility_media(FACILITIES_DATA[slug_clean], static_dir)
+    enriched_list = [
+        SEOMediaEngine.enrich_facility_media(f, static_dir)
+        for f in FACILITIES_DATA.values()
+    ]
+    return render_template(
+        'facility.html',
+        data=data,
+        facilities_list=enriched_list,
+        locations_list=list(LOCATIONS_DATA.items()),
+    )
+
 
 @public_bp.route('/get-quote', methods=['GET', 'POST'], endpoint='get_quote')
 @rate_limit(limit=15, period_seconds=60, scope="public_quote")
@@ -1346,12 +1672,16 @@ def get_quote():
             form_version = data.get('form_version', 'v1')
             
             if form_version == "v2":
-                sqf = 0.0
+                sqf_v2_raw = str(data.get('sqft', '') or '').strip().replace(',', '')
+                try:
+                    sqf = float(sqf_v2_raw) if sqf_v2_raw else 0.0
+                except ValueError:
+                    sqf = 0.0
                 need = 2
-                facility_type = "Not Specified"
-                frequency = "TBD (Handshake)"
+                facility_type = (data.get('facility_type') or 'Not Specified').strip()
+                frequency = (data.get('frequency') or 'TBD (Handshake)').strip()
                 need_label = "Handshake Protocol"
-                city = ""
+                city = (data.get('city') or '').strip()
                 zipcode = ""
                 job_title = ""
                 target_start = "Within 30 Days"
@@ -1726,11 +2056,27 @@ def protect_staging_indexing(response):
     host = request.host.lower()
     if 'hwbcleaning.com' not in host:
         response.headers['X-Robots-Tag'] = 'noindex, nofollow'
+    else:
+        response.headers['X-Robots-Tag'] = (
+            'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
+        )
+    # RFC 8288 HTTP Link headers for AI Search & Canonical Discovery
+    canon_url = f"https://www.hwbcleaning.com{request.path}"
+    response.headers['Link'] = (
+        f'<{canon_url}>; rel="canonical", '
+        '<https://www.hwbcleaning.com/llms.txt>; rel="alternate"; type="text/plain"; title="AI Knowledge Summary", '
+        '<https://www.hwbcleaning.com/llms-full.txt>; rel="alternate"; type="text/plain"; title="AI Full Knowledge Corpus"'
+    )
     return response
 
 @public_bp.route('/sitemap.xml', endpoint='sitemap_xml')
 def sitemap_xml():
-    return send_from_directory(current_app.static_folder, 'sitemap.xml')
+    from flask import Response
+    from core.services.seo_media_engine import SEOMediaEngine
+    xml_body = SEOMediaEngine.generate_dynamic_sitemap_xml(
+        FACILITIES_DATA, LOCATIONS_DATA
+    )
+    return Response(xml_body, mimetype='application/xml; charset=utf-8')
 
 @public_bp.route('/llms.txt', endpoint='llms_txt')
 @public_bp.route('/.well-known/llms.txt')

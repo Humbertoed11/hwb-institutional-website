@@ -2310,6 +2310,8 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         import json
         import re
 
+        self.client.get("/logout")
+
         # Pillar 1: /llms.txt and /llms-full.txt (Walkthrough-First Custom Quotes, P.O. Box 38465, Zero Published Dollar Rates & Zero Street Address)
         r_llms = self.client.get("/llms.txt")
         self.assertEqual(r_llms.status_code, 200)
@@ -2318,7 +2320,8 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("legal@hwbcleaning.com", llms_text)
         self.assertNotIn("3342 FM 1827", llms_text)
         self.assertIn("561720", llms_text)
-        self.assertIn("01 74 23", llms_text)
+        self.assertIn("3-Phase", llms_text)
+        self.assertNotIn("CSI Division 01 74 23", llms_text)
         self.assertIn("walkthrough", llms_text.lower())
         for forbidden_rate in ("$0.08", "$0.16", "$0.15", "$0.35", "$0.55", "$0.04"):
             self.assertNotIn(forbidden_rate, llms_text)
@@ -2354,7 +2357,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         const_html = self.client.get("/services/construction").get_data(as_text=True)
         self.assertIn("3-Step Neighborhood &amp; 3-Phase Post-Construction Cleanup in DFW", const_html)
         self.assertIn("Division 1: 3-Step Neighborhood &amp; Street Cleanup", const_html)
-        self.assertIn("Division 2: 3-Phase Interior Building &amp; Home Final Clean", const_html)
+        self.assertIn("Division 2: 3-Phase Interior Building Final Clean", const_html)
 
         # Pillar 1C: Lauri Tells 24/7 SEO & Search Growth Employee Endpoint (/api/v1/telemetry/seo-employee)
         r_seo_emp = self.client.get("/api/v1/telemetry/seo-employee")
@@ -2363,7 +2366,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertEqual(seo_emp_json.get("worker_name"), "lauri_tells_seo_growth_24x7")
         self.assertEqual(seo_emp_json.get("seo_health_score"), 100.0)
         self.assertEqual(seo_emp_json.get("city_hubs_count"), 18)
-        self.assertEqual(seo_emp_json.get("sitemap_urls_count"), 39)
+        self.assertEqual(seo_emp_json.get("sitemap_urls_count"), 47)
 
         # Pillar 2: /robots.txt AI crawlers & unblocked /compliance and /ehsq
         r_rob = self.client.get("/robots.txt", headers={"Host": "www.hwbcleaning.com"})

@@ -204,6 +204,21 @@
         initClarityHybridSync();
     }
 
-    // Initial page view event
-    enqueueEvent('PAGE_VIEW', null, { referrer: document.referrer || '' });
+    // Initial page view event with Dual-Funnel & AI Referral classification
+    (function recordInitialPageView() {
+        const ref = document.referrer || '';
+        const path = window.location.pathname || '/';
+        const funnelType = /^\/(work-with-us|careers|onboard)\b/i.test(path) ? 'workforce_supply' : 'commercial_client';
+        let aiSource = '';
+        if (/chatgpt\.com|openai\.com/i.test(ref)) aiSource = 'ChatGPT';
+        else if (/perplexity\.ai/i.test(ref)) aiSource = 'Perplexity';
+        else if (/gemini\.google\.com/i.test(ref)) aiSource = 'Gemini';
+        else if (/claude\.ai/i.test(ref)) aiSource = 'Claude';
+        else if (/copilot\.microsoft\.com|bing\.com/i.test(ref)) aiSource = 'Copilot_Bing';
+        enqueueEvent('PAGE_VIEW', null, {
+            referrer: ref,
+            funnel_type: funnelType,
+            ai_source: aiSource
+        });
+    })();
 })();

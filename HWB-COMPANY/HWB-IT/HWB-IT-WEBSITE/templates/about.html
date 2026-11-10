@@ -2,17 +2,66 @@
 
 {% block title %}About HWB Cleaning | North Texas Commercial Cleaning Leadership{% endblock %}
 {% block og_description %}Meet the leadership behind HWB Cleaning Services LLC. Managing over 656,000 SF of North Texas facilities with reliable supervision and 0.00 TRIR safety.{% endblock %}
+{% block og_image %}https://www.hwbcleaning.com/static/img/hwb_core_team_v2.webp{% endblock %}
+{% block twitter_image %}https://www.hwbcleaning.com/static/img/hwb_core_team_v2.webp{% endblock %}
+{% block og_image_meta %}
+  <meta property="og:image:alt" content="Executive leadership and field supervision team of HWB Cleaning Services LLC in Dallas-Fort Worth, Texas">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="1408">
+  <meta property="og:image:height" content="768">
+  <meta name="twitter:image:alt" content="Executive leadership and field supervision team of HWB Cleaning Services LLC in Dallas-Fort Worth, Texas">
+{% endblock %}
 
 {% block head %}
+  <link rel="preload" as="image" href="/static/img/hwb_core_team_v2.webp" imagesrcset="/static/img/hwb_core_team_v2-640w.webp 640w, /static/img/hwb_core_team_v2-1024w.webp 1024w, /static/img/hwb_core_team_v2.webp 1408w" imagesizes="100vw" fetchpriority="high">
   <meta name="description" content="Meet the leadership behind HWB Cleaning Services LLC. Managing over 656,000 SF of North Texas facilities with reliable supervision and 0.00 TRIR safety.">
   <meta name="keywords" content="about HWB Cleaning Services, North Texas commercial cleaning company, Humberto Dominguez CEO, HWB Quality Standard">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
-      {"@type": "ListItem", "position": 2, "name": "About HWB Cleaning", "item": "https://www.hwbcleaning.com/about"}
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://www.hwbcleaning.com/about#webpage",
+        "url": "https://www.hwbcleaning.com/about",
+        "name": "About HWB Cleaning | North Texas Commercial Cleaning Leadership",
+        "description": "Meet the leadership behind HWB Cleaning Services LLC. Managing over 656,000 SF of North Texas facilities with reliable supervision and 0.00 TRIR safety.",
+        "primaryImageOfPage": {
+          "@id": "https://www.hwbcleaning.com/about#primaryimage"
+        }
+      },
+      {
+        "@type": "ImageObject",
+        "@id": "https://www.hwbcleaning.com/about#primaryimage",
+        "url": "https://www.hwbcleaning.com/static/img/hwb_core_team_v2.webp",
+        "contentUrl": "https://www.hwbcleaning.com/static/img/hwb_core_team_v2.webp",
+        "name": "About HWB Cleaning Services LLC — North Texas Commercial Cleaning Leadership",
+        "caption": "Led by President Mirna Rondinella and CEO Humberto Dominguez, maintaining over 656,785 SF across North Texas.",
+        "description": "Executive leadership and field supervision team of HWB Cleaning Services LLC in Dallas-Fort Worth, Texas",
+        "encodingFormat": "image/webp",
+        "width": 1408,
+        "height": 768,
+        "contentLocation": {
+          "@type": "Place",
+          "name": "Dallas-Fort Worth, TX, USA"
+        },
+        "creator": {
+          "@type": "Organization",
+          "name": "HWB Cleaning Services LLC",
+          "@id": "https://www.hwbcleaning.com"
+        },
+        "copyrightNotice": "Copyright 2026 HWB Cleaning Services LLC. All Rights Reserved.",
+        "license": "https://www.hwbcleaning.com/terms",
+        "acquireLicensePage": "https://www.hwbcleaning.com/get-quote",
+        "creditText": "HWB Cleaning Services LLC"
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
+          {"@type": "ListItem", "position": 2, "name": "About HWB Cleaning", "item": "https://www.hwbcleaning.com/about"}
+        ]
+      }
     ]
   }
   </script>
@@ -21,8 +70,21 @@
 {% block content %}
 <section class="services-view">
     <!-- High-Fidelity About Hero (Personal Promise) -->
-    <section class="services-hero dark-variant" style="background-image: linear-gradient(rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.7)), url('/static/img/hwb_core_team_v2.webp'); background-position: center 15%;">
-        <div class="content-wrapper" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+    <section class="services-hero dark-variant" style="position: relative; overflow: hidden; background-image: linear-gradient(rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.7)), url('/static/img/hwb_core_team_v2.webp'); background-position: center 15%;">
+        <picture style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.001;">
+            <source type="image/webp" srcset="/static/img/hwb_core_team_v2-640w.webp 640w, /static/img/hwb_core_team_v2-1024w.webp 1024w, /static/img/hwb_core_team_v2.webp 1408w" sizes="100vw">
+            <img src="/static/img/hwb_core_team_v2.webp"
+                 srcset="/static/img/hwb_core_team_v2-640w.webp 640w, /static/img/hwb_core_team_v2-1024w.webp 1024w, /static/img/hwb_core_team_v2.webp 1408w"
+                 sizes="100vw"
+                 alt="Executive leadership and field supervision team of HWB Cleaning Services LLC in Dallas-Fort Worth, Texas"
+                 title="About HWB Cleaning Services LLC — North Texas Commercial Cleaning Leadership"
+                 width="1408"
+                 height="768"
+                 fetchpriority="high"
+                 decoding="async"
+                 style="width: 100%; height: 100%; object-fit: cover;">
+        </picture>
+        <div class="content-wrapper" style="position: relative; z-index: 2; max-width: 1000px; margin: 0 auto; text-align: center;">
             <h1 style="color: white !important;">Quality is a Personal Promise</h1>
             <p class="subtitle" style="color: rgba(255,255,255,0.9) !important; max-width: 800px; margin-left: auto; margin-right: auto;">Executive Leadership: Mirna Rondinella, President & Humberto Dominguez, CEO • HWB Cleaning Services LLC</p>
         </div>

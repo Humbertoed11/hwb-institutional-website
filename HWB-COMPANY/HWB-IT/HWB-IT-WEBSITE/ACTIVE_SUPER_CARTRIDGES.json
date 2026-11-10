@@ -1,10 +1,10 @@
 {
   "standard": "Super_Architecture Master Library (BABYSOP-SOP-0.34 & 0.35)",
   "authority": "Humberto Dominguez (CEO) & Super George (Systems Architect)",
-  "synced_at_utc": "2026-11-09T21:52:20.009712+00:00",
+  "synced_at_utc": "2026-11-10T22:52:28.452430+00:00",
   "total_books": 9,
-  "active_cartridges_count": 71,
-  "total_cartridges_count": 71,
+  "active_cartridges_count": 72,
+  "total_cartridges_count": 72,
   "books": [
     {
       "book_code": "BOOK-01",
@@ -319,6 +319,18 @@
       "in_hexgrowth": 1,
       "in_foundry": 1,
       "updated_at": "2026-10-29T22:12:43.182085+00:00"
+    },
+    {
+      "cartridge_id": "GRO-09",
+      "book_name": "Super_growth_and_seo_architecture",
+      "title": "Deterministic GSC Search-Intent Regex Classifier & Striking-Distance FAQ/GEO Gap Engine",
+      "specification": "Classifies Google Search Console queries via pre-compiled RE2 regex filters (QUESTION, BUYING, LOCAL_GEO, COMPETITOR), scores Striking-Distance ranking gaps (Position 4.0-25.0, Low CTR) against visible <details> and FAQPage JSON-LD parity, and writes WORM SearchIntentAuditReceipts.",
+      "status": "ACTIVE",
+      "in_babysop": 1,
+      "in_hwb": 1,
+      "in_hexgrowth": 1,
+      "in_foundry": 1,
+      "updated_at": "2026-11-09T23:40:37.745507+00:00"
     },
     {
       "cartridge_id": "ISO-01",

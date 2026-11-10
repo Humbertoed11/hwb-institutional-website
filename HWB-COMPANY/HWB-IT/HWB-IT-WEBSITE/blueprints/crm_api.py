@@ -4522,7 +4522,23 @@ def api_workforce_subcontractor():
     no_guarantee_agreed = str(data.get('sub_no_guarantee_agreed', 'true')).lower() in ('true', '1', 'yes')
     raw_notes = data.get('notes') or 'Registered via subcontractor portal.'
     sub_tag = "[DWC-83 & No-Guarantee Terms Agreed: True]" if (dwc83_signed and no_guarantee_agreed) else "[DWC-83 & No-Guarantee Terms Agreed: Incomplete]"
-    notes = f"{sub_tag} {raw_notes}".strip() if sub_tag not in raw_notes else raw_notes
+    city_lower_check = (city or '').lower()
+    dfw_tokens = (
+        'dallas', 'fort worth', 'ft worth', 'dfw', 'plano', 'frisco', 'mckinney', 'allen',
+        'richardson', 'addison', 'irving', 'las colinas', 'arlington', 'grand prairie',
+        'mansfield', 'waxahachie', 'prosper', 'celina', 'denton', 'rockwall', 'southlake',
+        'carrollton', 'coppell', 'lewisville', 'flower mound', 'garland', 'mesquite',
+        'lavon', 'forney', 'midlothian', 'burleson', 'weatherford', 'grapevine', 'euless',
+        'bedford', 'hurst', 'keller', 'roanoke', 'north texas', 'metroplex'
+    )
+    tx_tokens = ('houston', 'san antonio', 'austin', 'waco', 'tyler', 'lubbock', 'el paso', 'corpus christi', 'texas')
+    if any(tok in city_lower_check for tok in dfw_tokens) or not city_lower_check:
+        territory_tag = "[Territory: DFW Metroplex]"
+    elif any(tok in city_lower_check for tok in tx_tokens):
+        territory_tag = "[Territory: Texas Expansion]"
+    else:
+        territory_tag = "[Territory: Out-of-State Reserve]"
+    notes = f"{territory_tag} {sub_tag} {raw_notes}".strip() if sub_tag not in raw_notes else f"{territory_tag} {raw_notes}".strip()
 
     phone_digits = extract_phone_digits(phone)
     clean_e = (clean_email(email) or '').strip().lower()
@@ -7891,7 +7907,7 @@ CAMPAIGN_PLAYBOOK_PRESETS = {
 <p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
     If you prefer not to receive commercial updates, please <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a>.
 </p>
-<p>Send over your plan set or subdivision lot schedule anytime for a 24-hour lump-sum quote, or grab 5 minutes on my calendar here:</p>
+<p>Send over your plan set or subdivision lot schedule anytime and a quote will be provided, or grab 5 minutes on my calendar here:</p>
 <p><a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Book a 5-Minute Project Review with Humberto</a></p>
 <p>Sincerely,<br />
 <strong>{sender_name}</strong><br />

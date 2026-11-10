@@ -1,55 +1,418 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <!-- Core Conversion & Home Surface -->
-  <url><loc>https://www.hwbcleaning.com/</loc><lastmod>2026-11-09</lastmod><priority>1.0</priority></url>
-  <url><loc>https://www.hwbcleaning.com/get-quote</loc><lastmod>2026-11-09</lastmod><priority>0.95</priority></url>
+  <url>
+    <loc>https://www.hwbcleaning.com/</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Dallas, Plano, Frisco &amp; McKinney | HWB Cleaning</image:title>
+      <image:caption>Dependable nightly janitorial, specialty floor care, warehouse scrubbing, and post-construction cleanup across Dallas-Fort Worth.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url><loc>https://www.hwbcleaning.com/get-quote</loc><lastmod>2026-11-10</lastmod><priority>0.95</priority></url>
 
   <!-- Specialized Commercial Cleaning Service Lines -->
-  <url><loc>https://www.hwbcleaning.com/services/janitorial</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/commercial</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/industrial</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/services/construction</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
+  <url>
+    <loc>https://www.hwbcleaning.com/services/janitorial</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_corporate.webp</image:loc>
+      <image:title>Daily Office Cleaning &amp; Nightly Janitorial Services in DFW | HWB Cleaning</image:title>
+      <image:caption>Nightly office cleaning, day porter staffing, 4-color microfiber separation, and strict lock-up security across DFW.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/services/commercial</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/commercial_church_vacuuming.webp</image:loc>
+      <image:title>Commercial Floor Care, VCT Strip &amp; Wax &amp; Carpet Extraction in DFW</image:title>
+      <image:caption>VCT floor stripping and waxing, commercial carpet extraction, and streak-free window cleaning in Dallas-Fort Worth.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/services/industrial</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp</image:loc>
+      <image:title>Industrial &amp; Warehouse Floor Scrubbing in DFW — PPE &amp; PIT Trained Crews</image:title>
+      <image:caption>Debris-free concrete floor scrubbing that protects forklift tires, shift restroom cleaning, and an in-house Safety Department.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/services/construction</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_construction.webp</image:loc>
+      <image:title>3-Step Subdivision &amp; 3-Phase Post-Construction Cleanup in DFW</image:title>
+      <image:caption>Division 1 transit-line cleanup for City Inspectors and Division 2 3-Phase interior building final cleans across DFW.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+
+  <!-- Dedicated Facility Vertical Hubs (8 Specialized Hubs with Image Sitemap 1.1) -->
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/daycare-childcare</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_daycare.webp</image:loc>
+      <image:title>Daycare &amp; Preschool Classroom Cleaning in DFW — Residue-Free Floors &amp; 4-Color Microfiber System</image:title>
+      <image:caption>After-hours daycare and preschool classroom cleaning in Dallas-Fort Worth using properly diluted neutral floor cleaner (never sticky) and 4-color microfiber cloth separation.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/schools-education</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_school.webp</image:loc>
+      <image:title>Private School &amp; K-12 Campus Cleaning in DFW — Student Desk Wiping &amp; 4-Color Microfiber System</image:title>
+      <image:caption>Evening private school and K-12 campus cleaning across Dallas-Fort Worth featuring student desk detailing, 4-color microfiber cloth separation, and strict classroom lock-up.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/medical-dental</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_medical.webp</image:loc>
+      <image:title>Medical &amp; Dental Clinic Cleaning in DFW — 4-Color Cloth Separation &amp; Patient Privacy Protection</image:title>
+      <image:caption>Detailed nightly medical and dental office cleaning in Dallas-Fort Worth with 4-color microfiber separation, residue-free clinic floors, and strict respect for patient privacy and clinical equipment.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/corporate-offices</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_corporate.webp</image:loc>
+      <image:title>Corporate Office &amp; Class-A Building Cleaning in DFW — Undisturbed Workstations &amp; Streak-Free Glass</image:title>
+      <image:caption>Nightly corporate office and commercial building cleaning in Dallas-Fort Worth with undisturbed employee workstations, streak-free conference glass, and residue-free hard floors.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/auto-dealerships</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_dealership.webp</image:loc>
+      <image:title>Auto Dealership Showroom &amp; Service Cleaning in DFW — Mirror-Clear Tile Without Sticky Soap Haze</image:title>
+      <image:caption>After-hours auto dealership showroom cleaning in Dallas-Fort Worth delivering haze-free high-gloss tile, streak-free showroom glass, and careful work around vehicles.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/churches-nonprofits</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_church.webp</image:loc>
+      <image:title>Church Sanctuary &amp; Campus Cleaning in DFW — Sunday-Ready Seating &amp; Untouched Stage Equipment</image:title>
+      <image:caption>Flexible church sanctuary, nursery, and campus cleaning in Dallas-Fort Worth with Sunday-ready seating, child-safe nurseries, and untouched worship stage audio equipment.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/warehouses-industrial</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp</image:loc>
+      <image:title>Warehouse &amp; 3PL Distribution Floor Scrubbing in DFW — Debris-Free Concrete Aisles &amp; PPE/PIT Safety</image:title>
+      <image:caption>Industrial warehouse and 3PL distribution center cleaning in Dallas-Fort Worth keeping concrete aisles free of pallet splinters and nails to protect forklift tires, backed by HWB’s in-house Safety Department.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/facilities/construction-subdivisions</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.92</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_facility_construction.webp</image:loc>
+      <image:title>3-Step Subdivision &amp; 3-Phase Post-Construction Cleanup in DFW — Clear Transit Lines for City Inspectors &amp; PPE Safety</image:title>
+      <image:caption>Division 1 3-Step subdivision transit line and street cleanup for City Inspectors plus Division 2 3-Phase interior building final cleans across Dallas-Fort Worth, backed by HWB’s in-house Safety Department.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
 
   <!-- Regional North Texas Metropolitan Corridors (18 Cities) -->
-  <url><loc>https://www.hwbcleaning.com/locations/mckinney</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/frisco</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/plano</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/dallas</loc><lastmod>2026-11-09</lastmod><priority>0.90</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/prosper</loc><lastmod>2026-11-09</lastmod><priority>0.88</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/celina</loc><lastmod>2026-11-09</lastmod><priority>0.88</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/allen</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/richardson</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/addison</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/irving</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/denton</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/rockwall</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/southlake</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/fort-worth</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/arlington</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/grand-prairie</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/mansfield</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
-  <url><loc>https://www.hwbcleaning.com/locations/waxahachie</loc><lastmod>2026-11-09</lastmod><priority>0.85</priority></url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/mckinney</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in McKinney, TX | HWB Cleaning</image:title>
+      <image:caption>HWB Cleaning Services LLC delivers rapid local supervisor dispatch, nightly commercial janitorial, medical clinic disinfection, and 3-phase post-construction cleanup across Craig Ranch, SH-121, US-75, and McKinney industrial parks.</image:caption>
+      <image:geo_location>McKinney, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/frisco</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Frisco, TX | HWB Cleaning</image:title>
+      <image:caption>Supporting fast-growing corporate campuses in Hall Park and Frisco Station, medical offices along the Dallas North Tollway, private academies, and new retail build-outs near PGA Parkway with background-checked nightly crews and day porters.</image:caption>
+      <image:geo_location>Frisco, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/plano</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Plano, TX | HWB Cleaning</image:title>
+      <image:caption>Delivering enterprise-grade nightly janitorial, day porter coverage, and specialty floor restoration for corporate headquarters in Legacy West and Granite Park, medical plazas along Preston Road, and light industrial facilities in East Plano.</image:caption>
+      <image:geo_location>Plano, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/dallas</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Dallas, TX | HWB Cleaning</image:title>
+      <image:caption>Serving multi-tenant office towers, medical clinics, private schools, and distribution centers across Downtown and Uptown Dallas, the Stemmons Corridor, the Medical District, LBJ Freeway, and North Dallas with verifiable checklists and insured crews.</image:caption>
+      <image:geo_location>Dallas, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/fort-worth</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Fort Worth, TX | HWB Cleaning</image:title>
+      <image:caption>Built for Fort Worth commercial offices, Near Southside medical facilities, Centreport corporate hubs, and heavy-duty 3PL logistics centers along the AllianceTexas I-35W industrial corridor.</image:caption>
+      <image:geo_location>Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/waxahachie</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Waxahachie, TX | HWB Cleaning</image:title>
+      <image:caption>Delivering dependable nightly office janitorial, industrial plant restroom and breakroom sanitation, VCT floor waxing, and post-construction cleanup along the I-35E and US-287 corridors in Waxahachie and Ellis County.</image:caption>
+      <image:geo_location>Waxahachie, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/irving</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Irving, TX | HWB Cleaning</image:title>
+      <image:caption>Delivering clinical-grade nightly janitorial, day porter staffing, and specialty floor care for corporate headquarters, medical plazas, and logistics hubs across Irving, Las Colinas, and DFW Airport corridors.</image:caption>
+      <image:geo_location>Irving, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/richardson</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Richardson, TX | HWB Cleaning</image:title>
+      <image:caption>Supporting technology campuses, defense contractors, and Class-A office buildings across Richardson, the Telecom Corridor, and CityLine with vetted, badged cleaning technicians.</image:caption>
+      <image:geo_location>Richardson, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/allen</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Allen, TX | HWB Cleaning</image:title>
+      <image:caption>Providing dependable nightly office cleaning, daycare and school sanitization, medical clinic disinfection, and post-construction final cleans throughout Allen, Watters Creek, and the US-75 commercial corridor.</image:caption>
+      <image:geo_location>Allen, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/arlington</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Arlington, TX | HWB Cleaning</image:title>
+      <image:caption>Engineered for high-volume manufacturing plants, distribution centers in the Great Southwest Industrial District, medical offices, and commercial venues across Arlington and the Mid-Cities corridor.</image:caption>
+      <image:geo_location>Arlington, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/addison</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Addison, TX | HWB Cleaning</image:title>
+      <image:caption>Maintaining pristine executive suites, financial institutions, aviation hangars, and multi-tenant commercial buildings throughout Addison, Quorum Drive, Belt Line Road, and the Dallas North Tollway corridor.</image:caption>
+      <image:geo_location>Addison, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/prosper</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.88</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Prosper, TX | HWB Cleaning</image:title>
+      <image:caption>Supporting Prosper commercial plazas, medical clinics, private academies, and active master-planned residential subdivisions along US-380, Preston Road, and the Dallas North Tollway with nightly janitorial, 3-Step Neighborhood &amp; Street Cleanup, and 3-Phase interior final cleans.</image:caption>
+      <image:geo_location>Prosper, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/celina</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.88</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Celina, TX | HWB Cleaning</image:title>
+      <image:caption>Built for one of North Texas fastest-growing communities—delivering 3-Step Neighborhood &amp; Street Cleanup for active residential subdivisions, 3-Phase new home and commercial final cleans, and dependable nightly janitorial for Celina schools, daycares, and offices.</image:caption>
+      <image:geo_location>Celina, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/denton</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Denton, TX | HWB Cleaning</image:title>
+      <image:caption>Serving manufacturing and distribution centers along I-35E/I-35W and Denton Enterprise Airport, medical offices, schools, and fast-growing residential developments across Denton County with insured, OSHA-trained crews.</image:caption>
+      <image:geo_location>Denton, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/rockwall</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Rockwall, TX | HWB Cleaning</image:title>
+      <image:caption>Delivering nightly office janitorial, clinical restroom sanitization, industrial technology park maintenance, and 3-Step Neighborhood &amp; Post-Construction Cleanup throughout Rockwall and the I-30 East corridor.</image:caption>
+      <image:geo_location>Rockwall, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/southlake</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Southlake, TX | HWB Cleaning</image:title>
+      <image:caption>Providing white-glove nightly janitorial, day porter staffing, natural stone and carpet care, medical clinic disinfection, and post-construction final detailing for premier offices and retail destinations across Southlake (76092).</image:caption>
+      <image:geo_location>Southlake, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/grand-prairie</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Grand Prairie, TX | HWB Cleaning</image:title>
+      <image:caption>Engineered for high-volume 3PL distribution centers, manufacturing plants in the Great Southwest Industrial District, corporate offices along SH-161, and new construction projects throughout Grand Prairie.</image:caption>
+      <image:geo_location>Grand Prairie, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://www.hwbcleaning.com/locations/mansfield</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.85</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hero_lobby.webp</image:loc>
+      <image:title>Commercial Cleaning &amp; Janitorial Services in Mansfield, TX | HWB Cleaning</image:title>
+      <image:caption>Serving Mansfield medical plazas, private schools and daycares, industrial parks, and booming residential subdivisions along US-287 and SH-360 with nightly janitorial, 3-Step Neighborhood Cleanup, and 3-Phase post-construction final cleans.</image:caption>
+      <image:geo_location>Mansfield, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
 
   <!-- Commercial Trust, B2B Procurement & Prequalification -->
-  <url><loc>https://www.hwbcleaning.com/about</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/trust-center</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/capability-statement</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/prequal</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/academy</loc><lastmod>2026-11-09</lastmod><priority>0.75</priority></url>
+  <url>
+    <loc>https://www.hwbcleaning.com/about</loc>
+    <lastmod>2026-11-10</lastmod>
+    <priority>0.80</priority>
+    <image:image>
+      <image:loc>https://www.hwbcleaning.com/static/img/hwb_core_team_v2.webp</image:loc>
+      <image:title>About HWB Cleaning Services LLC — North Texas Commercial Cleaning Leadership</image:title>
+      <image:caption>Led by President Mirna Rondinella and CEO Humberto Dominguez, maintaining over 656,785 SF across North Texas.</image:caption>
+      <image:geo_location>Dallas-Fort Worth, TX, USA</image:geo_location>
+      <image:license>https://www.hwbcleaning.com/terms</image:license>
+    </image:image>
+  </url>
+  <url><loc>https://www.hwbcleaning.com/trust-center</loc><lastmod>2026-11-10</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/capability-statement</loc><lastmod>2026-11-10</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/prequal</loc><lastmod>2026-11-10</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/academy</loc><lastmod>2026-11-10</lastmod><priority>0.75</priority></url>
 
   <!-- Workforce Recruitment & Operational Methodology -->
-  <url><loc>https://www.hwbcleaning.com/work-with-us</loc><lastmod>2026-11-09</lastmod><priority>0.70</priority></url>
-  <url><loc>https://www.hwbcleaning.com/compliance</loc><lastmod>2026-11-09</lastmod><priority>0.70</priority></url>
-  <url><loc>https://www.hwbcleaning.com/ehsq</loc><lastmod>2026-11-09</lastmod><priority>0.70</priority></url>
-  <url><loc>https://www.hwbcleaning.com/methodology</loc><lastmod>2026-11-09</lastmod><priority>0.70</priority></url>
+  <url><loc>https://www.hwbcleaning.com/work-with-us</loc><lastmod>2026-11-10</lastmod><priority>0.70</priority></url>
+  <url><loc>https://www.hwbcleaning.com/compliance</loc><lastmod>2026-11-10</lastmod><priority>0.70</priority></url>
+  <url><loc>https://www.hwbcleaning.com/ehsq</loc><lastmod>2026-11-10</lastmod><priority>0.70</priority></url>
+  <url><loc>https://www.hwbcleaning.com/methodology</loc><lastmod>2026-11-10</lastmod><priority>0.70</priority></url>
 
   <!-- AI Knowledge Manifests -->
-  <url><loc>https://www.hwbcleaning.com/llms.txt</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
-  <url><loc>https://www.hwbcleaning.com/llms-full.txt</loc><lastmod>2026-11-09</lastmod><priority>0.80</priority></url>
+  <url><loc>https://www.hwbcleaning.com/llms.txt</loc><lastmod>2026-11-10</lastmod><priority>0.85</priority></url>
+  <url><loc>https://www.hwbcleaning.com/llms-full.txt</loc><lastmod>2026-11-10</lastmod><priority>0.85</priority></url>
 
   <!-- Legal & Institutional Standards -->
-  <url><loc>https://www.hwbcleaning.com/privacy-policy</loc><lastmod>2026-11-09</lastmod><priority>0.50</priority></url>
-  <url><loc>https://www.hwbcleaning.com/terms</loc><lastmod>2026-11-09</lastmod><priority>0.50</priority></url>
-  <url><loc>https://www.hwbcleaning.com/accessibility</loc><lastmod>2026-11-09</lastmod><priority>0.50</priority></url>
-  <url><loc>https://www.hwbcleaning.com/fcra-disclosure</loc><lastmod>2026-11-09</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/privacy-policy</loc><lastmod>2026-11-10</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/terms</loc><lastmod>2026-11-10</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/accessibility</loc><lastmod>2026-11-10</lastmod><priority>0.50</priority></url>
+  <url><loc>https://www.hwbcleaning.com/fcra-disclosure</loc><lastmod>2026-11-10</lastmod><priority>0.50</priority></url>
 </urlset>

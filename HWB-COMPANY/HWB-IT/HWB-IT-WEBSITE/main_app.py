@@ -254,9 +254,11 @@ def apply_application_security_headers(response):
 
     # AI Search Crawler Telemetry (BUG-151: OAI-SearchBot, ChatGPT-User, GPTBot, PerplexityBot, ClaudeBot, Google-Extended, bingbot)
     ua_str = request.headers.get('User-Agent', '')
+    is_ai_crawler_bot = False
     if ua_str and not request.path.startswith('/static/'):
         for bot_token in ('OAI-SearchBot', 'ChatGPT-User', 'GPTBot', 'PerplexityBot', 'ClaudeBot', 'Google-Extended', 'Applebot-Extended', 'bingbot'):
             if bot_token.lower() in ua_str.lower():
+                is_ai_crawler_bot = True
                 try:
                     from core.services.security_logger import log_security_event
                     log_security_event(
@@ -281,6 +283,10 @@ def apply_application_security_headers(response):
                 response.headers['Vary'] = ', '.join(vary_tokens)
             else:
                 del response.headers['Vary']
+    # AI Crawlers & Dynamic AI Manifests: Bypass Cloudflare 24h edge cache so 100% of AI bot crawls hit origin & receive live data
+    elif is_ai_crawler_bot or request.path in ('/llms.txt', '/llms-full.txt', '/.well-known/llms.txt', '/ai.txt', '/sitemap.xml'):
+        response.headers['Cache-Control'] = 'private, no-cache, no-store, must-revalidate, max-age=0'
+        response.headers.pop('Set-Cookie', None)
     # Public Marketing Pages: Split Cloudflare Edge Caching for anonymous guests (HWB-QMS-11.14)
     elif (
         request.method in ('GET', 'HEAD')
@@ -307,6 +313,21 @@ def apply_application_security_headers(response):
         if request.path.startswith(('/onboard', '/portal', '/reset-password')):
             response.headers['Referrer-Policy'] = 'no-referrer'
             response.headers['X-Robots-Tag'] = 'noindex, nofollow, noarchive'
+
+    # Global RFC 8288 AI Discovery Link Header & X-Robots-Tag for Public HTML Pages
+    if not request.path.startswith(('/admin', '/api', '/auth', '/sales-desk', '/login', '/logout', '/onboard', '/portal', '/reset-password', '/static/')):
+        canon_url = f"https://www.hwbcleaning.com{request.path}"
+        response.headers.setdefault(
+            'Link',
+            f'<{canon_url}>; rel="canonical", '
+            '<https://www.hwbcleaning.com/llms.txt>; rel="alternate"; type="text/plain"; title="AI Knowledge Summary", '
+            '<https://www.hwbcleaning.com/llms-full.txt>; rel="alternate"; type="text/plain"; title="AI Full Knowledge Corpus"',
+        )
+        if 'hwbcleaning.com' in request.host.lower():
+            response.headers.setdefault(
+                'X-Robots-Tag',
+                'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+            )
 
     # Permanent Enterprise Responsive & Adaptive Table Guardrail (BUG-137):
     # Guarantees that any future HTML page or standalone module added to the website

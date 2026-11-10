@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}Request a Free Cleaning Quote | HWB Cleaning Services LLC{% endblock %}
-{% block og_description %}Request a fast, custom commercial cleaning or post-construction cleanup quote in Dallas-Fort Worth. Transparent square-footage pricing and 24-hour turnaround.{% endblock %}
+{% block og_description %}Request a custom commercial cleaning or post-construction cleanup quote in Dallas-Fort Worth. On-site walkthroughs and custom scopes of work.{% endblock %}
 
 {% block head %}
-  <meta name="description" content="Request a fast, custom commercial cleaning or post-construction cleanup quote in Dallas-Fort Worth. Transparent square-footage pricing and 24-hour turnaround.">
+  <meta name="description" content="Request a custom commercial cleaning or post-construction cleanup quote in Dallas-Fort Worth. On-site walkthroughs and custom scopes of work.">
   <meta name="keywords" content="commercial cleaning quote Dallas, janitorial estimate Plano, office cleaning pricing Frisco, construction cleanup bid DFW">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.hwbcleaning.com/"},
+      {"@type": "ListItem", "position": 2, "name": "Request a Free Cleaning Quote", "item": "https://www.hwbcleaning.com/get-quote"}
+    ]
+  }
+  </script>
 {% endblock %}
 
 {% block content %}
@@ -20,8 +30,8 @@
             <div class="mobile-express-badge" style="align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem; margin-left: 0.5rem;">
                 <i class="fas fa-mobile-alt"></i> Mobile Express (10s)
             </div>
-            <h1 style="font-size: 2.35rem; font-weight: 900; margin: 0 0 0.5rem 0; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">Get Your Free Commercial Cleaning Quote</h1>
-            <p style="font-size: 1.05rem; color: #475569; max-width: 720px; margin: 0 auto; font-weight: 500; line-height: 1.5;">Tell us a little about your building. We will prepare custom pricing and service options for your North Texas facility.</p>
+            <h1 style="font-size: 2.35rem; font-weight: 900; margin: 0 0 0.5rem 0; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">Request a Free Commercial Cleaning Quote</h1>
+            <p style="font-size: 1.05rem; color: #475569; max-width: 720px; margin: 0 auto; font-weight: 500; line-height: 1.5;">Share the building details below. Custom pricing and service options will be prepared for the facility.</p>
         </div>
 
         <!-- 65/35 Enterprise Split Container -->
@@ -40,16 +50,16 @@
                         <input type="text" name="hp_tax_id" id="hp_tax_id" tabindex="-1" autocomplete="off">
                     </div>
 
-                    <!-- Step 1: Your Space & Schedule -->
+                    <!-- Step 1: Building & Schedule -->
                     <div class="sigma-form-section">
                         <div class="sigma-section-badge">
                             <span class="badge-num">01</span>
-                            <span class="badge-title">Your Building &amp; Schedule</span>
+                            <span class="badge-title">Building &amp; Schedule</span>
                         </div>
 
                         <!-- Facility Type Selection Chips -->
                         <div class="sigma-field" style="margin-bottom: 1.25rem;">
-                            <div class="sigma-label" id="facility-type-group-label">What type of building do you have?</div>
+                            <div class="sigma-label" id="facility-type-group-label">Facility Type</div>
                             <input type="hidden" name="facility_type" id="facility_type" value="office">
                             <div class="facility-chips-container" role="group" aria-labelledby="facility-type-group-label">
                                 <button type="button" class="facility-chip active" data-val="office" onclick="setFacilityType('office', this)" aria-label="Select office facility" title="Office" aria-pressed="true">
@@ -75,7 +85,7 @@
 
                         <!-- Cleaning Frequency (Full Width Dedicated Selector) -->
                         <div class="sigma-field desktop-only-field" style="margin-top: 1.25rem;">
-                            <label for="frequency" class="sigma-label">How often do you need cleaning?</label>
+                            <label for="frequency" class="sigma-label">Cleaning Schedule Frequency</label>
                             <select name="frequency" id="frequency" required class="sigma-input">
                                 <option value="Daily (5 Days/Week) - Standard Corporate" selected>Daily (5 Days / Week) — Standard Business</option>
                                 <option value="Periodic (3 Days/Week) - Mon/Wed/Fri">2 to 3 Days / Week — Regular Care</option>
@@ -102,17 +112,17 @@
                     <div class="sigma-form-section" style="margin-top: 2rem;">
                         <div class="sigma-section-badge">
                             <span class="badge-num">02</span>
-                            <span class="badge-title">Where Should We Send Your Quote?</span>
+                            <span class="badge-title">Contact Information for Quote Delivery</span>
                         </div>
 
                         <div class="sigma-form-row-2">
                             <div class="sigma-field">
-                                <label for="quote-name" class="sigma-label">Your Name <span style="color: #dc2626;">*</span></label>
+                                <label for="quote-name" class="sigma-label">Contact Name <span style="color: #dc2626;">*</span></label>
                                 <input type="text" name="name" id="quote-name" required autocomplete="name" placeholder="Full Name" class="sigma-input">
                             </div>
                             <div class="sigma-field desktop-only-field">
                                 <label for="quote-company" class="sigma-label">Company <span style="color: #dc2626;">*</span></label>
-                                <input type="text" name="company" id="quote-company" required autocomplete="organization" placeholder="Your Business LLC" class="sigma-input">
+                                <input type="text" name="company" id="quote-company" required autocomplete="organization" placeholder="Company or Facility Name" class="sigma-input">
                             </div>
                         </div>
 

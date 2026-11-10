@@ -1,7 +1,7 @@
 {
-  "version": "v5.5.2",
-  "commit": "b546dd5",
-  "build_date": "2026-11-09 04:19 PM",
-  "build_tag": "v5.5.2-b546dd5",
+  "version": "v5.5.3",
+  "commit": "b3333a2",
+  "build_date": "2026-11-10 04:53 PM",
+  "build_tag": "v5.5.3-b3333a2",
   "environment": "LOCAL_DEV"
 }

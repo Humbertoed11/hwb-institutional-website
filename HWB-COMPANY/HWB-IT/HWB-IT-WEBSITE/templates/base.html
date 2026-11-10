@@ -26,12 +26,19 @@
  "Plano",
  "Frisco",
  "McKinney",
- "Fort Worth",
- "Irving",
- "Richardson",
+ "Prosper",
+ "Celina",
  "Allen",
- "Arlington",
+ "Richardson",
  "Addison",
+ "Irving",
+ "Denton",
+ "Rockwall",
+ "Southlake",
+ "Fort Worth",
+ "Arlington",
+ "Grand Prairie",
+ "Mansfield",
  "Waxahachie"
  ],
  "openingHoursSpecification": {
@@ -66,10 +73,10 @@
  "knowsAbout": [
  "Commercial Janitorial Services",
  "Daily Office Cleaning",
- "3-Phase Post-Construction Final Cleaning (CSI Division 01 74 23)",
+ "3-Step Subdivision & 3-Phase Post-Construction Final Cleaning",
  "VCT Floor Stripping, Sealing, and Waxing",
- "Industrial Warehouse Floor Scrubbing",
- "Medical Clinic and Daycare Disinfection"
+ "Industrial Warehouse Floor Scrubbing (PIT & PPE Trained Crews)",
+ "Medical, Dental, School, and Daycare Cleaning (4-Color Microfiber System)"
  ],
  "hasOfferCatalog": {
  "@type": "OfferCatalog",
@@ -78,7 +85,15 @@
  {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Daily Office Cleaning & Nightly Janitorial", "url": "https://www.hwbcleaning.com/services/janitorial"}},
  {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Commercial Floor Care & Deep Cleaning", "url": "https://www.hwbcleaning.com/services/commercial"}},
  {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Industrial & Warehouse Floor Scrubbing", "url": "https://www.hwbcleaning.com/services/industrial"}},
- {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "3-Phase Post-Construction Final Cleaning", "url": "https://www.hwbcleaning.com/services/construction"}}
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "3-Step Subdivision & 3-Phase Post-Construction Cleanup", "url": "https://www.hwbcleaning.com/services/construction"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Daycares & Early Learning Center Cleaning", "url": "https://www.hwbcleaning.com/facilities/daycare-childcare", "image": "https://www.hwbcleaning.com/static/img/hero_facility_daycare.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Private Schools, K-12 Academies & Campus Cleaning", "url": "https://www.hwbcleaning.com/facilities/schools-education", "image": "https://www.hwbcleaning.com/static/img/hero_facility_school.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Medical, Dental & Outpatient Clinic Cleaning", "url": "https://www.hwbcleaning.com/facilities/medical-dental", "image": "https://www.hwbcleaning.com/static/img/hero_facility_medical.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Corporate Office & Class-A Building Cleaning", "url": "https://www.hwbcleaning.com/facilities/corporate-offices", "image": "https://www.hwbcleaning.com/static/img/hero_facility_corporate.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Auto Dealership Showroom & Service Bay Cleaning", "url": "https://www.hwbcleaning.com/facilities/auto-dealerships", "image": "https://www.hwbcleaning.com/static/img/hero_facility_dealership.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Churches, Sanctuaries & Campus Cleaning", "url": "https://www.hwbcleaning.com/facilities/churches-nonprofits", "image": "https://www.hwbcleaning.com/static/img/hero_facility_church.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Warehouses, 3PL Logistics & Manufacturing Floor Scrubbing", "url": "https://www.hwbcleaning.com/facilities/warehouses-industrial", "image": "https://www.hwbcleaning.com/static/img/hero_facility_warehouse.webp"}},
+ {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "3-Step Subdivision & 3-Phase Post-Construction Cleanup", "url": "https://www.hwbcleaning.com/facilities/construction-subdivisions", "image": "https://www.hwbcleaning.com/static/img/hero_facility_construction.webp"}}
  ]
  }
  }
@@ -97,15 +112,18 @@
  <meta name="referrer" content="no-referrer">
  {% else %}
  <!-- SigmaFidelity™ SEO Hardening -->
+ <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
  <link rel="canonical" href="https://www.hwbcleaning.com{{ request.path }}">
  
  <!-- Social Visibility (OG Tags) -->
  <meta property="og:title" content="{% block og_title %}{{ self.title() | striptags | trim }}{% endblock %}">
  <meta property="og:description" content="{% block og_description %}ISO 9001:2026-compliant commercial cleaning, janitorial, floor care, and post-construction cleanup across Dallas, Plano, Frisco, McKinney & DFW.{% endblock %}">
- <meta property="og:image" content="https://www.hwbcleaning.com/static/logo_standard.png">
+ <meta property="og:image" content="{% block og_image %}https://www.hwbcleaning.com/static/img/hero_lobby.webp{% endblock %}">
+ {% block og_image_meta %}{% endblock %}
  <meta property="og:url" content="https://www.hwbcleaning.com{{ request.path }}">
  <meta property="og:type" content="website">
  <meta name="twitter:card" content="summary_large_image">
+ <meta name="twitter:image" content="{% block twitter_image %}https://www.hwbcleaning.com/static/img/hero_lobby.webp{% endblock %}">
  {% endif %}
 
  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -114,8 +132,8 @@
  Professional Cleaning Standards Promise: All content reflects real-world commercial operations.
  Approved By: Humberto Dominguez (CEO)
  -->
- <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}">
- <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_engine.css') }}?v=2.4.1">
+ <link rel="stylesheet" href="{{ url_for('static', filename='HWB-WEB Style.css') }}?v=2.4.2">
+ <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_engine.css') }}?v=2.4.2">
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -235,7 +253,8 @@
       gaScript.src = "https://www.googletagmanager.com/gtag/js?id={{ ga_id }}";
       document.head.appendChild(gaScript);
       gtag('js', new Date());
-      gtag('config', '{{ ga_id }}', { 'anonymize_ip': true });
+      var hwbFunnelType = (/^\/(work-with-us|careers)\b/i.test(window.location.pathname || '')) ? 'workforce_supply' : 'commercial_client';
+      gtag('config', '{{ ga_id }}', { 'anonymize_ip': true, 'funnel_type': hwbFunnelType });
       gtag('config', '{{ gads_id }}');
     })();
     {% endif %}
@@ -333,7 +352,7 @@
                     <a href="/">
                         <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Services LLC" class="footer-logo-large">
                     </a>
-                    <p class="footer-formula">Proper Training + The Right Tools + Respect for Your Space = The SigmaQuality Clean</p>
+                    <p class="footer-formula">Proper Training + The Right Tools + Respect for the Facility = The SigmaQuality Clean</p>
                     <div class="social-links">
                         <a href="https://www.linkedin.com/company/hwb-cleaning-services-llc/" target="_blank" rel="noopener noreferrer" aria-label="HWB Cleaning Services LLC on LinkedIn" class="social-icon"><i class="fa-brands fa-linkedin" aria-hidden="true"></i></a>
                         <a href="https://www.facebook.com/cleaningdfw" target="_blank" rel="noopener noreferrer" aria-label="HWB Cleaning Services LLC on Facebook" class="social-icon"><i class="fa-brands fa-facebook" aria-hidden="true"></i></a>
@@ -483,7 +502,7 @@
   <!-- CIPA & CPRA Compliant Cookie Consent Banner -->
   <aside id="hwb-cookie-banner" class="sigma-consent-banner" style="display: none;" role="dialog" aria-label="Cookie and Privacy Consent">
       <div>
-          <strong>Privacy Choices:</strong> We use essential cookies to maintain system security. You can accept optional analytics and session replay, or continue with essential cookies only.
+          <strong>Privacy Choices:</strong> Essential cookies are used to maintain system security. Visitors may accept optional analytics and session replay, or continue with essential cookies only.
       </div>
       <div class="sigma-consent-actions">
           <button type="button" onclick="acceptCookieConsent()" class="sigma-consent-btn accept">Accept All</button>

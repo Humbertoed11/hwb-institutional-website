@@ -122,16 +122,66 @@ INITIAL_KEYWORD_RADAR_SEEDS: List[Dict[str, Any]] = [
         "status": "LIVE_INDEXED",
         "recommended_action": "Target medical plazas and master-planned subdivisions along US-287 and SH-360 in Mansfield.",
     },
-    # Core Flagship High-Intent Keywords
+    # Core Flagship High-Intent Keywords & 8 Dedicated Facility Vertical Hubs
     {
-        "keyword_phrase": "3-phase post construction final clean csi 01 74 23 dallas fort worth",
-        "service_division": "3-Phase Interior Building Final Clean",
+        "keyword_phrase": "3-step subdivision & 3-phase post construction cleanup dallas fort worth",
+        "service_division": "3-Step Subdivision & 3-Phase Final Clean",
         "target_city": "Dallas",
-        "target_route": "/services/construction",
+        "target_route": "/facilities/construction-subdivisions",
         "buyer_intent": "GC_COMMERCIAL",
         "priority_score": 100,
         "status": "LIVE_INDEXED",
-        "recommended_action": "Keep Division 1 (3-Step Neighborhood) & Division 2 (CSI 01 74 23 Final Clean) synced in /llms.txt for AI recommendations.",
+        "recommended_action": "Highlight clear transit lines for city inspections, PPE & PIT trained crews, in-house Safety Department, and custom scope of work.",
+    },
+    {
+        "keyword_phrase": "daycare & preschool cleaning services dallas plano frisco mckinney tx",
+        "service_division": "Daycare & Early Learning Cleaning",
+        "target_city": "Plano",
+        "target_route": "/facilities/daycare-childcare",
+        "buyer_intent": "HIGH_COMMERCIAL",
+        "priority_score": 100,
+        "status": "LIVE_INDEXED",
+        "recommended_action": "Focus outreach on custom scope of work, proper chemical dilution (no sticky floors), and nightly lock-up security.",
+    },
+    {
+        "keyword_phrase": "private school & charter campus janitorial services dallas fort worth",
+        "service_division": "K-12 & Private School Janitorial",
+        "target_city": "Dallas",
+        "target_route": "/facilities/schools-education",
+        "buyer_intent": "HIGH_COMMERCIAL",
+        "priority_score": 99,
+        "status": "LIVE_INDEXED",
+        "recommended_action": "Highlight background-checked campus crews, 4-color microfiber separation, and custom school-year + summer floor plans.",
+    },
+    {
+        "keyword_phrase": "medical & dental office cleaning dallas plano frisco tx",
+        "service_division": "Medical & Dental Office Cleaning",
+        "target_city": "Frisco",
+        "target_route": "/facilities/medical-dental",
+        "buyer_intent": "HIGH_COMMERCIAL",
+        "priority_score": 99,
+        "status": "LIVE_INDEXED",
+        "recommended_action": "Highlight patient-first waiting & exam room cleaning, 4-color microfiber cloth separation, and strict suite privacy/security.",
+    },
+    {
+        "keyword_phrase": "auto dealership showroom & service bay cleaning dallas fort worth",
+        "service_division": "Auto Dealership Showroom & Service Scrubbing",
+        "target_city": "Dallas",
+        "target_route": "/facilities/auto-dealerships",
+        "buyer_intent": "HIGH_COMMERCIAL",
+        "priority_score": 98,
+        "status": "LIVE_INDEXED",
+        "recommended_action": "Highlight streak-free showroom glass, residue-free glossy tile, service bay scrubbing, and key/lot lock-up security.",
+    },
+    {
+        "keyword_phrase": "church sanctuary & nursery cleaning services dallas fort worth",
+        "service_division": "Church & Sanctuary Campus Care",
+        "target_city": "Dallas",
+        "target_route": "/facilities/churches-nonprofits",
+        "buyer_intent": "HIGH_COMMERCIAL",
+        "priority_score": 97,
+        "status": "LIVE_INDEXED",
+        "recommended_action": "Highlight Sunday-ready sanctuaries, child-safe nurseries, residue-free fellowship hall floors, and full campus lock-up.",
     },
     # Next Wave Staged Opportunities (Ready for 1-Tap CEO Approval)
     {
@@ -368,7 +418,8 @@ class LauriTellsSearchGrowthEmployee:
                                 "employee": self.FULL_NAME,
                                 "role": self.ROLE_TITLE,
                                 "city_hubs_monitored": 18,
-                                "sitemap_urls_monitored": 39,
+                                "facility_hubs_monitored": 8,
+                                "sitemap_urls_monitored": 47,
                             }
                         ),
                     ),
@@ -429,7 +480,7 @@ class LauriTellsSearchGrowthEmployee:
         4. 30-day AI Recommendation Crawler visits (ChatGPT, Perplexity, Gemini, Claude, Bing)
         5. Keyword & Texas Lead Opportunity Radar across booming DFW suburbs
         """
-        from blueprints.public import LOCATIONS_DATA
+        from blueprints.public import FACILITIES_DATA, LOCATIONS_DATA
         from core.services.self_healing_engine import get_web_analytics_telemetry
 
         web_tel = get_web_analytics_telemetry(self.db_url, force_refresh=force_refresh)
@@ -437,6 +488,8 @@ class LauriTellsSearchGrowthEmployee:
         win_24h = funnel.get("window_24h", {})
         win_7d = funnel.get("window_7d", {})
         ai_vis = web_tel.get("ai_search_visibility", {})
+        b2b_funnel = web_tel.get("b2b_client_demand_funnel", {})
+        workforce_funnel = web_tel.get("workforce_supply_funnel", {})
 
         # Verify Sitemap XML count & freshness
         sitemap_path = os.path.join(self.base_dir, "static", "sitemap.xml")
@@ -447,10 +500,11 @@ class LauriTellsSearchGrowthEmployee:
             ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
             sitemap_count = len(root.findall("sm:url", ns))
         except Exception:
-            sitemap_count = 39
+            sitemap_count = 47
 
-        # Verify City Hub title & meta description compliance deterministically
+        # Verify City Hub & Facility Hub title & meta description compliance deterministically
         city_hubs_count = len(LOCATIONS_DATA)
+        facility_hubs_count = len(FACILITIES_DATA)
         title_violations: List[str] = []
         desc_violations: List[str] = []
         for slug, cdata in LOCATIONS_DATA.items():
@@ -460,6 +514,13 @@ class LauriTellsSearchGrowthEmployee:
                 title_violations.append(f"/locations/{slug} ({len(t_str)} chars)")
             if len(d_str) > 160:
                 desc_violations.append(f"/locations/{slug} ({len(d_str)} chars)")
+        for fslug, fdata in FACILITIES_DATA.items():
+            t_str = str(fdata.get("title") or "")
+            d_str = str(fdata.get("meta_desc") or "")
+            if len(t_str) > 65:
+                title_violations.append(f"/facilities/{fslug} ({len(t_str)} chars)")
+            if len(d_str) > 160:
+                desc_violations.append(f"/facilities/{fslug} ({len(d_str)} chars)")
 
         seo_score = 100.0
         if title_violations:
@@ -608,6 +669,7 @@ class LauriTellsSearchGrowthEmployee:
             "seo_health_score": seo_score,
             "sitemap_urls_count": sitemap_count,
             "city_hubs_count": city_hubs_count,
+            "facility_hubs_count": facility_hubs_count,
             "ga4_measurement_id": web_tel.get("measurement_id", "G-8BX5Q7THYR"),
             "google_ads_id": "AW-8622428739",
             "consent_mode_v2": "ACTIVE",
@@ -617,6 +679,9 @@ class LauriTellsSearchGrowthEmployee:
             "quote_conversions_7d": quote_conv_7d,
             "conversion_rate_7d_pct": conv_rate_7d,
             "ai_crawler_hits_30d": ai_hits_30d,
+            "ai_referral_visits_30d": int(ai_vis.get("ai_referral_visits_30d") or 0),
+            "b2b_client_demand_funnel": b2b_funnel,
+            "workforce_supply_funnel": workforce_funnel,
             "title_violations": title_violations,
             "desc_violations": desc_violations,
             "suburb_lead_counts": suburb_lead_counts,
@@ -708,6 +773,9 @@ class LauriTellsSearchGrowthEmployee:
         if not suburb_summary:
             suburb_summary = "Prosper, Celina, Denton, Rockwall, Southlake, Grand Prairie, Mansfield"
 
+        wf_funnel = patrol.get("workforce_supply_funnel") or {}
+        b2b_funnel = patrol.get("b2b_client_demand_funnel") or {}
+
         lines = [
             "📈 *Lauri Tells — 24/7 Google Analytics, SEO & Client Growth Report*",
             "━━━━━━━━━━━━━━━━━━━━━",
@@ -715,22 +783,33 @@ class LauriTellsSearchGrowthEmployee:
             f"• *Enterprise SEO Score:* `{patrol['seo_health_score']:.1f} / 100 (Grade A+)`",
             f"• *Google Analytics 4 (`{patrol['ga4_measurement_id']}`):* `ACTIVE (Consent Mode v2)`",
             f"• *Google Ads Tag (`{patrol['google_ads_id']}`):* `ACTIVE (Deduplicated Quote Tracking)`",
-            f"• *Indexed Pages & City Hubs:* `{patrol['sitemap_urls_count']}` Sitemap URLs | `{patrol['city_hubs_count']}` DFW City Hubs",
+            f"• *Indexed Pages & Hubs:* `{patrol['sitemap_urls_count']}` Sitemap URLs | `{patrol['city_hubs_count']}` DFW City Hubs | `{patrol.get('facility_hubs_count', 8)}` Facility Hubs",
             "",
-            "📊 *Live Website Traffic & Quote Funnel (7-Day Window):*",
-            f"  • *Website Visitors (7d / 24h):* `{patrol['views_7d']:,}` (7d) | `{patrol['views_24h']:,}` (24h)",
+            "📊 *Scoreboard 1 — Commercial Client Demand Funnel (7d):*",
+            f"  • *Client Page Views (7d):* `{b2b_funnel.get('client_page_views_7d', 0):,}` (`{b2b_funnel.get('facility_hub_views_7d', 0):,}` Facility Hub views)",
             f"  • *Quote Page Views (`/get-quote`):* `{patrol['quote_views_7d']:,}` views",
             f"  • *Quote Requests Submitted:* `{patrol['quote_conversions_7d']:,}` leads (`{patrol['conversion_rate_7d_pct']}%` conversion)",
+            "",
+            "👷 *Scoreboard 2 — 1099 & W-2 Workforce Supply Engine:*",
+            f"  • *Registered 1099 Subcontractors:* `{wf_funnel.get('subcontractors_total', 0):,}` (`{wf_funnel.get('dfw_subcontractors_total', 0):,}` DFW | `{wf_funnel.get('tx_expansion_subcontractors_total', 0):,}` TX | `{wf_funnel.get('out_of_state_subcontractors_total', 0):,}` Out-of-State Reserve)",
+            f"  • *W-2 Job Applicants:* `{wf_funnel.get('job_applicants_total', 0):,}` total (`{wf_funnel.get('work_with_us_views_7d', 0):,}` `/work-with-us` views in 7d)",
+            "",
+            "🤖 *Scoreboard 3 — AI Search Visibility & Referrals (30d):*",
             f"  • *AI Answer Engine Crawls (30d):* `{patrol['ai_crawler_hits_30d']:,}` verified bot visits (ChatGPT, Perplexity, Gemini, Claude, Bing)",
+            f"  • *Human AI Referral Visits (30d):* `{patrol.get('ai_referral_visits_30d', 0):,}` click-throughs from AI assistants",
+            "",
+            "🏢 *8 Facility Vertical Hubs (Live & Indexed):*",
+            "  • `/facilities/daycare-childcare` — Child-Safe Cleaning, 4-Color Microfiber & Lock-Up Security",
+            "  • `/facilities/schools-education` — Vetted Crews, Residue-Free Floors & Campus Security",
+            "  • `/facilities/medical-dental` — Patient-Ready Suites, 4-Color Microfiber & Privacy",
+            "  • `/facilities/corporate-offices` — Local Crews (10 Min), Breakrooms & Desk Security",
+            "  • `/facilities/auto-dealerships` — Showroom Glass, Glossy Tile & Service Bay Scrubbing",
+            "  • `/facilities/churches-nonprofits` — Sunday-Ready Sanctuaries & Child-Safe Nurseries",
+            "  • `/facilities/warehouses-industrial` — Debris-Free Floors, In-House Safety Dept & PIT/PPE",
+            "  • `/facilities/construction-subdivisions` — Clear Transit Lines, 3-Phase Final Clean & PIT/PPE",
             "",
             "🏘️ *Wave 1 Booming DFW Suburbs (Live & Indexed):*",
-            "  • `/locations/prosper` — 3-Step Neighborhood & Commercial Clean",
-            "  • `/locations/celina` — Subdivision Street Cleanup & Daycare Clean",
-            "  • `/locations/denton` — Warehouse Scrubbing & Construction Clean",
-            "  • `/locations/rockwall` — I-30 Commercial & Final Clean",
-            "  • `/locations/southlake` — SH-114 Executive & Medical Clean",
-            "  • `/locations/grand-prairie` — Great Southwest Industrial Scrubbing",
-            "  • `/locations/mansfield` — US-287 Medical & Subdivision Cleanup",
+            "  • `/locations/prosper`, `/locations/celina`, `/locations/denton`, `/locations/rockwall`, `/locations/southlake`, `/locations/grand-prairie`, `/locations/mansfield`",
             f"  • *Matched Database Leads in Wave 1 Suburbs:* {suburb_summary}",
         ]
 

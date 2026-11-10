@@ -678,6 +678,12 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
         visitors_7d = 0
         quote_views_7d = 0
         ai_crawler_hits_30d = 0
+        ai_referral_visits_30d = 0
+        b2b_client_views_total = 0
+        workforce_supply_views_total = 0
+        workforce_supply_clicks_total = 0
+        subcontractors_total = 0
+        job_applicants_total = 0
 
         if target_url:
             try:
@@ -713,21 +719,33 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
                         calibrations_24h = row_calib[0] if isinstance(row_calib, (tuple, list)) else row_calib.get('count', 0)
 
                     try:
+                        cur.execute('SELECT COUNT(*) FROM "SubcontractorPartners";')
+                        r_sub = cur.fetchone()
+                        if r_sub:
+                            subcontractors_total = r_sub[0] if isinstance(r_sub, (tuple, list)) else r_sub.get('count', 0)
+                        cur.execute('SELECT COUNT(*) FROM "JobApplicants";')
+                        r_app = cur.fetchone()
+                        if r_app:
+                            job_applicants_total = r_app[0] if isinstance(r_app, (tuple, list)) else r_app.get('count', 0)
+                    except Exception as wf_err:
+                        print(f"[ANALYTICS_TELEMETRY] Workforce count query notice: {wf_err}", flush=True)
+
+                    try:
                         cur.execute("""
                             SELECT COUNT(*) FROM "ClientBreadcrumbs"
                             WHERE element_id ILIKE '%tel%' OR (element_tag='a' AND element_text ILIKE '%(%');
                         """)
                         row_p = cur.fetchone()
                         if row_p:
-                            phone_taps_24h = row_p[0]
+                            phone_taps_24h = row_p[0] if isinstance(row_p, (tuple, list)) else row_p.get('count', 0)
 
                         cur.execute("""
                             SELECT COUNT(*) FROM "ClientBreadcrumbs"
-                            WHERE page_url = '/get-quote';
+                            WHERE page_url = '/get-quote' OR page_url LIKE '/facilities/%';
                         """)
                         row_qv = cur.fetchone()
                         if row_qv:
-                            quote_views_count = row_qv[0]
+                            quote_views_count = row_qv[0] if isinstance(row_qv, (tuple, list)) else row_qv.get('count', 0)
 
                         cur.execute("""
                             SELECT COUNT(*) FROM "ClientBreadcrumbs"
@@ -735,24 +753,49 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
                         """)
                         row_pv = cur.fetchone()
                         if row_pv:
-                            visitors_count = row_pv[0]
+                            visitors_count = row_pv[0] if isinstance(row_pv, (tuple, list)) else row_pv.get('count', 0)
 
                         cur.execute("""
                             SELECT
-                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND created_at >= NOW() - INTERVAL '24 hours'),
-                                COUNT(*) FILTER (WHERE page_url = '/get-quote' AND created_at >= NOW() - INTERVAL '24 hours'),
-                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND created_at >= NOW() - INTERVAL '7 days'),
-                                COUNT(*) FILTER (WHERE page_url = '/get-quote' AND created_at >= NOW() - INTERVAL '7 days')
+                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND "timestamp" >= NOW() - INTERVAL '24 hours') AS v24,
+                                COUNT(*) FILTER (WHERE (page_url = '/get-quote' OR page_url LIKE '/facilities/%') AND "timestamp" >= NOW() - INTERVAL '24 hours') AS q24,
+                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND "timestamp" >= NOW() - INTERVAL '7 days') AS v7,
+                                COUNT(*) FILTER (WHERE (page_url = '/get-quote' OR page_url LIKE '/facilities/%') AND "timestamp" >= NOW() - INTERVAL '7 days') AS q7,
+                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND page_url NOT IN ('/work-with-us', '/careers', '/login', '/forgot-password') AND page_url NOT LIKE '/onboard/%' AND page_url NOT LIKE '/reset-password/%') AS b2b_views,
+                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND (page_url IN ('/work-with-us', '/careers') OR page_url LIKE '/onboard/%')) AS wf_views,
+                                COUNT(*) FILTER (WHERE event_type = 'CLICK' AND (page_url IN ('/work-with-us', '/careers') OR page_url LIKE '/onboard/%')) AS wf_clicks,
+                                COUNT(*) FILTER (WHERE event_type = 'PAGE_VIEW' AND (
+                                    COALESCE(details->>'referrer', '') ILIKE '%chatgpt.com%'
+                                    OR COALESCE(details->>'referrer', '') ILIKE '%perplexity.ai%'
+                                    OR COALESCE(details->>'referrer', '') ILIKE '%gemini.google.com%'
+                                    OR COALESCE(details->>'referrer', '') ILIKE '%claude.ai%'
+                                    OR COALESCE(details->>'referrer', '') ILIKE '%copilot.microsoft.com%'
+                                    OR COALESCE(details->>'ai_source', '') != ''
+                                )) AS ai_refs
                             FROM "ClientBreadcrumbs";
                         """)
                         row_win = cur.fetchone()
                         if row_win:
-                            visitors_24h = row_win[0] or 0
-                            quote_views_24h = row_win[1] or 0
-                            visitors_7d = row_win[2] or 0
-                            quote_views_7d = row_win[3] or 0
-                    except Exception:
-                        pass
+                            if isinstance(row_win, dict):
+                                visitors_24h = row_win.get('v24') or 0
+                                quote_views_24h = row_win.get('q24') or 0
+                                visitors_7d = row_win.get('v7') or 0
+                                quote_views_7d = row_win.get('q7') or 0
+                                b2b_client_views_total = row_win.get('b2b_views') or 0
+                                workforce_supply_views_total = row_win.get('wf_views') or 0
+                                workforce_supply_clicks_total = row_win.get('wf_clicks') or 0
+                                ai_referral_visits_30d = row_win.get('ai_refs') or 0
+                            else:
+                                visitors_24h = row_win[0] or 0
+                                quote_views_24h = row_win[1] or 0
+                                visitors_7d = row_win[2] or 0
+                                quote_views_7d = row_win[3] or 0
+                                b2b_client_views_total = row_win[4] or 0
+                                workforce_supply_views_total = row_win[5] or 0
+                                workforce_supply_clicks_total = row_win[6] or 0
+                                ai_referral_visits_30d = row_win[7] or 0
+                    except Exception as bc_err:
+                        print(f"[ANALYTICS_TELEMETRY] ClientBreadcrumbs query notice: {bc_err}", flush=True)
 
                     try:
                         cur.execute("""
@@ -762,11 +805,12 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
                         """)
                         row_ai = cur.fetchone()
                         if row_ai:
-                            ai_crawler_hits_30d = row_ai[0] or 0
-                    except Exception:
-                        pass
+                            ai_crawler_hits_30d = (row_ai[0] if isinstance(row_ai, (tuple, list)) else row_ai.get('count', 0)) or 0
+                    except Exception as ai_err:
+                        print(f"[ANALYTICS_TELEMETRY] AI crawler log query notice: {ai_err}", flush=True)
                 conn.close()
-            except Exception:
+            except Exception as outer_err:
+                print(f"[ANALYTICS_TELEMETRY] Outer DB telemetry notice: {outer_err}", flush=True)
                 quote_leads_24h = 0
                 calibrations_24h = 0
 
@@ -777,6 +821,14 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
             {"route": "/services/commercial", "name": "Commercial Cleaning", "status": "VERIFIED"},
             {"route": "/services/industrial", "name": "Industrial Cleaning", "status": "VERIFIED"},
             {"route": "/services/construction", "name": "Construction Cleanup", "status": "VERIFIED"},
+            {"route": "/facilities/daycare-childcare", "name": "Daycare & Child Care Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/schools-education", "name": "Private Schools & K-12 Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/medical-dental", "name": "Medical & Dental Clinic Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/corporate-offices", "name": "Corporate Office Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/auto-dealerships", "name": "Auto Dealership Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/churches-nonprofits", "name": "Churches & Worship Cleaning Hub", "status": "VERIFIED"},
+            {"route": "/facilities/warehouses-industrial", "name": "Warehouse & 3PL Scrubbing Hub", "status": "VERIFIED"},
+            {"route": "/facilities/construction-subdivisions", "name": "Construction & Subdivision Cleanup Hub", "status": "VERIFIED"},
             {"route": "/locations/mckinney", "name": "McKinney Service Hub", "status": "VERIFIED"},
             {"route": "/locations/frisco", "name": "Frisco Service Hub", "status": "VERIFIED"},
             {"route": "/locations/plano", "name": "Plano Service Hub", "status": "VERIFIED"},
@@ -821,7 +873,7 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
             "composite_score": 99.5,
             "letter_grade": "A+",
             "measurement_id": ga_id,
-            "container_status": "ONLINE (gtag.js + Consent Mode v2)",
+            "container_status": "ONLINE (gtag.js + Consent Mode v2 + Dual-Funnel Tagging)",
             "google_search_console": {
                 "status": "CONNECTED",
                 "verification_token": gsc_token[:16] + "..." if len(gsc_token) > 16 else gsc_token,
@@ -831,16 +883,31 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
                 "crawl_index_grade": "A+"
             },
             "ai_search_visibility": {
-                "status": "OPTIMIZED (GEO 8-PILLAR)",
+                "status": "OPTIMIZED (GEO 8-PILLAR + 8 FACILITY HUBS)",
                 "llms_txt_url": "https://www.hwbcleaning.com/llms.txt",
                 "llms_full_txt_url": "https://www.hwbcleaning.com/llms-full.txt",
                 "knowledge_graph_id": "/g/11g9qb6tkk",
                 "google_maps_cid": "4883166476987591300",
                 "ai_crawler_hits_30d": ai_crawler_hits_30d,
+                "ai_referral_visits_30d": ai_referral_visits_30d,
                 "permitted_ai_bots": [
                     "OAI-SearchBot", "ChatGPT-User", "GPTBot", "PerplexityBot",
                     "ClaudeBot", "Google-Extended", "Applebot-Extended", "bingbot"
                 ]
+            },
+            "workforce_supply_funnel": {
+                "work_with_us_views": workforce_supply_views_total,
+                "work_with_us_clicks": workforce_supply_clicks_total,
+                "subcontractors_registered": subcontractors_total,
+                "job_applicants_registered": job_applicants_total,
+                "total_workforce_conversions": subcontractors_total + job_applicants_total
+            },
+            "b2b_client_demand_funnel": {
+                "b2b_client_page_views": b2b_client_views_total,
+                "quote_and_facility_views": quote_views_count,
+                "quote_leads_submitted_7d": quote_leads_7d,
+                "facility_hubs_live": 8,
+                "city_hubs_live": 18
             },
             "surface_coverage": {
                 "total_pages": public_surface_count,
@@ -859,7 +926,7 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
             "anti_pollution_gate": {
                 "status": "ARMED",
                 "internal_sessions_filtered": "100%",
-                "rule": "Staff login session blocks gtag() injection"
+                "rule": "Staff login & onboarding token sessions block public marketing gtag() injection"
             },
             "funnel_velocity": {
                 "stage_1_visitors": max(visitors_count, 1),

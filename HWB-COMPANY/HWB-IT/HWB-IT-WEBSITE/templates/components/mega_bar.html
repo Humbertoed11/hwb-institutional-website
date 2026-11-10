@@ -80,7 +80,7 @@
 
 <header class="main-header">
     <div class="header-container">
-        <div class="logo-container">
+        <div class="logo-container" style="flex-shrink: 0;">
             <a href="{% if current_user.is_authenticated and (request.path.startswith('/admin') or 'operations.' in (request.endpoint or '')) %}{{ url_for('admin_operations') }}{% else %}/{% endif %}">
                 <img src="{{ url_for('static', filename='logo_standard.png') }}" alt="HWB Cleaning Official Logo" class="header-logo" style="height: 64px;">
             </a>
@@ -114,9 +114,50 @@
                 </div>
             </div>
 
+            <!-- FACILITIES MENU (8 Vertical Hubs) -->
+            <div class="nav-item">
+                <a href="javascript:void(0)" style="cursor: default;">Facilities</a>
+                <div class="mega-menu">
+                    <div class="mega-menu-grid">
+                        <a href="{{ url_for('public.facility_page', facility_slug='daycare-childcare') }}" class="mega-option">
+                            <span class="title">Daycares &amp; Childcare</span>
+                            <span class="desc">Safe cleaners, no sticky floors &amp; strict lock-up security.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='schools-education') }}" class="mega-option">
+                            <span class="title">Private Schools &amp; K-12</span>
+                            <span class="desc">Background-checked crews, clean classrooms &amp; campus lock-up.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='medical-dental') }}" class="mega-option">
+                            <span class="title">Medical &amp; Dental Clinics</span>
+                            <span class="desc">Spotless waiting rooms, exam areas &amp; strict suite security.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='corporate-offices') }}" class="mega-option">
+                            <span class="title">Corporate Offices</span>
+                            <span class="desc">Spotless lobbies, breakrooms &amp; local crews within 10 mins.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='auto-dealerships') }}" class="mega-option">
+                            <span class="title">Auto Dealerships</span>
+                            <span class="desc">Streak-free showroom glass, bright tile &amp; service bay scrubbing.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='churches-nonprofits') }}" class="mega-option">
+                            <span class="title">Churches &amp; Nonprofits</span>
+                            <span class="desc">Sunday-ready sanctuaries, child-safe nurseries &amp; campus lock-up.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='warehouses-industrial') }}" class="mega-option">
+                            <span class="title">Warehouses &amp; Logistics</span>
+                            <span class="desc">Debris-free floors, shift restrooms &amp; in-house Safety Dept.</span>
+                        </a>
+                        <a href="{{ url_for('public.facility_page', facility_slug='construction-subdivisions') }}" class="mega-option">
+                            <span class="title">Construction &amp; Subdivisions</span>
+                            <span class="desc">Clear transit lines, 3-phase final clean &amp; in-house Safety Dept.</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- LOCATIONS MENU -->
             <div class="nav-item">
-                <a href="javascript:void(0)" style="cursor: default;">Locations We Serve</a>
+                <a href="javascript:void(0)" style="cursor: default;">Locations</a>
                 <div class="mega-menu">
                     <div class="mega-menu-grid">
                         <a href="{{ url_for('location_page', city='dallas') }}" class="mega-option">
@@ -235,16 +276,16 @@
             {% endif %}
         </nav>
         
-        <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 1.5rem;">
+        <div class="desktop-ease-controls" style="display: flex; align-items: center; gap: 1.5rem; flex-shrink: 0;">
             {% if not current_user.is_authenticated %}
-                <div class="header-phone" style="display: flex; flex-direction: column; text-align: right;">
-                    <span style="font-size: 0.65rem; font-weight: 800; color: var(--hwb-slate); text-transform: uppercase; letter-spacing: 0.1em;">Direct Connect</span>
-                    <a href="tel:+12145860257" style="font-size: 1.15rem; font-weight: 800; color: var(--hwb-dark); text-decoration: none;">(214)-586-0257</a>
+                <div class="header-phone" style="display: flex; flex-direction: column; text-align: right; flex-shrink: 0; white-space: nowrap;">
+                    <span style="font-size: 0.65rem; font-weight: 800; color: var(--hwb-slate); text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap;">Direct Connect</span>
+                    <a href="tel:+12145860257" style="font-size: 1.15rem; font-weight: 800; color: var(--hwb-dark); text-decoration: none; white-space: nowrap;">(214)-586-0257</a>
                 </div>
-                <a href="{{ url_for('get_quote') }}" class="nav-cta">Start a quote <i class="fas fa-arrow-right"></i></a>
+                <a href="{{ url_for('get_quote') }}" class="nav-cta" style="white-space: nowrap; flex-shrink: 0;">Start a quote <i class="fas fa-arrow-right"></i></a>
             {% else %}
                 <!-- Institutional Status -->
-                <div style="color: var(--slate-500); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 1rem; border: 1px solid var(--slate-200); border-radius: 6px; background: var(--slate-50);">
+                <div style="color: var(--slate-500); font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.5rem 1rem; border: 1px solid var(--slate-200); border-radius: 6px; background: var(--slate-50); white-space: nowrap; flex-shrink: 0;">
                     <i class="fas fa-shield-alt" style="margin-right: 6px; color: var(--brand);"></i> {{ nav_access.role_name or 'Active' }} Session
                 </div>
             {% endif %}
@@ -307,6 +348,16 @@
         <a href="{{ url_for('services_commercial') }}" class="sub-link" onclick="toggleMobileMenu()">Commercial Deep Cleaning</a>
         <a href="{{ url_for('services_industrial') }}" class="sub-link" onclick="toggleMobileMenu()">Industrial & Warehouse</a>
         <a href="{{ url_for('services_construction') }}" class="sub-link" onclick="toggleMobileMenu()">Construction Final Clean</a>
+
+        <div class="mobile-menu-section-label">Facilities We Clean</div>
+        <a href="{{ url_for('public.facility_page', facility_slug='daycare-childcare') }}" class="sub-link" onclick="toggleMobileMenu()">Daycares &amp; Childcare Centers</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='schools-education') }}" class="sub-link" onclick="toggleMobileMenu()">Private Schools &amp; K-12 Campuses</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='medical-dental') }}" class="sub-link" onclick="toggleMobileMenu()">Medical &amp; Dental Clinics</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='corporate-offices') }}" class="sub-link" onclick="toggleMobileMenu()">Corporate Offices &amp; Class-A Suites</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='auto-dealerships') }}" class="sub-link" onclick="toggleMobileMenu()">Auto Dealerships &amp; Showrooms</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='churches-nonprofits') }}" class="sub-link" onclick="toggleMobileMenu()">Churches &amp; Places of Worship</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='warehouses-industrial') }}" class="sub-link" onclick="toggleMobileMenu()">Warehouses &amp; 3PL Logistics</a>
+        <a href="{{ url_for('public.facility_page', facility_slug='construction-subdivisions') }}" class="sub-link" onclick="toggleMobileMenu()">Construction &amp; Subdivisions</a>
 
         <div class="mobile-menu-section-label">Service Areas</div>
         <a href="{{ url_for('location_page', city='dallas') }}" class="sub-link" onclick="toggleMobileMenu()">Dallas</a>

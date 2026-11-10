@@ -1,27 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}3-Phase Post-Construction Cleanup in Dallas & DFW | HWB Cleaning{% endblock %}
-{% block og_description %}OSHA-10/30 compliant 3-Phase Post-Construction Final Cleaning (CSI Division 01 74 23 Rough, Final & Touch-Up) in McKinney, Frisco, Plano, Dallas & DFW.{% endblock %}
+{% block title %}3-Step Subdivision & Post-Construction Clean DFW | HWB Cleaning{% endblock %}
+{% block og_description %}3-Step Subdivision Street Cleanup & 3-Phase Post-Construction Final Cleaning in Dallas & DFW. Backed by HWB's in-house Safety Dept & PPE/PIT-trained crews.{% endblock %}
+{% block og_image %}https://www.hwbcleaning.com/static/img/hero_facility_construction.webp{% endblock %}
+{% block twitter_image %}https://www.hwbcleaning.com/static/img/hero_facility_construction.webp{% endblock %}
+{% block og_image_meta %}
+  <meta property="og:image:alt" content="HWB Cleaning crew in full PPE sweeping mud and gravel from a Dallas-Fort Worth subdivision street curb for City Inspection">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="1376">
+  <meta property="og:image:height" content="768">
+  <meta name="twitter:image:alt" content="HWB Cleaning crew in full PPE sweeping mud and gravel from a Dallas-Fort Worth subdivision street curb for City Inspection">
+{% endblock %}
 
 {% block head %}
- <link rel="preload" as="image" href="/static/img/construction_rough_clean_ppe.webp" fetchpriority="high">
- <meta name="description" content="OSHA-10/30 compliant 3-Phase Post-Construction Final Cleaning (CSI Division 01 74 23 Rough, Final & Touch-Up) in McKinney, Frisco, Plano, Dallas & DFW.">
- <meta name="keywords" content="Post-construction cleaning McKinney, construction cleanup Frisco, final clean Plano, commercial builder cleaning Dallas, CSI 01 74 23 DFW">
+ <link rel="preload" as="image" href="/static/img/construction_rough_clean_ppe.webp" imagesrcset="/static/img/construction_rough_clean_ppe-640w.webp 640w, /static/img/construction_rough_clean_ppe-1024w.webp 1024w, /static/img/construction_rough_clean_ppe.webp 1408w" imagesizes="100vw" fetchpriority="high">
+ <meta name="description" content="3-Step Subdivision Street Cleanup & 3-Phase Post-Construction Final Cleaning in Dallas & DFW. Backed by HWB's in-house Safety Dept & PPE/PIT-trained crews.">
+ <meta name="keywords" content="Post-construction cleaning McKinney, construction cleanup Frisco, final clean Plano, commercial builder cleaning Dallas, subdivision street sweeping DFW">
  <script type="application/ld+json">
  {
    "@context": "https://schema.org",
    "@graph": [
      {
+       "@type": "WebPage",
+       "@id": "https://www.hwbcleaning.com/services/construction#webpage",
+       "url": "https://www.hwbcleaning.com/services/construction",
+       "name": "3-Step Subdivision & 3-Phase Post-Construction Cleanup in DFW | HWB Cleaning",
+       "description": "Backed by an in-house Safety Department and PPE & PIT-trained crews, HWB provides 3-Step Subdivision Street Cleanup and 3-Phase Post-Construction Final Cleaning in Dallas & DFW.",
+       "primaryImageOfPage": {
+         "@id": "https://www.hwbcleaning.com/services/construction#primaryimage"
+       }
+     },
+     {
+       "@type": "ImageObject",
+       "@id": "https://www.hwbcleaning.com/services/construction#primaryimage",
+       "url": "https://www.hwbcleaning.com/static/img/hero_facility_construction.webp",
+       "contentUrl": "https://www.hwbcleaning.com/static/img/hero_facility_construction.webp",
+       "name": "3-Step Subdivision & 3-Phase Post-Construction Cleanup in DFW",
+       "caption": "Division 1 transit-line cleanup for City Inspectors and Division 2 3-Phase interior building final cleans across DFW.",
+       "description": "HWB Cleaning crew in full PPE sweeping mud and gravel from a Dallas-Fort Worth subdivision street curb for City Inspection",
+       "encodingFormat": "image/webp",
+       "width": 1376,
+       "height": 768,
+       "contentLocation": {
+         "@type": "Place",
+         "name": "Dallas-Fort Worth, TX, USA"
+       },
+       "creator": {
+         "@type": "Organization",
+         "name": "HWB Cleaning Services LLC",
+         "@id": "https://www.hwbcleaning.com"
+       },
+       "copyrightNotice": "Copyright 2026 HWB Cleaning Services LLC. All Rights Reserved.",
+       "license": "https://www.hwbcleaning.com/terms",
+       "acquireLicensePage": "https://www.hwbcleaning.com/get-quote",
+       "creditText": "HWB Cleaning Services LLC"
+     },
+     {
        "@type": "Service",
-       "name": "3-Step Post-Construction Final Cleaning",
+       "name": "3-Step Subdivision & 3-Phase Post-Construction Cleanup",
        "serviceType": "Post-Construction Cleaning",
+       "image": {
+         "@id": "https://www.hwbcleaning.com/services/construction#primaryimage"
+       },
        "provider": {
          "@type": "LocalBusiness",
          "name": "HWB Cleaning Services LLC",
          "@id": "https://www.hwbcleaning.com"
        },
-       "areaServed": ["McKinney", "Frisco", "Plano", "Dallas", "Fort Worth", "Irving", "Richardson", "Allen", "Arlington", "Addison", "Waxahachie"],
-       "description": "OSHA-10/30 compliant 3-phase post-construction cleanup (Rough Clean, Final Detail Clean, and White-Glove Turnover) for commercial General Contractors."
+       "areaServed": ["Dallas", "Plano", "Frisco", "McKinney", "Prosper", "Celina", "Allen", "Richardson", "Addison", "Irving", "Denton", "Rockwall", "Southlake", "Fort Worth", "Arlington", "Grand Prairie", "Mansfield", "Waxahachie"],
+       "description": "Backed by an in-house Safety Department and PPE & PIT-trained crews, HWB provides Division 1 3-Step Subdivision Cleanup and Division 2 3-Phase Post-Construction Final Cleaning."
      },
      {
        "@type": "BreadcrumbList",
@@ -35,10 +82,10 @@
        "mainEntity": [
          {
            "@type": "Question",
-           "name": "What are the 3 phases of commercial post-construction cleanup (CSI Division 01 74 23)?",
+           "name": "What are the 3 phases of commercial post-construction cleanup?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "Phase 1 is the Rough Clean (clearing framing debris, packaging, and sweeping subfloors), Phase 2 is the Final Detail Clean (removing stickers, paint overspray, and silicone from glass, wiping all cabinetry inside and out, sanitizing restrooms, and machine-scrubbing floors), and Phase 3 is the White-Glove Touch-Up (removing settled dust 24–48 hours before owner handover and Certificate of Occupancy)."
+             "text": "Phase 1 is the Rough Clean (clearing framing debris, packaging, and sweeping subfloors), Phase 2 is the Final Detail Clean (removing stickers, paint overspray, and silicone from glass, wiping all cabinetry inside and out, sanitizing restrooms, and machine-scrubbing floors), and Phase 3 is the Final Touch-Up (removing settled dust 24–48 hours before owner handover and Certificate of Occupancy)."
            }
          },
          {
@@ -46,15 +93,15 @@
            "name": "How does HWB price commercial post-construction final cleaning bids?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "We review your architectural floor plans, finish schedules, or walk the job site with your superintendent to price each phase based on square footage, interior and exterior glass, cabinetry, floor types, and turnover deadlines."
+             "text": "HWB reviews architectural floor plans, finish schedules, or walks the job site with the project superintendent to price each phase based on square footage, interior and exterior glass, cabinetry, floor types, and turnover deadlines."
            }
          },
          {
            "@type": "Question",
-           "name": "Are HWB construction cleanup crews OSHA-certified and insured for commercial job sites?",
+           "name": "Are HWB construction cleanup crews safety-trained and insured for commercial job sites?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "Yes. HWB Cleaning Services LLC maintains a verified 0.00 TRIR safety record, OSHA-10/30 trained field supervisors, site-specific Job Hazard Analyses (JHAs), full PPE compliance, and full Commercial General Liability and Workers' Compensation coverage."
+             "text": "Yes. HWB Cleaning Services LLC maintains an in-house Safety Department, a verified 0.00 TRIR safety record, OSHA-10/30 trained field supervisors, PPE and PIT safety training around heavy equipment, and full Commercial General Liability and Workers' Compensation coverage."
            }
          },
          {
@@ -62,7 +109,7 @@
            "name": "What is included in 3-Step Neighborhood, Street, and Builder Debris Cleanup?",
            "acceptedAnswer": {
              "@type": "Answer",
-             "text": "During neighborhood home construction, our crews remove trash, lumber scraps, and packaging left by building crews, sweep streets, concrete curbs, and gutters to protect storm drains, power wash streets, sidewalks, and driveways, and complete a final neighborhood detailing sweep before developer handover."
+             "text": "During subdivision construction, HWB crews remove trash, lumber scraps, and packaging left by building trades, sweep streets, concrete curbs, and gutters so transit lines pass City Inspection, power wash streets, sidewalks, and driveways, and complete a final neighborhood detailing sweep before developer handover."
            }
          }
        ]
@@ -75,8 +122,21 @@
 {% block content %}
 <section class="services-view">
     <!-- High-Fidelity Construction Hero (Original Graphic Restored) -->
-    <div class="services-hero dark-variant" style="background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_rough_clean_ppe.webp');">
-        <div class="content-wrapper" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+    <div class="services-hero dark-variant" style="position: relative; overflow: hidden; background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/static/img/construction_rough_clean_ppe.webp');">
+        <picture style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.001;">
+            <source type="image/webp" srcset="/static/img/construction_rough_clean_ppe-640w.webp 640w, /static/img/construction_rough_clean_ppe-1024w.webp 1024w, /static/img/construction_rough_clean_ppe.webp 1408w" sizes="100vw">
+            <img src="/static/img/construction_rough_clean_ppe.webp"
+                 srcset="/static/img/construction_rough_clean_ppe-640w.webp 640w, /static/img/construction_rough_clean_ppe-1024w.webp 1024w, /static/img/construction_rough_clean_ppe.webp 1408w"
+                 sizes="100vw"
+                 alt="PPE-equipped HWB Cleaning post-construction crew executing Phase 1 Rough Clean inside a DFW commercial build"
+                 title="3-Step Subdivision & 3-Phase Post-Construction Cleanup in DFW"
+                 width="1408"
+                 height="768"
+                 fetchpriority="high"
+                 decoding="async"
+                 style="width: 100%; height: 100%; object-fit: cover;">
+        </picture>
+        <div class="content-wrapper" style="position: relative; z-index: 2; max-width: 1000px; margin: 0 auto; text-align: center;">
             <h1>3-Step Neighborhood &amp; 3-Phase Post-Construction Cleanup in DFW</h1>
             <p class="subtitle">Complete construction site cleaning for residential neighborhood developers, homebuilders, and commercial General Contractors across Dallas, Plano, Frisco, McKinney, and Fort Worth—covering active neighborhood street sweeping, builder trash and debris removal, and 3-phase interior building final cleans.</p>
             <div class="hero-ctas">
@@ -93,13 +153,13 @@
                     <img src="/static/img/construction_sweeper_servicing_street.webp" alt="HWB Construction Sweeper Site Cleanup" loading="lazy" decoding="async" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
                 <div class="split-content">
-                    <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">OSHA-Compliant Teams</span>
+                    <span style="font-size: 0.75rem; font-weight: 900; color: var(--hwb-blue); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; display: block;">In-House Safety Department &bull; PPE &amp; PIT Trained</span>
                     <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1.5rem; letter-spacing: -0.02em;">Active Neighborhood, Street &amp; Builder Debris Cleanup</h2>
-                    <p style="font-size: 1.15rem; color: var(--hwb-slate); margin-bottom: 2rem; line-height: 1.8; font-weight: 500;">During the construction of neighborhood homes and commercial developments, building crews generate daily trash, lumber scraps, mud, and dust. Our OSHA-trained teams work alongside your superintendents to haul away crew debris, sweep streets and curbs, power wash sidewalks, and detail interiors before handover.</p>
+                    <p style="font-size: 1.15rem; color: var(--hwb-slate); margin-bottom: 2rem; line-height: 1.8; font-weight: 500;">During the construction of residential subdivisions and commercial developments, building crews generate daily trash, lumber scraps, mud, and dust. Backed by HWB’s in-house Safety Department, PPE and PIT-trained teams work alongside project superintendents to haul away crew debris, keep transit lines and streets clear of mud for City Inspectors, power wash sidewalks, and detail interiors before handover.</p>
                     <ul class="hwb-checklist" style="list-style: none; padding: 0;">
-                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Builder Trash &amp; Lot Debris Removal During Home Construction</li>
-                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Street, Curb, Gutter &amp; Sidewalk Sweeping and Power Washing</li>
-                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> 3-Phase Interior Rough, Final Detail &amp; Touch-Up Cleaning (CSI 01 74 23)</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Builder Trash &amp; Lot Debris Removal During Active Construction</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Street, Curb, Gutter &amp; Transit Line Sweeping for City Inspections</li>
+                        <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> 3-Phase Interior Rough, Final Detail &amp; Touch-Up Cleaning</li>
                         <li style="margin-bottom: 1rem; font-weight: 600; color: var(--hwb-dark); display: flex; align-items: center; gap: 1rem;"><i class="fas fa-check-circle" style="color: var(--hwb-blue);"></i> Final Superintendent Walkthrough and Quality Check</li>
                     </ul>
                 </div>
@@ -108,7 +168,7 @@
             <div style="margin-bottom: 6rem;">
                 <div class="section-header" style="text-align: center; margin-bottom: 4rem;">
                     <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Division 1: 3-Step Neighborhood &amp; Street Cleanup</h2>
-                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Keeping new residential subdivisions, streets, and home sites clean throughout construction and developer handover.</p>
+                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Keeping active subdivisions, transit lines, and streets clear of debris for City Inspectors and municipal handover.</p>
                 </div>
                 
                 <!-- Restored 4-Column Aligned Grid (using 3 cards) -->
@@ -119,7 +179,7 @@
                         <div class="card-content">
                             <div class="card-badge">Step 01</div>
                             <h3>Rough Site &amp; Builder Debris Sweeping</h3>
-                            <p>During active home construction and utility setup, we clear framing trash, packaging, and building crew debris from lots, clean out concrete curbs and gutters, and sweep main roadways to protect storm drains.</p>
+                            <p>During active construction and utility setup, crews clear framing trash, packaging, and building debris from lots, clean out concrete curbs and gutters, and sweep main transit lines to protect storm drains.</p>
                         </div>
                     </div>
 
@@ -138,8 +198,8 @@
                         <div class="card-image" style="background-image: url('/static/img/construction_stage3_new.webp');"></div>
                         <div class="card-content">
                             <div class="card-badge">Step 03</div>
-                            <h3>Handover Sweep &amp; Detail</h3>
-                            <p>Conducted right before developer or municipal handover. We perform a final street sweep, clean public signs and mailboxes, and clear remaining windblown litter from trade crews for a spotless neighborhood presentation.</p>
+                            <h3>City Inspection &amp; Handover Sweep</h3>
+                            <p>Conducted right before municipal or City Inspector review. Crews perform a final street and curb sweep, clean public signs, and clear remaining windblown litter so every transit line passes inspection.</p>
                         </div>
                     </div>
                 </div>
@@ -147,8 +207,8 @@
 
             <div style="margin-bottom: 8rem;">
                 <div class="section-header" style="text-align: center; margin-bottom: 3rem;">
-                    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Division 2: 3-Phase Interior Building &amp; Home Final Clean (CSI 01 74 23)</h2>
-                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Turnkey interior post-construction cleaning for newly built homes, amenity centers, schools, medical clinics, and commercial buildings.</p>
+                    <h2 style="font-size: 2.25rem; font-weight: 800; color: var(--hwb-dark);">Division 2: 3-Phase Interior Building Final Clean</h2>
+                    <p style="font-size: 1.1rem; color: var(--hwb-slate); margin-top: 1rem;">Turnkey interior post-construction cleaning for newly built amenity centers, schools, medical clinics, offices, and commercial buildings.</p>
                 </div>
 
                 <div class="service-grid" style="grid-template-columns: repeat(3, 1fr);">
@@ -164,8 +224,8 @@
                     </div>
                     <div class="service-card" style="padding: 2rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                         <div class="card-badge" style="margin-bottom: 0.75rem;">Phase 03</div>
-                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem;">White-Glove Touch-Up (Fluff Clean)</h3>
-                        <p style="color: #475569; line-height: 1.6;">Completed 24 to 48 hours before final buyer walkthrough or Certificate of Occupancy to remove settled dust, polish glass and fixtures, and leave every room move-in ready.</p>
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 0.75rem;">Final Touch-Up (Fluff Clean)</h3>
+                        <p style="color: #475569; line-height: 1.6;">Completed 24 to 48 hours before final superintendent walkthrough or Certificate of Occupancy to remove settled dust, polish glass and fixtures, and leave every room move-in ready.</p>
                     </div>
                 </div>
 
@@ -173,20 +233,20 @@
                     <h2 style="font-size: 1.75rem; font-weight: 800; color: var(--hwb-dark); margin-bottom: 1.5rem; text-align: center;">3-Step Neighborhood &amp; 3-Phase Post-Construction Cleanup FAQs</h2>
                     <div style="display: grid; gap: 1rem; max-width: 900px; margin: 0 auto;">
                         <details open style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
-                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">What are the 3 phases of commercial post-construction cleanup (CSI Division 01 74 23)?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Phase 1 is the Rough Clean (clearing framing debris, packaging, and sweeping subfloors), Phase 2 is the Final Detail Clean (removing stickers, paint overspray, and silicone from glass, wiping all cabinetry inside and out, sanitizing restrooms, and machine-scrubbing floors), and Phase 3 is the White-Glove Touch-Up (removing settled dust 24–48 hours before owner handover and Certificate of Occupancy).</p>
+                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">What are the 3 phases of commercial post-construction cleanup?</summary>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Phase 1 is the Rough Clean (clearing framing debris, packaging, and sweeping subfloors), Phase 2 is the Final Detail Clean (removing stickers, paint overspray, and silicone from glass, wiping all cabinetry inside and out, sanitizing restrooms, and machine-scrubbing floors), and Phase 3 is the Final Touch-Up (removing settled dust 24–48 hours before owner handover and Certificate of Occupancy).</p>
                         </details>
                         <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
                             <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">How does HWB price commercial post-construction final cleaning bids?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">We review your architectural floor plans, finish schedules, or walk the job site with your superintendent to price each phase based on square footage, interior and exterior glass, cabinetry, floor types, and turnover deadlines.</p>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">HWB reviews architectural floor plans, finish schedules, or walks the job site with the project superintendent to price each phase based on square footage, interior and exterior glass, cabinetry, floor types, and turnover deadlines.</p>
                         </details>
                         <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
-                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">Are HWB construction cleanup crews OSHA-certified and insured for commercial job sites?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Yes. HWB Cleaning Services LLC maintains a verified 0.00 TRIR safety record, OSHA-10/30 trained field supervisors, site-specific Job Hazard Analyses (JHAs), full PPE compliance, and full Commercial General Liability and Workers' Compensation coverage.</p>
+                            <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">Are HWB construction cleanup crews safety-trained and insured for commercial job sites?</summary>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">Yes. HWB Cleaning Services LLC maintains an in-house Safety Department, a verified 0.00 TRIR safety record, OSHA-10/30 trained field supervisors, PPE and PIT safety training around heavy equipment, and full Commercial General Liability and Workers' Compensation coverage.</p>
                         </details>
                         <details style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.25rem 1.5rem;">
                             <summary style="font-weight: 800; color: #0f172a; cursor: pointer;">What is included in 3-Step Neighborhood, Street, and Builder Debris Cleanup?</summary>
-                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">During neighborhood home construction, our crews remove trash, lumber scraps, and packaging left by building crews, sweep streets, concrete curbs, and gutters to protect storm drains, power wash streets, sidewalks, and driveways, and complete a final neighborhood detailing sweep before developer handover.</p>
+                            <p style="margin-top: 0.75rem; color: #475569; line-height: 1.65;">During subdivision construction, HWB crews remove trash, lumber scraps, and packaging left by building trades, sweep streets, concrete curbs, and gutters so transit lines pass City Inspection, power wash streets, sidewalks, and driveways, and complete a final neighborhood detailing sweep before developer handover.</p>
                         </details>
                     </div>
                 </div>

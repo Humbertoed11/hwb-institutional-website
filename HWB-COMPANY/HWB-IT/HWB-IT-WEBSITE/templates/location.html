@@ -3,9 +3,18 @@
 {% block title %}{{ data.title | replace('&amp;', '&') | safe }}{% endblock %}
 {% block og_title %}{{ data.title | replace('&amp;', '&') }}{% endblock %}
 {% block og_description %}{{ data.meta_desc }}{% endblock %}
+{% block og_image %}{{ data.get('hero_image_canonical_url', 'https://www.hwbcleaning.com/static/img/hero_lobby.webp') }}{% endblock %}
+{% block twitter_image %}{{ data.get('hero_image_canonical_url', 'https://www.hwbcleaning.com/static/img/hero_lobby.webp') }}{% endblock %}
+{% block og_image_meta %}
+  <meta property="og:image:alt" content="{{ data.get('hero_image_alt', data.h1) }}">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="1280">
+  <meta property="og:image:height" content="698">
+  <meta name="twitter:image:alt" content="{{ data.get('hero_image_alt', data.h1) }}">
+{% endblock %}
 
 {% block head %}
-  <link rel="preload" as="image" href="/static/img/hero_lobby.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="{{ data.get('hero_image', '/static/img/hero_lobby.webp') }}" imagesrcset="{{ data.get('hero_image_srcset', '/static/img/hero_lobby.webp 1376w') }}" imagesizes="100vw" fetchpriority="high">
   <meta name="description" content="{{ data.meta_desc }}">
   <meta name="keywords" content="commercial cleaning {{ data.name | lower }}, janitorial services {{ data.name | lower }}, office cleaning {{ data.name | lower }}, floor care {{ data.name | lower }}">
   <script type="application/ld+json">
@@ -13,9 +22,52 @@
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@type": "WebPage",
+        "@id": "https://www.hwbcleaning.com{{ request.path }}#webpage",
+        "url": "https://www.hwbcleaning.com{{ request.path }}",
+        "name": {{ data.title | tojson }},
+        "description": {{ data.meta_desc | tojson }},
+        "primaryImageOfPage": {
+          "@id": "https://www.hwbcleaning.com{{ request.path }}#primaryimage"
+        }
+      },
+      {
+        "@type": "ImageObject",
+        "@id": "https://www.hwbcleaning.com{{ request.path }}#primaryimage",
+        "url": {{ data.get('hero_image_canonical_url', 'https://www.hwbcleaning.com/static/img/hero_lobby.webp') | tojson }},
+        "contentUrl": {{ data.get('hero_image_canonical_url', 'https://www.hwbcleaning.com/static/img/hero_lobby.webp') | tojson }},
+        "name": {{ data.get('hero_image_title', data.h1) | tojson }},
+        "caption": {{ data.get('hero_image_caption', data.meta_desc) | tojson }},
+        "description": {{ data.get('hero_image_alt', data.h1) | tojson }},
+        "encodingFormat": "image/webp",
+        "width": 1280,
+        "height": 698,
+        "contentLocation": {
+          "@type": "Place",
+          "name": "{{ data.name }}, TX, USA",
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": {{ data.get('geo_lat', 32.8998) | tojson }},
+            "longitude": {{ data.get('geo_lng', -97.0403) | tojson }}
+          }
+        },
+        "creator": {
+          "@type": "Organization",
+          "name": "HWB Cleaning Services LLC",
+          "@id": "https://www.hwbcleaning.com"
+        },
+        "copyrightNotice": "Copyright 2026 HWB Cleaning Services LLC. All Rights Reserved.",
+        "license": "https://www.hwbcleaning.com/terms",
+        "acquireLicensePage": "https://www.hwbcleaning.com/get-quote",
+        "creditText": "HWB Cleaning Services LLC"
+      },
+      {
         "@type": "Service",
         "name": {{ data.h1 | tojson }},
         "serviceType": "Commercial Cleaning & Janitorial Services",
+        "image": {
+          "@id": "https://www.hwbcleaning.com{{ request.path }}#primaryimage"
+        },
         "provider": {
           "@type": "LocalBusiness",
           "name": "HWB Cleaning Services LLC",
@@ -24,6 +76,11 @@
         "areaServed": {
           "@type": "City",
           "name": {{ data.name | tojson }},
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": {{ data.get('geo_lat', 32.8998) | tojson }},
+            "longitude": {{ data.get('geo_lng', -97.0403) | tojson }}
+          },
           "containedInPlace": {
             "@type": "State",
             "name": "Texas"
@@ -60,8 +117,21 @@
 
 {% block content %}
 <!-- High-Fidelity Location Hero Section -->
-<section class="services-hero light-variant" style="background-image: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.75)), url('/static/img/hero_lobby.webp');">
-    <div class="content-wrapper" style="max-width: 1000px; text-align: center;">
+<section class="services-hero light-variant" style="position: relative; overflow: hidden; background-image: linear-gradient(rgba(255,255,255,0.75), rgba(255,255,255,0.75)), url('{{ data.get('hero_image', '/static/img/hero_lobby.webp') }}');">
+    <picture style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.001;">
+        <source type="image/webp" srcset="{{ data.get('hero_image_srcset', '/static/img/hero_lobby.webp 1376w') }}" sizes="100vw">
+        <img src="{{ data.get('hero_image', '/static/img/hero_lobby.webp') }}"
+             srcset="{{ data.get('hero_image_srcset', '/static/img/hero_lobby.webp 1376w') }}"
+             sizes="100vw"
+             alt="{{ data.get('hero_image_alt', data.h1) }}"
+             title="{{ data.get('hero_image_title', data.h1) }}"
+             width="1280"
+             height="698"
+             fetchpriority="high"
+             decoding="async"
+             style="width: 100%; height: 100%; object-fit: cover;">
+    </picture>
+    <div class="content-wrapper" style="position: relative; z-index: 2; max-width: 1000px; text-align: center;">
         <h1>{{ data.h1 }}</h1>
         <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">{{ data.desc }}</p>
         <div class="hero-ctas">
@@ -111,13 +181,64 @@
 
             <!-- 4. Construction & Neighborhood Cleanup -->
             <a href="{{ url_for('services_construction') }}" class="service-card">
-                <div class="card-image" style="background-image: url('/static/img/construction_window_scraping.webp');"></div>
+                <div class="card-image" style="background-image: url('/static/img/hero_facility_construction.webp');"></div>
                 <div class="card-content">
                     <div class="card-badge">Builders &amp; GCs</div>
                     <h3>Neighborhood &amp; Final Clean</h3>
-                    <p>3-Step Neighborhood &amp; Street Cleanup during active subdivision construction plus 3-Phase CSI 01 74 23 interior final cleans in {{ data.name }}.</p>
+                    <p>3-Step Neighborhood &amp; Street Cleanup keeping transit lines clear for City Inspectors plus 3-Phase interior building final cleans in {{ data.name }}.</p>
                 </div>
             </a>
+        </div>
+
+        <!-- 8 Dedicated Facility Verticals Served in This City -->
+        <div style="margin-top: 4.5rem;">
+            <div style="text-align: center; margin-bottom: 2.25rem;">
+                <span style="display: inline-block; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 999px; padding: 0.3rem 0.9rem; font-size: 0.76rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em;">Specialized Facility Protocols</span>
+                <h2 style="font-size: 1.9rem; font-weight: 900; color: var(--slate-900); margin-top: 0.65rem;">Facilities Cleaned in {{ data.name }}, TX</h2>
+                <p style="font-size: 1.02rem; color: var(--slate-500); margin-top: 0.5rem;">Select a facility type to view cleaning standards, checklists, and the custom walkthrough process.</p>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.15rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='daycare-childcare') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Child-Safe &bull; No Sticky Floors</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Daycares &amp; Early Learning</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Custom nightly daycare cleaning in {{ data.name }}—proper chemical usage, residue-free floors, and strict lock-up security.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='schools-education') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Background-Checked Campus Crews</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Private Schools &amp; K-12</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Custom nightly classroom, cafeteria, and gym cleaning plus summer floor care for schools in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='medical-dental') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Patient-First &bull; 4-Color Microfiber</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Medical &amp; Dental Clinics</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Detailed exam-room and waiting-room cleaning with 4-color microfiber separation in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='corporate-offices') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Local Crews &bull; Strict Security</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Corporate Offices</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Dependable nightly office cleaning, spotless breakrooms, and day porters in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='auto-dealerships') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Showroom Tile &bull; Service Bays</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Auto Dealerships</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Streak-free showroom glass, residue-free glossy tile, customer lounges, and service bay scrubbing in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='churches-nonprofits') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Sanctuaries &bull; Child-Safe Nurseries</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Churches &amp; Nonprofits</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Flexible pre-Sunday and weekday cleaning for sanctuaries, child-safe nurseries, and fellowship halls in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='warehouses-industrial') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">In-House Safety Dept &bull; PIT &amp; PPE</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Warehouses &amp; Logistics</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Debris-free concrete floors that protect forklift tires, clean shift restrooms, and PIT &amp; PPE trained crews in {{ data.name }}.</p>
+                </a>
+                <a href="{{ url_for('public.facility_page', facility_slug='construction-subdivisions') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                    <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">In-House Safety Dept &bull; 3-Step &amp; 3-Phase</div>
+                    <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Construction &amp; Subdivisions</h3>
+                    <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">3-Step subdivision cleanup keeping transit lines clear for city inspections and 3-Phase interior final cleans in {{ data.name }}.</p>
+                </a>
+            </div>
         </div>
 
         {% if data.get('corridors') or data.get('zip_codes') %}

@@ -2597,14 +2597,26 @@ header.main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 2rem;
     padding: 0 var(--global-padding);
+}
+
+.logo-container {
+    flex-shrink: 0;
 }
 
 .desktop-nav {
     display: flex;
-    gap: 3.5rem;
+    gap: clamp(1.25rem, 2vw, 2.25rem);
     align-items: center;
     height: 100%;
+}
+
+.desktop-nav > a {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 700;
+    color: var(--hwb-dark);
 }
 
 .nav-item {
@@ -2612,6 +2624,7 @@ header.main-header {
     display: flex;
     align-items: center;
     position: static; /* Required for full-width mega menu */
+    flex-shrink: 0;
 }
 
 .nav-item > a {
@@ -2624,6 +2637,7 @@ header.main-header {
     height: 100%;
     display: flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .nav-item:hover > a { color: var(--hwb-blue); }
@@ -2767,12 +2781,13 @@ header.main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 2rem;
     padding: 0 40px;
 }
 
 .desktop-nav {
     display: flex;
-    gap: 3.5rem;
+    gap: clamp(1.25rem, 2vw, 2.25rem);
     align-items: center;
     height: 100%;
 }
@@ -2789,6 +2804,8 @@ header.main-header {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .nav-cta:hover {
