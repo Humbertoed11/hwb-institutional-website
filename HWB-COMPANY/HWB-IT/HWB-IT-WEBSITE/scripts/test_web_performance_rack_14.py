@@ -4171,37 +4171,30 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertEqual(r_portal_get.status_code, 200)
                 portal_html = r_portal_get.get_data(as_text=True)
                 self.assertIn('data-tin-pill-for="onb-ein-ssn"', portal_html)
+                self.assertIn('Business EIN Only (XX-XXXXXXX)', portal_html)
+                self.assertNotIn('SSN / ITIN (XXX-XX-XXXX)', portal_html)
                 self.assertIn('id="btn-w9-mode-digital"', portal_html)
                 self.assertIn('id="receipt-quick-coi-upload-box"', portal_html)
                 self.assertIn('Single-Member LLC (Disregarded Entity)', portal_html)
 
-                # Reject invalid dummy TIN ('123456789') on submit
-                r_bad_submit = self.client.post(
-                    f"/onboard/subcontractor/{tok}/submit",
+                # SEC-003: Uploading a W-9 PDF containing a personal SSN must extract address but strip SSN and never store SSN-bearing PDF
+                ssn_w9_bytes = b"%PDF-1.4\nForm W-9\n1. Name: Maria Vega\nSSN: 453-21-9876\n5. Address: 800 Ross Ave\n6. Dallas, TX 75202\n"
+                r_ssn_w9 = self.client.post(
+                    f"/onboard/subcontractor/{tok}/extract-document",
                     data={
-                        "w9_mode": "digital",
-                        "company_name": f"Vega Single Member {uid} LLC",
-                        "legal_entity_name": "Maria Vega",
-                        "contact_name": "Maria Vega",
-                        "email": f"vega.{uid}@example.com",
-                        "phone": "2145550174",
-                        "tax_classification": "Single-Member LLC (Disregarded Entity)",
-                        "tax_id_mode": "ssn",
-                        "ein_or_ssn": "123456789",
-                        "street_address": "800 Ross Ave",
-                        "city": "Dallas",
-                        "state": "TX",
-                        "zip_code": "75202",
-                        "msa_signer_name": "Maria Vega",
-                        "msa_signer_title": "Managing Member",
-                        "msa_agreed": "true",
-                        "dwc83_agreed": "true",
+                        "doc_type": "w9",
+                        "file": (io.BytesIO(ssn_w9_bytes), "w9_ssn.pdf"),
                     },
+                    content_type="multipart/form-data",
                 )
-                self.assertEqual(r_bad_submit.status_code, 400)
+                self.assertEqual(r_ssn_w9.status_code, 200)
+                ssn_w9_json = r_ssn_w9.get_json()
+                self.assertTrue(ssn_w9_json["extracted"].get("ssn_rejected_policy"))
+                self.assertEqual(ssn_w9_json["extracted"].get("ein_or_ssn"), "")
+                self.assertIsNone(ssn_w9_json.get("vault_receipt"))
 
-                # Submit with Digital Substitute W-9 mode + valid Single-Member LLC owner SSN ('453219876')
-                r_good_submit = self.client.post(
+                # Reject personal SSN ('453-21-9876' / tax_id_mode='ssn') on submit under SEC-003 Commercial EIN-Only Policy
+                r_ssn_submit = self.client.post(
                     f"/onboard/subcontractor/{tok}/submit",
                     data={
                         "w9_mode": "digital",
@@ -4223,10 +4216,61 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                         "dwc83_agreed": "true",
                     },
                 )
+                self.assertEqual(r_ssn_submit.status_code, 400)
+                self.assertEqual(r_ssn_submit.get_json().get("code"), "SSN_NOT_PERMITTED_EIN_REQUIRED")
+
+                # Reject invalid dummy EIN ('123456789') on submit
+                r_bad_submit = self.client.post(
+                    f"/onboard/subcontractor/{tok}/submit",
+                    data={
+                        "w9_mode": "digital",
+                        "company_name": f"Vega Single Member {uid} LLC",
+                        "legal_entity_name": "Maria Vega",
+                        "contact_name": "Maria Vega",
+                        "email": f"vega.{uid}@example.com",
+                        "phone": "2145550174",
+                        "tax_classification": "Single-Member LLC (Disregarded Entity)",
+                        "tax_id_mode": "ein",
+                        "ein_or_ssn": "123456789",
+                        "street_address": "800 Ross Ave",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75202",
+                        "msa_signer_name": "Maria Vega",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_bad_submit.status_code, 400)
+
+                # Submit with Digital Substitute W-9 mode + valid Single-Member LLC Business EIN ('842910455')
+                r_good_submit = self.client.post(
+                    f"/onboard/subcontractor/{tok}/submit",
+                    data={
+                        "w9_mode": "digital",
+                        "company_name": f"Vega Single Member {uid} LLC",
+                        "legal_entity_name": "Maria Vega",
+                        "contact_name": "Maria Vega",
+                        "email": f"vega.{uid}@example.com",
+                        "phone": "2145550174",
+                        "tax_classification": "Single-Member LLC (Disregarded Entity)",
+                        "tax_id_mode": "ein",
+                        "ein_or_ssn": "842910455",
+                        "street_address": "800 Ross Ave",
+                        "city": "Dallas",
+                        "state": "TX",
+                        "zip_code": "75202",
+                        "msa_signer_name": "Maria Vega",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                    },
+                )
                 self.assertEqual(r_good_submit.status_code, 200, r_good_submit.get_data(as_text=True))
                 good_json = r_good_submit.get_json()
                 self.assertEqual(good_json["status"], "success")
-                self.assertEqual(good_json["masked_tin"], "***-**-9876")
+                self.assertEqual(good_json["masked_tin"], "**-***0455")
                 self.assertEqual(good_json["onboarding_status"], "Pending COI")
 
                 # Verify generated Substitute W-9 PDF is vaulted and downloadable
@@ -4250,11 +4294,11 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 q_json = r_quick_coi.get_json()
                 self.assertEqual(q_json["onboarding_status"], "Docs Under Review")
 
-                # Pillar 7: Audited Backoffice TIN Reveal decrypts '453-21-9876' and logs CRITICAL audit event
+                # Pillar 7: Audited Backoffice TIN Reveal decrypts '84-2910455' and logs CRITICAL audit event
                 r_reveal = self.client.post(f"/api/v1/workforce/subcontractors/{created_sub_id}/reveal-tin")
                 self.assertEqual(r_reveal.status_code, 200)
                 rev_json = r_reveal.get_json()
-                self.assertEqual(rev_json["tin"], "453-21-9876")
+                self.assertEqual(rev_json["tin"], "84-2910455")
                 self.assertTrue(rev_json["has_full_tin"])
 
                 with conn.cursor() as cur:

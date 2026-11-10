@@ -2187,59 +2187,125 @@ def subcontractor_onboarding_extract(token: str):
             clean_fn = secure_filename(f_obj.filename)
             tag = 'W9' if 'w9' in doc_type else 'COI'
             safe_name = f"sub_{sub_id}_{tag}_{int(dt_cls.now().timestamp())}_{clean_fn}"
-            vault_receipt = deposit_subcontractor_document_vault(
-                conn=conn,
-                subcontractor_id=sub_id,
-                doc_type='w9' if tag == 'W9' else 'coi',
-                file_key=safe_name,
-                original_filename=clean_fn,
-                raw_bytes=raw_bytes,
-                mime_type=f_obj.mimetype or 'application/pdf',
-                uploaded_by='subcontractor_portal_extract',
-                uploaded_ip=client_ip,
-                vault_dir=vault_dir,
-            )
 
             extracted = extract_subcontractor_document_metadata(
                 raw_bytes, clean_fn, doc_type=doc_type, partner_row=partner
             )
 
-            if tag == 'W9':
-                raw_tin = extracted.get('ein_or_ssn') or ''
-                masked_tin, last4, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_tin)
-                cur.execute(
-                    '''
-                    UPDATE "SubcontractorPartners"
-                    SET w9_file_url = %s,
-                        w9_status = 'File Uploaded (Review)',
-                        legal_entity_name = COALESCE(NULLIF(%s, ''), legal_entity_name),
-                        tax_classification = COALESCE(NULLIF(%s, ''), tax_classification),
-                        street_address = COALESCE(NULLIF(%s, ''), street_address),
-                        city = COALESCE(NULLIF(%s, ''), city),
-                        state = COALESCE(NULLIF(%s, ''), state),
-                        zip_code = COALESCE(NULLIF(%s, ''), zip_code),
-                        ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
-                        w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
-                        w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
-                        w9_extracted_json = %s,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s;
-                    ''',
-                    (
-                        safe_name,
-                        extracted.get('legal_entity_name') or '',
-                        extracted.get('tax_classification') or '',
-                        extracted.get('street_address') or '',
-                        extracted.get('city') or '',
-                        extracted.get('state') or '',
-                        extracted.get('zip_code') or '',
-                        masked_tin or raw_tin,
-                        last4,
-                        encrypted_tin,
-                        json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
-                        sub_id,
-                    ),
+            # SEC-003 Commercial Business EIN-Only Policy (No Personal SSNs Stored):
+            # If an uploaded W-9 PDF contains a personal Social Security Number (XXX-XX-XXXX / tax_id_mode == 'ssn'),
+            # we strip the SSN and do NOT store the SSN-bearing W-9 PDF bytes in PostgreSQL.
+            import re as _re_tin
+            raw_extracted_tin = str(extracted.get('ein_or_ssn') or '').strip()
+            is_extracted_ssn = (
+                tag == 'W9'
+                and (
+                    str(extracted.get('tax_id_mode') or '').lower() == 'ssn'
+                    or bool(_re_tin.match(r'^(\*{3}|\d{3})-(\*{2}|\d{2})-\d{4}$', raw_extracted_tin))
                 )
+            )
+            vault_receipt = None
+            if not is_extracted_ssn:
+                vault_receipt = deposit_subcontractor_document_vault(
+                    conn=conn,
+                    subcontractor_id=sub_id,
+                    doc_type='w9' if tag == 'W9' else 'coi',
+                    file_key=safe_name,
+                    original_filename=clean_fn,
+                    raw_bytes=raw_bytes,
+                    mime_type=f_obj.mimetype or 'application/pdf',
+                    uploaded_by='subcontractor_portal_extract',
+                    uploaded_ip=client_ip,
+                    vault_dir=vault_dir,
+                )
+
+            if tag == 'W9':
+                if is_extracted_ssn:
+                    extracted['ein_or_ssn'] = ''
+                    extracted['ein_masked'] = ''
+                    extracted['ein_last4'] = ''
+                    extracted['tax_id_mode'] = 'ein'
+                    extracted['ssn_rejected_policy'] = True
+                    extracted['ssn_rejected_message'] = (
+                        'Commercial Privacy Policy: For your privacy protection, HWB Cleaning does not collect or store '
+                        'personal Social Security Numbers (SSN). Your business name and address were auto-filled — please '
+                        'enter a 9-digit Business EIN (XX-XXXXXXX) below (or get a free IRS EIN in 2 minutes at irs.gov/ein).'
+                    )
+                    try:
+                        from core.services.security_logger import log_security_event
+                        log_security_event(
+                            event_category='DATA_LIFECYCLE',
+                            event_action='SUBCONTRACTOR_W9_SSN_REJECTED_BY_POLICY',
+                            severity='INFO',
+                            endpoint='/onboard/subcontractor/[REDACTED_TOKEN]/extract-document',
+                            details={
+                                'subcontractor_id': sub_id,
+                                'policy': 'SEC-003 Commercial EIN-Only',
+                                'ssn_persisted': False,
+                            },
+                        )
+                    except Exception:
+                        pass
+                    cur.execute(
+                        '''
+                        UPDATE "SubcontractorPartners"
+                        SET legal_entity_name = COALESCE(NULLIF(%s, ''), legal_entity_name),
+                            tax_classification = COALESCE(NULLIF(%s, ''), tax_classification),
+                            street_address = COALESCE(NULLIF(%s, ''), street_address),
+                            city = COALESCE(NULLIF(%s, ''), city),
+                            state = COALESCE(NULLIF(%s, ''), state),
+                            zip_code = COALESCE(NULLIF(%s, ''), zip_code),
+                            w9_extracted_json = %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                        ''',
+                        (
+                            extracted.get('legal_entity_name') or '',
+                            extracted.get('tax_classification') or '',
+                            extracted.get('street_address') or '',
+                            extracted.get('city') or '',
+                            extracted.get('state') or '',
+                            extracted.get('zip_code') or '',
+                            json.dumps(extracted),
+                            sub_id,
+                        ),
+                    )
+                else:
+                    raw_tin = extracted.get('ein_or_ssn') or ''
+                    masked_tin, last4, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_tin, tax_id_mode='ein')
+                    cur.execute(
+                        '''
+                        UPDATE "SubcontractorPartners"
+                        SET w9_file_url = %s,
+                            w9_status = 'File Uploaded (Review)',
+                            legal_entity_name = COALESCE(NULLIF(%s, ''), legal_entity_name),
+                            tax_classification = COALESCE(NULLIF(%s, ''), tax_classification),
+                            street_address = COALESCE(NULLIF(%s, ''), street_address),
+                            city = COALESCE(NULLIF(%s, ''), city),
+                            state = COALESCE(NULLIF(%s, ''), state),
+                            zip_code = COALESCE(NULLIF(%s, ''), zip_code),
+                            ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
+                            w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
+                            w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                            w9_extracted_json = %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s;
+                        ''',
+                        (
+                            safe_name,
+                            extracted.get('legal_entity_name') or '',
+                            extracted.get('tax_classification') or '',
+                            extracted.get('street_address') or '',
+                            extracted.get('city') or '',
+                            extracted.get('state') or '',
+                            extracted.get('zip_code') or '',
+                            masked_tin or raw_tin,
+                            last4,
+                            encrypted_tin,
+                            json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
+                            sub_id,
+                        ),
+                    )
             else:
                 exp_val = extracted.get('coi_expiration_date') or None
                 already_signed = bool(partner.get('msa_signed'))
@@ -2407,6 +2473,7 @@ def subcontractor_onboarding_submit(token: str):
             coi_ext_data = {}
 
             # Handle direct file attachments if not already uploaded via AJAX
+            import re as _re_tin_submit
             from core.security import inspect_and_sanitize_file_upload
             if 'w9_file' in request.files and request.files['w9_file'].filename:
                 wf = request.files['w9_file']
@@ -2416,6 +2483,23 @@ def subcontractor_onboarding_submit(token: str):
                     if not w_airlock.get('allowed'):
                         return jsonify({'status': 'error', 'message': f"W-9 rejected by security airlock: {w_airlock.get('rejection_reason')}"}), 400
                     clean_wfn = secure_filename(wf.filename)
+                    w9_ext_data = extract_subcontractor_document_metadata(
+                        w_bytes, clean_wfn, doc_type='w9', partner_row=partner
+                    )
+                    ext_tin_str = str(w9_ext_data.get('ein_or_ssn') or '').strip()
+                    if (
+                        str(w9_ext_data.get('tax_id_mode') or '').lower() == 'ssn'
+                        or bool(_re_tin_submit.match(r'^(\*{3}|\d{3})-(\*{2}|\d{2})-\d{4}$', ext_tin_str))
+                    ):
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'SSN_NOT_PERMITTED_EIN_REQUIRED',
+                            'message': (
+                                'Commercial Privacy Policy: For your privacy protection, HWB Cleaning does not collect or store '
+                                'personal Social Security Numbers (SSN). Please provide a 9-digit Federal Business EIN (XX-XXXXXXX) '
+                                'or obtain a free IRS EIN in 2 minutes at irs.gov/ein.'
+                            ),
+                        }), 400
                     w9_file_url = f"sub_{sub_id}_W9_{int(dt_cls.now().timestamp())}_{clean_wfn}"
                     deposit_subcontractor_document_vault(
                         conn=conn,
@@ -2428,9 +2512,6 @@ def subcontractor_onboarding_submit(token: str):
                         uploaded_by='subcontractor_portal_submit',
                         uploaded_ip=extract_client_ip(),
                         vault_dir=vault_dir,
-                    )
-                    w9_ext_data = extract_subcontractor_document_metadata(
-                        w_bytes, clean_wfn, doc_type='w9', partner_row=partner
                     )
 
             if 'coi_file' in request.files and request.files['coi_file'].filename:
@@ -2468,7 +2549,7 @@ def subcontractor_onboarding_submit(token: str):
             company_name = (request.form.get('company_name') or w9_ext_data.get('company_name') or partner.get('company_name') or '').strip()
             legal_entity_name = (request.form.get('legal_entity_name') or w9_ext_data.get('legal_entity_name') or partner.get('legal_entity_name') or partner.get('contact_name') or '').strip()
             tax_classification = (request.form.get('tax_classification') or w9_ext_data.get('tax_classification') or partner.get('tax_classification') or 'LLC').strip()
-            tax_id_mode = (request.form.get('tax_id_mode') or w9_ext_data.get('tax_id_mode') or '').strip().lower() or None
+            requested_tax_id_mode = (request.form.get('tax_id_mode') or w9_ext_data.get('tax_id_mode') or '').strip().lower()
 
             raw_tin_candidate = (
                 request.form.get('ein_or_ssn')
@@ -2476,10 +2557,41 @@ def subcontractor_onboarding_submit(token: str):
                 or partner.get('ein_or_ssn')
                 or ''
             ).strip()
+
+            # SEC-003 Commercial Business EIN-Only Enforcement (Zero Personal SSN Collection):
+            if (
+                requested_tax_id_mode == 'ssn'
+                or bool(_re_tin_submit.match(r'^(\*{3}|\d{3})-(\*{2}|\d{2})-\d{4}$', raw_tin_candidate))
+            ):
+                try:
+                    log_security_event(
+                        event_category='DATA_LIFECYCLE',
+                        event_action='SUBCONTRACTOR_SUBMIT_SSN_REJECTED_BY_POLICY',
+                        severity='INFO',
+                        endpoint='/onboard/subcontractor/[REDACTED_TOKEN]/submit',
+                        status_code=400,
+                        details={
+                            'subcontractor_id': sub_id,
+                            'policy': 'SEC-003 Commercial EIN-Only',
+                            'ssn_persisted': False,
+                        },
+                    )
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'error',
+                    'code': 'SSN_NOT_PERMITTED_EIN_REQUIRED',
+                    'message': (
+                        'Commercial Privacy Policy: For your privacy protection, HWB Cleaning does not collect or store '
+                        'personal Social Security Numbers (SSN). Please enter a 9-digit Federal Business EIN (XX-XXXXXXX). '
+                        'Sole proprietors and Single-Member LLCs can obtain a free EIN online in 2 minutes at irs.gov/ein.'
+                    ),
+                }), 400
+
             tin_valid, tin_val_or_err, resolved_tin_mode = validate_federal_tax_id(
                 raw_tin_candidate,
-                tax_id_mode=tax_id_mode,
-                tax_classification=tax_classification,
+                tax_id_mode='ein',
+                tax_classification='LLC',
                 allow_masked_existing=True,
             )
             if not tin_valid:
@@ -2490,12 +2602,12 @@ def subcontractor_onboarding_submit(token: str):
 
             raw_ein_input = clean_ein_or_ssn(
                 tin_val_or_err,
-                tax_classification=tax_classification,
-                tax_id_mode=resolved_tin_mode,
+                tax_classification='LLC',
+                tax_id_mode='ein',
             )
             masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
                 raw_ein_input,
-                tax_id_mode=resolved_tin_mode,
+                tax_id_mode='ein',
             )
             ein_or_ssn = masked_tin or raw_ein_input
             street_address = (request.form.get('street_address') or w9_ext_data.get('street_address') or partner.get('street_address') or '').strip()

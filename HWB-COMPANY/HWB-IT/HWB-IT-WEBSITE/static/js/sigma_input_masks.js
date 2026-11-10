@@ -42,6 +42,10 @@
 
     function detectTaxIdMode(inputEl, explicitTaxClassSelectId) {
         if (!inputEl) return "ein";
+        if (inputEl.getAttribute("data-ein-only") === "true") {
+            inputEl.setAttribute("data-tax-mode", "ein");
+            return "ein";
+        }
         const rawVal = (inputEl.value || "").trim();
         if (/^[0-9*•]{3}-[0-9*•]{2}-[0-9*•]{1,4}$/.test(rawVal)) {
             inputEl.setAttribute("data-tax-mode", "ssn");
@@ -62,10 +66,6 @@
             "onb-tax-class";
         const sel = document.getElementById(selectId);
         if (sel && sel.value) {
-            const v = sel.value.toLowerCase();
-            if (v.indexOf("individual") !== -1 || v.indexOf("sole") !== -1 || v.indexOf("ssn") !== -1) {
-                return "ssn";
-            }
             return "ein";
         }
         return "ein";
@@ -198,7 +198,7 @@
             } else {
                 const prefix = digits.slice(0, 2);
                 if (INVALID_EIN_PREFIXES[prefix]) {
-                    const msg = "Prefix '" + prefix + "' is not a valid IRS EIN campus prefix. If entering a Social Security Number, click 'SSN / ITIN (XXX-XX-XXXX)' above.";
+                    const msg = "Prefix '" + prefix + "' is not a valid IRS Business EIN campus prefix. Commercial privacy policy requires a 9-digit Business EIN (XX-XXXXXXX).";
                     if (fbEl) {
                         fbEl.style.display = "block";
                         fbEl.style.color = "#dc2626";
@@ -222,7 +222,7 @@
             if (fbEl) {
                 fbEl.style.display = "block";
                 fbEl.style.color = "#15803d";
-                fbEl.textContent = "✓ Valid 9-digit " + (mode === "ssn" ? "SSN / ITIN (XXX-XX-XXXX)" : "IRS EIN (XX-XXXXXXX)") + " format verified.";
+                fbEl.textContent = "✓ Valid 9-digit " + (mode === "ssn" ? "SSN / ITIN (XXX-XX-XXXX)" : "IRS Business EIN (XX-XXXXXXX)") + " format verified.";
             }
             input.setCustomValidity("");
             return { valid: true, message: "" };
@@ -234,25 +234,24 @@
 
     /**
      * Adaptive Federal Tax ID Mask:
-     *  - Business Entities (LLC, S-Corp, C-Corp, Partnership): XX-XXXXXXX (maxlength 10)
-     *  - Individual / Sole Proprietor or SSN pill selected: XXX-XX-XXXX (maxlength 11)
-     *  - Preserves server-masked tokens (**-***0455 / ***-**-9012) until user edits
+     *  - Commercial Business EIN-Only fields (data-ein-only="true"): strictly XX-XXXXXXX (maxlength 10)
+     *  - Preserves server-masked tokens (**-***0455) until user edits
      */
     function maskTaxIdInput(elOrEvent, taxClassSelectId) {
         const input = resolveInput(elOrEvent);
         if (!input) return;
 
         const raw = input.value || "";
-        // Auto-detect pasted XXX-XX-XXXX vs XX-XXXXXXX
-        if (/^\d{3}-\d{2}-\d{4}$/.test(raw.trim())) {
+        const isEinOnly = input.getAttribute("data-ein-only") === "true";
+        if (!isEinOnly && /^\d{3}-\d{2}-\d{4}$/.test(raw.trim())) {
             input.setAttribute("data-tax-mode", "ssn");
             updateTaxModePillsUI(input, "ssn");
-        } else if (/^\d{2}-\d{7}$/.test(raw.trim())) {
+        } else if (/^\d{2}-\d{7}$/.test(raw.trim()) || isEinOnly) {
             input.setAttribute("data-tax-mode", "ein");
             updateTaxModePillsUI(input, "ein");
         }
 
-        const mode = detectTaxIdMode(input, taxClassSelectId);
+        const mode = isEinOnly ? "ein" : detectTaxIdMode(input, taxClassSelectId);
         input.setAttribute("inputmode", "numeric");
         input.setAttribute("maxlength", mode === "ssn" ? "11" : "10");
 
@@ -289,8 +288,10 @@
     }
 
     /**
-     * Synchronizes the Tax ID field placeholder, format badge, pill toggle, and W-9 Line 1/2
+     * Synchronizes the Tax ID field placeholder, format badge, and W-9 Line 1/2
      * helper labels whenever the user switches the Federal Tax Classification dropdown.
+     * Under Fortune 500 Commercial EIN-Only Policy (SEC-003), all 1099 subcontractor
+     * classifications use a 9-digit Business EIN (XX-XXXXXXX).
      */
     function syncTaxClassificationMask(selectElOrId, targetInputId) {
         const sel =
@@ -304,22 +305,14 @@
         const isSoleProp = tcVal.indexOf("individual") !== -1 || tcVal.indexOf("sole") !== -1;
         const isSingleMemberLlc = tcVal.indexOf("single-member") !== -1 || tcVal.indexOf("disregarded") !== -1;
 
-        // If Single-Member LLC and user already clicked SSN pill, keep their choice; otherwise set default
-        let targetMode = isSoleProp ? "ssn" : "ein";
-        if (isSingleMemberLlc && input.getAttribute("data-user-selected-mode") === "true") {
-            targetMode = input.getAttribute("data-tax-mode") === "ssn" ? "ssn" : "ein";
-        }
-
+        const targetMode = "ein";
         input.setAttribute("data-tax-mode", targetMode);
-        input.setAttribute("maxlength", targetMode === "ssn" ? "11" : "10");
-        input.setAttribute(
-            "placeholder",
-            targetMode === "ssn" ? "XXX-XX-XXXX (9-Digit SSN / ITIN)" : "XX-XXXXXXX (9-Digit EIN)"
-        );
+        input.setAttribute("maxlength", "10");
+        input.setAttribute("placeholder", "XX-XXXXXXX (9-Digit Business EIN)");
 
         updateTaxModePillsUI(input, targetMode);
 
-        // Update dynamic W-9 Line 1 / Line 2 labels and Single-Member LLC guidance banner if present
+        // Update dynamic W-9 Line 1 / Line 2 labels and Single-Member LLC / Sole Proprietor guidance banner
         const legalLabel = document.getElementById("onb-legal-entity-label");
         const legalHint = document.getElementById("onb-legal-entity-hint");
         const smLlcBanner = document.getElementById("onb-single-member-llc-tip");
@@ -333,16 +326,14 @@
             }
         }
         if (legalHint) {
-            if (isSoleProp) {
-                legalHint.textContent = "Enter your personal legal name exactly as shown on your tax return. Put your DBA / trade name in Business Name on the left.";
-            } else if (isSingleMemberLlc) {
-                legalHint.textContent = "Single-Member LLC: Enter the LLC's EIN (XX-XXXXXXX), or click 'SSN / ITIN' above if filing under the owner's personal Social Security Number.";
+            if (isSoleProp || isSingleMemberLlc) {
+                legalHint.textContent = "Enter your legal name on Line 1 and your 9-digit Business EIN (XX-XXXXXXX) on the right (personal SSNs are not collected).";
             } else {
                 legalHint.textContent = "Must match Line 1 of your IRS Form W-9 for 1099-NEC filing.";
             }
         }
         if (smLlcBanner) {
-            smLlcBanner.style.display = isSingleMemberLlc ? "block" : "none";
+            smLlcBanner.style.display = "block";
         }
 
         if (input.value && !isVaultMaskedValue(input.value)) {

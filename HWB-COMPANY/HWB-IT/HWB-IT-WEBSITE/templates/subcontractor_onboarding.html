@@ -339,45 +339,43 @@
                         {% set raw_partner_tin = partner.ein_or_ssn or '' %}
                         {% set is_indiv = ('individual' in tc|lower or 'sole' in tc|lower) %}
                         {% set is_sm_llc = ('single-member' in tc|lower or 'disregarded' in tc|lower) %}
-                        {% set is_ssn_tin = (is_indiv or raw_partner_tin.startswith('***-')) %}
                         {% set is_masked_tin = ('*' in raw_partner_tin) %}
                         <select id="onb-tax-class" name="tax_classification" onchange="syncTaxClassificationMask(this, 'onb-ein-ssn')" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; background: #fff; box-sizing: border-box;">
                             <option value="LLC" {% if 'llc' in tc|lower and not is_sm_llc %}selected{% endif %}>Limited Liability Company (LLC)</option>
-                            <option value="Single-Member LLC (Disregarded Entity)" {% if is_sm_llc %}selected{% endif %}>Single-Member LLC (Disregarded Entity — EIN or Owner SSN)</option>
-                            <option value="Individual / Sole Proprietor" {% if is_indiv %}selected{% endif %}>Individual / Sole Proprietor (SSN or EIN)</option>
+                            <option value="Single-Member LLC (Disregarded Entity)" {% if is_sm_llc %}selected{% endif %}>Single-Member LLC (Disregarded Entity — Business EIN Required)</option>
+                            <option value="Individual / Sole Proprietor" {% if is_indiv %}selected{% endif %}>Individual / Sole Proprietor (Business EIN Required)</option>
                             <option value="S Corporation" {% if 's corp' in tc|lower %}selected{% endif %}>S Corporation</option>
                             <option value="C Corporation" {% if 'c corp' in tc|lower %}selected{% endif %}>C Corporation</option>
                             <option value="Partnership" {% if 'partner' in tc|lower %}selected{% endif %}>Partnership</option>
                         </select>
-                        <div id="onb-single-member-llc-tip" style="display: {% if is_sm_llc %}block{% else %}none{% endif %}; margin-top: 0.35rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.4rem 0.65rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">
-                            <i class="fas fa-info-circle"></i> Single-Member LLCs can enter either their LLC's <strong>EIN (XX-XXXXXXX)</strong> or click <strong>SSN / ITIN</strong> on the right to enter the owner's Social Security Number.
+                        <div id="onb-single-member-llc-tip" style="display: block; margin-top: 0.35rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.45rem 0.65rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; line-height: 1.4;">
+                            <i class="fas fa-shield-alt"></i> <strong>Commercial Privacy Policy (No Personal SSNs):</strong> For your privacy protection, HWB Cleaning only accepts 9-digit <strong>Business EINs (XX-XXXXXXX)</strong> and never collects personal Social Security Numbers. Need an EIN? <a href="https://www.irs.gov/businesses/small-businesses-self-employed/get-an-employer-identification-number" target="_blank" rel="noopener noreferrer" style="color: #1d4ed8; text-decoration: underline; font-weight: 800;">Get a free IRS Business EIN online in 2 minutes &rarr;</a>
                         </div>
                     </div>
                     <div>
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem;">
                             <label for="onb-ein-ssn" style="font-size: 0.78rem; font-weight: 700; color: #334155; margin: 0;">
-                                Federal Tax ID (EIN or SSN) *
+                                Federal Business EIN (XX-XXXXXXX) *
                             </label>
                             <div style="display: inline-flex; align-items: center; gap: 0.25rem;">
-                                <button type="button" data-tin-pill-for="onb-ein-ssn" data-tin-mode="ein" onclick="setTaxIdMode('onb-ein-ssn', 'ein', 'onb-tax-id-format-badge')" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid {% if not is_ssn_tin %}#1d4ed8{% else %}#cbd5e1{% endif %}; background: {% if not is_ssn_tin %}#1d4ed8{% else %}#ffffff{% endif %}; color: {% if not is_ssn_tin %}#ffffff{% else %}#475569{% endif %}; cursor: pointer;">
-                                    EIN (XX-XXXXXXX)
-                                </button>
-                                <button type="button" data-tin-pill-for="onb-ein-ssn" data-tin-mode="ssn" onclick="setTaxIdMode('onb-ein-ssn', 'ssn', 'onb-tax-id-format-badge')" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid {% if is_ssn_tin %}#1d4ed8{% else %}#cbd5e1{% endif %}; background: {% if is_ssn_tin %}#1d4ed8{% else %}#ffffff{% endif %}; color: {% if is_ssn_tin %}#ffffff{% else %}#475569{% endif %}; cursor: pointer;">
-                                    SSN / ITIN (XXX-XX-XXXX)
-                                </button>
-                                <span id="onb-tax-id-format-badge" style="font-size: 0.68rem; font-weight: 800; color: #6d28d9; background: #ede9fe; padding: 0.1rem 0.45rem; border-radius: 4px;">{% if is_ssn_tin %}Format: XXX-XX-XXXX (SSN){% else %}Format: XX-XXXXXXX (EIN){% endif %}</span>
+                                <span data-tin-pill-for="onb-ein-ssn" data-tin-mode="ein" style="font-size: 0.68rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid #1d4ed8; background: #1d4ed8; color: #ffffff;">
+                                    Business EIN Only (XX-XXXXXXX)
+                                </span>
+                                <span id="onb-tax-id-format-badge" style="font-size: 0.68rem; font-weight: 800; color: #065f46; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 0.1rem 0.45rem; border-radius: 4px;">No Personal SSNs</span>
                             </div>
                         </div>
-                        <input type="hidden" id="onb-tax-id-mode" name="tax_id_mode" value="{% if is_ssn_tin %}ssn{% else %}ein{% endif %}">
+                        <input type="hidden" id="onb-tax-id-mode" name="tax_id_mode" value="ein">
                         {% if is_masked_tin %}
                         <div id="onb-locked-tin-banner" style="display: flex; align-items: center; justify-content: space-between; background: #ecfdf5; border: 1px solid #86efac; border-radius: 6px; padding: 0.35rem 0.65rem; margin-bottom: 0.35rem; font-size: 0.74rem; font-weight: 800; color: #065f46;">
-                            <span><i class="fas fa-lock"></i> Verified Tax ID on File ({{ raw_partner_tin }})</span>
+                            <span><i class="fas fa-lock"></i> Verified Business EIN on File ({{ raw_partner_tin }})</span>
+                            {% if not partner.msa_signed %}
                             <button type="button" onclick="unlockMaskedTaxIdField()" style="background: #ffffff; border: 1px solid #059669; color: #065f46; font-size: 0.68rem; font-weight: 800; padding: 0.12rem 0.5rem; border-radius: 4px; cursor: pointer;">
-                                Change Tax ID
+                                Change EIN
                             </button>
+                            {% endif %}
                         </div>
                         {% endif %}
-                        <input type="text" id="onb-ein-ssn" name="ein_or_ssn" required value="{{ partner.ein_or_ssn or '' }}" {% if is_masked_tin %}readonly{% endif %} oninput="maskTaxIdInput(this)" maxlength="{% if is_ssn_tin %}11{% else %}10{% endif %}" inputmode="numeric" autocomplete="off" data-tax-mode="{% if is_ssn_tin %}ssn{% else %}ein{% endif %}" placeholder="{% if is_ssn_tin %}XXX-XX-XXXX (9-Digit SSN){% else %}XX-XXXXXXX (9-Digit EIN){% endif %}" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; font-family: monospace; letter-spacing: 0.04em; box-sizing: border-box;">
+                        <input type="text" id="onb-ein-ssn" name="ein_or_ssn" required value="{{ partner.ein_or_ssn or '' }}" {% if is_masked_tin or partner.msa_signed %}readonly{% endif %} oninput="maskTaxIdInput(this)" maxlength="10" inputmode="numeric" autocomplete="off" data-tax-mode="ein" data-ein-only="true" placeholder="XX-XXXXXXX (9-Digit Business EIN)" class="sigma-input" style="width: 100%; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.75rem; font-size: 0.9rem; font-family: monospace; letter-spacing: 0.04em; box-sizing: border-box;">
                         <div id="onb-ein-validation-msg" style="display: none; font-size: 0.73rem; font-weight: 700; margin-top: 0.25rem;"></div>
                     </div>
                 </div>
@@ -814,8 +812,8 @@ async function handleDocumentAutoExtract(docType, fileInput) {
                         tinEl.removeAttribute('readonly');
                         tinEl.value = ext.ein_or_ssn;
                     }
-                    if (ext.tax_id_mode && typeof setTaxIdMode === 'function') {
-                        setTaxIdMode('onb-ein-ssn', ext.tax_id_mode, 'onb-tax-id-format-badge');
+                    if (typeof setTaxIdMode === 'function') {
+                        setTaxIdMode('onb-ein-ssn', 'ein', 'onb-tax-id-format-badge');
                     }
                 }
                 if (ext.tax_classification) {
@@ -833,15 +831,32 @@ async function handleDocumentAutoExtract(docType, fileInput) {
                     maskTaxIdInput(document.getElementById('onb-ein-ssn'));
                 }
                 syncContractPreview();
-                if (badgeEl) {
-                    badgeEl.textContent = 'W-9 Uploaded & Extracted ✓';
-                    badgeEl.style.background = '#ecfdf5';
-                    badgeEl.style.color = '#065f46';
-                }
-                if (feedbackEl) {
-                    feedbackEl.style.background = '#ecfdf5';
-                    feedbackEl.style.color = '#065f46';
-                    feedbackEl.innerHTML = '<i class="fas fa-check-circle"></i> W-9 uploaded! Address, Tax Classification, and Tax ID auto-filled below.';
+                if (ext.ssn_rejected_policy) {
+                    if (typeof setW9EntryMode === 'function') {
+                        setW9EntryMode('digital');
+                    }
+                    if (badgeEl) {
+                        badgeEl.textContent = 'Business EIN Required';
+                        badgeEl.style.background = '#fffbeb';
+                        badgeEl.style.color = '#92400e';
+                    }
+                    if (feedbackEl) {
+                        feedbackEl.style.display = 'block';
+                        feedbackEl.style.background = '#fffbeb';
+                        feedbackEl.style.color = '#92400e';
+                        feedbackEl.innerHTML = '<i class="fas fa-shield-alt"></i> ' + (ext.ssn_rejected_message || 'Commercial Privacy Policy: Personal Social Security Numbers are not collected or stored. Your business name and address were auto-filled — please enter a 9-digit Business EIN (XX-XXXXXXX) below.');
+                    }
+                } else {
+                    if (badgeEl) {
+                        badgeEl.textContent = 'W-9 Uploaded & Extracted ✓';
+                        badgeEl.style.background = '#ecfdf5';
+                        badgeEl.style.color = '#065f46';
+                    }
+                    if (feedbackEl) {
+                        feedbackEl.style.background = '#ecfdf5';
+                        feedbackEl.style.color = '#065f46';
+                        feedbackEl.innerHTML = '<i class="fas fa-check-circle"></i> W-9 uploaded! Address, Tax Classification, and Business EIN auto-filled below.';
+                    }
                 }
             } else {
                 if (ext.coi_carrier) document.getElementById('onb-coi-carrier').value = ext.coi_carrier;

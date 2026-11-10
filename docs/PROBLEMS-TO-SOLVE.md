@@ -3373,3 +3373,17 @@ CEO Humberto Dominguez identified that Matt Christou operates a **two-page funne
 5. **Unescaped HTML Interpolation in Compliance Certificate & Raw Exception Leakage (`MEDIUM-HIGH`):**
    - `generate_signed_msa_dwc83_certificate_html()` in `core/services/subcontractor_doc_extractor.py` (`lines 520-636`) interpolated user-supplied fields directly into HTML without `html.escape()`.
    - `subcontractor_onboarding_extract()` (`line 2187`) and `subcontractor_onboarding_submit()` (`line 2624`) lacked rate limiting on `/submit` and returned raw `str(err)` database/internal exceptions to unauthenticated clients, and tokens prefixed sequential database IDs (`sub_37_...`).
+
+## SEC-003 (BUG-171): Fortune 500 Commercial Business EIN-Only Policy & Zero Personal SSN Collection for 1099 Subcontractors
+**Detected:** 11/10/2026
+**Status:** **RESOLVED** (11/10/2026 — Verified by `test_43` & `test_49` in `scripts/test_web_performance_rack_14.py`)
+**Symptoms:**
+1. **Personal Social Security Number (`SSN: XXX-XX-XXXX`) Collection on 1099 Subcontractor Web Forms & PDF Uploads:**
+   - Allowing 1099 trade subcontractors to submit personal Social Security Numbers (`XXX-XX-XXXX`) instead of commercial Federal Business EINs (`XX-XXXXXXX`) created avoidable Texas Identity Theft Enforcement and Protection Act (Tex. Bus. & Com. Code § 521.002) PII exposure and 1099 worker-misclassification audit risk.
+**Solution:**
+1. **Commercial Business EIN-Only Portal & Backoffice UI (`templates/subcontractor_onboarding.html`, `templates/backoffice_operations.html`, `static/js/sigma_input_masks.js`):**
+   - Removed the `SSN / ITIN (XXX-XX-XXXX)` toggle from `/onboard/subcontractor/<token>` and backoffice subcontractor modals (`#sub-onboard-ein`, `#edit-sub-ein`), enforced `data-ein-only="true"` (`XX-XXXXXXX`), and added a 1-click IRS Free Business EIN notice (`irs.gov/ein`) for Sole Proprietors and Single-Member LLCs.
+2. **Zero-SSN PDF Upload Sanitization & Submission Gate (`blueprints/public.py`, `blueprints/crm_api.py`):**
+   - Updated `subcontractor_onboarding_extract()` to inspect uploaded W-9 PDFs *before* vault storage: if a W-9 contains a personal SSN (`XXX-XX-XXXX` / `tax_id_mode == 'ssn'`), the SSN is stripped and the SSN-bearing W-9 PDF is never stored in PostgreSQL (`ssn_rejected_policy: True`), while non-sensitive business name and address fields are still auto-filled.
+   - Updated `subcontractor_onboarding_submit()` to reject personal SSN submissions (`HTTP 400 SSN_NOT_PERMITTED_EIN_REQUIRED`) and validate all 1099 subcontractor Tax IDs strictly as 9-digit Federal Business EINs (`XX-XXXXXXX`).
+

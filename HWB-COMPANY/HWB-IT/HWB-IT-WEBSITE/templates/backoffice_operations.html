@@ -6312,13 +6312,12 @@
                 </div>
                 <div>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.35rem; margin-bottom: 0.35rem;">
-                        <label for="sub-onboard-ein" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">Federal EIN or SSN</label>
+                        <label for="sub-onboard-ein" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">Federal Business EIN</label>
                         <div style="display: inline-flex; gap: 0.25rem;">
-                            <button type="button" data-tin-pill-for="sub-onboard-ein" data-tin-mode="ein" onclick="setTaxIdMode('sub-onboard-ein', 'ein')" style="font-size: 0.65rem; font-weight: 800; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #1d4ed8; background: #1d4ed8; color: #fff; cursor: pointer;">EIN</button>
-                            <button type="button" data-tin-pill-for="sub-onboard-ein" data-tin-mode="ssn" onclick="setTaxIdMode('sub-onboard-ein', 'ssn')" style="font-size: 0.65rem; font-weight: 800; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">SSN</button>
+                            <span data-tin-pill-for="sub-onboard-ein" data-tin-mode="ein" style="font-size: 0.65rem; font-weight: 800; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #1d4ed8; background: #1d4ed8; color: #fff;">EIN Only (XX-XXXXXXX)</span>
                         </div>
                     </div>
-                    <input type="text" id="sub-onboard-ein" maxlength="10" inputmode="numeric" data-tax-mode="ein" oninput="maskTaxIdInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; font-family: monospace; box-sizing: border-box;" placeholder="XX-XXXXXXX">
+                    <input type="text" id="sub-onboard-ein" maxlength="10" inputmode="numeric" data-tax-mode="ein" data-ein-only="true" oninput="maskTaxIdInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; font-family: monospace; box-sizing: border-box;" placeholder="XX-XXXXXXX">
                 </div>
             </div>
 
@@ -6469,16 +6468,15 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.25rem; margin-bottom: 0.35rem;">
-                        <label for="edit-sub-ein" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">EIN / SSN</label>
+                        <label for="edit-sub-ein" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">Business EIN</label>
                         <div style="display: inline-flex; gap: 0.2rem; align-items: center;">
-                            <button type="button" data-tin-pill-for="edit-sub-ein" data-tin-mode="ein" onclick="setTaxIdMode('edit-sub-ein', 'ein')" style="font-size: 0.62rem; font-weight: 800; padding: 0.08rem 0.35rem; border-radius: 4px; border: 1px solid #1d4ed8; background: #1d4ed8; color: #fff; cursor: pointer;">EIN</button>
-                            <button type="button" data-tin-pill-for="edit-sub-ein" data-tin-mode="ssn" onclick="setTaxIdMode('edit-sub-ein', 'ssn')" style="font-size: 0.62rem; font-weight: 800; padding: 0.08rem 0.35rem; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff; color: #475569; cursor: pointer;">SSN</button>
-                            <button type="button" id="btn-reveal-sub-tin" onclick="revealSubcontractorTinInModal()" title="Reveal Unmasked 9-Digit Tax ID (Logged in Audit Ledger)" style="font-size: 0.62rem; font-weight: 800; padding: 0.08rem 0.38rem; border-radius: 4px; border: 1px solid #7c3aed; background: #f5f3ff; color: #6d28d9; cursor: pointer;">
+                            <span data-tin-pill-for="edit-sub-ein" data-tin-mode="ein" style="font-size: 0.62rem; font-weight: 800; padding: 0.08rem 0.35rem; border-radius: 4px; border: 1px solid #1d4ed8; background: #1d4ed8; color: #fff;">EIN Only</span>
+                            <button type="button" id="btn-reveal-sub-tin" onclick="revealSubcontractorTinInModal()" title="Reveal Unmasked 9-Digit Business EIN (Logged in Audit Ledger)" style="font-size: 0.62rem; font-weight: 800; padding: 0.08rem 0.38rem; border-radius: 4px; border: 1px solid #7c3aed; background: #f5f3ff; color: #6d28d9; cursor: pointer;">
                                 <i class="fas fa-eye"></i> Reveal
                             </button>
                         </div>
                     </div>
-                    <input type="text" id="edit-sub-ein" maxlength="10" inputmode="numeric" data-tax-mode="ein" oninput="maskTaxIdInput(this)" placeholder="XX-XXXXXXX" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; font-family: monospace; box-sizing: border-box;">
+                    <input type="text" id="edit-sub-ein" maxlength="10" inputmode="numeric" data-tax-mode="ein" data-ein-only="true" oninput="maskTaxIdInput(this)" placeholder="XX-XXXXXXX" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; font-family: monospace; box-sizing: border-box;">
                 </div>
                 <div>
                     <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Hub</label>

@@ -4859,12 +4859,12 @@ def api_get_or_create_subcontractors():
                 from core.services.subcontractor_doc_extractor import encrypt_and_mask_subcontractor_tin
                 raw_tin = clean_ein_or_ssn(
                     data.get('ein_or_ssn') or '',
-                    tax_classification=data.get('tax_classification') or 'LLC',
-                    tax_id_mode=data.get('tax_id_mode'),
+                    tax_classification='LLC',
+                    tax_id_mode='ein',
                 ) or ''
                 masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
                     raw_tin,
-                    tax_id_mode=data.get('tax_id_mode'),
+                    tax_id_mode='ein',
                 )
                 ein_or_ssn = masked_tin or raw_tin
                 city = clean_city(data.get('city') or '')
@@ -5064,12 +5064,12 @@ def api_manage_subcontractor(id):
                 raw_incoming_tin = data.get('ein_or_ssn', current_sub['ein_or_ssn'])
                 cleaned_tin = clean_ein_or_ssn(
                     raw_incoming_tin,
-                    tax_classification=data.get('tax_classification') or current_sub.get('tax_classification') or 'LLC',
-                    tax_id_mode=data.get('tax_id_mode'),
+                    tax_classification='LLC',
+                    tax_id_mode='ein',
                 )
                 masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
                     cleaned_tin or '',
-                    tax_id_mode=data.get('tax_id_mode'),
+                    tax_id_mode='ein',
                 )
                 ein_or_ssn = masked_tin or cleaned_tin or current_sub['ein_or_ssn']
                 city = clean_city(data.get('city', current_sub['city']))
