@@ -19,7 +19,7 @@ fi
 ACR_URL="hwbprodacr.azurecr.io"
 CURRENT_HASH=$(git rev-parse --short HEAD)
 CURRENT_DATE=$(date +%Y-%m-%d)
-IMAGE_TAG="v5.5.0-$CURRENT_DATE-$CURRENT_HASH"
+IMAGE_TAG="v5.5.3-$CURRENT_DATE-$CURRENT_HASH"
 FULL_IMAGE="$ACR_URL/sigmafidelity-web:$IMAGE_TAG"
 
 echo "--- SigmaFidelity: Starting Zero-Touch Production Deploy (Tag: $IMAGE_TAG) ---"
@@ -44,7 +44,7 @@ VERSION_FILE="$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/version.json"
 # Write production version stamp for container compilation
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.5.0",
+  "version": "v5.5.3",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
   "build_tag": "$IMAGE_TAG",
@@ -61,10 +61,10 @@ BUILD_STATUS=$?
 # Immediately restore local development version stamp for local container parity
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.5.0",
+  "version": "v5.5.3",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
-  "build_tag": "v5.4.9-$CURRENT_HASH",
+  "build_tag": "v5.5.3-$CURRENT_HASH",
   "environment": "LOCAL_DEV"
 }
 EOF

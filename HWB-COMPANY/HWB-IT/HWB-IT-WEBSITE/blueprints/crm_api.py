@@ -7818,35 +7818,34 @@ CAMPAIGN_PLAYBOOK_PRESETS = {
 (214) 586-0257 | sales@hwbcleaning.com</p>"""
     },
     'daycare': {
-        'label': '🧸 Childcare & Daycare Safety + Floor Care Included',
+        'label': '🧸 Childcare & Daycare Safety + No Sticky Floors + Lock-Up Security',
         'sector': 'Licensed Childcare',
         'subject': 'Quick question regarding after-hours cleaning for {facility_name}',
         'body': """<p>Hi {first_name},</p>
 <p>You probably already have a regular cleaning crew or an active contract in place—and if you are happy with their service, that is wonderful.</p>
-<p>Still, you and I know that running a successful school and protecting your bottom line takes a team effort. HWB Cleaning Services is my company, and here are three things I will put together for you at zero cost:</p>
+<p>Still, you and I know that parents notice the cleanliness of a center the moment morning drop-off begins, and protecting your teachers and budget takes a reliable backup plan. HWB Cleaning Services is my company, and here are three things I will put together for {facility_name} at zero cost:</p>
 <ol style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
-    <li style="margin-bottom: 6px;"><strong>A Walkthrough Plan</strong> with your total cleanable square footage and classroom layout.</li>
-    <li style="margin-bottom: 6px;"><strong>An Objective Cleanliness Score</strong> so you know exactly where your facility currently stands.</li>
-    <li style="margin-bottom: 6px;"><strong>A Locked-In Contract</strong> with an exact flat monthly dollar figure you can keep in your back pocket whenever you need to replace or requote your current contract.</li>
+    <li style="margin-bottom: 6px;"><strong>A Custom Room-by-Room Walkthrough Plan</strong> built around your infant rooms, classrooms, and toddler restrooms.</li>
+    <li style="margin-bottom: 6px;"><strong>An Objective Floor &amp; Restroom Check</strong> so you know exactly where your building currently stands.</li>
+    <li style="margin-bottom: 6px;"><strong>A Written Backup Quote</strong> you can keep in your desk drawer whenever you need to replace or compare your current cleaning service.</li>
 </ol>
 <p style="font-size: 0.88rem; color: #64748b; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 14px; border-radius: 6px;">
     If you don't want to continue with my sales pitch, please feel free to <a href="{unsubscribe_link}" style="color: #2563eb; text-decoration: underline; font-weight: 600;">click here to unsubscribe</a> and you will receive no further emails from me.
 </p>
-<p>Here is what our after-hours childcare service covers:</p>
+<p>Here is how our nightly daycare and preschool service protects your center (<a href="https://www.hwbcleaning.com/facilities/daycare-childcare" style="color: #2563eb; font-weight: 700; text-decoration: underline;">view our Daycare Cleaning Standards here</a>):</p>
 <ul style="margin: 0.5rem 0 1rem 1.25rem; padding: 0; line-height: 1.6;">
-    <li style="margin-bottom: 6px;"><strong>Teachers Don't Stay Late:</strong> We handle all the heavy vacuuming and scrubbing after 6:30 PM so teachers never stay late after a full day with the kids.</li>
-    <li style="margin-bottom: 6px;"><strong>Classroom Rugs &amp; HEPA Filtration:</strong> Backpack vacuums with quiet HEPA filters that trap dust and allergens instead of blowing them around.</li>
-    <li style="margin-bottom: 6px;"><strong>Restrooms &amp; Low Sinks:</strong> Nightly deep scrubbing of toddler toilets, sinks, faucets, and high-touch door handles.</li>
-    <li style="margin-bottom: 6px;"><strong>Diaper Pails to Dumpster:</strong> All diaper bins emptied directly to the outside dumpster so your facility opens fresh and clean every morning.</li>
-    <li style="margin-bottom: 6px;"><strong>Morning Restock:</strong> Soap, paper towels, and toilet paper restocked every night so teachers are fully ready for the 6:30 AM drop-off.</li>
-    <li style="margin-bottom: 6px;"><strong>Floor Care Included:</strong> Stripping, waxing, and carpet cleaning twice a year included right in your regular monthly rate, with no surprise bills.</li>
+    <li style="margin-bottom: 6px;"><strong>No Sticky Classroom Floors (Proper Chemical Dilution):</strong> Sticky floors happen when crews pour too much soap or reuse dirty mop water where infants crawl. We measure exact neutral cleaner dilution and use fresh microfiber flat-mop pads per room so floors feel smooth, dry, and residue-free.</li>
+    <li style="margin-bottom: 6px;"><strong>4-Color Microfiber Cloth Separation:</strong> Red cloths are used only for toilets, Yellow for sinks, Green for food areas, and Blue only for classrooms and nap areas—so restroom rags never touch toddler tables or toys.</li>
+    <li style="margin-bottom: 6px;"><strong>Strict Nightly Lock-Up &amp; Alarm Security:</strong> Background-checked crews who never prop exterior doors open, check every door and window, and arm your building security alarm every night.</li>
+    <li style="margin-bottom: 6px;"><strong>Teachers Don't Stay Late:</strong> We handle all the heavy HEPA backpack vacuuming, scrubbing, and taking diaper pails directly to the outside dumpster after 6:30 PM, plus restocking soap and paper towels for the 6:30 AM drop-off.</li>
+    <li style="margin-bottom: 6px;"><strong>Floor Care Options Available:</strong> Scheduled floor stripping, waxing, and carpet cleaning over holiday breaks so your hallways and classrooms stay bright year-round.</li>
 </ul>
-<p>Would you have 5 minutes this week to take a quick look at your layout? Or feel free to pick a time directly on my calendar here:<br />
+<p>Would you have 5 minutes this week for a quick walkthrough of {facility_name}? Or feel free to pick a time directly on my calendar here:<br />
 <a href="{booking_link}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 700; margin-top: 10px;">Select a 5-Minute Time on Humberto's Calendar</a></p>
 <p>Sincerely,<br />
 <strong>{sender_name}</strong><br />
 {sender_title} | HWB Cleaning Services LLC<br />
-(214) 586-0257 | sales@hwbcleaning.com</p>"""
+(214) 586-0257 | sales@hwbcleaning.com | <a href="https://www.hwbcleaning.com/facilities/daycare-childcare" style="color: #2563eb;">hwbcleaning.com/facilities/daycare-childcare</a></p>"""
     },
     'office': {
         'label': '🏙️ Corporate Office & Multi-Tenant Nightly Janitorial',
