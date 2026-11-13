@@ -58,6 +58,7 @@ from blueprints.ai_employee_api import ai_employee_bp
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, "../../.."))
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=False)
 
 app = Flask(__name__, 
             static_folder=os.path.join(BASE_DIR, 'static'), 
@@ -543,6 +544,14 @@ with app.app_context():
                         conn_sync.close()
                 except Exception as sync_err:
                     print(f"[BOOT] Initial Inbound Deal Sync Notice: {sync_err}", flush=True)
+
+                # 4. Lauri Tells 24/7 SEO, Analytics & GBP Watchdog Schema & SystemSettings Handshake
+                try:
+                    from core.ai_employee.seo_growth_engine import get_lauri_seo_employee
+                    get_lauri_seo_employee()
+                    print("[BOOT] Lauri Tells SEO & GBP Watchdog Schema & SystemSettings Verified.", flush=True)
+                except Exception as seo_boot_err:
+                    print(f"[BOOT] Lauri Tells Schema Init Notice: {seo_boot_err}", flush=True)
 
                 print("[BOOT] Infrastructure Handshake Complete.", flush=True)
             except Exception as e:

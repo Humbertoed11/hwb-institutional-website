@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
+from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import Json, RealDictCursor
 import requests
@@ -36,6 +37,21 @@ from werkzeug.security import generate_password_hash
 _GOOGLE_CLOUD_CACHE_LOCK: threading.Lock = threading.Lock()
 _GOOGLE_CLOUD_CACHE_TTL_SECONDS: float = 900.0
 _GOOGLE_CLOUD_CACHE: Dict[str, Any] = {
+    "key": None,
+    "timestamp": 0.0,
+    "payload": None,
+}
+
+GBP_VERIFIED_PLACE_ID: str = "ChIJDyQyYSuhToYRhOrw5wl-xEM"
+GBP_VERIFIED_CID: str = "4883166476987591300"
+GBP_REVIEW_SHORTLINK: str = "https://g.page/r/CYTq8OcJfsRDEBM/review"
+GBP_UTM_WEBSITE_URL: str = (
+    "https://www.hwbcleaning.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp"
+)
+GBP_PLACES_SHARED_CACHE_KEY: str = "gbp_places_cached_snapshot"
+_GBP_PLACES_CACHE_LOCK: threading.Lock = threading.Lock()
+_GBP_PLACES_CACHE_TTL_SECONDS: float = 14400.0
+_GBP_PLACES_CACHE: Dict[str, Any] = {
     "key": None,
     "timestamp": 0.0,
     "payload": None,
@@ -439,7 +455,28 @@ class LauriTellsSearchGrowthEmployee:
                         ),
                     )
 
-                # 4. Register initial heartbeat for lauri_tells_seo_growth_24x7
+                # 4. Upsert verified Google Business Profile, GA4 & Search Console identifiers in SystemSettings
+                for setting_key, setting_val in (
+                    ("google_places_id", GBP_VERIFIED_PLACE_ID),
+                    ("gbp_utm_website_url", GBP_UTM_WEBSITE_URL),
+                    ("ga4_property_id", "534516731"),
+                    ("gsc_site_url", "sc-domain:hwbcleaning.com"),
+                    (
+                        "google_service_account_email",
+                        "lauri-tells-readonly@hwb-cleaning.iam.gserviceaccount.com",
+                    ),
+                ):
+                    cur.execute(
+                        """
+                        INSERT INTO "SystemSettings" (key, value)
+                        VALUES (%s, %s)
+                        ON CONFLICT (key) DO UPDATE
+                        SET value = EXCLUDED.value;
+                        """,
+                        (setting_key, setting_val),
+                    )
+
+                # 5. Register initial heartbeat for lauri_tells_seo_growth_24x7
                 cur.execute(
                     """
                     INSERT INTO "AIEmployeeHeartbeat"
@@ -794,11 +831,17 @@ class LauriTellsSearchGrowthEmployee:
         never block (SO-SCAR-010). Enforces Mandate 1 Zero Synthetic Data:
         returns explicit DATA REQUIRED status when credentials are not yet set.
         """
+        if (
+            "GOOGLE_SERVICE_ACCOUNT_JSON" not in os.environ
+            or "GA4_PROPERTY_ID" not in os.environ
+        ):
+            load_dotenv(os.path.join(self.base_dir, ".env"), override=False)
+
         sa_raw = (os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or "").strip()
         prop_raw = (os.environ.get("GA4_PROPERTY_ID") or "").strip()
         prop_id = prop_raw.replace("properties/", "").strip()
         gsc_site = (
-            os.environ.get("GSC_SITE_URL") or "https://www.hwbcleaning.com/"
+            os.environ.get("GSC_SITE_URL") or "sc-domain:hwbcleaning.com"
         ).strip()
 
         cache_key = f"{hashlib.sha256(sa_raw.encode('utf-8')).hexdigest()[:16]}:{prop_id}:{gsc_site}"
@@ -1120,6 +1163,491 @@ class LauriTellsSearchGrowthEmployee:
             _GOOGLE_CLOUD_CACHE["payload"] = dict(live_payload)
         return live_payload
 
+    @staticmethod
+    def _build_gbp_owner_reply_draft(reviewer_name: str, star_rating: float) -> str:
+        """
+        Generates a plain Everyday Words owner reply draft thanking the reviewer
+        by first name for choosing HWB Cleaning Services LLC across Dallas-Fort Worth.
+        """
+        cleaned_name = (reviewer_name or "").strip()
+        first_name = cleaned_name.split()[0] if cleaned_name else "there"
+        if star_rating >= 4.0:
+            return (
+                f"Hi {first_name}, thank you for choosing HWB Cleaning Services LLC "
+                "and taking a moment to rate our team! We are proud to serve "
+                "commercial facilities across Dallas-Fort Worth 24/7 and look "
+                "forward to working with you again."
+            )
+        return (
+            f"Hi {first_name}, thank you for sharing your feedback with HWB Cleaning "
+            "Services LLC. Taking care of Dallas-Fort Worth facilities is our top "
+            "priority—please call our McKinney office at (214) 586-0257 so we can "
+            "make things right immediately."
+        )
+
+    def _read_shared_gbp_places_cache(
+        self, cache_key: str, now_ts: float
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Reads the 4-hour (14,400s) cross-process Google Places snapshot from
+        PostgreSQL SystemSettings ('gbp_places_cached_snapshot') so Gunicorn
+        workers, hwb_agent_worker, and container restarts share one cache and
+        never multiply Places API calls ($0.00/mo fiscal shield).
+        """
+        conn = None
+        try:
+            conn = self._get_conn()
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT value FROM "SystemSettings" WHERE key = %s;',
+                    (GBP_PLACES_SHARED_CACHE_KEY,),
+                )
+                row = cur.fetchone()
+            if not row:
+                return None
+            raw_val = row["value"] if isinstance(row, dict) else row[0]
+            if not raw_val:
+                return None
+            parsed = json.loads(str(raw_val))
+            if not isinstance(parsed, dict):
+                return None
+            stored_ts = float(parsed.get("timestamp") or 0.0)
+            stored_key = str(parsed.get("cache_key") or "")
+            stored_payload = parsed.get("payload")
+            if (
+                stored_key == cache_key
+                and isinstance(stored_payload, dict)
+                and 0.0 <= (now_ts - stored_ts) < _GBP_PLACES_CACHE_TTL_SECONDS
+            ):
+                with _GBP_PLACES_CACHE_LOCK:
+                    _GBP_PLACES_CACHE["key"] = cache_key
+                    _GBP_PLACES_CACHE["timestamp"] = stored_ts
+                    _GBP_PLACES_CACHE["payload"] = dict(stored_payload)
+                return dict(stored_payload)
+            return None
+        except Exception as exc:
+            print(
+                f"[LAURI TELLS 24/7] Shared Places cache read notice: {exc}",
+                flush=True,
+            )
+            return None
+        finally:
+            self._put_conn(conn)
+
+    def _write_shared_gbp_places_cache(
+        self, cache_key: str, now_ts: float, payload: Dict[str, Any]
+    ) -> None:
+        """
+        Persists a fresh HTTP 200 Google Places snapshot into PostgreSQL
+        SystemSettings ('gbp_places_cached_snapshot') for 4-hour (14,400s)
+        cross-process / cross-restart reuse.
+        """
+        conn = None
+        try:
+            serialized = json.dumps(
+                {
+                    "timestamp": now_ts,
+                    "cache_key": cache_key,
+                    "payload": payload,
+                }
+            )
+            conn = self._get_conn()
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO "SystemSettings" (key, value)
+                    VALUES (%s, %s)
+                    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                    """,
+                    (GBP_PLACES_SHARED_CACHE_KEY, serialized),
+                )
+            conn.commit()
+        except Exception as exc:
+            if conn is not None:
+                try:
+                    conn.rollback()
+                except Exception as rb_exc:
+                    print(
+                        f"[LAURI TELLS 24/7] Shared Places cache rollback notice: {rb_exc}",
+                        flush=True,
+                    )
+            print(
+                f"[LAURI TELLS 24/7] Shared Places cache write notice: {exc}",
+                flush=True,
+            )
+        finally:
+            self._put_conn(conn)
+
+    def fetch_google_places_gbp_watchdog(
+        self, force_refresh: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Live Google Places API (New) v1 watchdog for HWB Cleaning Services LLC
+        (Place ID ChIJDyQyYSuhToYRhOrw5wl-xEM) with a 4-hour (14,400-second)
+        thread-safe + PostgreSQL SystemSettings ('gbp_places_cached_snapshot')
+        cross-process cache (6 calls/day = 180 calls/month, staying under
+        Google's 1,000 free monthly cap for $0.00/month cost) so web threads
+        never block (SO-SCAR-010). Enforces Mandate 1 when GOOGLE_MAPS_API_KEY
+        is missing.
+        """
+        if "GOOGLE_MAPS_API_KEY" not in os.environ:
+            load_dotenv(os.path.join(self.base_dir, ".env"), override=False)
+
+        api_key = (os.environ.get("GOOGLE_MAPS_API_KEY") or "").strip()
+        place_id = (
+            os.environ.get("GBP_PLACE_ID") or GBP_VERIFIED_PLACE_ID
+        ).strip()
+        reply_console_url = "https://business.google.com/locations"
+
+        cache_key = (
+            f"{hashlib.sha256(api_key.encode('utf-8')).hexdigest()[:16]}:{place_id}"
+            if api_key
+            else f"MISSING_KEY:{place_id}"
+        )
+        now_ts = time.time()
+
+        if not force_refresh:
+            with _GBP_PLACES_CACHE_LOCK:
+                if (
+                    _GBP_PLACES_CACHE["payload"] is not None
+                    and _GBP_PLACES_CACHE["key"] == cache_key
+                    and (now_ts - float(_GBP_PLACES_CACHE["timestamp"]))
+                    < _GBP_PLACES_CACHE_TTL_SECONDS
+                ):
+                    return dict(_GBP_PLACES_CACHE["payload"])
+            if api_key:
+                shared_cached = self._read_shared_gbp_places_cache(cache_key, now_ts)
+                if shared_cached is not None:
+                    return shared_cached
+
+        if not api_key:
+            missing_payload: Dict[str, Any] = {
+                "connected": False,
+                "gbp_places_status": "DATA REQUIRED: GOOGLE_MAPS_API_KEY MISSING IN .ENV",
+                "place_id": place_id,
+                "cid": GBP_VERIFIED_CID,
+                "review_shortlink": GBP_REVIEW_SHORTLINK,
+                "business_name": None,
+                "business_status": None,
+                "formatted_address": None,
+                "phone": None,
+                "open_24_hours": None,
+                "website_uri": None,
+                "https_website_ok": None,
+                "utm_gbp_tagged": None,
+                "pure_service_area_business": None,
+                "primary_type": None,
+                "types": [],
+                "rating": None,
+                "review_count": None,
+                "google_maps_uri": None,
+                "latest_reviews": [],
+                "draft_owner_reply": None,
+                "reply_console_url": reply_console_url,
+                "profile_action_items": [],
+            }
+            with _GBP_PLACES_CACHE_LOCK:
+                _GBP_PLACES_CACHE["key"] = cache_key
+                _GBP_PLACES_CACHE["timestamp"] = now_ts
+                _GBP_PLACES_CACHE["payload"] = dict(missing_payload)
+            return missing_payload
+
+        places_url = f"https://places.googleapis.com/v1/places/{place_id}"
+        field_mask = (
+            "id,displayName,formattedAddress,nationalPhoneNumber,"
+            "internationalPhoneNumber,rating,userRatingCount,reviews,"
+            "regularOpeningHours,primaryType,types,websiteUri,businessStatus,"
+            "googleMapsUri,pureServiceAreaBusiness"
+        )
+        headers = {
+            "X-Goog-Api-Key": api_key,
+            "X-Goog-FieldMask": field_mask,
+        }
+
+        try:
+            resp = requests.get(places_url, headers=headers, timeout=6)
+            resp.raise_for_status()
+            data = resp.json() if resp.content else {}
+        except Exception as exc:
+            err_payload: Dict[str, Any] = {
+                "connected": False,
+                "gbp_places_status": f"API_ERROR: {exc}",
+                "place_id": place_id,
+                "cid": GBP_VERIFIED_CID,
+                "review_shortlink": GBP_REVIEW_SHORTLINK,
+                "business_name": None,
+                "business_status": None,
+                "formatted_address": None,
+                "phone": None,
+                "open_24_hours": None,
+                "website_uri": None,
+                "https_website_ok": None,
+                "utm_gbp_tagged": None,
+                "pure_service_area_business": None,
+                "primary_type": None,
+                "types": [],
+                "rating": None,
+                "review_count": None,
+                "google_maps_uri": None,
+                "latest_reviews": [],
+                "draft_owner_reply": None,
+                "reply_console_url": reply_console_url,
+                "profile_action_items": [],
+            }
+            print(f"[LAURI TELLS 24/7] Places API watchdog notice: {exc}", flush=True)
+            with _GBP_PLACES_CACHE_LOCK:
+                _GBP_PLACES_CACHE["key"] = cache_key
+                _GBP_PLACES_CACHE["timestamp"] = now_ts
+                _GBP_PLACES_CACHE["payload"] = dict(err_payload)
+            return err_payload
+
+        display_obj = data.get("displayName") or {}
+        business_name = (
+            str(display_obj.get("text") or "").strip()
+            if isinstance(display_obj, dict)
+            else str(display_obj).strip()
+        ) or None
+        business_status = str(data.get("businessStatus") or "").strip() or None
+        formatted_address = str(data.get("formattedAddress") or "").strip() or None
+        phone = (
+            str(
+                data.get("internationalPhoneNumber")
+                or data.get("nationalPhoneNumber")
+                or ""
+            ).strip()
+            or None
+        )
+        hours_obj = data.get("regularOpeningHours") or {}
+        weekday_descriptions = [
+            str(d) for d in (hours_obj.get("weekdayDescriptions") or [])
+        ]
+        open_24_hours = any(
+            "open 24 hours" in desc.lower() for desc in weekday_descriptions
+        )
+        website_uri = str(data.get("websiteUri") or "").strip()
+        https_website_ok = website_uri.startswith("https://")
+        utm_gbp_tagged = "utm_campaign=gbp" in website_uri
+        pure_service_area_business = bool(data.get("pureServiceAreaBusiness"))
+        primary_type = str(data.get("primaryType") or "").strip() or None
+        types = [str(t) for t in (data.get("types") or [])]
+        rating = float(data.get("rating") or 0.0)
+        review_count = int(data.get("userRatingCount") or 0)
+        google_maps_uri = (
+            str(data.get("googleMapsUri") or "").strip()
+            or f"https://www.google.com/maps?cid={GBP_VERIFIED_CID}"
+        )
+
+        profile_action_items: List[str] = []
+        if not https_website_ok or not utm_gbp_tagged:
+            profile_action_items.append(
+                f"Update Website in business.google.com to {GBP_UTM_WEBSITE_URL}"
+            )
+        if "laundry" in types:
+            profile_action_items.append(
+                "Remove Laundry/Cleaners secondary category in business.google.com so Commercial cleaning service leads"
+            )
+        if pure_service_area_business:
+            profile_action_items.append(
+                "Street address 3342 FM 1827 Ste 8d, McKinney, TX 75071 is currently hidden (Service-Area mode)"
+            )
+
+        raw_reviews = list(data.get("reviews") or [])[:5]
+        latest_reviews: List[Dict[str, Any]] = []
+        for rev in raw_reviews:
+            if not isinstance(rev, dict):
+                continue
+            author_attr = rev.get("authorAttribution") or {}
+            author_name = (
+                str(author_attr.get("displayName") or rev.get("author_name") or "Customer").strip()
+            )
+            text_obj = rev.get("text") or rev.get("originalText") or {}
+            rev_text = (
+                str(text_obj.get("text") or "").strip()
+                if isinstance(text_obj, dict)
+                else str(text_obj or "").strip()
+            )
+            rev_rating = float(rev.get("rating") or 0.0)
+            latest_reviews.append(
+                {
+                    "reviewer_name": author_name,
+                    "rating": rev_rating,
+                    "text": rev_text,
+                    "relative_time": str(
+                        rev.get("relativePublishTimeDescription") or ""
+                    ).strip(),
+                    "publish_time": str(rev.get("publishTime") or "").strip(),
+                    "google_maps_uri": str(
+                        rev.get("googleMapsUri") or google_maps_uri
+                    ).strip(),
+                }
+            )
+
+        draft_owner_reply: Optional[str] = None
+        if latest_reviews:
+            newest = latest_reviews[0]
+            draft_owner_reply = self._build_gbp_owner_reply_draft(
+                newest["reviewer_name"], float(newest["rating"])
+            )
+
+        live_gbp_payload: Dict[str, Any] = {
+            "connected": True,
+            "gbp_places_status": "CONNECTED_LIVE",
+            "place_id": place_id,
+            "cid": GBP_VERIFIED_CID,
+            "review_shortlink": GBP_REVIEW_SHORTLINK,
+            "business_name": business_name,
+            "business_status": business_status,
+            "formatted_address": formatted_address,
+            "phone": phone,
+            "open_24_hours": open_24_hours,
+            "website_uri": website_uri,
+            "https_website_ok": https_website_ok,
+            "utm_gbp_tagged": utm_gbp_tagged,
+            "pure_service_area_business": pure_service_area_business,
+            "primary_type": primary_type,
+            "types": types,
+            "rating": rating,
+            "review_count": review_count,
+            "google_maps_uri": google_maps_uri,
+            "latest_reviews": latest_reviews,
+            "draft_owner_reply": draft_owner_reply,
+            "reply_console_url": reply_console_url,
+            "profile_action_items": profile_action_items,
+        }
+        with _GBP_PLACES_CACHE_LOCK:
+            _GBP_PLACES_CACHE["key"] = cache_key
+            _GBP_PLACES_CACHE["timestamp"] = now_ts
+            _GBP_PLACES_CACHE["payload"] = dict(live_gbp_payload)
+        self._write_shared_gbp_places_cache(cache_key, now_ts, live_gbp_payload)
+        return live_gbp_payload
+
+    def _sync_gbp_review_alert_waterline(
+        self, cur: Any, gbp_watchdog: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Tracks SystemSettings key 'gbp_last_alerted_review_count'. Initializes on
+        first run without spamming; whenever review_count increases above stored
+        count, sends a plain-spoken Telegram alert to TELEGRAM_CHAT_ID with rating,
+        reviewer name, drafted reply, and 1-tap business.google.com link.
+        """
+        if not gbp_watchdog.get("connected") or gbp_watchdog.get("review_count") is None:
+            return {"initialized": False, "alert_sent": False}
+
+        current_count = int(gbp_watchdog.get("review_count") or 0)
+        cur.execute(
+            'SELECT value FROM "SystemSettings" WHERE key = %s;',
+            ("gbp_last_alerted_review_count",),
+        )
+        row = cur.fetchone()
+        if not row:
+            cur.execute(
+                """
+                INSERT INTO "SystemSettings" (key, value)
+                VALUES ('gbp_last_alerted_review_count', %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                """,
+                (str(current_count),),
+            )
+            return {
+                "initialized": True,
+                "alert_sent": False,
+                "last_count": current_count,
+                "current_count": current_count,
+            }
+
+        raw_val = row["value"] if isinstance(row, dict) else row[0]
+        try:
+            last_count = int(str(raw_val or "0").strip())
+        except ValueError:
+            last_count = current_count
+
+        if current_count <= last_count:
+            return {
+                "initialized": False,
+                "alert_sent": False,
+                "last_count": last_count,
+                "current_count": current_count,
+            }
+
+        latest_list = gbp_watchdog.get("latest_reviews") or []
+        newest = latest_list[0] if latest_list else {}
+        reviewer_name = str(newest.get("reviewer_name") or "New Customer")
+        rev_rating = float(newest.get("rating") or gbp_watchdog.get("rating") or 5.0)
+        rev_text = str(newest.get("text") or "(Star rating without written comment)")
+        draft_reply = str(
+            gbp_watchdog.get("draft_owner_reply")
+            or self._build_gbp_owner_reply_draft(reviewer_name, rev_rating)
+        )
+        console_url = str(
+            gbp_watchdog.get("reply_console_url")
+            or "https://business.google.com/locations"
+        )
+
+        alert_text = (
+            "⭐ *New Google Maps Review Received — HWB Cleaning Services LLC*\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n"
+            f"• *Reviewer:* {reviewer_name}\n"
+            f"• *Rating:* {rev_rating:.1f} / 5.0 stars (Total Reviews: {current_count})\n"
+            f"• *Customer Comment:* {rev_text}\n\n"
+            "✍️ *Suggested Plain-Language Reply:*\n"
+            f"_{draft_reply}_\n\n"
+            f"🔗 *1-Tap Reply Link:* {console_url}"
+        )
+
+        bot_token = (os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip()
+        chat_ids = [
+            cid.strip()
+            for cid in (os.environ.get("TELEGRAM_CHAT_ID") or "").split(",")
+            if cid.strip()
+        ]
+        sent_ok = False
+        if bot_token and chat_ids:
+            tg_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            for cid in chat_ids:
+                try:
+                    r_tg = requests.post(
+                        tg_url,
+                        json={
+                            "chat_id": cid,
+                            "text": alert_text,
+                            "parse_mode": "Markdown",
+                            "disable_web_page_preview": True,
+                            "reply_markup": {
+                                "inline_keyboard": [
+                                    [
+                                        {
+                                            "text": "⭐ Reply on Google Business Profile",
+                                            "url": console_url,
+                                        }
+                                    ]
+                                ]
+                            },
+                        },
+                        timeout=6,
+                    )
+                    if r_tg.status_code == 200:
+                        sent_ok = True
+                except Exception as tg_exc:
+                    print(
+                        f"[LAURI TELLS 24/7] New GBP review Telegram alert notice: {tg_exc}",
+                        flush=True,
+                    )
+
+        cur.execute(
+            """
+            INSERT INTO "SystemSettings" (key, value)
+            VALUES ('gbp_last_alerted_review_count', %s)
+            ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+            """,
+            (str(current_count),),
+        )
+        return {
+            "initialized": False,
+            "alert_sent": sent_ok,
+            "last_count": last_count,
+            "current_count": current_count,
+        }
+
     def run_seo_and_analytics_patrol(
         self, force_refresh: bool = False, force_google_refresh: bool = False
     ) -> Dict[str, Any]:
@@ -1130,12 +1658,16 @@ class LauriTellsSearchGrowthEmployee:
         3. 24h & 7d Quote Funnel Velocity (/get-quote views vs submitted leads)
         4. 30-day AI Recommendation Crawler visits (ChatGPT, Perplexity, Gemini, Claude, Bing)
         5. Keyword & Texas Lead Opportunity Radar across booming DFW suburbs
+        6. Live Google Places API (New) GBP Watchdog & Review Alerting
         """
         from blueprints.public import FACILITIES_DATA, LOCATIONS_DATA
         from core.services.self_healing_engine import get_web_analytics_telemetry
 
         web_tel = get_web_analytics_telemetry(self.db_url, force_refresh=force_refresh)
         google_cloud_readback = self.fetch_google_cloud_search_and_ga4_metrics(
+            force_refresh=force_google_refresh
+        )
+        gbp_watchdog = self.fetch_google_places_gbp_watchdog(
             force_refresh=force_google_refresh
         )
         funnel = web_tel.get("funnel_velocity", {})
@@ -1235,6 +1767,42 @@ class LauriTellsSearchGrowthEmployee:
                 )
                 suburb_lead_counts = [dict(r) for r in cur.fetchall()]
 
+                # Count 30-day utm_campaign=gbp visits & quote leads
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM "ClientBreadcrumbs"
+                    WHERE timestamp >= NOW() - INTERVAL '30 days'
+                      AND (
+                          COALESCE(page_url, '') ILIKE '%utm_campaign=gbp%'
+                          OR COALESCE(details::text, '') ILIKE '%utm_campaign=gbp%'
+                      );
+                    """
+                )
+                bc_gbp_row = cur.fetchone()
+                gbp_utm_visits_30d = int(bc_gbp_row["cnt"]) if bc_gbp_row else 0
+
+                cur.execute(
+                    """
+                    SELECT COUNT(*) AS cnt
+                    FROM "Leads"
+                    WHERE COALESCE(input_date, CURRENT_DATE) >= CURRENT_DATE - INTERVAL '30 days'
+                      AND COALESCE(is_duplicate, FALSE) = FALSE
+                      AND (
+                          COALESCE(lead_source, '') ILIKE '%utm_campaign=gbp%'
+                          OR COALESCE(lead_source, '') ILIKE '%Google Business Profile%'
+                          OR COALESCE(notes, '') ILIKE '%utm_campaign=gbp%'
+                      );
+                    """
+                )
+                ld_gbp_row = cur.fetchone()
+                gbp_utm_leads_30d = int(ld_gbp_row["cnt"]) if ld_gbp_row else 0
+
+                # Sync Google Business Profile review count waterline & send Telegram alert on new review
+                review_sync_result = self._sync_gbp_review_alert_waterline(
+                    cur, gbp_watchdog
+                )
+
                 # Save snapshot in SEOMetricsSnapshots
                 today_str = datetime.now().strftime("%Y-%m-%d")
                 snapshot_payload = {
@@ -1251,6 +1819,10 @@ class LauriTellsSearchGrowthEmployee:
                     "striking_distance_count": len(
                         google_cloud_readback.get("striking_distance_keywords") or []
                     ),
+                    "gbp_places_status": gbp_watchdog.get("gbp_places_status"),
+                    "gbp_review_count": gbp_watchdog.get("review_count"),
+                    "gbp_utm_visits_30d": gbp_utm_visits_30d,
+                    "gbp_utm_leads_30d": gbp_utm_leads_30d,
                 }
                 cur.execute(
                     """
@@ -1308,6 +1880,7 @@ class LauriTellsSearchGrowthEmployee:
                                 "seo_score": seo_score,
                                 "sitemap_urls": sitemap_count,
                                 "city_hubs": city_hubs_count,
+                                "gbp_places_status": gbp_watchdog.get("gbp_places_status"),
                                 "worm_sha256": receipt_hash,
                             }
                         ),
@@ -1318,6 +1891,11 @@ class LauriTellsSearchGrowthEmployee:
             if conn:
                 conn.rollback()
             print(f"[LAURI TELLS 24/7] Patrol DB log warning: {exc}", flush=True)
+            gbp_utm_visits_30d = locals().get("gbp_utm_visits_30d", 0)
+            gbp_utm_leads_30d = locals().get("gbp_utm_leads_30d", 0)
+            review_sync_result = locals().get(
+                "review_sync_result", {"initialized": False, "alert_sent": False}
+            )
         finally:
             self._put_conn(conn)
 
@@ -1351,6 +1929,14 @@ class LauriTellsSearchGrowthEmployee:
                 "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT",
             ),
             "google_cloud_readback": google_cloud_readback,
+            "gbp_places_status": gbp_watchdog.get(
+                "gbp_places_status",
+                "DATA REQUIRED: GOOGLE_MAPS_API_KEY MISSING IN .ENV",
+            ),
+            "gbp_places_watchdog": gbp_watchdog,
+            "gbp_utm_visits_30d": gbp_utm_visits_30d,
+            "gbp_utm_leads_30d": gbp_utm_leads_30d,
+            "gbp_review_alert_sync": review_sync_result,
         }
 
     def stage_weekly_keyword_expansion_changeset(self, chat_id: int) -> Optional[int]:
@@ -1428,7 +2014,9 @@ class LauriTellsSearchGrowthEmployee:
         Generates the plain-spoken Everyday Words Telegram Briefing from Lauri Tells (24/7 SEO & Growth)
         with 1-tap [Approve] / [Skip] buttons.
         """
-        patrol = self.run_seo_and_analytics_patrol(force_refresh=True)
+        patrol = self.run_seo_and_analytics_patrol(
+            force_refresh=True, force_google_refresh=False
+        )
         cs_id = self.stage_weekly_keyword_expansion_changeset(chat_id)
 
         suburb_summary = ", ".join(
@@ -1440,6 +2028,22 @@ class LauriTellsSearchGrowthEmployee:
 
         wf_funnel = patrol.get("workforce_supply_funnel") or {}
         b2b_funnel = patrol.get("b2b_client_demand_funnel") or {}
+        g_readback = patrol.get("google_cloud_readback") or {}
+        gbp_card = patrol.get("gbp_places_watchdog") or {}
+        gbp_status_str = gbp_card.get(
+            "gbp_places_status",
+            "DATA REQUIRED: GOOGLE_MAPS_API_KEY MISSING IN .ENV",
+        )
+        gbp_hours_str = (
+            "Open 24 hours"
+            if gbp_card.get("open_24_hours")
+            else ("Standard Hours" if gbp_card.get("connected") else "Pending")
+        )
+        gbp_rating_str = (
+            f"{float(gbp_card.get('rating') or 0.0):.1f} stars ({int(gbp_card.get('review_count') or 0)} reviews)"
+            if gbp_card.get("connected") and gbp_card.get("rating") is not None
+            else "Pending API Key"
+        )
 
         lines = [
             "📈 *Lauri Tells — 24/7 Google Analytics, SEO & Client Growth Report*",
@@ -1450,8 +2054,53 @@ class LauriTellsSearchGrowthEmployee:
             f"• *Google Cloud Read-Only API:* `{patrol.get('google_cloud_api_status', 'DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT')}`",
             f"• *Google Ads Tag (`{patrol['google_ads_id']}`):* `ACTIVE (Deduplicated Quote Tracking)`",
             f"• *Indexed Pages & Hubs:* `{patrol['sitemap_urls_count']}` Sitemap URLs | `{patrol['city_hubs_count']}` DFW City Hubs | `{patrol.get('facility_hubs_count', 8)}` Facility Hubs",
-            "",
-            "📊 *Scoreboard 1 — Commercial Client Demand Funnel (7d):*",
+        ]
+
+        if g_readback.get("connected"):
+            ga4_28 = g_readback.get("ga4_metrics_28d") or {}
+            ga4_ev = ga4_28.get("events") or {}
+            gsc_28 = g_readback.get("gsc_metrics_28d") or {}
+            sd_list = g_readback.get("striking_distance_keywords") or []
+            lines.extend(
+                [
+                    "",
+                    "🌐 *Live Google Analytics 4 & Search Console (28d):*",
+                    (
+                        f"  • *GA4 (`{g_readback.get('ga4_property_id')}`):* "
+                        f"`{int(ga4_28.get('sessions') or 0):,}` sessions | "
+                        f"`{int(ga4_28.get('totalUsers') or 0):,}` users | "
+                        f"`{int(ga4_28.get('engagedSessions') or 0):,}` engaged sessions | "
+                        f"`{int(ga4_ev.get('generate_lead') or 0)}` quote leads | "
+                        f"`{int(ga4_ev.get('click_to_call') or 0)}` phone taps"
+                    ),
+                    (
+                        f"  • *Search Console (`{g_readback.get('gsc_site_url')}`):* "
+                        f"`{int(gsc_28.get('clicks') or 0):,}` clicks | "
+                        f"`{int(gsc_28.get('impressions') or 0):,}` impressions | "
+                        f"`{float(gsc_28.get('ctr_pct') or 0.0):.2f}%` CTR | "
+                        f"Avg Pos `{float(gsc_28.get('position') or 0.0):.1f}` | "
+                        f"`{len(sd_list)}` Striking-Distance Keywords (Pos 8–20)"
+                    ),
+                ]
+            )
+
+        lines.extend(
+            [
+                "",
+                "📍 *Google Business Profile & Maps Live Card:*",
+                f"  • *Places API Status:* `{gbp_status_str}`",
+                f"  • *Phone & Hours:* `{gbp_card.get('phone') or 'Pending'}` | `{gbp_hours_str}`",
+                f"  • *Google Maps Rating:* `{gbp_rating_str}`",
+                f"  • *Google Maps Link Visits / Leads (30d):* `{patrol.get('gbp_utm_visits_30d', 0):,}` visits | `{patrol.get('gbp_utm_leads_30d', 0):,}` leads",
+            ]
+        )
+        for action_item in gbp_card.get("profile_action_items") or []:
+            lines.append(f"  • *Profile Action Needed:* {action_item}")
+
+        lines.extend(
+            [
+                "",
+                "📊 *Scoreboard 1 — Commercial Client Demand Funnel (7d):*",
             f"  • *Client Page Views (7d):* `{b2b_funnel.get('client_page_views_7d', 0):,}` (`{b2b_funnel.get('facility_hub_views_7d', 0):,}` Facility Hub views)",
             f"  • *Quote Page Views (`/get-quote`):* `{patrol['quote_views_7d']:,}` views",
             f"  • *Quote Requests Submitted:* `{patrol['quote_conversions_7d']:,}` leads (`{patrol['conversion_rate_7d_pct']}%` conversion)",
@@ -1474,10 +2123,11 @@ class LauriTellsSearchGrowthEmployee:
             "  • `/facilities/warehouses-industrial` — Debris-Free Floors, In-House Safety Dept & PIT/PPE",
             "  • `/facilities/construction-subdivisions` — Clear Transit Lines, 3-Phase Final Clean & PIT/PPE",
             "",
-            "🏘️ *Wave 1 Booming DFW Suburbs (Live & Indexed):*",
-            "  • `/locations/prosper`, `/locations/celina`, `/locations/denton`, `/locations/rockwall`, `/locations/southlake`, `/locations/grand-prairie`, `/locations/mansfield`",
-            f"  • *Matched Database Leads in Wave 1 Suburbs:* {suburb_summary}",
-        ]
+                "🏘️ *Wave 1 Booming DFW Suburbs (Live & Indexed):*",
+                "  • `/locations/prosper`, `/locations/celina`, `/locations/denton`, `/locations/rockwall`, `/locations/southlake`, `/locations/grand-prairie`, `/locations/mansfield`",
+                f"  • *Matched Database Leads in Wave 1 Suburbs:* {suburb_summary}",
+            ]
+        )
 
         buttons: List[List[Dict[str, str]]] = []
         if cs_id:

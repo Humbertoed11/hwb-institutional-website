@@ -10,6 +10,7 @@ import time
 import threading
 import datetime
 from typing import Dict, Any, List, Optional, Tuple, Callable
+from dotenv import load_dotenv
 from core.services.database import get_db
 
 _TELEMETRY_CACHE_LOCK = threading.Lock()
@@ -663,6 +664,11 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
     target_url = db_url or os.environ.get('DATABASE_URL')
 
     def _compute() -> Dict[str, Any]:
+        if 'GOOGLE_SERVICE_ACCOUNT_JSON' not in os.environ or 'GA4_PROPERTY_ID' not in os.environ:
+            load_dotenv(
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), '.env'),
+                override=False,
+            )
         ga_id = os.environ.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR'
         gsc_token = os.environ.get('GOOGLE_SITE_VERIFICATION') or 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z'
         gcloud_sa_set = bool((os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON') or '').strip())

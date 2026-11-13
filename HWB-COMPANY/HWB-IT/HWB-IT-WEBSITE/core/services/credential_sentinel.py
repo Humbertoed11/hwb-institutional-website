@@ -296,7 +296,7 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
     # Read-Only Google Analytics 4 Data API & Search Console Connector Visibility (Lauri Tells #11)
     google_sa_raw = (os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or "").strip()
     ga4_prop_raw = (os.environ.get("GA4_PROPERTY_ID") or "").strip()
-    gsc_site_url = (os.environ.get("GSC_SITE_URL") or "https://www.hwbcleaning.com/").strip()
+    gsc_site_url = (os.environ.get("GSC_SITE_URL") or "sc-domain:hwbcleaning.com").strip()
     gcloud_configured = bool(google_sa_raw and ga4_prop_raw)
     google_cloud_seo_connector: Dict[str, Any] = {
         "name": "Google Cloud GA4 & Search Console Read-Only Service Account",

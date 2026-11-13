@@ -19,7 +19,7 @@ fi
 ACR_URL="hwbprodacr.azurecr.io"
 CURRENT_HASH=$(git rev-parse --short HEAD)
 CURRENT_DATE=$(date +%Y-%m-%d)
-IMAGE_TAG="v5.5.3-$CURRENT_DATE-$CURRENT_HASH"
+IMAGE_TAG="v5.7.3-$CURRENT_DATE-$CURRENT_HASH"
 FULL_IMAGE="$ACR_URL/sigmafidelity-web:$IMAGE_TAG"
 
 echo "--- SigmaFidelity: Starting Zero-Touch Production Deploy (Tag: $IMAGE_TAG) ---"
@@ -44,7 +44,7 @@ VERSION_FILE="$PROJECT_ROOT/HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/version.json"
 # Write production version stamp for container compilation
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.5.3",
+  "version": "v5.7.3",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
   "build_tag": "$IMAGE_TAG",
@@ -61,10 +61,10 @@ BUILD_STATUS=$?
 # Immediately restore local development version stamp for local container parity
 cat <<EOF > "$VERSION_FILE"
 {
-  "version": "v5.5.3",
+  "version": "v5.7.3",
   "commit": "$CURRENT_HASH",
   "build_date": "$(date '+%Y-%m-%d %I:%M %p')",
-  "build_tag": "v5.5.3-$CURRENT_HASH",
+  "build_tag": "v5.7.3-$CURRENT_HASH",
   "environment": "LOCAL_DEV"
 }
 EOF
@@ -131,24 +131,36 @@ else:
     print(f'FAILED: Azure config update returned {res_config.status_code}: {res_config.text}')
     exit(1)
 
-# 2. Update WEBSITES_PORT in App Settings (load optional tokens strictly from .env)
+# 2. Update WEBSITES_PORT & Verified Production Env Keys in App Settings (strictly from .env; NEVER log secret values)
 url_settings_list = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/config/appsettings/list?api-version=2022-03-01'
 res_settings_list = requests.post(url_settings_list, headers=headers)
 settings = res_settings_list.json().get('properties', {})
 settings['WEBSITES_PORT'] = '5000'
-if os.getenv('TELEGRAM_BOT_TOKEN'):
-    settings['TELEGRAM_BOT_TOKEN'] = os.getenv('TELEGRAM_BOT_TOKEN')
-if os.getenv('TELEGRAM_CHAT_ID'):
-    settings['TELEGRAM_CHAT_ID'] = os.getenv('TELEGRAM_CHAT_ID')
-if os.getenv('CEO_PERSONAL_EMAIL'):
-    settings['CEO_PERSONAL_EMAIL'] = os.getenv('CEO_PERSONAL_EMAIL')
-if os.getenv('PII_ENCRYPTION_KEY'):
-    settings['PII_ENCRYPTION_KEY'] = os.getenv('PII_ENCRYPTION_KEY')
+settings['APP_BUILD_TAG'] = '$IMAGE_TAG'
+settings['APP_GIT_COMMIT'] = '$CURRENT_HASH'
+synced_key_names = ['WEBSITES_PORT', 'APP_BUILD_TAG', 'APP_GIT_COMMIT']
+for env_k in (
+    'TELEGRAM_BOT_TOKEN',
+    'TELEGRAM_CHAT_ID',
+    'CEO_PERSONAL_EMAIL',
+    'PII_ENCRYPTION_KEY',
+    'GOOGLE_SERVICE_ACCOUNT_JSON',
+    'GA4_PROPERTY_ID',
+    'GSC_SITE_URL',
+    'GOOGLE_MAPS_API_KEY',
+    'GEMINI_API_KEY',
+):
+    val = os.getenv(env_k)
+    if val:
+        settings[env_k] = val
+        synced_key_names.append(env_k)
+settings['GBP_PLACE_ID'] = os.getenv('GBP_PLACE_ID') or 'ChIJDyQyYSuhToYRhOrw5wl-xEM'
+synced_key_names.append('GBP_PLACE_ID')
 
 url_settings_put = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/config/appsettings?api-version=2022-03-01'
 res_settings_put = requests.put(url_settings_put, headers=headers, json={'properties': settings})
 if res_settings_put.status_code == 200:
-    print('SUCCESS: WEBSITES_PORT enforced to 5000.')
+    print(f'SUCCESS: WEBSITES_PORT & App Settings synchronized ({len(synced_key_names)} keys: {synced_key_names}).')
 
 # 3. Restart App
 url_restart = f'https://management.azure.com/subscriptions/{SUBSCRIPTION_ID}/resourceGroups/{RG}/providers/Microsoft.Web/sites/{APP_NAME}/restart?api-version=2022-03-01'

@@ -2,7 +2,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-8.3-GBP</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.1</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Customer Communication &amp; Local Prominence)</span></div>
     </div>
@@ -18,11 +18,11 @@
             <tbody>
                 <tr><td style="text-align: left;"><strong>Document Title</strong></td><td style="text-align: left;"><strong>Google Business Profile, Local Map Pack &amp; Knowledge Graph Integration Plan</strong></td></tr>
                 <tr><td style="text-align: left;"><strong>Document ID</strong></td><td style="text-align: left;">HWB-QMS-8.3-GBP</td></tr>
-                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.0.0</td></tr>
+                <tr><td style="text-align: left;"><strong>Version</strong></td><td style="text-align: left;">3.1.1</td></tr>
                 <tr><td style="text-align: left;"><strong>Status</strong></td><td style="text-align: left;">APPROVED</td></tr>
                 <tr><td style="text-align: left;"><strong>Author</strong></td><td style="text-align: left;">George (Systems Architect &amp; Expert SEO)</td></tr>
                 <tr><td style="text-align: left;"><strong>Approved By</strong></td><td style="text-align: left;">Humberto Dominguez, CEO</td></tr>
-                <tr><td style="text-align: left;"><strong>Effective Date</strong></td><td style="text-align: left;">10/16/2026</td></tr>
+                <tr><td style="text-align: left;"><strong>Effective Date</strong></td><td style="text-align: left;">11/13/2026</td></tr>
                 <tr><td style="text-align: left;"><strong>ISO Standard</strong></td><td style="text-align: left;">ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.2.1 &amp; Clause 7.5</td></tr>
             </tbody>
         </table>
@@ -47,9 +47,11 @@
             <tbody>
                 <tr><td style="text-align: left;"><strong>Business Name</strong></td><td style="text-align: left;">HWB Cleaning Services LLC</td></tr>
                 <tr><td style="text-align: left;"><strong>Google Business Manager Account ID</strong></td><td style="text-align: left;"><code>om-3476665088349393016</code></td></tr>
+                <tr><td style="text-align: left;"><strong>Google Places API ID (<code>Place ID</code>)</strong></td><td style="text-align: left;"><code>ChIJDyQyYSuhToYRhOrw5wl-xEM</code></td></tr>
                 <tr><td style="text-align: left;"><strong>Google Maps Customer ID (Decimal CID)</strong></td><td style="text-align: left;"><code>4883166476987591300</code> (<code>https://www.google.com/maps?cid=4883166476987591300</code>)</td></tr>
                 <tr><td style="text-align: left;"><strong>Google Maps Feature ID (Hex)</strong></td><td style="text-align: left;"><code>0x864ea12b6132240f:0x43c47e09e7f0ea84</code></td></tr>
                 <tr><td style="text-align: left;"><strong>Google Knowledge Graph ID (KGMID)</strong></td><td style="text-align: left;"><code>/g/11g9qb6tkk</code> (<code>https://www.google.com/search?kgmid=/g/11g9qb6tkk</code>)</td></tr>
+                <tr><td style="text-align: left;"><strong>Website Tracking Link (<code>GA4 UTM</code>)</strong></td><td style="text-align: left;"><code>https://www.hwbcleaning.com/?utm_source=google&amp;utm_medium=organic&amp;utm_campaign=gbp</code></td></tr>
                 <tr><td style="text-align: left;"><strong>Official 1-Click Google Review Shortlink</strong></td><td style="text-align: left;"><code>https://g.page/r/CYTq8OcJfsRDEBM/review</code></td></tr>
                 <tr><td style="text-align: left;"><strong>Physical Headquarters Address (NAP)</strong></td><td style="text-align: left;"><code>3342 FM 1827 Ste 8d, McKinney, TX 75071</code></td></tr>
                 <tr><td style="text-align: left;"><strong>Verified GPS Coordinates</strong></td><td style="text-align: left;"><code>33.2465, -96.5615</code></td></tr>
@@ -60,17 +62,18 @@
             </tbody>
         </table>
 
-        <h2 id="40-standard-procedure">4.0 Standard Governance &amp; Poka-Yoke Safeguards</h2>
+        <h2 id="40-standard-procedure">4.0 Standard Governance &amp; Safeguards</h2>
         <ol>
-            <li><strong>Category Integrity (No School/Daycare Category Lock):</strong> The primary category must remain <strong>Commercial cleaning service</strong> (with secondary categories <em>Janitorial service</em>, <em> Carpet cleaning service</em>, <em>Window cleaning service</em>, and <em>Pressure washing service</em>). Never assign <em>Day care center</em> or <em>School</em> as a GBP category—Google automatically disables customer reviews on educational/childcare categories.</li>
+            <li><strong>Category Integrity (No School/Daycare Category Lock):</strong> The primary category must remain <strong>Commercial cleaning service</strong> (with secondary categories <em>Janitorial service</em>, <em>Carpet cleaning service</em>, <em>Window cleaning service</em>, and <em>Pressure washing service</em>). Never assign <em>Day care center</em> or <em>School</em> as a GBP category—Google automatically disables customer reviews on educational/childcare categories.</li>
             <li><strong>Separation from Legacy Retail Merchant Center:</strong> HWB Cleaning Services LLC is a B2B commercial facility service provider and must remain strictly decoupled from legacy retail Google Merchant Center accounts (such as legacy account <code>8126538</code>).</li>
             <li><strong>Bidirectional Website Schema Handshake:</strong> Every public page via <code>templates/base.html</code> and standalone B2B RFP pages (<code>prequal.html</code>, <code>capability_statement.html</code>, <code>academy_catalog.html</code>) must declare <code>"hasMap": "https://www.google.com/maps?cid=4883166476987591300"</code> and include the CID URL, Review Shortlink, and Knowledge Graph ID in <code>"sameAs"</code>.</li>
             <li><strong>1-Click Review Velocity Loop:</strong> The global website footer, post-quote confirmation card (<code>quote_success.html</code>), and all 3 executive email signatures (<code>executive_signature.html</code>) must link directly to <code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>.</li>
+            <li><strong>Live Places API Watchdog &amp; Review Alerting (Zero-Cost 4-Hour Shared Cache):</strong> <code>Lauri Tells</code> checks <code>https://places.googleapis.com/v1/places/ChIJDyQyYSuhToYRhOrw5wl-xEM</code> using a <strong>4-hour (<code>14,400</code>-second) shared database cache</strong> in PostgreSQL <code>"SystemSettings"</code> (<code>gbp_places_cached_snapshot</code> — <code>6</code> checks/day = <code>180</code> calls/month per environment, staying under Google's <code>1,000</code> free monthly cap for <code>$0.00/month</code> cost) to verify phone <code>+1 214-586-0257</code>, 24-hour status, <code>https://</code> website link, category cleanliness, star rating, and new customer reviews, while free read-only Google Analytics 4 and Search Console checks run on a 15-minute (<code>900</code>-second) cache and track <code>utm_campaign=gbp</code> visits and quote leads.</li>
         </ol>
 
         <div class="callout callout-note">
             <strong>Mandatory Compliance Note</strong>
-            <p>All Google Business Profile and Maps identifiers are permanently stored in PostgreSQL <code>"SystemSettings"</code> and <code>"SigmaVault"</code> (<code>GOOGLE_BUSINESS_PROFILE_CID</code> and <code>GOOGLE_REVIEW_SHORTLINK</code>). Any modifications require CEO approval and WORM audit logging in <code>SecurityAuditLogs</code>.</p>
+            <p>All Google Business Profile and Maps identifiers are permanently stored in PostgreSQL <code>"SystemSettings"</code> and <code>"SigmaVault"</code> (including <code>google_places_id</code>, <code>gbp_utm_website_url</code>, <code>gbp_places_cached_snapshot</code>, <code>GOOGLE_BUSINESS_PROFILE_CID</code>, and <code>GOOGLE_REVIEW_SHORTLINK</code>). Any modifications require CEO approval and WORM audit logging in <code>SecurityAuditLogs</code>.</p>
         </div>
 
         <h2 id="50-verification">5.0 Verification (Zero-Defect Check)</h2>
@@ -78,6 +81,7 @@
             <li>100% NAP and GPS coordinate parity between Google Maps and <code>https://www.hwbcleaning.com</code>.</li>
             <li>Interactive Google Maps embed live on <code>/get-quote</code> pointing to McKinney HQ.</li>
             <li>1-Click Google Review modal verified at <code>https://g.page/r/CYTq8OcJfsRDEBM/review</code>.</li>
+            <li>Live 4-hour (<code>14,400</code>-second) shared database-cached Places API check active for Place ID <code>ChIJDyQyYSuhToYRhOrw5wl-xEM</code> (<code>6</code> checks/day = <code>180</code> calls/month, <code>$0.00/month</code> under Google's <code>1,000</code> free monthly cap) alongside 15-minute free Google Analytics 4 and Search Console readback.</li>
         </ul>
 
         <h2 id="60-revision-history">6.0 Revision History</h2>
@@ -91,6 +95,18 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.1.1</td>
+                    <td style="text-align: left;">11/13/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Updated Google Places API (New) watchdog to a 4-hour (14,400-second) shared database cache in PostgreSQL SystemSettings (gbp_places_cached_snapshot — 6 checks/day = 180 calls/month, staying inside Google's 1,000 free monthly cap for $0.00/month cost) while keeping free Google Analytics 4 and Search Console checks at 15 minutes (SO-COM-001-DIR-GBP-01 v2.1). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added verified Google Places API ID (ChIJDyQyYSuhToYRhOrw5wl-xEM), Google Analytics 4 website tracking link (utm_campaign=gbp), and 15-minute live Places API watchdog and customer review alerting inside Lauri Tells (SO-COM-001-DIR-GBP-01 v2.0). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">10/16/2026</td>

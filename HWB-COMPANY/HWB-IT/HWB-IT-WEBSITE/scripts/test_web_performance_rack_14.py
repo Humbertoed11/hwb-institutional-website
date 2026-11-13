@@ -5365,14 +5365,26 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn.commit()
 
             # 3. Verify /api/v1/telemetry/seo-employee Mandate 1 Zero Synthetic Data when env unset
+            from core.ai_employee.seo_growth_engine import (
+                _GBP_PLACES_CACHE,
+                _GBP_PLACES_CACHE_LOCK,
+            )
+
             with patch.dict(
                 os.environ,
-                {"GOOGLE_SERVICE_ACCOUNT_JSON": "", "GA4_PROPERTY_ID": ""},
+                {
+                    "GOOGLE_SERVICE_ACCOUNT_JSON": "",
+                    "GA4_PROPERTY_ID": "",
+                    "GOOGLE_MAPS_API_KEY": "",
+                },
                 clear=False,
             ):
                 with _GOOGLE_CLOUD_CACHE_LOCK:
                     _GOOGLE_CLOUD_CACHE["key"] = None
                     _GOOGLE_CLOUD_CACHE["payload"] = None
+                with _GBP_PLACES_CACHE_LOCK:
+                    _GBP_PLACES_CACHE["key"] = None
+                    _GBP_PLACES_CACHE["payload"] = None
                 r_seo = self.client.get("/api/v1/telemetry/seo-employee?refresh_google=1")
                 self.assertEqual(r_seo.status_code, 200)
                 seo_json = r_seo.get_json()
@@ -5385,6 +5397,9 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertIsNone(g_readback.get("ga4_metrics_28d"))
                 self.assertIsNone(g_readback.get("gsc_metrics_28d"))
                 self.assertEqual(g_readback.get("striking_distance_keywords"), [])
+            with _GBP_PLACES_CACHE_LOCK:
+                _GBP_PLACES_CACHE["key"] = None
+                _GBP_PLACES_CACHE["payload"] = None
 
             # 4. Verify live RS256 OAuth2 + GA4 Data API + GSC Striking-Distance (8.0-20.0) Radar ingestion
             test_kw = f"post construction final clean mckinney {uid}"
@@ -6659,6 +6674,285 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 conn.commit()
             finally:
                 conn.close()
+
+    def test_56_google_places_gbp_watchdog_and_sop_v310(self) -> None:
+        """
+        SO-COM-001-DIR-GBP-01 v2.1:
+        1. Verifies hwb-qms-8.3_google_business_profile_integration_plan.html is at v3.1.1 (11/13/2026),
+           references Place ID ChIJDyQyYSuhToYRhOrw5wl-xEM, utm_campaign=gbp, and 4-hour (14,400-second)
+           shared database cache (gbp_places_cached_snapshot), and contains zero retired terms or banned jargon.
+        2. Verifies _GBP_PLACES_CACHE_TTL_SECONDS == 14400.0 (4 hours) while _GOOGLE_CLOUD_CACHE_TTL_SECONDS == 900.0,
+           and verifies LauriTellsSearchGrowthEmployee.fetch_google_places_gbp_watchdog() returns explicit
+           Mandate 1 DATA REQUIRED status when GOOGLE_MAPS_API_KEY is blank.
+        3. Verifies Places API (New) v1 response parsing, cross-process/cross-restart PostgreSQL SystemSettings
+           shared cache ('gbp_places_cached_snapshot') serving hits with ZERO live HTTP calls when in-memory
+           cache is cold, format_telegram_seo_briefing() cache-honoring behavior, and new-review Telegram
+           alert waterline tracking in SystemSettings without making any live external network calls.
+        """
+        from unittest.mock import MagicMock, patch
+        from core.ai_employee.seo_growth_engine import (
+            GBP_PLACES_SHARED_CACHE_KEY,
+            GBP_UTM_WEBSITE_URL,
+            GBP_VERIFIED_PLACE_ID,
+            _GBP_PLACES_CACHE,
+            _GBP_PLACES_CACHE_LOCK,
+            _GBP_PLACES_CACHE_TTL_SECONDS,
+            _GOOGLE_CLOUD_CACHE,
+            _GOOGLE_CLOUD_CACHE_LOCK,
+            _GOOGLE_CLOUD_CACHE_TTL_SECONDS,
+            get_lauri_seo_employee,
+        )
+        from core.services.database import get_db
+
+        self.assertEqual(_GBP_PLACES_CACHE_TTL_SECONDS, 14400.0)
+        self.assertEqual(_GOOGLE_CLOUD_CACHE_TTL_SECONDS, 900.0)
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        static_sop_path = os.path.join(
+            base_dir,
+            "static",
+            "qms",
+            "hwb-qms-8.3_google_business_profile_integration_plan.html",
+        )
+        self.assertTrue(os.path.isfile(static_sop_path))
+        with open(static_sop_path, "r", encoding="utf-8") as fh:
+            sop_html = fh.read()
+
+        self.assertIn("3.1.1", sop_html)
+        self.assertIn("11/13/2026", sop_html)
+        self.assertIn("14,400", sop_html)
+        self.assertIn("gbp_places_cached_snapshot", sop_html)
+        self.assertIn("ChIJDyQyYSuhToYRhOrw5wl-xEM", sop_html)
+        self.assertIn("utm_campaign=gbp", sop_html)
+        self.assertNotIn("poka-yoke", sop_html.lower())
+
+        master_sop_path = os.path.normpath(
+            os.path.join(
+                base_dir,
+                "..",
+                "..",
+                "HWB-QMS",
+                "hwb-qms-8.3_google_business_profile_integration_plan.html",
+            )
+        )
+        if os.path.isfile(master_sop_path):
+            with open(master_sop_path, "r", encoding="utf-8") as mfh:
+                self.assertEqual(sop_html, mfh.read(), "0-byte QMS mirror parity required")
+
+        lauri = get_lauri_seo_employee()
+        lauri.ensure_lauri_tells_schema_and_roster()
+
+        conn = get_db(self.db_url)
+        orig_waterline = None
+        had_waterline = False
+        orig_shared_cache = None
+        had_shared_cache = False
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT key, value FROM "SystemSettings" WHERE key IN (%s, %s, %s, %s);',
+                    (
+                        "google_places_id",
+                        "gbp_utm_website_url",
+                        "gbp_last_alerted_review_count",
+                        GBP_PLACES_SHARED_CACHE_KEY,
+                    ),
+                )
+                settings_map = {
+                    (r["key"] if isinstance(r, dict) else r[0]): (
+                        r["value"] if isinstance(r, dict) else r[1]
+                    )
+                    for r in cur.fetchall()
+                }
+                self.assertEqual(settings_map.get("google_places_id"), GBP_VERIFIED_PLACE_ID)
+                self.assertEqual(settings_map.get("gbp_utm_website_url"), GBP_UTM_WEBSITE_URL)
+                if "gbp_last_alerted_review_count" in settings_map:
+                    had_waterline = True
+                    orig_waterline = settings_map["gbp_last_alerted_review_count"]
+                if GBP_PLACES_SHARED_CACHE_KEY in settings_map:
+                    had_shared_cache = True
+                    orig_shared_cache = settings_map[GBP_PLACES_SHARED_CACHE_KEY]
+
+            # 1. Missing API key -> Mandate 1 DATA REQUIRED & None/[] metrics
+            with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": ""}, clear=False):
+                missing_res = lauri.fetch_google_places_gbp_watchdog(force_refresh=True)
+                self.assertFalse(missing_res["connected"])
+                self.assertEqual(
+                    missing_res["gbp_places_status"],
+                    "DATA REQUIRED: GOOGLE_MAPS_API_KEY MISSING IN .ENV",
+                )
+                self.assertIsNone(missing_res["rating"])
+                self.assertIsNone(missing_res["review_count"])
+                self.assertEqual(missing_res["profile_action_items"], [])
+
+            # 2. Mocked Places API (New) response -> shared Postgres cache, drift detection, owner reply draft & Telegram integration
+            mock_places_payload = {
+                "id": GBP_VERIFIED_PLACE_ID,
+                "displayName": {"text": "HWB Cleaning Services LLC", "languageCode": "en"},
+                "businessStatus": "OPERATIONAL",
+                "internationalPhoneNumber": "+1 214-586-0257",
+                "regularOpeningHours": {
+                    "openNow": True,
+                    "weekdayDescriptions": ["Monday: Open 24 hours"],
+                },
+                "websiteUri": "http://www.hwbcleaning.com/",
+                "types": ["laundry", "general_contractor", "service"],
+                "pureServiceAreaBusiness": True,
+                "rating": 4.0,
+                "userRatingCount": 2,
+                "googleMapsUri": "https://www.google.com/maps?cid=4883166476987591300",
+                "reviews": [
+                    {
+                        "rating": 5,
+                        "authorAttribution": {"displayName": "Bobby Hunt"},
+                        "text": {"text": "Reliable commercial cleaning crew across DFW."},
+                        "relativePublishTimeDescription": "just now",
+                        "publishTime": "2026-11-12T22:00:00Z",
+                    }
+                ],
+            }
+            mock_get_resp = MagicMock()
+            mock_get_resp.status_code = 200
+            mock_get_resp.content = b"{}"
+            mock_get_resp.json.return_value = mock_places_payload
+
+            mock_tg_resp = MagicMock()
+            mock_tg_resp.status_code = 200
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO "SystemSettings" (key, value)
+                    VALUES ('gbp_last_alerted_review_count', '1')
+                    ON CONFLICT (key) DO UPDATE SET value = '1';
+                    """
+                )
+            conn.commit()
+
+            with (
+                patch.dict(
+                    os.environ,
+                    {
+                        "GOOGLE_MAPS_API_KEY": "test_places_api_key_gbp",
+                        "GOOGLE_SERVICE_ACCOUNT_JSON": "",
+                        "GA4_PROPERTY_ID": "",
+                        "TELEGRAM_BOT_TOKEN": "test_bot_token",
+                        "TELEGRAM_CHAT_ID": "8564340073",
+                    },
+                    clear=False,
+                ),
+                patch(
+                    "core.ai_employee.seo_growth_engine.requests.get",
+                    return_value=mock_get_resp,
+                ) as mock_get,
+                patch(
+                    "core.ai_employee.seo_growth_engine.requests.post",
+                    return_value=mock_tg_resp,
+                ) as mock_post,
+            ):
+                with _GOOGLE_CLOUD_CACHE_LOCK:
+                    _GOOGLE_CLOUD_CACHE["key"] = None
+                    _GOOGLE_CLOUD_CACHE["payload"] = None
+
+                gbp_res = lauri.fetch_google_places_gbp_watchdog(force_refresh=True)
+                self.assertEqual(mock_get.call_count, 1)
+                self.assertTrue(gbp_res["connected"])
+                self.assertEqual(gbp_res["gbp_places_status"], "CONNECTED_LIVE")
+                self.assertEqual(gbp_res["phone"], "+1 214-586-0257")
+                self.assertTrue(gbp_res["open_24_hours"])
+                self.assertFalse(gbp_res["https_website_ok"])
+                self.assertFalse(gbp_res["utm_gbp_tagged"])
+                self.assertTrue(gbp_res["pure_service_area_business"])
+                self.assertEqual(len(gbp_res["profile_action_items"]), 3)
+                self.assertIn("Hi Bobby", gbp_res["draft_owner_reply"] or "")
+                self.assertEqual(
+                    gbp_res["reply_console_url"], "https://business.google.com/locations"
+                )
+
+                # Simulate cold worker/container restart by wiping in-memory cache; verify Postgres SystemSettings serves hit with 0 HTTP calls
+                with _GBP_PLACES_CACHE_LOCK:
+                    _GBP_PLACES_CACHE["key"] = None
+                    _GBP_PLACES_CACHE["timestamp"] = 0.0
+                    _GBP_PLACES_CACHE["payload"] = None
+
+                shared_hit_res = lauri.fetch_google_places_gbp_watchdog(force_refresh=False)
+                self.assertEqual(
+                    mock_get.call_count,
+                    1,
+                    "Cold worker must hydrate from SystemSettings gbp_places_cached_snapshot with 0 external HTTP calls",
+                )
+                self.assertTrue(shared_hit_res["connected"])
+                self.assertEqual(shared_hit_res["place_id"], GBP_VERIFIED_PLACE_ID)
+                self.assertEqual(shared_hit_res["review_count"], 2)
+
+                patrol = lauri.run_seo_and_analytics_patrol(
+                    force_refresh=False, force_google_refresh=False
+                )
+                self.assertEqual(mock_get.call_count, 1)
+                self.assertIn("gbp_places_watchdog", patrol)
+                self.assertEqual(
+                    patrol["gbp_places_watchdog"]["place_id"], GBP_VERIFIED_PLACE_ID
+                )
+                self.assertTrue(patrol["gbp_review_alert_sync"]["alert_sent"])
+                self.assertTrue(mock_post.called)
+
+                # Clear in-memory cache again before format_telegram_seo_briefing to prove briefing honors shared 4h cache
+                with _GBP_PLACES_CACHE_LOCK:
+                    _GBP_PLACES_CACHE["key"] = None
+                    _GBP_PLACES_CACHE["timestamp"] = 0.0
+                    _GBP_PLACES_CACHE["payload"] = None
+
+                with patch.object(
+                    lauri, "stage_weekly_keyword_expansion_changeset", return_value=None
+                ):
+                    brief_text, _ = lauri.format_telegram_seo_briefing(chat_id=8564340073)
+                self.assertEqual(
+                    mock_get.call_count,
+                    1,
+                    "format_telegram_seo_briefing must honor shared 4-hour Places cache",
+                )
+                self.assertIn("Google Business Profile & Maps Live Card", brief_text)
+                self.assertIn("CONNECTED_LIVE", brief_text)
+        finally:
+            with _GBP_PLACES_CACHE_LOCK:
+                _GBP_PLACES_CACHE["key"] = None
+                _GBP_PLACES_CACHE["timestamp"] = 0.0
+                _GBP_PLACES_CACHE["payload"] = None
+            with _GOOGLE_CLOUD_CACHE_LOCK:
+                _GOOGLE_CLOUD_CACHE["key"] = None
+                _GOOGLE_CLOUD_CACHE["timestamp"] = 0.0
+                _GOOGLE_CLOUD_CACHE["payload"] = None
+            with conn.cursor() as cur:
+                if had_waterline and orig_waterline is not None:
+                    cur.execute(
+                        """
+                        INSERT INTO "SystemSettings" (key, value)
+                        VALUES ('gbp_last_alerted_review_count', %s)
+                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                        """,
+                        (str(orig_waterline),),
+                    )
+                else:
+                    cur.execute(
+                        'DELETE FROM "SystemSettings" WHERE key = %s;',
+                        ("gbp_last_alerted_review_count",),
+                    )
+                if had_shared_cache and orig_shared_cache is not None:
+                    cur.execute(
+                        """
+                        INSERT INTO "SystemSettings" (key, value)
+                        VALUES (%s, %s)
+                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+                        """,
+                        (GBP_PLACES_SHARED_CACHE_KEY, str(orig_shared_cache)),
+                    )
+                else:
+                    cur.execute(
+                        'DELETE FROM "SystemSettings" WHERE key = %s;',
+                        (GBP_PLACES_SHARED_CACHE_KEY,),
+                    )
+            conn.commit()
+            conn.close()
 
 
 if __name__ == "__main__":

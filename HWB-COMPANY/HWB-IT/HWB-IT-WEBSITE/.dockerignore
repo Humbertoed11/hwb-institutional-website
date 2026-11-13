@@ -9,6 +9,7 @@ __pycache__/
 templates/.snapshots_pre_salesforce_ui/
 .snapshots/
 backup/
+backups/
 .backups/
 HWB-COMPANY/
 trash-out/
