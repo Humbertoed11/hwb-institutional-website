@@ -10,6 +10,7 @@ import uuid
 import json
 import datetime
 from flask import Blueprint, request, jsonify, render_template, current_app, redirect, url_for, abort
+from flask_login import login_required, current_user
 from core.services.database import get_db
 
 academy_bp = Blueprint('academy', __name__)
@@ -310,6 +311,7 @@ def api_list_packages():
 
 
 @academy_bp.route('/api/v1/academy/assign', methods=['POST'])
+@login_required
 def api_assign_training():
     """
     Assigns an individual course or pre-configured curriculum package to a candidate.
@@ -718,6 +720,7 @@ def api_submit_course_quiz(course_code):
 
 
 @academy_bp.route('/api/v1/academy/enrollments', methods=['GET'])
+@login_required
 def api_list_enrollments():
     """Lists certified roster and progress records for operations tracking."""
     status_filter = request.args.get('status')

@@ -43,6 +43,8 @@ def serialize_row(row):
     if not row:
         return None
     d = dict(row)
+    d.pop('ssn_hmac', None)
+    d.pop('ein_hmac', None)
     if 'activity_id' in d and 'id' not in d:
         d['id'] = d['activity_id']
     for k, v in d.items():
@@ -113,7 +115,10 @@ def _sanitize_snapshot_row(row):
     d = dict(row)
     clean = {}
     for k, v in d.items():
-        if k in ('embedding', 'w9_tin_encrypted'):
+        if k in (
+            'embedding', 'w9_tin_encrypted', 'ssn_encrypted',
+            'direct_deposit_account_encrypted', 'ssn_hmac', 'ein_hmac'
+        ):
             continue
         if isinstance(v, (bytes, memoryview)):
             continue
@@ -210,6 +215,7 @@ def _reinsert_snapshot_rows(cur, table_name: str, pk_col: str, rows: list) -> in
         'Customers': 'customer_id',
         'JobApplicants': 'id',
         'SubcontractorPartners': 'id',
+        'Employees': 'id',
         'Contacts': 'contact_id',
         'GlobalActivities': 'id',
     }
@@ -228,7 +234,12 @@ def _reinsert_snapshot_rows(cur, table_name: str, pk_col: str, rows: list) -> in
     for rec in rows:
         if not isinstance(rec, dict):
             continue
-        cols = [c for c in rec.keys() if c in valid_cols and c not in ('embedding', 'w9_tin_encrypted')]
+        cols = [
+            c for c in rec.keys()
+            if c in valid_cols and c not in (
+                'embedding', 'w9_tin_encrypted', 'ssn_encrypted', 'direct_deposit_account_encrypted'
+            )
+        ]
         if not cols:
             continue
         col_sql = ', '.join(f'"{c}"' for c in cols)
@@ -4312,16 +4323,96 @@ def api_workforce_apply():
                     if fallback_row:
                         job_position_id = fallback_row['id']
 
+            from core.security import normalize_person_name_key
             phone_digits = extract_phone_digits(phone)
             clean_e = (clean_email(email) or '').strip().lower()
+            cand_name_key = normalize_person_name_key(full_name)
+
+            # BUG-182: Cross-Track & Prior-Employment Gate (Employees + SubcontractorPartners)
+            cross_track_tags = []
+            matched_sub_for_backstamp = None
+            if len(phone_digits) == 10 or clean_e or cand_name_key:
+                cur.execute('''
+                    SELECT id, employee_number, first_name, last_name, phone, email, employment_status
+                    FROM "Employees"
+                    ORDER BY id ASC;
+                ''')
+                for emp_r in cur.fetchall():
+                    e_phone = extract_phone_digits(emp_r.get('phone') or '')
+                    e_email = (emp_r.get('email') or '').strip().lower()
+                    e_name_key = normalize_person_name_key(
+                        f"{emp_r.get('first_name') or ''} {emp_r.get('last_name') or ''}"
+                    )
+                    contact_match = bool(
+                        (len(phone_digits) == 10 and e_phone == phone_digits)
+                        or (clean_e and e_email == clean_e)
+                    )
+                    name_match = bool(cand_name_key and e_name_key == cand_name_key)
+                    if contact_match and (emp_r.get('employment_status') or '') == 'Active':
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'ACTIVE_W2_ALREADY_EMPLOYED',
+                            'message': (
+                                'An active employee profile already exists with this phone number or email address. '
+                                'Please contact HWB Human Resources at (214) 586-0257 for shift or role updates.'
+                            ),
+                        }), 409
+                    if contact_match or name_match:
+                        emp_code = emp_r.get('employee_number') or f"HWB-EMP-{emp_r['id']}"
+                        emp_stat = emp_r.get('employment_status') or 'Inactive'
+                        cross_track_tags.append(
+                            f"[HR ALERT: Prior {emp_stat} Employee {emp_code}]"
+                        )
+                        break
+
+                cur.execute('''
+                    SELECT id, company_name, contact_name, legal_entity_name, msa_signer_name,
+                           phone, email, status
+                    FROM "SubcontractorPartners"
+                    ORDER BY id ASC;
+                ''')
+                for sub_r in cur.fetchall():
+                    s_phone = extract_phone_digits(sub_r.get('phone') or '')
+                    s_email = (sub_r.get('email') or '').strip().lower()
+                    s_names = {
+                        normalize_person_name_key(sub_r.get('contact_name')),
+                        normalize_person_name_key(sub_r.get('legal_entity_name')),
+                        normalize_person_name_key(sub_r.get('msa_signer_name')),
+                    }
+                    s_names.discard('')
+                    contact_match = bool(
+                        (len(phone_digits) == 10 and s_phone == phone_digits)
+                        or (clean_e and s_email == clean_e)
+                    )
+                    name_match = bool(cand_name_key and cand_name_key in s_names)
+                    if contact_match and (sub_r.get('status') or '') == 'Active Partner':
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED',
+                            'message': (
+                                'Active 1099 subcontractor partners cannot simultaneously submit a W-2 employee application. '
+                                'Please contact HWB Operations at (214) 586-0257.'
+                            ),
+                        }), 409
+                    if contact_match or name_match:
+                        sub_code = f"SUB-#{int(sub_r['id']):04d}"
+                        cross_track_tags.append(
+                            f"[CROSS-TRACK 1099 PARTNER: Matches {sub_code} {sub_r.get('company_name') or ''}]"
+                        )
+                        matched_sub_for_backstamp = sub_r
+                        break
+
+            for ctag in cross_track_tags:
+                if ctag not in notes:
+                    notes = f"{notes} | {ctag}".strip(" |")
 
             existing_app = None
             if len(phone_digits) == 10 or clean_e:
                 cur.execute('''
                     SELECT * FROM "JobApplicants"
                     WHERE (
-                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
-                        OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                        (%s != '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s != '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
                     )
                     ORDER BY created_at ASC, id ASC
                     LIMIT 1;
@@ -4338,6 +4429,9 @@ def api_workforce_apply():
                 merged_notes = f"{existing_notes} | {update_note}".strip(" |") if update_note not in existing_notes else existing_notes
                 if raw_notes and raw_notes not in merged_notes:
                     merged_notes = f"{merged_notes} | {raw_notes}".strip(" |")
+                for ctag in cross_track_tags:
+                    if ctag not in merged_notes:
+                        merged_notes = f"{merged_notes} | {ctag}".strip(" |")
 
                 cur.execute('''
                     UPDATE "JobApplicants"
@@ -4413,15 +4507,47 @@ def api_workforce_apply():
                     )
                 }), 200
 
-            cur.execute('''
-                INSERT INTO "JobApplicants" (
-                    full_name, phone, email, city, state, desired_role, desired_shift,
-                    experience_level, has_transportation, authorized_to_work_us,
-                    preferred_language, status, notes, job_position_id
-                ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id;
-            ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, status, notes, job_position_id))
-            new_id = _row_val(cur.fetchone(), 'id', 0)
+            import psycopg2
+            cur.execute('SAVEPOINT sp_job_applicant_insert;')
+            try:
+                cur.execute('''
+                    INSERT INTO "JobApplicants" (
+                        full_name, phone, email, city, state, desired_role, desired_shift,
+                        experience_level, has_transportation, authorized_to_work_us,
+                        preferred_language, status, notes, job_position_id
+                    ) VALUES (%s, %s, %s, %s, 'TX', %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                ''', (full_name, phone, email, city, desired_role, desired_shift, experience, has_transport, authorized_us, language, status, notes, job_position_id))
+                new_id = _row_val(cur.fetchone(), 'id', 0)
+            except psycopg2.errors.UniqueViolation:
+                cur.execute('ROLLBACK TO SAVEPOINT sp_job_applicant_insert;')
+                cur.execute('''
+                    SELECT id, job_position_id FROM "JobApplicants"
+                    WHERE (
+                        (%s != '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s != '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    ORDER BY id ASC LIMIT 1;
+                ''', (phone_digits, phone_digits, clean_e, clean_e))
+                race_row = cur.fetchone()
+                race_id = race_row['id'] if race_row else 0
+                conn.commit()
+                return jsonify({
+                    'status': 'already_registered',
+                    'is_duplicate': True,
+                    'applicant_id': race_id,
+                    'reference_code': f"APP-#{int(race_id):04d}",
+                    'message': 'You already have an active job application on file with HWB Cleaning Services.'
+                }), 200
+
+            if matched_sub_for_backstamp:
+                back_stamp = f"[CROSS-TRACK W-2 CANDIDATE: Matches APP-#{int(new_id):04d} {full_name}]"
+                cur.execute('''
+                    UPDATE "SubcontractorPartners"
+                    SET notes = TRIM(BOTH ' |' FROM COALESCE(notes, '') || ' | ' || %s),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND POSITION(%s IN COALESCE(notes, '')) = 0;
+                ''', (back_stamp, matched_sub_for_backstamp['id'], f"APP-#{int(new_id):04d}"))
 
             # Stage official email alert in PendingOutbox
             is_sales = any(k in (desired_role or '').lower() for k in ['sales', 'account executive', 'business development', 'growth', 'appointment setter'])
@@ -4518,10 +4644,11 @@ def api_workforce_subcontractor():
     # Never mark COI as 'Verified' on initial public intake without an uploaded file
     coi_status = 'Self-Reported' if raw_coi_status == 'Verified' else raw_coi_status
     hourly_rate = data.get('hourly_rate_range') or '$22 - $28/hr'
-    dwc83_signed = str(data.get('dwc83_agreed', 'true')).lower() in ('true', '1', 'yes')
-    no_guarantee_agreed = str(data.get('sub_no_guarantee_agreed', 'true')).lower() in ('true', '1', 'yes')
+    prelim_dwc83_ack = str(data.get('dwc83_agreed', 'false')).lower() in ('true', '1', 'yes')
+    dwc83_signed = False
+    no_guarantee_agreed = str(data.get('sub_no_guarantee_agreed', 'false')).lower() in ('true', '1', 'yes')
     raw_notes = data.get('notes') or 'Registered via subcontractor portal.'
-    sub_tag = "[DWC-83 & No-Guarantee Terms Agreed: True]" if (dwc83_signed and no_guarantee_agreed) else "[DWC-83 & No-Guarantee Terms Agreed: Incomplete]"
+    sub_tag = "[Preliminary Terms Acknowledged: True]" if (prelim_dwc83_ack and no_guarantee_agreed) else "[Preliminary Terms Acknowledged: Incomplete]"
     city_lower_check = (city or '').lower()
     dfw_tokens = (
         'dallas', 'fort worth', 'ft worth', 'dfw', 'plano', 'frisco', 'mckinney', 'allen',
@@ -4547,13 +4674,76 @@ def api_workforce_subcontractor():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         from database.schema_engine import ensure_subcontractor_onboarding_schema
+        from core.security import normalize_person_name_key
         ensure_subcontractor_onboarding_schema(conn)
         with conn.cursor() as cur:
+            contact_name_key = normalize_person_name_key(contact_name)
+            sub_cross_tags = []
+            matched_app_ids = []
+
+            # BUG-182: Hard-block Active W-2 employees; flag Terminated W-2 & Candidate Pool crossovers
+            if len(phone_digits) == 10 or clean_e or contact_name_key:
+                cur.execute('''
+                    SELECT id, employee_number, first_name, last_name, phone, email, employment_status
+                    FROM "Employees"
+                    ORDER BY id ASC;
+                ''')
+                for emp_r in cur.fetchall():
+                    e_phone = extract_phone_digits(emp_r.get('phone') or '')
+                    e_email = (emp_r.get('email') or '').strip().lower()
+                    e_name_key = normalize_person_name_key(
+                        f"{emp_r.get('first_name') or ''} {emp_r.get('last_name') or ''}"
+                    )
+                    contact_match = bool(
+                        (len(phone_digits) == 10 and e_phone == phone_digits)
+                        or (clean_e and e_email == clean_e)
+                    )
+                    name_match = bool(contact_name_key and e_name_key == contact_name_key)
+                    if (contact_match or name_match) and (emp_r.get('employment_status') or '') == 'Active':
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED',
+                            'message': (
+                                'Active W-2 employees cannot simultaneously register as a 1099 subcontractor partner. '
+                                'Please contact HWB Human Resources at (214) 586-0257.'
+                            ),
+                        }), 409
+                    if contact_match or name_match:
+                        emp_code = emp_r.get('employee_number') or f"HWB-EMP-{emp_r['id']}"
+                        sub_cross_tags.append(
+                            f"[HR ALERT: Prior {emp_r.get('employment_status') or 'Terminated'} Employee {emp_code}]"
+                        )
+                        break
+
+                cur.execute('''
+                    SELECT id, full_name, phone, email, status
+                    FROM "JobApplicants"
+                    ORDER BY id ASC;
+                ''')
+                for app_r in cur.fetchall():
+                    a_phone = extract_phone_digits(app_r.get('phone') or '')
+                    a_email = (app_r.get('email') or '').strip().lower()
+                    a_name_key = normalize_person_name_key(app_r.get('full_name'))
+                    if (
+                        (len(phone_digits) == 10 and a_phone == phone_digits)
+                        or (clean_e and a_email == clean_e)
+                        or (contact_name_key and a_name_key == contact_name_key)
+                    ):
+                        app_code = f"APP-#{int(app_r['id']):04d}"
+                        sub_cross_tags.append(
+                            f"[CROSS-TRACK W-2 CANDIDATE: Matches {app_code} {app_r.get('full_name') or ''}]"
+                        )
+                        matched_app_ids.append(app_r['id'])
+
+            for stag in sub_cross_tags:
+                if stag not in notes:
+                    notes = f"{notes} | {stag}".strip(" |")
+
             cur.execute('''
                 SELECT * FROM "SubcontractorPartners"
                 WHERE (
-                    (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
-                    OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                    (%s != '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                    OR (%s != '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
                     OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
                 )
                 ORDER BY created_at ASC, id ASC;
@@ -4674,8 +4864,8 @@ def api_workforce_subcontractor():
             ''')
             setting_row = cur.fetchone()
             auto_review_enabled = bool(setting_row and str(setting_row.get('value') if isinstance(setting_row, dict) else setting_row[0]).lower() == 'true')
-            passes_initial_check = bool(len(phone_digits) == 10 and clean_e and '@' in clean_e and dwc83_signed and no_guarantee_agreed)
-            auto_invite_active = bool(auto_review_enabled and passes_initial_check)
+            passes_initial_check = bool(len(phone_digits) == 10 and clean_e and '@' in clean_e and prelim_dwc83_ack and no_guarantee_agreed)
+            auto_invite_active = bool(auto_review_enabled and passes_initial_check and not sub_cross_tags)
             initial_onboarding_status = 'Invited' if auto_invite_active else 'Initial Review'
 
             cur.execute('''
@@ -4695,6 +4885,15 @@ def api_workforce_subcontractor():
                     onboarding_invited_at = CASE WHEN %s THEN CURRENT_TIMESTAMP ELSE NULL END
                 WHERE id = %s;
             ''', (onboarding_token, auto_invite_active, new_id))
+
+            for aid in matched_app_ids:
+                app_stamp = f"[CROSS-TRACK 1099 PARTNER: Matches SUB-#{int(new_id):04d} {company_name}]"
+                cur.execute('''
+                    UPDATE "JobApplicants"
+                    SET notes = TRIM(BOTH ' |' FROM COALESCE(notes, '') || ' | ' || %s),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND POSITION(%s IN COALESCE(notes, '')) = 0;
+                ''', (app_stamp, aid, f"SUB-#{int(new_id):04d}"))
             onboarding_url = f"https://www.hwbcleaning.com/onboard/subcontractor/{onboarding_token}"
 
             # Stage official email alert in PendingOutbox (updated to SENT after verified Graph delivery)
@@ -4820,13 +5019,45 @@ def api_manage_applicant(id):
             new_notes = data.get('notes') if 'notes' in data else current_app_row['notes']
             new_city = clean_city(data.get('city')) if 'city' in data else current_app_row['city']
             new_phone = clean_phone(data.get('phone')) if 'phone' in data else current_app_row['phone']
+            new_email = (
+                (clean_email(data.get('email')) or (data.get('email') or '').strip())
+                if 'email' in data
+                else current_app_row.get('email')
+            )
+
+            patch_phone_digits = extract_phone_digits(new_phone or '')
+            patch_email_norm = (new_email or '').strip().lower()
+            if len(patch_phone_digits) == 10 or patch_email_norm:
+                cur.execute('''
+                    SELECT id, full_name FROM "JobApplicants"
+                    WHERE id <> %s AND (
+                        (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    LIMIT 1;
+                ''', (id, patch_phone_digits, patch_phone_digits, patch_email_norm, patch_email_norm))
+                dup_app = cur.fetchone()
+                if dup_app:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_CONTACT_DETECTED',
+                        'message': (
+                            f"Another candidate record (APP-#{int(dup_app['id']):04d} - {dup_app.get('full_name') or ''}) "
+                            "already uses this phone number or email address."
+                        ),
+                    }), 409
 
             cur.execute('''
                 UPDATE "JobApplicants"
-                SET status = %s, notes = %s, city = %s, phone = %s, updated_at = CURRENT_TIMESTAMP
+                SET status = %s, notes = %s, city = %s, phone = %s, email = %s, updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s;
-            ''', (new_status, new_notes, new_city, new_phone, id))
+            ''', (new_status, new_notes, new_city, new_phone, new_email, id))
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             return jsonify({'status': 'success', 'id': id})
     finally:
         if conn: conn.close()
@@ -4856,8 +5087,8 @@ def api_get_or_create_subcontractors():
                 cur.execute('''
                     SELECT id, company_name, created_at FROM "SubcontractorPartners"
                     WHERE (
-                        (%s != '' AND REGEXP_REPLACE(COALESCE(phone, ''), '\\D', '', 'g') LIKE '%%' || %s)
-                        OR (%s != '' AND LOWER(TRIM(COALESCE(email, ''))) = %s)
+                        (%s != '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s != '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
                         OR LOWER(TRIM(company_name)) = LOWER(TRIM(%s))
                     )
                     ORDER BY created_at ASC, id ASC
@@ -4871,6 +5102,41 @@ def api_get_or_create_subcontractors():
                         'message': f"Trade Partner '{existing_sub['company_name']}' is already registered (SUB-#{int(existing_sub['id']):04d}). Please edit the existing record instead of adding a duplicate."
                     }), 409
 
+                from core.security import compute_tax_id_hmac, normalize_person_name_key
+                bo_contact_key = normalize_person_name_key(contact_name)
+                if len(phone_digits) == 10 or clean_e or bo_contact_key:
+                    cur.execute('''
+                        SELECT id, employee_number, first_name, last_name, phone, email
+                        FROM "Employees"
+                        WHERE employment_status = 'Active';
+                    ''')
+                    for emp_r in cur.fetchall():
+                        e_phone = extract_phone_digits(emp_r.get('phone') or '')
+                        e_email = (emp_r.get('email') or '').strip().lower()
+                        e_name_key = normalize_person_name_key(
+                            f"{emp_r.get('first_name') or ''} {emp_r.get('last_name') or ''}"
+                        )
+                        if (
+                            (len(phone_digits) == 10 and e_phone == phone_digits)
+                            or (clean_e and e_email == clean_e)
+                            or (bo_contact_key and e_name_key == bo_contact_key)
+                        ):
+                            return jsonify({
+                                'status': 'error',
+                                'code': 'ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED',
+                                'message': (
+                                    f"Active W-2 employee {emp_r.get('employee_number') or ''} cannot simultaneously "
+                                    "be registered as a 1099 subcontractor partner."
+                                ),
+                            }), 409
+
+                if str(data.get('tax_id_mode') or '').strip().lower() == 'ssn':
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'SSN_NOT_PERMITTED_EIN_REQUIRED',
+                        'message': 'Personal SSNs are not accepted for 1099 trade partners. Enter a 9-digit Federal Business EIN (XX-XXXXXXX).'
+                    }), 400
+
                 from core.services.sanitizer import clean_ein_or_ssn
                 from core.services.subcontractor_doc_extractor import encrypt_and_mask_subcontractor_tin
                 raw_tin = clean_ein_or_ssn(
@@ -4878,6 +5144,23 @@ def api_get_or_create_subcontractors():
                     tax_classification='LLC',
                     tax_id_mode='ein',
                 ) or ''
+                ein_hmac_val = compute_tax_id_hmac(raw_tin)
+                if ein_hmac_val:
+                    cur.execute(
+                        'SELECT id, company_name FROM "SubcontractorPartners" WHERE ein_hmac = %s LIMIT 1;',
+                        (ein_hmac_val,),
+                    )
+                    dup_ein_sub = cur.fetchone()
+                    if dup_ein_sub:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'DUPLICATE_EIN_DETECTED',
+                            'subcontractor_id': dup_ein_sub['id'],
+                            'message': (
+                                f"Federal Business EIN is already registered to '{dup_ein_sub['company_name']}' "
+                                f"(SUB-#{int(dup_ein_sub['id']):04d})."
+                            ),
+                        }), 409
                 masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
                     raw_tin,
                     tax_id_mode='ein',
@@ -4893,30 +5176,50 @@ def api_get_or_create_subcontractors():
                 coi_expiration_date = data.get('coi_expiration_date') or None
                 w9_status = data.get('w9_status', 'Pending')
                 dwc83_signed = bool(data.get('dwc83_signed', False))
-                status = data.get('status', 'Active Partner')
+                msa_signed = bool(data.get('msa_signed', False))
+                requested_status = data.get('status') or 'Vetting'
+                coi_exp_ok = False
+                if coi_expiration_date:
+                    try:
+                        parsed_coi_exp = (
+                            datetime.date.fromisoformat(str(coi_expiration_date).strip()[:10])
+                            if not isinstance(coi_expiration_date, datetime.date)
+                            else coi_expiration_date
+                        )
+                        coi_exp_ok = parsed_coi_exp >= datetime.date.today()
+                    except Exception:
+                        coi_exp_ok = False
+                is_fully_compliant = bool(
+                    coi_status == 'Verified' and w9_status == 'Verified' and msa_signed and dwc83_signed and coi_exp_ok
+                )
+                status = (
+                    'Vetting'
+                    if (requested_status == 'Active Partner' and not is_fully_compliant)
+                    else requested_status
+                )
                 notes = (data.get('notes') or '').strip()
                 init_onb_status = (
                     'Approved / Active'
-                    if (status == 'Active Partner' and coi_status == 'Verified' and w9_status == 'Verified' and dwc83_signed)
+                    if (status == 'Active Partner' and is_fully_compliant)
                     else (data.get('onboarding_status') or 'Invited')
                 )
 
                 cur.execute('''
                     INSERT INTO "SubcontractorPartners" (
-                        company_name, ein_or_ssn, w9_ein_last4, w9_tin_encrypted,
+                        company_name, ein_or_ssn, w9_ein_last4, w9_tin_encrypted, ein_hmac,
                         contact_name, phone, email,
                         city, state, coverage_counties, crew_size, specialties,
                         hourly_rate_range, coi_status, coi_expiration_date,
                         w9_status, dwc83_signed, status, onboarding_status, notes
                     ) VALUES (
-                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s, %s, %s, %s
                     ) RETURNING id;
                 ''', (
-                    company_name, ein_or_ssn, last4_tin or None, encrypted_tin,
+                    company_name, ein_or_ssn, last4_tin or None, encrypted_tin, ein_hmac_val,
                     contact_name, phone, email,
                     city, state, coverage_counties, crew_size, specialties,
                     hourly_rate_range, coi_status, coi_expiration_date,
@@ -5071,19 +5374,70 @@ def api_manage_subcontractor(id):
                 if not current_sub:
                     return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
 
+                if str(data.get('tax_id_mode') or '').strip().lower() == 'ssn':
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'SSN_NOT_PERMITTED_EIN_REQUIRED',
+                        'message': 'Personal SSNs are not accepted for 1099 trade partners. Enter a 9-digit Federal Business EIN (XX-XXXXXXX).'
+                    }), 400
+
+                from core.security import compute_tax_id_hmac
                 from core.services.sanitizer import clean_ein_or_ssn
                 from core.services.subcontractor_doc_extractor import encrypt_and_mask_subcontractor_tin
 
                 company_name = data.get('company_name', current_sub['company_name'])
                 contact_name = data.get('contact_name', current_sub['contact_name'])
                 phone = clean_phone(data.get('phone', current_sub['phone']))
-                email = data.get('email', current_sub['email'])
+                email = (
+                    (clean_email(data.get('email')) or (data.get('email') or '').strip())
+                    if 'email' in data
+                    else current_sub['email']
+                )
+                patch_sub_phone_digits = extract_phone_digits(phone or '')
+                patch_sub_email_norm = (email or '').strip().lower()
+                if len(patch_sub_phone_digits) == 10 or patch_sub_email_norm:
+                    cur.execute('''
+                        SELECT id, company_name FROM "SubcontractorPartners"
+                        WHERE id <> %s AND (
+                            (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                            OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                        )
+                        LIMIT 1;
+                    ''', (id, patch_sub_phone_digits, patch_sub_phone_digits, patch_sub_email_norm, patch_sub_email_norm))
+                    dup_sub_row = cur.fetchone()
+                    if dup_sub_row:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'DUPLICATE_CONTACT_DETECTED',
+                            'message': (
+                                f"Another subcontractor record (SUB-#{int(dup_sub_row['id']):04d} - "
+                                f"{dup_sub_row.get('company_name') or ''}) already uses this phone number or email address."
+                            ),
+                        }), 409
+
                 raw_incoming_tin = data.get('ein_or_ssn', current_sub['ein_or_ssn'])
                 cleaned_tin = clean_ein_or_ssn(
                     raw_incoming_tin,
                     tax_classification='LLC',
                     tax_id_mode='ein',
                 )
+                patch_ein_hmac = compute_tax_id_hmac(cleaned_tin)
+                if patch_ein_hmac:
+                    cur.execute(
+                        'SELECT id, company_name FROM "SubcontractorPartners" WHERE ein_hmac = %s AND id <> %s LIMIT 1;',
+                        (patch_ein_hmac, id),
+                    )
+                    dup_ein_row = cur.fetchone()
+                    if dup_ein_row:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'DUPLICATE_EIN_DETECTED',
+                            'message': (
+                                f"Federal Business EIN is already registered to '{dup_ein_row.get('company_name') or ''}' "
+                                f"(SUB-#{int(dup_ein_row['id']):04d})."
+                            ),
+                        }), 409
+
                 masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(
                     cleaned_tin or '',
                     tax_id_mode='ein',
@@ -5099,9 +5453,60 @@ def api_manage_subcontractor(id):
                 coi_expiration_date = data.get('coi_expiration_date') if 'coi_expiration_date' in data else current_sub['coi_expiration_date']
                 w9_status = data.get('w9_status', current_sub['w9_status'])
                 dwc83_signed = bool(data.get('dwc83_signed', current_sub['dwc83_signed']))
+                msa_signed = bool(data.get('msa_signed', current_sub.get('msa_signed')))
                 status = data.get('status', current_sub['status'])
                 notes = data.get('notes', current_sub['notes'])
                 rating = float(data.get('rating', current_sub['rating'] or 5.0))
+
+                if 'status' in data and status == 'Active Partner':
+                    if len(patch_sub_phone_digits) == 10 or patch_sub_email_norm:
+                        cur.execute('''
+                            SELECT id, employee_number FROM "Employees"
+                            WHERE employment_status = 'Active' AND (
+                                (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                                OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                            )
+                            LIMIT 1;
+                        ''', (patch_sub_phone_digits, patch_sub_phone_digits, patch_sub_email_norm, patch_sub_email_norm))
+                        active_emp_conflict = cur.fetchone()
+                        if active_emp_conflict:
+                            return jsonify({
+                                'status': 'error',
+                                'code': 'ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED',
+                                'message': (
+                                    f"Partner cannot be set to Active Partner while {active_emp_conflict.get('employee_number') or 'an employee'} "
+                                    "remains Active on W-2 payroll."
+                                ),
+                            }), 409
+                    has_w9 = bool(current_sub.get('w9_file_url') or w9_status == 'Verified')
+                    has_coi = bool(current_sub.get('coi_file_url') or coi_status == 'Verified')
+                    parsed_coi_exp = coi_expiration_date
+                    if isinstance(parsed_coi_exp, str) and parsed_coi_exp.strip():
+                        try:
+                            parsed_coi_exp = datetime.date.fromisoformat(parsed_coi_exp.strip()[:10])
+                        except Exception:
+                            parsed_coi_exp = None
+                    elif not isinstance(parsed_coi_exp, datetime.date):
+                        parsed_coi_exp = None
+
+                    if not (msa_signed and dwc83_signed):
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'MISSING_EXECUTED_MSA_DWC83',
+                            'message': 'Partner cannot be set to Active Partner until both the Master Subcontractor Agreement (MSA) and Texas DWC Form-83 are signed.',
+                        }), 400
+                    if not has_w9:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'MISSING_W9',
+                            'message': 'Partner cannot be set to Active Partner without a verified Form W-9 on file.',
+                        }), 400
+                    if not has_coi or not parsed_coi_exp or parsed_coi_exp < datetime.date.today():
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'EXPIRED_OR_MISSING_COI_DATE',
+                            'message': 'Partner cannot be set to Active Partner without an active Certificate of Insurance (COI) and future expiration date.',
+                        }), 400
 
                 cur.execute('''
                     UPDATE "SubcontractorPartners" SET
@@ -5109,6 +5514,7 @@ def api_manage_subcontractor(id):
                         ein_or_ssn = %s,
                         w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
                         w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                        ein_hmac = COALESCE(%s, ein_hmac),
                         city = %s, state = %s, coverage_counties = %s,
                         crew_size = %s, specialties = %s, hourly_rate_range = %s,
                         coi_status = %s, coi_expiration_date = %s, w9_status = %s,
@@ -5120,12 +5526,18 @@ def api_manage_subcontractor(id):
                     ein_or_ssn,
                     last4_tin or '',
                     encrypted_tin,
+                    patch_ein_hmac,
                     city, state, coverage_counties,
                     crew_size, specialties, hourly_rate_range,
                     coi_status, coi_expiration_date, w9_status,
                     dwc83_signed, status, notes, rating, id
                 ))
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
                 return jsonify({
                     'status': 'success',
                     'id': id,
@@ -5260,8 +5672,26 @@ def api_upload_subcontractor_document(id):
             low_type = doc_type.lower()
 
             if 'w-9' in low_type or 'w9' in low_type:
+                from core.security import compute_tax_id_hmac
                 extracted = extract_subcontractor_document_metadata(raw_bytes, filename, doc_type='w9', partner_row=partner_dict)
                 raw_tin = extracted.get('ein_or_ssn') or ''
+                doc_ein_hmac = compute_tax_id_hmac(raw_tin)
+                if doc_ein_hmac:
+                    cur.execute(
+                        'SELECT id, company_name FROM "SubcontractorPartners" WHERE ein_hmac = %s AND id <> %s LIMIT 1;',
+                        (doc_ein_hmac, id),
+                    )
+                    dup_w9_sub = cur.fetchone()
+                    if dup_w9_sub:
+                        conn.rollback()
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'DUPLICATE_EIN_DETECTED',
+                            'message': (
+                                f"Uploaded W-9 EIN is already registered to '{dup_w9_sub.get('company_name') or ''}' "
+                                f"(SUB-#{int(dup_w9_sub['id']):04d})."
+                            ),
+                        }), 409
                 masked_tin, last4_tin, encrypted_tin = encrypt_and_mask_subcontractor_tin(raw_tin)
                 cur.execute('''
                     UPDATE "SubcontractorPartners" 
@@ -5276,6 +5706,7 @@ def api_upload_subcontractor_document(id):
                         ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
                         w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
                         w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                        ein_hmac = COALESCE(%s, ein_hmac),
                         w9_extracted_json = %s,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
@@ -5290,6 +5721,7 @@ def api_upload_subcontractor_document(id):
                     masked_tin or raw_tin,
                     last4_tin,
                     encrypted_tin,
+                    doc_ein_hmac,
                     json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
                     id
                 ))
@@ -5308,10 +5740,25 @@ def api_upload_subcontractor_document(id):
             else:  # COI
                 extracted = extract_subcontractor_document_metadata(raw_bytes, filename, doc_type='coi', partner_row=partner_dict)
                 final_exp = coi_expiration or extracted.get('coi_expiration_date') or None
+                parsed_coi_exp = None
+                if final_exp:
+                    try:
+                        parsed_coi_exp = (
+                            final_exp
+                            if isinstance(final_exp, datetime.date)
+                            else datetime.date.fromisoformat(str(final_exp)[:10])
+                        )
+                    except Exception:
+                        parsed_coi_exp = None
+                coi_verif_state = (
+                    'Expired'
+                    if (parsed_coi_exp and parsed_coi_exp < datetime.date.today())
+                    else 'Verified'
+                )
                 cur.execute('''
                     UPDATE "SubcontractorPartners" 
                     SET coi_file_url = %s,
-                        coi_status = 'Verified',
+                        coi_status = %s,
                         coi_carrier = COALESCE(NULLIF(%s, ''), coi_carrier),
                         coi_policy_number = COALESCE(NULLIF(%s, ''), coi_policy_number),
                         coi_coverage_amount = COALESCE(NULLIF(%s, ''), coi_coverage_amount),
@@ -5321,6 +5768,7 @@ def api_upload_subcontractor_document(id):
                     WHERE id = %s;
                 ''', (
                     safe_name,
+                    coi_verif_state,
                     extracted.get('coi_carrier') or '',
                     extracted.get('coi_policy_number') or '',
                     extracted.get('coi_coverage_amount') or '',
@@ -5331,16 +5779,20 @@ def api_upload_subcontractor_document(id):
 
             # Auto-advance onboarding_status when documents are deposited via backoffice vault
             cur.execute('''
-                SELECT w9_status, coi_status, msa_signed, dwc83_signed, onboarding_status, status
+                SELECT w9_status, coi_status, coi_expiration_date, msa_signed, dwc83_signed, onboarding_status, status
                 FROM "SubcontractorPartners" WHERE id = %s;
             ''', (id,))
             latest_sub = cur.fetchone() or {}
             curr_onb = latest_sub.get('onboarding_status') or 'Initial Review'
             next_onb = curr_onb
+            latest_exp = latest_sub.get('coi_expiration_date')
+            coi_unexpired = bool(latest_exp and latest_exp >= datetime.date.today())
             if (
                 latest_sub.get('w9_status') == 'Verified'
                 and latest_sub.get('coi_status') == 'Verified'
-                and (latest_sub.get('msa_signed') or latest_sub.get('dwc83_signed'))
+                and coi_unexpired
+                and bool(latest_sub.get('msa_signed'))
+                and bool(latest_sub.get('dwc83_signed'))
                 and latest_sub.get('status') == 'Active Partner'
             ):
                 next_onb = 'Approved / Active'
@@ -5579,9 +6031,62 @@ def api_approve_subcontractor_partner(id):
             if not row:
                 return jsonify({'status': 'error', 'message': 'Subcontractor not found'}), 404
             sub = dict(row)
-            has_coi = bool(sub.get('coi_file_url'))
-            new_coi_status = 'Verified' if has_coi else (sub.get('coi_status') or 'Pending')
-            new_w9_status = 'Verified' if sub.get('w9_file_url') else (sub.get('w9_status') or 'Verified')
+            app_sub_phone = extract_phone_digits(sub.get('phone') or '')
+            app_sub_email = (sub.get('email') or '').strip().lower()
+            if len(app_sub_phone) == 10 or app_sub_email:
+                cur.execute('''
+                    SELECT id, employee_number FROM "Employees"
+                    WHERE employment_status = 'Active' AND (
+                        (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    LIMIT 1;
+                ''', (app_sub_phone, app_sub_phone, app_sub_email, app_sub_email))
+                active_w2_conflict = cur.fetchone()
+                if active_w2_conflict:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED',
+                        'message': (
+                            f"Partner cannot be activated while {active_w2_conflict.get('employee_number') or 'an employee'} "
+                            "is Active on W-2 payroll."
+                        ),
+                    }), 409
+            if not (bool(sub.get('msa_signed')) and bool(sub.get('dwc83_signed'))):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'MISSING_EXECUTED_MSA_DWC83',
+                    'message': 'Partner cannot be activated until both the Master Subcontractor Agreement (MSA) and Texas DWC Form-83 are signed.',
+                }), 400
+            has_w9 = bool(sub.get('w9_file_url') or sub.get('w9_status') == 'Verified')
+            if not has_w9:
+                return jsonify({
+                    'status': 'error',
+                    'code': 'MISSING_W9',
+                    'message': 'Partner cannot be activated without a verified Form W-9 on file.',
+                }), 400
+            has_coi = bool(sub.get('coi_file_url') or sub.get('coi_status') == 'Verified')
+            if not has_coi:
+                return jsonify({
+                    'status': 'error',
+                    'code': 'MISSING_COI',
+                    'message': 'Partner cannot be activated without a Certificate of Insurance (COI) on file.',
+                }), 400
+            coi_exp_val = sub.get('coi_expiration_date')
+            if isinstance(coi_exp_val, str) and coi_exp_val.strip():
+                try:
+                    coi_exp_val = datetime.date.fromisoformat(coi_exp_val.strip()[:10])
+                except Exception:
+                    coi_exp_val = None
+            if not coi_exp_val or coi_exp_val < datetime.date.today():
+                return jsonify({
+                    'status': 'error',
+                    'code': 'EXPIRED_OR_MISSING_COI_DATE',
+                    'message': 'Partner cannot be activated with a missing or expired Certificate of Insurance expiration date.',
+                }), 400
+
+            new_coi_status = 'Verified'
+            new_w9_status = 'Verified'
 
             cur.execute('''
                 UPDATE "SubcontractorPartners"
@@ -5870,36 +6375,116 @@ def api_hr_onboard_candidate():
                 if pos_row:
                     job_position_id = pos_row['id']
 
+            from core.security import compute_tax_id_hmac, normalize_person_name_key
             phone_digits = extract_phone_digits(phone)
             clean_emp_email = clean_email(email) or email
+            emp_email_norm = (clean_emp_email or '').strip().lower()
+            emp_name_key = normalize_person_name_key(f"{first_name} {last_name}")
+
+            # BUG-182: Hard-block Active Partner 1099 subcontractors; flag Vetting/Inactive 1099 crossovers
+            if len(phone_digits) == 10 or emp_email_norm or emp_name_key:
+                cur.execute('''
+                    SELECT id, company_name, contact_name, legal_entity_name, msa_signer_name,
+                           phone, email, status
+                    FROM "SubcontractorPartners"
+                    ORDER BY id ASC;
+                ''')
+                for sub_r in cur.fetchall():
+                    s_phone = extract_phone_digits(sub_r.get('phone') or '')
+                    s_email = (sub_r.get('email') or '').strip().lower()
+                    s_names = {
+                        normalize_person_name_key(sub_r.get('contact_name')),
+                        normalize_person_name_key(sub_r.get('legal_entity_name')),
+                        normalize_person_name_key(sub_r.get('msa_signer_name')),
+                    }
+                    s_names.discard('')
+                    contact_match = bool(
+                        (len(phone_digits) == 10 and s_phone == phone_digits)
+                        or (emp_email_norm and s_email == emp_email_norm)
+                    )
+                    name_match = bool(emp_name_key and emp_name_key in s_names)
+                    if (contact_match or name_match) and (sub_r.get('status') or '') == 'Active Partner':
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED',
+                            'message': (
+                                f"Candidate matches Active 1099 Partner '{sub_r.get('company_name') or ''}' "
+                                f"(SUB-#{int(sub_r['id']):04d}). Deactivate the 1099 partner record before onboarding to W-2 payroll."
+                            ),
+                        }), 409
+                    if contact_match or name_match:
+                        sub_tag = f"[CROSS-TRACK NOTICE: Matches 1099 SUB-#{int(sub_r['id']):04d} {sub_r.get('company_name') or ''}]"
+                        if sub_tag not in notes:
+                            notes = f"{notes} | {sub_tag}".strip(" |")
+                        break
+
+            raw_ssn_onboard = (
+                data.get('social_security_number')
+                or data.get('ssn')
+                or data.get('ssn_plain')
+                or ''
+            ).strip()
+            ssn_hmac_onboard = compute_tax_id_hmac(raw_ssn_onboard)
+
             existing_emp = None
 
+            emp_lookup_cols = 'id, employee_number, notes, onboarding_token, onboarding_invited_at, onboarding_first_opened_at, onboarding_token_expires_at, onboarding_packet_signed'
             if applicant_id:
-                cur.execute('SELECT id, employee_number, notes, onboarding_token FROM "Employees" WHERE applicant_id = %s ORDER BY id ASC LIMIT 1;', (applicant_id,))
+                cur.execute(f'SELECT {emp_lookup_cols} FROM "Employees" WHERE applicant_id = %s ORDER BY id ASC LIMIT 1;', (applicant_id,))
                 existing_emp = cur.fetchone()
 
             if not existing_emp and phone_digits and len(phone_digits) == 10:
-                cur.execute('''
-                    SELECT id, employee_number, notes, onboarding_token FROM "Employees"
+                cur.execute(f'''
+                    SELECT {emp_lookup_cols} FROM "Employees"
                     WHERE RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s
                     ORDER BY id ASC LIMIT 1;
                 ''', (phone_digits,))
                 existing_emp = cur.fetchone()
 
             if not existing_emp and clean_emp_email:
-                cur.execute('''
-                    SELECT id, employee_number, notes, onboarding_token FROM "Employees"
+                cur.execute(f'''
+                    SELECT {emp_lookup_cols} FROM "Employees"
                     WHERE LOWER(TRIM(COALESCE(email, ''))) = LOWER(%s)
                     ORDER BY id ASC LIMIT 1;
                 ''', (clean_emp_email,))
                 existing_emp = cur.fetchone()
 
+            if ssn_hmac_onboard:
+                exclude_eid = existing_emp['id'] if existing_emp else -1
+                cur.execute(
+                    'SELECT id, employee_number FROM "Employees" WHERE ssn_hmac = %s AND id <> %s LIMIT 1;',
+                    (ssn_hmac_onboard, exclude_eid),
+                )
+                dup_ssn_row = cur.fetchone()
+                if dup_ssn_row:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_SSN_DETECTED',
+                        'employee_id': dup_ssn_row['id'],
+                        'message': (
+                            f"This Social Security Number is already registered to employee "
+                            f"{dup_ssn_row.get('employee_number') or dup_ssn_row['id']}."
+                        ),
+                    }), 409
+
             if existing_emp:
+                from blueprints.public import _is_onboarding_token_expired
                 emp_id = existing_emp['id']
                 emp_number = existing_emp['employee_number']
-                emp_token = existing_emp.get('onboarding_token') or f"emp_{emp_id}_{generate_employee_onboarding_token()}"
+                existing_tok = existing_emp.get('onboarding_token')
+                if not existing_tok or _is_onboarding_token_expired(dict(existing_emp)):
+                    emp_token = f"emp_{emp_id}_{generate_employee_onboarding_token()}"
+                else:
+                    emp_token = existing_tok
                 prev_notes = existing_emp.get('notes') or ''
                 merged_notes = f"{prev_notes}\n[PROFILE UPDATED]: {notes}".strip() if notes else prev_notes
+                dup_ssn_enc = None
+                dup_ssn_l4 = None
+                if raw_ssn_onboard:
+                    d_ssn = re.sub(r'\D', '', raw_ssn_onboard)
+                    if len(d_ssn) == 9:
+                        dup_ssn_enc = encrypt_pii(f"{d_ssn[:3]}-{d_ssn[3:5]}-{d_ssn[5:]}")
+                        dup_ssn_l4 = d_ssn[-4:]
 
                 cur.execute('''
                     UPDATE "Employees"
@@ -5923,8 +6508,13 @@ def api_hr_onboard_candidate():
                         weekly_hours_allocated = %s,
                         notes = %s,
                         job_position_id = COALESCE(%s, job_position_id),
+                        ssn_encrypted = COALESCE(%s, ssn_encrypted),
+                        ssn_last_four = COALESCE(%s, ssn_last_four),
+                        ssn_hmac = COALESCE(%s, ssn_hmac),
                         onboarding_token = %s,
-                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                        onboarding_first_opened_at = NULL,
+                        onboarding_invited_at = CURRENT_TIMESTAMP,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
                         updated_at = NOW()
                     WHERE id = %s;
                 ''', (
@@ -5933,7 +6523,8 @@ def api_hr_onboard_candidate():
                     pay_rate, overtime_rate, pay_frequency, primary_language,
                     emergency_name, emergency_phone, city, state,
                     assigned_customer_id, weekly_hours, merged_notes,
-                    job_position_id, emp_token, emp_id
+                    job_position_id, dup_ssn_enc, dup_ssn_l4, ssn_hmac_onboard,
+                    emp_token, emp_id
                 ))
 
                 if applicant_id:
@@ -5967,12 +6558,6 @@ def api_hr_onboard_candidate():
             emp_number = f"HWB-EMP-{next_id}"
             new_token = f"emp_{next_id}_{generate_employee_onboarding_token()}"
 
-            raw_ssn_onboard = (
-                data.get('social_security_number')
-                or data.get('ssn')
-                or data.get('ssn_plain')
-                or ''
-            ).strip()
             ssn_enc_onboard = None
             ssn_l4_onboard = None
             if raw_ssn_onboard:
@@ -5994,8 +6579,8 @@ def api_hr_onboard_candidate():
                     emergency_contact_name, emergency_contact_phone, address_city, address_state,
                     assigned_customer_id, weekly_hours_allocated, notes,
                     job_position_id, job_description_acknowledged_at,
-                    onboarding_token, onboarding_token_expires_at, onboarding_invited_at, onboarding_status,
-                    ssn_encrypted, ssn_last_four
+                    onboarding_token, onboarding_token_expires_at, onboarding_invited_at, onboarding_first_opened_at, onboarding_status,
+                    ssn_encrypted, ssn_last_four, ssn_hmac
                 ) VALUES (
                     %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s,
@@ -6003,8 +6588,8 @@ def api_hr_onboard_candidate():
                     %s, %s, %s, %s,
                     %s, %s, %s,
                     %s, %s,
-                    %s, CURRENT_TIMESTAMP + INTERVAL '30 days', CURRENT_TIMESTAMP, 'Pending Onboarding',
-                    %s, %s
+                    %s, CURRENT_TIMESTAMP + INTERVAL '7 days', CURRENT_TIMESTAMP, NULL, 'Pending Onboarding',
+                    %s, %s, %s
                 ) RETURNING id, employee_number;
             ''', (
                 emp_number, applicant_id, first_name, last_name, phone, clean_emp_email,
@@ -6013,7 +6598,7 @@ def api_hr_onboard_candidate():
                 emergency_name, emergency_phone, city, state,
                 assigned_customer_id, weekly_hours, notes,
                 job_position_id, ack_ts, new_token,
-                ssn_enc_onboard, ssn_l4_onboard
+                ssn_enc_onboard, ssn_l4_onboard, ssn_hmac_onboard
             ))
             new_emp = cur.fetchone()
 
@@ -6182,29 +6767,81 @@ def api_manage_employee(id):
                 return jsonify({'status': 'success', 'employee': emp_data})
 
             elif request.method == 'DELETE':
-                cur.execute('SELECT applicant_id FROM "Employees" WHERE id = %s;', (id,))
+                cur.execute('SELECT id, applicant_id, employment_status, first_name, last_name, email, employee_number FROM "Employees" WHERE id = %s;', (id,))
                 emp_del = cur.fetchone()
+                if not emp_del:
+                    return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
+
+                purge_mode = str(request.args.get('purge') or '').strip().lower() in ('1', 'true', 'yes')
+                if purge_mode:
+                    restore_token = _create_delete_snapshot(cur, 'employee', 'Employees', 'id', [id])
+                    try:
+                        cur.execute('UPDATE "WorkOrders" SET assigned_technician_id = NULL WHERE assigned_technician_id = %s;', (id,))
+                        cur.execute('UPDATE "WorkOrders" SET crew_lead_id = NULL WHERE crew_lead_id = %s;', (id,))
+                        cur.execute('UPDATE "AcademyEnrollments" SET employee_id = NULL WHERE employee_id = %s;', (id,))
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (id,))
+                    except Exception:
+                        pass
+                    cur.execute('DELETE FROM "Employees" WHERE id = %s;', (id,))
+                    conn.commit()
+                    try:
+                        from blueprints.operations import invalidate_operations_caches
+                        invalidate_operations_caches()
+                    except Exception:
+                        pass
+                    return jsonify({
+                        'status': 'success',
+                        'action': 'purged',
+                        'deleted_id': id,
+                        'restore_token': restore_token,
+                        'message': f"Employee #{id} ({emp_del.get('first_name') or ''} {emp_del.get('last_name') or ''}) permanently removed."
+                    })
+
                 cur.execute('''
                     UPDATE "Employees" 
                     SET employment_status = 'Terminated',
                         badge_status = 'Revoked',
                         termination_date = CURRENT_DATE,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL '1 second',
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (id,))
-                if emp_del and emp_del.get('applicant_id'):
+                if emp_del.get('applicant_id'):
                     cur.execute('''
                         UPDATE "JobApplicants"
                         SET status = 'Terminated', updated_at = CURRENT_TIMESTAMP
                         WHERE id = %s;
                     ''', (emp_del['applicant_id'],))
+                del_email_norm = (emp_del.get('email') or '').strip().lower()
+                cur.execute('''
+                    UPDATE "AcademyEnrollments"
+                    SET magic_token = NULL,
+                        status = CASE WHEN status = 'PASSED' THEN status ELSE 'REVOKED' END,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE employee_id = %s
+                       OR (%s <> '' AND LOWER(BTRIM(COALESCE(student_email, ''))) = %s);
+                ''', (id, del_email_norm, del_email_norm))
+                if del_email_norm:
+                    cur.execute('''
+                        UPDATE "Users"
+                        SET status = 'Suspended'
+                        WHERE LOWER(BTRIM(COALESCE(email, ''))) = %s
+                          AND COALESCE(role, '') NOT IN ('Executive', 'Admin')
+                          AND LOWER(username) NOT IN ('admin', 'hdominguez', 'humberto', 'humbertoed', 'mrondinella');
+                    ''', (del_email_norm,))
                 conn.commit()
                 try:
                     from blueprints.operations import invalidate_operations_caches
                     invalidate_operations_caches()
                 except Exception:
                     pass
-                return jsonify({'status': 'success', 'badge_status': 'Revoked', 'message': f'Employee #{id} marked Terminated and badge revoked.'})
+                return jsonify({
+                    'status': 'success',
+                    'action': 'terminated',
+                    'employment_status': 'Terminated',
+                    'badge_status': 'Revoked',
+                    'message': f'Employee #{id} marked Terminated and badge revoked.'
+                })
 
             elif request.method == 'PATCH':
                 data = request.get_json() or {}
@@ -6213,12 +6850,59 @@ def api_manage_employee(id):
                 if not emp:
                     return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
 
+                from core.security import compute_tax_id_hmac
                 first_name = data.get('first_name', emp['first_name'])
                 last_name = data.get('last_name', emp['last_name'])
                 phone = clean_phone(data.get('phone', emp['phone']))
-                email = data.get('email', emp['email'])
+                email = (
+                    (clean_email(data.get('email'), allow_internal=True) or (data.get('email') or '').strip())
+                    if 'email' in data
+                    else emp['email']
+                )
                 primary_role = data.get('primary_role', emp['primary_role'])
                 employment_status = data.get('employment_status', emp['employment_status'])
+
+                patch_emp_phone_digits = extract_phone_digits(phone or '')
+                patch_emp_email_norm = (email or '').strip().lower()
+                if len(patch_emp_phone_digits) == 10 or patch_emp_email_norm:
+                    cur.execute('''
+                        SELECT id, employee_number, first_name, last_name FROM "Employees"
+                        WHERE id <> %s AND (
+                            (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                            OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                        )
+                        LIMIT 1;
+                    ''', (id, patch_emp_phone_digits, patch_emp_phone_digits, patch_emp_email_norm, patch_emp_email_norm))
+                    dup_emp_row = cur.fetchone()
+                    if dup_emp_row:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'DUPLICATE_CONTACT_DETECTED',
+                            'message': (
+                                f"Another employee record ({dup_emp_row.get('employee_number') or dup_emp_row['id']}) "
+                                "already uses this phone number or email address."
+                            ),
+                        }), 409
+
+                    if employment_status == 'Active':
+                        cur.execute('''
+                            SELECT id, company_name FROM "SubcontractorPartners"
+                            WHERE status = 'Active Partner' AND (
+                                (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                                OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                            )
+                            LIMIT 1;
+                        ''', (patch_emp_phone_digits, patch_emp_phone_digits, patch_emp_email_norm, patch_emp_email_norm))
+                        active_sub_conflict = cur.fetchone()
+                        if active_sub_conflict:
+                            return jsonify({
+                                'status': 'error',
+                                'code': 'ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED',
+                                'message': (
+                                    f"Employee cannot be set Active while '{active_sub_conflict.get('company_name') or ''}' "
+                                    f"(SUB-#{int(active_sub_conflict['id']):04d}) is an Active Partner."
+                                ),
+                            }), 409
                 employment_type = data.get('employment_type', emp['employment_type'])
                 pay_rate = float(data.get('pay_rate_hourly', emp['pay_rate_hourly']))
                 overtime_rate = float(data.get('overtime_rate_hourly', emp['overtime_rate_hourly']))
@@ -6286,23 +6970,43 @@ def api_manage_employee(id):
                 elif 'ssn' in data:
                     raw_ssn = clean_str_field(data.get('ssn'))
 
+                ssn_hmac = emp.get('ssn_hmac')
                 if raw_ssn is not None:
                     # Check if user entered an unmasked SSN
                     if raw_ssn and not raw_ssn.startswith('***') and not raw_ssn.startswith('•••'):
                         digits = re.sub(r'\D', '', raw_ssn)
                         if len(digits) == 9:
+                            ssn_hmac = compute_tax_id_hmac(digits)
+                            if ssn_hmac:
+                                cur.execute(
+                                    'SELECT id, employee_number FROM "Employees" WHERE ssn_hmac = %s AND id <> %s LIMIT 1;',
+                                    (ssn_hmac, id),
+                                )
+                                dup_ssn_emp = cur.fetchone()
+                                if dup_ssn_emp:
+                                    return jsonify({
+                                        'status': 'error',
+                                        'code': 'DUPLICATE_SSN_DETECTED',
+                                        'message': (
+                                            f"This Social Security Number is already registered to employee "
+                                            f"{dup_ssn_emp.get('employee_number') or dup_ssn_emp['id']}."
+                                        ),
+                                    }), 409
                             formatted_ssn = f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
                             ssn_encrypted = encrypt_pii(formatted_ssn)
                             ssn_last_four = digits[-4:]
                         elif len(digits) >= 4:
                             ssn_encrypted = encrypt_pii(raw_ssn)
                             ssn_last_four = digits[-4:]
+                            ssn_hmac = None
                         else:
                             ssn_encrypted = None
                             ssn_last_four = None
+                            ssn_hmac = None
                     elif raw_ssn == '':
                         ssn_encrypted = None
                         ssn_last_four = None
+                        ssn_hmac = None
                     else:
                         ssn_encrypted = emp.get('ssn_encrypted')
                         ssn_last_four = emp.get('ssn_last_four')
@@ -6346,6 +7050,22 @@ def api_manage_employee(id):
                             SET status = 'Terminated', updated_at = CURRENT_TIMESTAMP 
                             WHERE id = %s;
                         ''', (emp['applicant_id'],))
+                    cur.execute('''
+                        UPDATE "AcademyEnrollments"
+                        SET magic_token = NULL,
+                            status = CASE WHEN status = 'PASSED' THEN status ELSE 'REVOKED' END,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE employee_id = %s
+                           OR (%s <> '' AND LOWER(BTRIM(COALESCE(student_email, ''))) = %s);
+                    ''', (id, patch_emp_email_norm, patch_emp_email_norm))
+                    if patch_emp_email_norm:
+                        cur.execute('''
+                            UPDATE "Users"
+                            SET status = 'Suspended'
+                            WHERE LOWER(BTRIM(COALESCE(email, ''))) = %s
+                              AND COALESCE(role, '') NOT IN ('Executive', 'Admin')
+                              AND LOWER(username) NOT IN ('admin', 'hdominguez', 'humberto', 'humbertoed', 'mrondinella');
+                        ''', (patch_emp_email_norm,))
                 elif employment_status in ['On Leave', 'Suspended']:
                     badge_status = 'Suspended'
                 elif employment_status == 'Active':
@@ -6365,6 +7085,8 @@ def api_manage_employee(id):
                 else:
                     job_description_acknowledged_at = emp.get('job_description_acknowledged_at')
 
+                revoke_portal_token = employment_status in ('Terminated', 'Fired', 'Suspended') or badge_status == 'Revoked'
+
                 cur.execute('''
                     UPDATE "Employees" SET
                         first_name = %s, last_name = %s, phone = %s, email = %s,
@@ -6383,9 +7105,10 @@ def api_manage_employee(id):
                         dps_clearance_date = %s, i9_verification_date = %s,
                         direct_deposit_bank = %s, direct_deposit_routing = %s,
                         direct_deposit_account = %s,
-                        ssn_encrypted = %s, ssn_last_four = %s,
+                        ssn_encrypted = %s, ssn_last_four = %s, ssn_hmac = %s,
                         direct_deposit_account_encrypted = %s, direct_deposit_account_last_four = %s,
                         job_position_id = %s, job_description_acknowledged_at = %s,
+                        onboarding_token_expires_at = CASE WHEN %s THEN CURRENT_TIMESTAMP - INTERVAL '1 second' ELSE onboarding_token_expires_at END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s;
                 ''', (
@@ -6405,12 +7128,18 @@ def api_manage_employee(id):
                     dps_clearance_date, i9_verification_date,
                     direct_deposit_bank, direct_deposit_routing,
                     direct_deposit_account,
-                    ssn_encrypted, ssn_last_four,
+                    ssn_encrypted, ssn_last_four, ssn_hmac,
                     direct_deposit_account_encrypted, direct_deposit_account_last_four,
                     job_position_id, job_description_acknowledged_at,
+                    revoke_portal_token,
                     id
                 ))
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
                 return jsonify({
                     'status': 'success',
                     'id': id,
@@ -6521,7 +7250,17 @@ def api_upload_employee_document(id):
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
-        updated_fields = apply_extracted_fields_to_employee(conn, id, doc_type, extracted)
+        try:
+            updated_fields = apply_extracted_fields_to_employee(conn, id, doc_type, extracted)
+        except ValueError as dup_err:
+            conn.rollback()
+            if 'DUPLICATE_SSN_DETECTED' in str(dup_err):
+                return jsonify({
+                    'status': 'error',
+                    'code': 'DUPLICATE_SSN_DETECTED',
+                    'message': str(dup_err).replace('DUPLICATE_SSN_DETECTED: ', ''),
+                }), 409
+            raise
         auto_note = (
             f"{notes} | Auto-extracted: {', '.join(updated_fields)}".strip(" |")
             if updated_fields
@@ -6854,10 +7593,12 @@ def api_acknowledge_job_description(id):
 @login_required
 def api_send_employee_onboarding_link(id):
     """
-    Generates or refreshes a 30-day self-service W-2 onboarding link (/onboard/employee/<token>)
-    pre-filled with the employee's application and profile information, dispatches the
-    onboarding email via Microsoft Graph, and returns the canonical URL and SMS invite URI.
+    Generates or refreshes a Dual-Stage (7-day unopened / 14-day active) self-service W-2
+    onboarding link (/onboard/employee/<token>) pre-filled with the employee's application
+    and profile information, rotates expired tokens, dispatches the onboarding email via
+    Microsoft Graph, and returns the canonical URL and SMS invite URI.
     """
+    from blueprints.public import _is_onboarding_token_expired
     from database.schema_engine import ensure_employee_onboarding_schema
     from core.services.employee_doc_extractor import generate_employee_onboarding_token
     from core.services.notification_service import (
@@ -6876,14 +7617,31 @@ def api_send_employee_onboarding_link(id):
                 return jsonify({'status': 'error', 'message': 'Employee not found'}), 404
 
             emp_dict = dict(emp)
+            emp_status = (emp_dict.get('employment_status') or '').strip()
+            emp_badge = (emp_dict.get('badge_status') or '').strip()
+            if emp_status in ('Terminated', 'Fired', 'Suspended') or emp_badge == 'Revoked':
+                cur.execute('''
+                    UPDATE "Employees"
+                    SET onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL '1 second',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (id,))
+                conn.commit()
+                return jsonify({
+                    'status': 'error',
+                    'code': 'EMPLOYMENT_INACTIVE_LOCKED',
+                    'message': f'Cannot send an onboarding link while employment status is {emp_status or "Inactive"}. Re-activate the employee first.'
+                }), 403
+
             token = emp_dict.get('onboarding_token')
-            if not token:
+            if not token or _is_onboarding_token_expired(emp_dict):
                 token = f"emp_{id}_{generate_employee_onboarding_token()}"
 
             cur.execute('''
                 UPDATE "Employees"
                 SET onboarding_token = %s,
-                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
+                    onboarding_first_opened_at = NULL,
+                    onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
                     onboarding_invited_at = CURRENT_TIMESTAMP,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s

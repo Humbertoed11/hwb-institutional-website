@@ -1,94 +1,102 @@
-
 <div class="sop-card">
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3.2-PANIC</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
-        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.5</span></div>
+        <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 &amp; 7.5</span></div>
     </div>
 
     <div class="sop-content-body">
         <table>
-<thead>
-<tr>
-<th style="text-align: left;"><strong>Document Control</strong></th>
-<th style="text-align: left;"></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Disaster Recovery: The Panic Button SOP</strong></td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Document ID</strong></td>
-<td style="text-align: left;">HWB-QMS-9.3.2-PANIC</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.0.0</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Status</strong></td>
-<td style="text-align: left;">APPROVED</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Systems Architect)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Approved By</strong></td>
-<td style="text-align: left;">Humberto Dominguez, CEO</td>
-</tr>
-<tr>
-<td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h1 id="10-objective">1.0 Objective</h1>
-<p>To provide a definitive, high-velocity response protocol for catastrophic system failures, data corruption, or accidental deletions. This SOP acts as the "Panic Button," guiding the operator through the immediate restoration of SigmaFidelity™ infrastructure.</p>
-<h1 id="20-roles-and-responsibilities">2.0 Roles and Responsibilities</h1>
-<ul>
-<li><strong>George (Systems Architect):</strong> Decision authority on rollback necessity and target timestamps.</li>
-<li><strong>Peter (Recovery Specialist):</strong> Primary autonomous execution agent for all backup/restore logic.</li>
-<li><strong>CEO (Humberto Dominguez):</strong> Final approval for total system rollbacks.</li>
-</ul>
-<h1 id="30-the-recovery-stack-tactics">3.0 The Recovery Stack (Tactics)</h1>
-<p>The system is protected by five autonomous layers managed by the <strong>Peter Sentinel</strong>:
-1.  <strong>Disk Protection (15m):</strong> Prevents crashes via log/disk monitoring.
-2.  <strong>Shadow Snapshots (15m):</strong> Hard-linked file-level recovery for web development.
-3.  <strong>Binary DB Snapshots (1h):</strong> PostgreSQL state recovery via <code>.sql</code> archives.
-4.  <strong>Vault Guardian (24h):</strong> Full institutional archival of SOPs and secrets.
-5.  <strong>Ghost Checkpoints (Pre-Stop):</strong> Captures uncommitted Git state.</p>
-<h1 id="40-protocol-the-panic-button-sequence">4.0 Protocol: The "Panic Button" Sequence</h1>
-<h2 id="step-1-damage-assessment">STEP 1: Damage Assessment</h2>
-<ol>
-<li>Locate and read the <strong>Black Box</strong> at <code>HWB-COMPANY/HWB-DATA/HWB-SESSION-RECOVERY.md</code>.</li>
-<li>Identify the <strong>Heat Zone Files</strong> and the <strong>Timestamp</strong> of the last successful action.</li>
-</ol>
-<h2 id="step-2-choose-restoration-path">STEP 2: Choose Restoration Path</h2>
-<ul>
-<li><strong>If Code is Broken:</strong> Locate the nearest <strong>Shadow Snapshot</strong> in <code>backup/shadow_snapshots/</code> and execute:
-  <code>cp -r backup/shadow_snapshots/web_dev_[TIMESTAMP]/* HWB-COMPANY/HWB-IT/HWB-IT-WEBSITE/</code></li>
-<li><strong>If Data is Lost:</strong> Locate the nearest <strong>DB Snapshot</strong> in <code>backup/</code> and execute:
-  <code>python3 scripts/peter_sentinel.py --restore backup/hwb_db_snapshot_[TIMESTAMP].sql</code></li>
-<li><strong>If System is Unstable:</strong> Perform a <strong>Ghost Rollback</strong> using the latest <code>kit-ghost-</code> branch in Git.</li>
-</ul>
-<h2 id="step-3-verification">STEP 3: Verification</h2>
-<ol>
-<li>Run the Diagnostic Dashboard: <code>docker exec hwb_web_app python diag_dashboard.py</code>.</li>
-<li>Verify log health: <code>journalctl -u sigma-peter -n 20</code>.</li>
-</ol>
-<h1 id="50-emergency-summoning">5.0 Emergency Summoning</h1>
-<p>In a state of total disorientation, the human operator may summon Peter directly for any specific recovery task using the CLI:
-- <code>python3 scripts/peter_sentinel.py --help</code></p>
-<hr />
-<p><strong>Institutional Standard Active</strong>
-<em>This document is a mandate of the SigmaFidelity™ Quality Management System.</em></p>
-    </div>
+            <thead>
+                <tr>
+                    <th style="text-align: left;"><strong>Document Control</strong></th>
+                    <th style="text-align: left;"><strong>Institutional Specification</strong></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: left;"><strong>Document Title</strong></td>
+                    <td style="text-align: left;"><strong>Disaster Recovery: The Panic Button SOP</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Document ID</strong></td>
+                    <td style="text-align: left;">HWB-QMS-9.3.2-PANIC</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Version</strong></td>
+                    <td style="text-align: left;">3.1.0</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Status</strong></td>
+                    <td style="text-align: left;">APPROVED</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Author</strong></td>
+                    <td style="text-align: left;">Peter (Recovery Specialist) &amp; George (Systems Architect)</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Approved By</strong></td>
+                    <td style="text-align: left;">Humberto Dominguez, CEO</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;"><strong>Date</strong></td>
+                    <td style="text-align: left;">11/12/2026</td>
+                </tr>
+            </tbody>
+        </table>
+        <hr />
+        <h1 id="10-objective">1.0 Objective</h1>
+        <p>To provide a fast, plain-language emergency response checklist ("The Panic Button") for recovering HWB Cleaning Services LLC databases, containers, WSL2 Linux workspaces, or an entire lost workstation without risking cross-OS filesystem freezes.</p>
+
+        <h1 id="20-roles-and-responsibilities">2.0 Roles and Responsibilities</h1>
+        <ul>
+            <li><strong>Humberto Dominguez (CEO):</strong> Final approval authority for full-system rollbacks and bare-metal nuclear restores.</li>
+            <li><strong>Peter (Recovery Specialist):</strong> Autonomous owner of hourly native <code>ext4</code> binary snapshots and pre-change checkpoint vaults.</li>
+            <li><strong>George (Systems Architect):</strong> Technical verification lead for database integrity, container health, and post-restore audit gates.</li>
+        </ul>
+
+        <h1 id="30-the-recovery-stack-tactics">3.0 The 3-Layer Sovereign Backup Stack (<code>v3.1.0</code>)</h1>
+        <p>Legacy <code>sigma-peter.service</code> (15-minute daemon) and <code>/mnt/c/.../OneDrive</code> cross-OS <code>9P</code> backups are permanently retired (<code>BUG-173</code> / <code>SO-SCAR-023</code>) because <code>9P</code> file locks stall WSL2. Active protection runs across three isolated layers:</p>
+        <ol>
+            <li><strong>Layer 1 — Hardened Hourly Native <code>ext4</code> Snapshots &amp; Peter Sentinel (<code>v2.0.0</code>):</strong> <code>scripts/hwb_hourly_backup.sh</code> executes via Linux <code>cron</code> at <code>:00</code> every hour, writing 24-hour rolling <code>pg_dump -Fc</code> PostgreSQL 16.15 binary dumps locked to <code>chmod 600</code> with SHA-256 checksums (<code>hwb_dev_db.dump.sha256</code>) into <code>backups/hourly/</code> and <code>backups/latest/</code>. Before risky edits or migrations inside <code>/home/humbertoed/gemini_projects</code>, <code>python3 scripts/peter_sentinel.py checkpoint --label &lt;name&gt;</code> pins a <code>chmod 600</code> PG16 dump, <code>.env</code> copy, and complete active code/QMS archive in <code>backups/checkpoints/&lt;name&gt;/</code> with <code>SHA256SUMS.txt</code> (protected from 24-hour auto-purge) and test-restores into temporary database <code>hwb_peter_verify_tmp</code>.</li>
+            <li><strong>Layer 2 — Tier 1 Out-of-Band Windows Rescue Cockpit (PC Intact, WSL2 Hung):</strong> Standalone Windows Antigravity workspace at <code>C:\wsl-backup\SuperGeorge-Rescue</code> (<code>Request Review</code> / <code>ASK</code> mode, zero <code>L:\</code> Linux drive mount) paired with <code>C:\wsl-backup\restore-system.ps1</code>.</li>
+            <li><strong>Layer 3 — Tier 2 Grab-and-Go USB Nuclear Drive (<code>D:\</code>):</strong> Offline bare-metal recovery drive containing <code>D:\Installers\</code>, <code>D:\restore-system.bat</code>, <code>D:\2026-data-backup-ubuntu\ubuntu-full.tar</code>, and <code>D:\SuperGeorge-Rescue</code>.</li>
+        </ol>
+
+        <h1 id="40-protocol-the-panic-button-sequence">4.0 Protocol: The "Panic Button" Sequence</h1>
+        <h2 id="step-1-damage-assessment">STEP 1: Assess Failure Scope</h2>
+        <ol>
+            <li>If Linux is responsive, inspect the session Black Box at <code>/home/humbertoed/gemini_projects/HWB-SESSION-RECOVERY.md</code> and run <code>python3 scripts/peter_sentinel.py verify</code> to confirm backup freshness (<code>&lt;90</code> minutes), <code>chmod 600</code> permissions, and SHA-256 integrity.</li>
+            <li>Select the exact recovery tier below matching the failure mode.</li>
+        </ol>
+
+        <h2 id="step-2-choose-restoration-path">STEP 2: Execute Matching Recovery Tier</h2>
+        <ul>
+            <li><strong>Scenario A — Database Drift, Row Corruption, or Full Local Rollback (Linux Healthy):</strong> Execute Peter's full staging-swap rollback from a pinned checkpoint in <code>backups/checkpoints/&lt;name&gt;/</code> (restores into clean staging database <code>hwb_restore_stage</code> first, stops <code>hwb_web_app</code> and <code>hwb_agent_worker</code> briefly, swaps <code>hwb_dev_db</code> cleanly without open-socket or <code>"SecurityAuditLogs"</code> WORM trigger errors, restarts containers, and verifies all 4 worker daemons via <code>docker top</code>):
+                <br /><code>python3 scripts/peter_sentinel.py rollback --label &lt;name&gt; --full</code></li>
+            <li><strong>Scenario B — Uncommitted Working-Tree / Code Breakage Only (Linux Healthy):</strong> Restore active code and QMS files from the pinned checkpoint and restart <code>hwb_web_app</code> via <code>python3 scripts/peter_sentinel.py rollback --label &lt;name&gt; --code-only</code> (or clean working tree via <code>git reset --hard HEAD &amp;&amp; git clean -fd &amp;&amp; docker restart hwb_web_app</code>).</li>
+            <li><strong>Scenario C — Tier 1 Rescue (PC Intact, WSL2 / Ubuntu Hung or Broken):</strong> Do NOT open any <code>L:\</code> or WSL path. Open Windows Antigravity on <code>C:\wsl-backup\SuperGeorge-Rescue</code> (<code>Request Review</code> / <code>ASK</code> mode) or run <code>C:\wsl-backup\restore-system.ps1</code> in Administrator PowerShell.</li>
+            <li><strong>Scenario D — Tier 2 Bare-Metal / Lost PC Nuclear Restore (<code>D:\</code> USB Drive):</strong>
+                <ol>
+                    <li>Run <code>wsl --install -d Ubuntu</code> in Administrator PowerShell and reboot.</li>
+                    <li>Install offline installers from <code>D:\Installers\</code>: <code>Docker Desktop Installer.exe</code> (Docker Hub User: <code>hdominguez11</code>, Email: <code>hdominguez@hwbcleaning.com</code>; enable <code>Settings -&gt; Resources -&gt; WSL Integration -&gt; Ubuntu</code> after Step 3) and <code>Antigravity-x64.exe</code> (Google login: <code>humbertoed@gmail.com</code>).</li>
+                    <li>Double-click <code>D:\restore-system.bat</code> to restore the Ubuntu WSL2 image from <code>D:\2026-data-backup-ubuntu\ubuntu-full.tar</code>, apply <code>.wslconfig</code> (<code>12GB</code> RAM / <code>6</code> CPUs), and verify <code>/home/humbertoed/gemini_projects</code> and external sibling workspaces.</li>
+                    <li>Open Windows Antigravity -&gt; <code>File -&gt; Open Folder -&gt; D:\SuperGeorge-Rescue</code> (or connect to WSL <code>Ubuntu</code> once restored) and boot the HWB container stack (<code>127.0.0.1:5000</code>).</li>
+                </ol>
+            </li>
+        </ul>
+
+        <h2 id="step-3-verification">STEP 3: Post-Recovery Verification</h2>
+        <ol>
+            <li>Verify backup freshness, <code>chmod 600</code> permissions, and SHA-256 checksum: <code>python3 scripts/peter_sentinel.py verify</code>.</li>
+            <li>Verify HTTP health and 4 worker processes: <code>curl -fsS http://127.0.0.1:5000/heartbeat</code> and <code>docker top hwb_agent_worker</code>.</li>
+            <li>Run regression and SOC 2 gates: <code>docker exec hwb_web_app python3 scripts/test_web_performance_rack_14.py</code> and <code>docker exec hwb_web_app python3 scripts/check_soc2_data_leakage.py</code>.</li>
+        </ol>
+        <hr />
+        <p><strong>Institutional Standard Active</strong> — <em>Controlled under the SigmaFidelity™ Quality Management System.</em></p>
+
         <h2 id="50-revision-history">5.0 Revision History</h2>
         <table>
             <thead>
@@ -101,21 +109,32 @@
             </thead>
             <tbody>
                 <tr>
-                    <td style="text-align: left;">1.0.0</td>
-                    <td style="text-align: left;">04/27/2026</td>
-                    <td style="text-align: left;">George (Systems Architect)</td>
-                    <td style="text-align: left;">Initial Architecture Baseline.</td>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified hardened <code>chmod 600</code> and SHA-256 hourly snapshots in <code>scripts/hwb_hourly_backup.sh</code> and the unified 3-command Peter Recovery Standard in <code>scripts/peter_sentinel.py v2.0.0</code> (<code>checkpoint --label &lt;name&gt;</code>, <code>rollback --label &lt;name&gt; [--code-only | --full]</code> via clean staging DB <code>hwb_restore_stage</code>, and <code>verify</code> recording status in PostgreSQL <code>"AIEmployeeHeartbeat"</code> / <code>"SecurityAuditLogs"</code>). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Retired obsolete <code>sigma-peter.service</code> (15m daemon) and <code>/mnt/c/.../OneDrive</code> <code>9P</code> snapshots (BUG-173 / SO-SCAR-023). Codified the 3-Layer Sovereign Backup &amp; Two-Tier Recovery Architecture: Layer 1 <code>scripts/hwb_hourly_backup.sh</code> (:00 cron native <code>ext4</code>), Tier 1 Windows Rescue Cockpit (<code>C:\wsl-backup\SuperGeorge-Rescue</code> + <code>restore-system.ps1</code>), and Tier 2 Bare-Metal Nuclear Restore on Drive <code>D:\</code> (<code>D:\Installers\</code> + <code>D:\restore-system.bat</code>). Approved by Humberto Dominguez, CEO.</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;">2.0.0</td>
                     <td style="text-align: left;">09/21/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
-                    <td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline. Standardized under HWB-QMS-1.0 v2.0 (Everyday Words) and approved by Humberto Dominguez, CEO.</td>
+                    <td style="text-align: left;">Modernized and upgraded to post-May 1st, 2026 baseline under HWB-QMS-1.0 v2.0 (Everyday Words). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">1.0.0</td>
+                    <td style="text-align: left;">04/27/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Initial Architecture Baseline.</td>
                 </tr>
             </tbody>
         </table>
-
-
+    </div>
 
     <div class="sop-card-footer">
         <span>&copy; 2026 HWB Cleaning Services LLC</span>

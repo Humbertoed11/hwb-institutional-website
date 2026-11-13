@@ -16,18 +16,56 @@ Lauri Tells — 24/7 Autonomous SEO, Google Analytics, Keyword Intelligence & Cl
   [Approve] / [Skip] / [Undo] execution.
 """
 
+import base64
 import hashlib
 import json
 import os
 import threading
 import time
-from datetime import datetime
+import urllib.parse
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 
 import psycopg2
 from psycopg2.extras import Json, RealDictCursor
+import requests
 from werkzeug.security import generate_password_hash
+
+
+_GOOGLE_CLOUD_CACHE_LOCK: threading.Lock = threading.Lock()
+_GOOGLE_CLOUD_CACHE_TTL_SECONDS: float = 900.0
+_GOOGLE_CLOUD_CACHE: Dict[str, Any] = {
+    "key": None,
+    "timestamp": 0.0,
+    "payload": None,
+}
+
+GOOGLE_READONLY_SCOPES: List[str] = [
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/webmasters.readonly",
+]
+
+DFW_CITIES_CANONICAL: Tuple[str, ...] = (
+    "Dallas",
+    "Fort Worth",
+    "Plano",
+    "Frisco",
+    "McKinney",
+    "Allen",
+    "Prosper",
+    "Celina",
+    "Denton",
+    "Richardson",
+    "Addison",
+    "Irving",
+    "Arlington",
+    "Grand Prairie",
+    "Mansfield",
+    "Southlake",
+    "Rockwall",
+    "Waxahachie",
+)
 
 
 INITIAL_KEYWORD_RADAR_SEEDS: List[Dict[str, Any]] = [
@@ -471,7 +509,620 @@ class LauriTellsSearchGrowthEmployee:
         finally:
             self._put_conn(conn)
 
-    def run_seo_and_analytics_patrol(self, force_refresh: bool = False) -> Dict[str, Any]:
+    @staticmethod
+    def _base64url_encode(raw_bytes: bytes) -> str:
+        return base64.urlsafe_b64encode(raw_bytes).rstrip(b"=").decode("ascii")
+
+    @staticmethod
+    def _load_google_service_account_info(
+        raw_value: str,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Parses GOOGLE_SERVICE_ACCOUNT_JSON from a file path, inline JSON string,
+        or base64-encoded JSON string. Returns None if invalid or unreadable.
+        """
+        cleaned = (raw_value or "").strip()
+        if not cleaned:
+            return None
+        try:
+            if os.path.isfile(cleaned):
+                with open(cleaned, "r", encoding="utf-8") as fh:
+                    parsed = json.load(fh)
+                return parsed if isinstance(parsed, dict) else None
+            if cleaned.startswith("{"):
+                parsed = json.loads(cleaned)
+                return parsed if isinstance(parsed, dict) else None
+            decoded_bytes = base64.b64decode(cleaned)
+            parsed = json.loads(decoded_bytes.decode("utf-8"))
+            return parsed if isinstance(parsed, dict) else None
+        except Exception as exc:
+            print(
+                f"[LAURI TELLS 24/7] Service Account JSON parse notice: {exc}",
+                flush=True,
+            )
+            return None
+
+    def _mint_google_readonly_access_token(
+        self, sa_info: Dict[str, Any], scopes: List[str]
+    ) -> str:
+        """
+        Exchanges a Google Cloud Service Account JSON key for a short-lived
+        read-only OAuth2 Bearer token using google-auth if installed, or native
+        cryptography RS256 JWT signing to https://oauth2.googleapis.com/token.
+        """
+        try:
+            from google.auth.transport.requests import Request as GoogleAuthRequest  # type: ignore
+            from google.oauth2 import service_account as google_sa  # type: ignore
+
+            creds = google_sa.Credentials.from_service_account_info(
+                sa_info, scopes=scopes
+            )
+            creds.refresh(GoogleAuthRequest())
+            if creds.token:
+                return str(creds.token)
+        except ImportError:
+            pass
+
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+
+        client_email = str(sa_info.get("client_email") or "").strip()
+        private_key_pem = str(sa_info.get("private_key") or "").replace("\\n", "\n")
+        token_uri = str(
+            sa_info.get("token_uri") or "https://oauth2.googleapis.com/token"
+        ).strip()
+        if not client_email or not private_key_pem:
+            raise ValueError(
+                "Service Account JSON requires client_email and private_key."
+            )
+
+        now_epoch = int(time.time())
+        jwt_header: Dict[str, Any] = {"alg": "RS256", "typ": "JWT"}
+        if sa_info.get("private_key_id"):
+            jwt_header["kid"] = str(sa_info["private_key_id"])
+        jwt_claims: Dict[str, Any] = {
+            "iss": client_email,
+            "scope": " ".join(scopes),
+            "aud": token_uri,
+            "iat": now_epoch,
+            "exp": now_epoch + 3600,
+        }
+        signing_input = (
+            f"{self._base64url_encode(json.dumps(jwt_header, separators=(',', ':')).encode('utf-8'))}."
+            f"{self._base64url_encode(json.dumps(jwt_claims, separators=(',', ':')).encode('utf-8'))}"
+        )
+        private_key = serialization.load_pem_private_key(
+            private_key_pem.encode("utf-8"), password=None
+        )
+        signature = private_key.sign(  # type: ignore[union-attr]
+            signing_input.encode("ascii"),
+            padding.PKCS1v15(),
+            hashes.SHA256(),
+        )
+        signed_jwt = f"{signing_input}.{self._base64url_encode(signature)}"
+
+        token_resp = requests.post(
+            token_uri,
+            data={
+                "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                "assertion": signed_jwt,
+            },
+            timeout=6,
+        )
+        token_resp.raise_for_status()
+        token_json = token_resp.json()
+        access_token = str(token_json.get("access_token") or "").strip()
+        if not access_token:
+            raise RuntimeError("Google OAuth2 response did not include access_token.")
+        return access_token
+
+    @staticmethod
+    def _classify_striking_distance_keyword(
+        query_phrase: str, page_url: str
+    ) -> Dict[str, Any]:
+        """
+        Deterministically classifies a Google Search Console Striking-Distance
+        query (positions 8.0-20.0) into buyer_intent, service_division,
+        target_city, and target_route (Mandate 2 / GRO-09).
+        """
+        q_low = (query_phrase or "").lower().strip()
+        p_low = (page_url or "").lower().strip()
+        combined = f"{q_low} {p_low}"
+
+        target_city = "Dallas"
+        for city_name in DFW_CITIES_CANONICAL:
+            city_slug = city_name.lower().replace(" ", "-")
+            if city_name.lower() in combined or f"/locations/{city_slug}" in p_low:
+                target_city = city_name
+                break
+
+        parsed_path = ""
+        if page_url:
+            try:
+                parsed = urllib.parse.urlparse(page_url)
+                if parsed.path and parsed.path.startswith("/"):
+                    parsed_path = parsed.path.rstrip("/") or "/"
+            except Exception as parse_err:
+                print(
+                    f"[LAURI TELLS 24/7] URL parse notice for {page_url}: {parse_err}",
+                    flush=True,
+                )
+
+        gc_terms = (
+            "post-construction",
+            "post construction",
+            "subdivision",
+            "rough clean",
+            "final clean",
+            "rough",
+            "builder",
+            "construction",
+            "street sweep",
+        )
+        ind_terms = (
+            "warehouse",
+            "scrubbing",
+            "distribution",
+            "3pl",
+            "industrial",
+            "logistics",
+            "manufacturing",
+        )
+
+        if any(term in combined for term in gc_terms):
+            buyer_intent = "GC_COMMERCIAL"
+            service_division = "3-Step Subdivision & 3-Phase Final Clean"
+            default_route = "/facilities/construction-subdivisions"
+        elif any(term in combined for term in ind_terms):
+            buyer_intent = "INDUSTRIAL_3PL"
+            service_division = "Industrial & Warehouse Scrubbing"
+            default_route = "/facilities/warehouses-industrial"
+        else:
+            buyer_intent = "HIGH_COMMERCIAL"
+            if any(t in combined for t in ("daycare", "childcare", "child care", "preschool")):
+                service_division = "Daycare & Early Learning Cleaning"
+                default_route = "/facilities/daycare-childcare"
+            elif any(t in combined for t in ("school", "academy", "campus", "charter")):
+                service_division = "K-12 & Private School Janitorial"
+                default_route = "/facilities/schools-education"
+            elif any(t in combined for t in ("medical", "dental", "clinic", "patient")):
+                service_division = "Medical & Dental Office Cleaning"
+                default_route = "/facilities/medical-dental"
+            elif any(t in combined for t in ("dealership", "showroom", "automotive", "service bay")):
+                service_division = "Auto Dealership Showroom & Service Scrubbing"
+                default_route = "/facilities/auto-dealerships"
+            elif any(t in combined for t in ("church", "sanctuary", "worship", "nursery")):
+                service_division = "Church & Sanctuary Campus Care"
+                default_route = "/facilities/churches-nonprofits"
+            else:
+                service_division = "Executive Office & Commercial Janitorial"
+                default_route = "/facilities/corporate-offices"
+
+        target_route = parsed_path if parsed_path else default_route
+        return {
+            "buyer_intent": buyer_intent,
+            "service_division": service_division,
+            "target_city": target_city,
+            "target_route": target_route,
+        }
+
+    def _upsert_striking_distance_keywords(
+        self, striking_rows: List[Dict[str, Any]]
+    ) -> int:
+        """
+        Upserts discovered Google Search Console Striking-Distance keywords
+        (positions 8.0-20.0) into PostgreSQL "SEOKeywordRadar" with verified
+        lead counts per target city.
+        """
+        if not striking_rows:
+            return 0
+        conn = None
+        upserted_count = 0
+        try:
+            conn = self._get_conn()
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                for item in striking_rows:
+                    phrase = str(item.get("query") or "").strip()[:255]
+                    if not phrase:
+                        continue
+                    target_city = str(item.get("target_city") or "Dallas")
+                    cur.execute(
+                        """
+                        SELECT COUNT(*) AS cnt
+                        FROM "Leads"
+                        WHERE LOWER(COALESCE(city, '')) = LOWER(%s)
+                          AND (is_duplicate = FALSE OR is_duplicate IS NULL)
+                          AND (status != 'ARCHIVED' OR status IS NULL);
+                        """,
+                        (target_city,),
+                    )
+                    c_row = cur.fetchone()
+                    city_leads = int(c_row["cnt"]) if c_row else 0
+                    pos_val = float(item.get("position") or 15.0)
+                    impr_val = int(item.get("impressions") or 0)
+                    clicks_val = int(item.get("clicks") or 0)
+                    priority = max(85, min(100, int(round(108.0 - pos_val))))
+                    rec_action = (
+                        f"GRO-09 Striking Distance (Pos {pos_val:.1f}, {impr_val} impressions, "
+                        f"{clicks_val} clicks): refine title/H1/FAQ alignment on {item.get('target_route', '/')}."
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO "SEOKeywordRadar"
+                            (keyword_phrase, service_division, target_city, target_route,
+                             buyer_intent, matched_leads_count, priority_score, status,
+                             recommended_action, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, 'STRIKING_DISTANCE', %s, NOW())
+                        ON CONFLICT (keyword_phrase) DO UPDATE
+                        SET matched_leads_count = EXCLUDED.matched_leads_count,
+                            target_route = EXCLUDED.target_route,
+                            buyer_intent = EXCLUDED.buyer_intent,
+                            priority_score = GREATEST("SEOKeywordRadar".priority_score, EXCLUDED.priority_score),
+                            recommended_action = EXCLUDED.recommended_action,
+                            updated_at = NOW();
+                        """,
+                        (
+                            phrase,
+                            str(item.get("service_division") or "Commercial Cleaning"),
+                            target_city,
+                            str(item.get("target_route") or "/"),
+                            str(item.get("buyer_intent") or "HIGH_COMMERCIAL"),
+                            city_leads,
+                            priority,
+                            rec_action,
+                        ),
+                    )
+                    upserted_count += 1
+            conn.commit()
+        except Exception as exc:
+            if conn:
+                conn.rollback()
+            print(
+                f"[LAURI TELLS 24/7] Striking-distance upsert warning: {exc}",
+                flush=True,
+            )
+        finally:
+            self._put_conn(conn)
+        return upserted_count
+
+    def fetch_google_cloud_search_and_ga4_metrics(
+        self, force_refresh: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Read-Only Google Analytics 4 Data API + Google Search Console Search
+        Analytics API connector with a 900-second in-memory cache so web threads
+        never block (SO-SCAR-010). Enforces Mandate 1 Zero Synthetic Data:
+        returns explicit DATA REQUIRED status when credentials are not yet set.
+        """
+        sa_raw = (os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or "").strip()
+        prop_raw = (os.environ.get("GA4_PROPERTY_ID") or "").strip()
+        prop_id = prop_raw.replace("properties/", "").strip()
+        gsc_site = (
+            os.environ.get("GSC_SITE_URL") or "https://www.hwbcleaning.com/"
+        ).strip()
+
+        cache_key = f"{hashlib.sha256(sa_raw.encode('utf-8')).hexdigest()[:16]}:{prop_id}:{gsc_site}"
+        now_ts = time.time()
+
+        if not force_refresh:
+            with _GOOGLE_CLOUD_CACHE_LOCK:
+                if (
+                    _GOOGLE_CLOUD_CACHE["payload"] is not None
+                    and _GOOGLE_CLOUD_CACHE["key"] == cache_key
+                    and (now_ts - float(_GOOGLE_CLOUD_CACHE["timestamp"]))
+                    < _GOOGLE_CLOUD_CACHE_TTL_SECONDS
+                ):
+                    return dict(_GOOGLE_CLOUD_CACHE["payload"])
+
+        setup_steps: List[str] = [
+            "1. Create a read-only Google Cloud Service Account JSON key with Analytics Data API and Search Console API enabled.",
+            "2. Grant that Service Account email 'Viewer' access in GA4 Property (G-8BX5Q7THYR) and 'Restricted/Full User' in Google Search Console (https://www.hwbcleaning.com/).",
+            "3. Add GOOGLE_SERVICE_ACCOUNT_JSON and GA4_PROPERTY_ID to .env and restart hwb_web_app.",
+        ]
+
+        if not sa_raw or not prop_id:
+            pending_payload: Dict[str, Any] = {
+                "connected": False,
+                "google_cloud_api_status": "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT",
+                "ga4_api_status": (
+                    "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT "
+                    "(GA4_PROPERTY_ID + GOOGLE_SERVICE_ACCOUNT_JSON)"
+                ),
+                "gsc_api_status": (
+                    "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT "
+                    "(GOOGLE_SERVICE_ACCOUNT_JSON)"
+                ),
+                "gsc_site_url": gsc_site,
+                "ga4_property_id": prop_id or None,
+                "setup_steps": setup_steps,
+                "ga4_metrics_28d": None,
+                "ga4_metrics_7d": None,
+                "gsc_metrics_28d": None,
+                "striking_distance_keywords": [],
+            }
+            with _GOOGLE_CLOUD_CACHE_LOCK:
+                _GOOGLE_CLOUD_CACHE["key"] = cache_key
+                _GOOGLE_CLOUD_CACHE["timestamp"] = now_ts
+                _GOOGLE_CLOUD_CACHE["payload"] = dict(pending_payload)
+            return pending_payload
+
+        sa_info = self._load_google_service_account_info(sa_raw)
+        if not sa_info:
+            invalid_payload: Dict[str, Any] = {
+                "connected": False,
+                "google_cloud_api_status": "DATA REQUIRED: INVALID GOOGLE_SERVICE_ACCOUNT_JSON FORMAT",
+                "ga4_api_status": "DATA REQUIRED: INVALID GOOGLE_SERVICE_ACCOUNT_JSON FORMAT",
+                "gsc_api_status": "DATA REQUIRED: INVALID GOOGLE_SERVICE_ACCOUNT_JSON FORMAT",
+                "gsc_site_url": gsc_site,
+                "ga4_property_id": prop_id,
+                "setup_steps": setup_steps,
+                "ga4_metrics_28d": None,
+                "ga4_metrics_7d": None,
+                "gsc_metrics_28d": None,
+                "striking_distance_keywords": [],
+            }
+            with _GOOGLE_CLOUD_CACHE_LOCK:
+                _GOOGLE_CLOUD_CACHE["key"] = cache_key
+                _GOOGLE_CLOUD_CACHE["timestamp"] = now_ts
+                _GOOGLE_CLOUD_CACHE["payload"] = dict(invalid_payload)
+            return invalid_payload
+
+        try:
+            bearer_token = self._mint_google_readonly_access_token(
+                sa_info, GOOGLE_READONLY_SCOPES
+            )
+        except Exception as auth_exc:
+            err_payload: Dict[str, Any] = {
+                "connected": False,
+                "google_cloud_api_status": f"AUTH_ERROR: {auth_exc}",
+                "ga4_api_status": f"AUTH_ERROR: {auth_exc}",
+                "gsc_api_status": f"AUTH_ERROR: {auth_exc}",
+                "gsc_site_url": gsc_site,
+                "ga4_property_id": prop_id,
+                "setup_steps": setup_steps,
+                "ga4_metrics_28d": None,
+                "ga4_metrics_7d": None,
+                "gsc_metrics_28d": None,
+                "striking_distance_keywords": [],
+            }
+            with _GOOGLE_CLOUD_CACHE_LOCK:
+                _GOOGLE_CLOUD_CACHE["key"] = cache_key
+                _GOOGLE_CLOUD_CACHE["timestamp"] = now_ts
+                _GOOGLE_CLOUD_CACHE["payload"] = dict(err_payload)
+            return err_payload
+
+        headers = {
+            "Authorization": f"Bearer {bearer_token}",
+            "Content-Type": "application/json",
+        }
+
+        ga4_status = "CONNECTED_READONLY"
+        ga4_metrics_28d: Optional[Dict[str, Any]] = None
+        ga4_metrics_7d: Optional[Dict[str, Any]] = None
+        ga4_url = (
+            f"https://analyticsdata.googleapis.com/v1beta/properties/{prop_id}:runReport"
+        )
+
+        try:
+            # 1a. GA4 28-day & 7-day core session/engagement totals
+            totals_body: Dict[str, Any] = {
+                "dateRanges": [
+                    {"startDate": "28daysAgo", "endDate": "today", "name": "window_28d"},
+                    {"startDate": "7daysAgo", "endDate": "today", "name": "window_7d"},
+                ],
+                "metrics": [
+                    {"name": "sessions"},
+                    {"name": "totalUsers"},
+                    {"name": "engagedSessions"},
+                ],
+            }
+            r_tot = requests.post(ga4_url, headers=headers, json=totals_body, timeout=6)
+            r_tot.raise_for_status()
+            tot_json = r_tot.json()
+
+            parsed_windows: Dict[str, Dict[str, int]] = {
+                "window_28d": {"sessions": 0, "totalUsers": 0, "engagedSessions": 0},
+                "window_7d": {"sessions": 0, "totalUsers": 0, "engagedSessions": 0},
+            }
+            for row in tot_json.get("rows") or []:
+                dim_vals = row.get("dimensionValues") or []
+                met_vals = row.get("metricValues") or []
+                win_name = (
+                    dim_vals[0].get("value", "window_28d")
+                    if dim_vals
+                    else "window_28d"
+                )
+                if win_name in parsed_windows and len(met_vals) >= 3:
+                    parsed_windows[win_name] = {
+                        "sessions": int(float(met_vals[0].get("value") or 0)),
+                        "totalUsers": int(float(met_vals[1].get("value") or 0)),
+                        "engagedSessions": int(float(met_vals[2].get("value") or 0)),
+                    }
+
+            # 1b. GA4 conversion eventCount (generate_lead & click_to_call)
+            events_body: Dict[str, Any] = {
+                "dateRanges": [
+                    {"startDate": "28daysAgo", "endDate": "today", "name": "window_28d"},
+                    {"startDate": "7daysAgo", "endDate": "today", "name": "window_7d"},
+                ],
+                "dimensions": [{"name": "eventName"}],
+                "metrics": [{"name": "eventCount"}],
+                "dimensionFilter": {
+                    "filter": {
+                        "fieldName": "eventName",
+                        "inListFilter": {
+                            "values": ["generate_lead", "click_to_call"]
+                        },
+                    }
+                },
+            }
+            r_evt = requests.post(ga4_url, headers=headers, json=events_body, timeout=6)
+            r_evt.raise_for_status()
+            evt_counts: Dict[str, Dict[str, int]] = {
+                "window_28d": {"generate_lead": 0, "click_to_call": 0},
+                "window_7d": {"generate_lead": 0, "click_to_call": 0},
+            }
+            for row in r_evt.json().get("rows") or []:
+                d_vals = row.get("dimensionValues") or []
+                m_vals = row.get("metricValues") or []
+                if not d_vals or not m_vals:
+                    continue
+                ev_name = str(d_vals[0].get("value") or "")
+                win_key = (
+                    str(d_vals[1].get("value") or "window_28d")
+                    if len(d_vals) > 1
+                    else "window_28d"
+                )
+                if win_key in evt_counts and ev_name in evt_counts[win_key]:
+                    evt_counts[win_key][ev_name] = int(
+                        float(m_vals[0].get("value") or 0)
+                    )
+
+            # 1c. GA4 28-day session channel breakdown (Organic Search, Direct, Referral)
+            channels_body: Dict[str, Any] = {
+                "dateRanges": [{"startDate": "28daysAgo", "endDate": "today"}],
+                "dimensions": [{"name": "sessionDefaultChannelGroup"}],
+                "metrics": [{"name": "sessions"}],
+            }
+            r_ch = requests.post(
+                ga4_url, headers=headers, json=channels_body, timeout=6
+            )
+            r_ch.raise_for_status()
+            channels_28d: Dict[str, int] = {
+                "Organic Search": 0,
+                "Direct": 0,
+                "Referral": 0,
+            }
+            for row in r_ch.json().get("rows") or []:
+                d_vals = row.get("dimensionValues") or []
+                m_vals = row.get("metricValues") or []
+                if d_vals and m_vals:
+                    ch_name = str(d_vals[0].get("value") or "Unassigned")
+                    channels_28d[ch_name] = int(float(m_vals[0].get("value") or 0))
+
+            ga4_metrics_28d = {
+                **parsed_windows["window_28d"],
+                "events": evt_counts["window_28d"],
+                "channels": channels_28d,
+            }
+            ga4_metrics_7d = {
+                **parsed_windows["window_7d"],
+                "events": evt_counts["window_7d"],
+            }
+        except Exception as ga4_exc:
+            ga4_status = f"API_ERROR: {ga4_exc}"
+            print(f"[LAURI TELLS 24/7] GA4 Data API notice: {ga4_exc}", flush=True)
+
+        gsc_status = "CONNECTED_READONLY"
+        gsc_metrics_28d: Optional[Dict[str, Any]] = None
+        striking_distance_keywords: List[Dict[str, Any]] = []
+        encoded_site = urllib.parse.quote(gsc_site, safe="")
+        gsc_url = (
+            f"https://www.googleapis.com/webmasters/v3/sites/{encoded_site}/searchAnalytics/query"
+        )
+        end_dt = datetime.now(timezone.utc).date()
+        start_dt = end_dt - timedelta(days=28)
+
+        try:
+            # 2a. 28-day Search Console sitewide totals
+            gsc_tot_body: Dict[str, Any] = {
+                "startDate": start_dt.strftime("%Y-%m-%d"),
+                "endDate": end_dt.strftime("%Y-%m-%d"),
+            }
+            r_gsc_tot = requests.post(
+                gsc_url, headers=headers, json=gsc_tot_body, timeout=6
+            )
+            r_gsc_tot.raise_for_status()
+            tot_rows = r_gsc_tot.json().get("rows") or []
+            if tot_rows:
+                t0 = tot_rows[0]
+                gsc_metrics_28d = {
+                    "clicks": int(round(float(t0.get("clicks") or 0.0))),
+                    "impressions": int(round(float(t0.get("impressions") or 0.0))),
+                    "ctr_pct": round(float(t0.get("ctr") or 0.0) * 100.0, 2),
+                    "position": round(float(t0.get("position") or 0.0), 2),
+                }
+            else:
+                gsc_metrics_28d = {
+                    "clicks": 0,
+                    "impressions": 0,
+                    "ctr_pct": 0.0,
+                    "position": 0.0,
+                }
+
+            # 2b. Top 50 query + page rows -> filter GRO-09 Striking Distance (8.0 <= position <= 20.0)
+            gsc_rows_body: Dict[str, Any] = {
+                "startDate": start_dt.strftime("%Y-%m-%d"),
+                "endDate": end_dt.strftime("%Y-%m-%d"),
+                "dimensions": ["query", "page"],
+                "rowLimit": 50,
+            }
+            r_gsc_rows = requests.post(
+                gsc_url, headers=headers, json=gsc_rows_body, timeout=6
+            )
+            r_gsc_rows.raise_for_status()
+            for row in r_gsc_rows.json().get("rows") or []:
+                keys = row.get("keys") or []
+                if not keys:
+                    continue
+                q_text = str(keys[0] or "").strip()
+                page_text = str(keys[1] or "").strip() if len(keys) > 1 else ""
+                pos_val = float(row.get("position") or 0.0)
+                if 8.0 <= pos_val <= 20.0 and q_text:
+                    classified = self._classify_striking_distance_keyword(
+                        q_text, page_text
+                    )
+                    striking_distance_keywords.append(
+                        {
+                            "query": q_text,
+                            "page": page_text,
+                            "clicks": int(round(float(row.get("clicks") or 0.0))),
+                            "impressions": int(
+                                round(float(row.get("impressions") or 0.0))
+                            ),
+                            "ctr_pct": round(float(row.get("ctr") or 0.0) * 100.0, 2),
+                            "position": round(pos_val, 2),
+                            **classified,
+                        }
+                    )
+            if striking_distance_keywords:
+                self._upsert_striking_distance_keywords(striking_distance_keywords)
+        except Exception as gsc_exc:
+            gsc_status = f"API_ERROR: {gsc_exc}"
+            print(
+                f"[LAURI TELLS 24/7] Search Console API notice: {gsc_exc}", flush=True
+            )
+
+        both_ok = (
+            ga4_status == "CONNECTED_READONLY" and gsc_status == "CONNECTED_READONLY"
+        )
+        overall_status = (
+            "CONNECTED_READONLY"
+            if both_ok
+            else f"PARTIAL ({ga4_status} | {gsc_status})"
+        )
+        live_payload: Dict[str, Any] = {
+            "connected": both_ok,
+            "google_cloud_api_status": overall_status,
+            "ga4_api_status": ga4_status,
+            "gsc_api_status": gsc_status,
+            "gsc_site_url": gsc_site,
+            "ga4_property_id": prop_id,
+            "setup_steps": [] if both_ok else setup_steps,
+            "ga4_metrics_28d": ga4_metrics_28d,
+            "ga4_metrics_7d": ga4_metrics_7d,
+            "gsc_metrics_28d": gsc_metrics_28d,
+            "striking_distance_keywords": striking_distance_keywords,
+        }
+        with _GOOGLE_CLOUD_CACHE_LOCK:
+            _GOOGLE_CLOUD_CACHE["key"] = cache_key
+            _GOOGLE_CLOUD_CACHE["timestamp"] = now_ts
+            _GOOGLE_CLOUD_CACHE["payload"] = dict(live_payload)
+        return live_payload
+
+    def run_seo_and_analytics_patrol(
+        self, force_refresh: bool = False, force_google_refresh: bool = False
+    ) -> Dict[str, Any]:
         """
         Layer 2 & Layer 3: Runs a comprehensive deterministic audit of:
         1. Google Analytics 4 (G-8BX5Q7THYR), Google Ads (AW-8622428739), and Consent Mode v2
@@ -484,6 +1135,9 @@ class LauriTellsSearchGrowthEmployee:
         from core.services.self_healing_engine import get_web_analytics_telemetry
 
         web_tel = get_web_analytics_telemetry(self.db_url, force_refresh=force_refresh)
+        google_cloud_readback = self.fetch_google_cloud_search_and_ga4_metrics(
+            force_refresh=force_google_refresh
+        )
         funnel = web_tel.get("funnel_velocity", {})
         win_24h = funnel.get("window_24h", {})
         win_7d = funnel.get("window_7d", {})
@@ -591,6 +1245,12 @@ class LauriTellsSearchGrowthEmployee:
                     "title_violations": title_violations,
                     "desc_violations": desc_violations,
                     "suburb_lead_counts": suburb_lead_counts,
+                    "google_cloud_api_status": google_cloud_readback.get(
+                        "google_cloud_api_status"
+                    ),
+                    "striking_distance_count": len(
+                        google_cloud_readback.get("striking_distance_keywords") or []
+                    ),
                 }
                 cur.execute(
                     """
@@ -686,6 +1346,11 @@ class LauriTellsSearchGrowthEmployee:
             "desc_violations": desc_violations,
             "suburb_lead_counts": suburb_lead_counts,
             "top_keywords": top_keywords,
+            "google_cloud_api_status": google_cloud_readback.get(
+                "google_cloud_api_status",
+                "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT",
+            ),
+            "google_cloud_readback": google_cloud_readback,
         }
 
     def stage_weekly_keyword_expansion_changeset(self, chat_id: int) -> Optional[int]:
@@ -782,6 +1447,7 @@ class LauriTellsSearchGrowthEmployee:
             f"• *Employee Status:* `ONLINE (24/7 Autonomous Growth Monitor)`",
             f"• *Enterprise SEO Score:* `{patrol['seo_health_score']:.1f} / 100 (Grade A+)`",
             f"• *Google Analytics 4 (`{patrol['ga4_measurement_id']}`):* `ACTIVE (Consent Mode v2)`",
+            f"• *Google Cloud Read-Only API:* `{patrol.get('google_cloud_api_status', 'DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT')}`",
             f"• *Google Ads Tag (`{patrol['google_ads_id']}`):* `ACTIVE (Deduplicated Quote Tracking)`",
             f"• *Indexed Pages & Hubs:* `{patrol['sitemap_urls_count']}` Sitemap URLs | `{patrol['city_hubs_count']}` DFW City Hubs | `{patrol.get('facility_hubs_count', 8)}` Facility Hubs",
             "",

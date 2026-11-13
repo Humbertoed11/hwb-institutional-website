@@ -145,9 +145,7 @@ def run_migration(db_url: str):
             cur.execute('''
                 INSERT INTO "AcademyTenants" (slug, display_name, brand_logo_url, brand_primary_color, tenant_type, subscription_tier)
                 VALUES 
-                    ('hwb', 'HWB Cleaning Services LLC', '/static/HWB-LOGO.png', '#2563eb', 'INTERNAL', 'ENTERPRISE'),
-                    ('collin-college', 'Collin College Facilities Management', '/static/collin_logo.png', '#0284c7', 'CLIENT', 'FACILITY_PREMIUM'),
-                    ('bright-horizons', 'Bright Horizons Child Care Academy', '', '#059669', 'SAAS_SUBSCRIBER', 'DAYCARE_STANDARD')
+                    ('hwb', 'HWB Cleaning Services LLC', '/static/HWB-LOGO.png', '#2563eb', 'INTERNAL', 'ENTERPRISE')
                 ON CONFLICT (slug) DO NOTHING;
             ''')
 
@@ -368,31 +366,7 @@ def run_migration(db_url: str):
                     ) VALUES (%s, %s, %s, %s, %s, %s);
                 ''', (course_id, q_order, q_text, q_opts, q_correct, q_exp))
 
-            # --- SEED A SAMPLE VERIFIED CERTIFIED ENROLLMENT (CEO Demo Verification) ---
-            sample_uuid = "cert-demo-7f8a9b2c3d4e"
-            cur.execute('''
-                INSERT INTO "AcademyEnrollments" (
-                    enrollment_uuid, tenant_id, course_id, worker_type, student_name, student_email,
-                    status, progress_pct, quiz_score, quiz_attempts, practical_skills_verified,
-                    supervisor_evaluator_name, supervisor_evaluation_date, certified_at, expires_at
-                ) VALUES (
-                    %s,
-                    (SELECT id FROM "AcademyTenants" WHERE slug = 'hwb'),
-                    %s,
-                    'W2_EMPLOYEE',
-                    'Carlos E. Mendoza',
-                    'carlos.mendoza@hwbcleaning.com',
-                    'PASSED',
-                    100,
-                    100,
-                    1,
-                    TRUE,
-                    'George (Systems Architect)',
-                    CURRENT_DATE,
-                    CURRENT_TIMESTAMP,
-                    CURRENT_TIMESTAMP + INTERVAL '1 year'
-                ) ON CONFLICT (enrollment_uuid) DO NOTHING;
-            ''', (sample_uuid, course_id))
+            # BUG-180 Empirical Data Integrity Gate: Sample demo certificate row removed.
 
             conn.commit()
             print("[MIGRATION SUCCESS] 008_sigma_academy_lms completed successfully!")

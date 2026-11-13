@@ -722,22 +722,34 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertEqual(dd_res["direct_deposit_routing"], "111000614")
         self.assertEqual(dd_res["direct_deposit_account_last_four"], "2233")
 
-        # 3. Verify Encrypted PostgreSQL EmployeeDocuments Vault & Portal Route
+        # 3. Verify Encrypted PostgreSQL EmployeeDocuments Vault & Portal Route using disposable row
+        import uuid
+        t18_uid = uuid.uuid4().hex[:8]
         conn = get_db(self.db_url)
+        temp_emp_id = None
         try:
             ensure_employee_onboarding_schema(conn)
+            token = f"emp_t18_{t18_uid}_vaulttoken"
             with conn.cursor() as cur:
-                cur.execute('SELECT * FROM "Employees" ORDER BY id ASC LIMIT 1;')
+                cur.execute(
+                    '''
+                    INSERT INTO "Employees" (
+                        employee_number, first_name, last_name, email, phone,
+                        employment_status, employment_type, primary_role,
+                        onboarding_token, onboarding_token_expires_at
+                    ) VALUES (
+                        %s, 'VaultTest', %s, %s, '(214)-555-0188',
+                        'Active', 'W-2 Full-Time', 'Commercial Cleaning Technician',
+                        %s, NOW() + INTERVAL '7 days'
+                    )
+                    RETURNING *;
+                    ''',
+                    (f"TEMP-T18-{t18_uid}", t18_uid, f"t18.{t18_uid}@example.com", token),
+                )
                 emp = cur.fetchone()
                 self.assertIsNotNone(emp)
-                token = emp.get("onboarding_token")
-                if not token:
-                    token = f"emp_{emp['id']}_testtoken"
-                    cur.execute(
-                        'UPDATE "Employees" SET onboarding_token = %s WHERE id = %s;',
-                        (token, emp["id"]),
-                    )
-                    conn.commit()
+                temp_emp_id = emp["id"]
+            conn.commit()
 
             # Test public portal render
             resp = self.client.get(f"/onboard/employee/{token}")
@@ -747,7 +759,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             # Test locked W-2 PDF generation + encrypted vault deposit + disk wipe recovery
             pdf_bytes = generate_signed_w2_onboarding_pdf(
                 employee_record=dict(emp),
-                signer_name="Carlos Mendoza",
+                signer_name="VaultTest Signer",
                 signer_ip="127.0.0.1",
                 signed_at_iso="2026-10-20T18:00:00Z",
                 signature_hash="a" * 64,
@@ -771,12 +783,16 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
 
             sweep = run_employee_doc_expiration_sweep(conn)
             self.assertIn("expired_count", sweep)
-
-            # Clean up test document row
-            with conn.cursor() as cur:
-                cur.execute('DELETE FROM "EmployeeDocuments" WHERE id = %s;', (doc_id,))
-            conn.commit()
         finally:
+            if temp_emp_id is not None:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'DELETE FROM "GlobalActivities" WHERE parent_type = \'Employee\' AND parent_id = %s;',
+                        (temp_emp_id,),
+                    )
+                    cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (temp_emp_id,))
+                    cur.execute('DELETE FROM "Employees" WHERE id = %s;', (temp_emp_id,))
+                conn.commit()
             conn.close()
 
     def test_19_comprehensive_all_w2_and_1099_forms_regression(self) -> None:
@@ -2148,6 +2164,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     self.assertIn("disclosure_sha256", details_str)
                     self.assertIn("TERMS-v2.4.0|PRIVACY-v2.5.0", details_str)
                     cur.execute('DELETE FROM "Leads" WHERE LOWER(email) = %s;', ("shield.audit@example.com",))
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE subject ILIKE %s;', ("%Shield Verification Corp%",))
                 conn.commit()
             finally:
                 conn.close()
@@ -2578,25 +2595,43 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         """
         auth_client = self.get_auth_client()
 
-        # 1. Verify full-name and rep-prefixed search for Beabe Wiley
-        for q_str in ("beabe wiley", "Beabe Wiley", "rep:Beabe Wiley", "bwiley"):
-            r = auth_client.get(f"/admin/operations?view=leads&q={q_str}&format=json")
-            self.assertEqual(r.status_code, 200)
-            data = r.get_json()
-            self.assertEqual(len(data.get("leads", [])), 50, f"Query '{q_str}' must return all 50 leads assigned to Beabe Wiley")
-
-        # 2. Verify dedicated owner_id parameter
+        # 1. Verify full-name and rep-prefixed search for Beabe Wiley against empirical active DB count
         conn = get_db(self.db_url)
         try:
             with conn.cursor() as cur:
                 cur.execute('SELECT id FROM "Users" WHERE LOWER(username) = %s LIMIT 1;', ("bwiley",))
-                bw_id = cur.fetchone()["id"]
+                bw_row = cur.fetchone()
+                bw_id = bw_row["id"] if isinstance(bw_row, dict) else bw_row[0]
+                cur.execute(
+                    '''
+                    SELECT COUNT(*) AS cnt
+                    FROM "Leads"
+                    WHERE owner_id = %s
+                      AND COALESCE(is_duplicate, FALSE) = FALSE
+                      AND COALESCE(status, 'New') != 'ARCHIVED';
+                    ''',
+                    (bw_id,),
+                )
+                cnt_row = cur.fetchone()
+                expected_bw_count = int(cnt_row["cnt"] if isinstance(cnt_row, dict) else cnt_row[0])
         finally:
             conn.close()
 
+        self.assertGreater(expected_bw_count, 0, "Beabe Wiley must have active leads in database")
+        for q_str in ("beabe wiley", "Beabe Wiley", "rep:Beabe Wiley", "bwiley"):
+            r = auth_client.get(f"/admin/operations?view=leads&q={q_str}&format=json")
+            self.assertEqual(r.status_code, 200)
+            data = r.get_json()
+            self.assertEqual(
+                len(data.get("leads", [])),
+                expected_bw_count,
+                f"Query '{q_str}' must return all {expected_bw_count} active leads assigned to Beabe Wiley",
+            )
+
+        # 2. Verify dedicated owner_id parameter
         r_owner = auth_client.get(f"/admin/operations?view=leads&owner_id={bw_id}&format=json")
         self.assertEqual(r_owner.status_code, 200)
-        self.assertEqual(len(r_owner.get_json().get("leads", [])), 50)
+        self.assertEqual(len(r_owner.get_json().get("leads", [])), expected_bw_count)
 
         # 3. Verify Texas city spell-correction (`wiley tx` -> `Wylie, TX` without mixing in Beabe Wiley's Dallas/Plano leads)
         r_city = auth_client.get("/admin/operations?view=leads&q=wiley+tx&format=json")
@@ -4508,6 +4543,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
                 patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
                 patch("core.services.notification_service.requests.post") as mock_tg_post,
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
             ):
                 mock_tg_post.return_value.status_code = 200
                 # =====================================================================
@@ -4673,7 +4709,42 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
 
                 r_renew_w2 = self.client.post(f"/onboard/employee/{emp_token}/renew")
                 self.assertEqual(r_renew_w2.status_code, 200)
-                self.assertEqual(r_renew_w2.get_json().get("status"), "success")
+                renew_w2_json = r_renew_w2.get_json()
+                self.assertEqual(renew_w2_json.get("status"), "success")
+                self.assertTrue(renew_w2_json.get("token_rotated"))
+                self.assertNotIn("onboarding_url", renew_w2_json)
+
+                # SEC-005: Old expired token must return 404 after cryptographic rotation
+                r_old_w2 = self.client.get(f"/onboard/employee/{emp_token}")
+                self.assertEqual(r_old_w2.status_code, 404)
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT onboarding_token, onboarding_first_opened_at FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        rot_row = cur.fetchone()
+                        self.assertNotEqual(rot_row[0], emp_token)
+                        self.assertIsNone(rot_row[1])
+                        emp_token = rot_row[0]
+                finally:
+                    conn.close()
+
+                # First valid open stamps onboarding_first_opened_at and 14-day active completion window (SEC-005)
+                r_first_open = self.client.get(f"/onboard/employee/{emp_token}")
+                self.assertEqual(r_first_open.status_code, 200)
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT onboarding_first_opened_at FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        self.assertIsNotNone(cur.fetchone()[0])
+                finally:
+                    conn.close()
 
                 # Upload W-4 doc via portal
                 r_up_w4 = self.client.post(
@@ -5118,6 +5189,1476 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
                 conn.commit()
             conn.close()
+
+    def test_50_lauri_tells_ga4_gsc_connector_and_contact_first_quote_funnel(self) -> None:
+        """
+        Verifies the 11/12/2026 Approved SEO & Conversion Upgrades:
+        1. GET /get-quote?facility=daycare&city=McKinney (plus /facilities/daycare-childcare?city=McKinney
+           and /locations/mckinney) pre-selects facility & city, enforces ZERO required attributes on
+           city/zipcode/sqft/company/frequency, binds 100% explicit <label for="..."> on every control,
+           and leaves tcpa_consent unchecked.
+        2. POST /get-quote with ONLY name, email, facility_type, and a real aged form_security_token
+           captures the lead in PostgreSQL "Leads", passes lead_id & LEAD-# reference_code to
+           quote_success.html, and POST /update-quote-details enriches city, frequency, and sqf.
+        3. GET /api/v1/telemetry/seo-employee returns 200 OK with Mandate 1 zero-synthetic-data status
+           ("DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT") when env vars are unset,
+           and RS256 OAuth2 + GA4 Data API + GSC Striking-Distance (8.0-20.0) ingestion works end-to-end.
+        """
+        import json
+        import re
+        import time
+        import uuid
+        from html.parser import HTMLParser
+        from unittest.mock import MagicMock, patch
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from core.ai_employee.seo_growth_engine import (
+            _GOOGLE_CLOUD_CACHE,
+            _GOOGLE_CLOUD_CACHE_LOCK,
+            get_lauri_seo_employee,
+        )
+        from core.services.bot_defense import get_serializer
+        from core.services.database import get_db
+
+        class _QuoteFormControlAuditor(HTMLParser):
+            def __init__(self) -> None:
+                super().__init__()
+                self.controls: list[dict[str, str]] = []
+                self.labels_for: set[str] = set()
+                self.checked_boxes: list[str] = []
+
+            def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+                ad = {k.lower(): (v if v is not None else "") for k, v in attrs}
+                if tag == "label" and ad.get("for"):
+                    self.labels_for.add(ad["for"])
+                elif tag in ("input", "select", "textarea"):
+                    itype = ad.get("type", "").lower()
+                    if itype == "checkbox" and "checked" in ad:
+                        self.checked_boxes.append(ad.get("id") or ad.get("name") or "checkbox")
+                    if itype not in ("hidden", "submit", "button"):
+                        ad["_tag"] = tag
+                        ad["_required"] = "yes" if "required" in {k.lower() for k, _ in attrs} else "no"
+                        self.controls.append(ad)
+
+        # 1. Verify GET /locations/mckinney, /facilities/daycare-childcare?city=McKinney, and /get-quote?facility=daycare&city=McKinney
+        r_loc = self.client.get("/locations/mckinney")
+        self.assertEqual(r_loc.status_code, 200)
+        loc_html = r_loc.get_data(as_text=True)
+        self.assertIn("/get-quote?city=McKinney", loc_html)
+        self.assertIn("/facilities/daycare-childcare?city=McKinney", loc_html)
+
+        r_fac = self.client.get("/facilities/daycare-childcare?city=McKinney")
+        self.assertEqual(r_fac.status_code, 200)
+        fac_html = r_fac.get_data(as_text=True)
+        self.assertIn("/get-quote?facility=daycare&amp;city=McKinney", fac_html)
+        fac_auditor = _QuoteFormControlAuditor()
+        fac_auditor.feed(fac_html)
+        self.assertEqual(fac_auditor.checked_boxes, [])
+        for ctrl in fac_auditor.controls:
+            cid = ctrl.get("id", "")
+            self.assertTrue(cid in fac_auditor.labels_for, f"Missing <label for='{cid}'> on facility.html")
+            if ctrl.get("name") in ("company", "phone", "city", "sqft", "frequency"):
+                self.assertEqual(ctrl["_required"], "no", f"{ctrl.get('name')} must be optional on facility.html")
+
+        r_get = self.client.get("/get-quote?facility=daycare&city=McKinney")
+        self.assertEqual(r_get.status_code, 200)
+        q_html = r_get.get_data(as_text=True)
+        self.assertIn('id="facility_type" value="daycare"', q_html)
+        self.assertIn('value="McKinney"', q_html)
+        for chip_val in ("office", "daycare", "medical", "industrial", "worship", "construction", "automotive", "other"):
+            self.assertIn(f'data-val="{chip_val}"', q_html)
+
+        q_auditor = _QuoteFormControlAuditor()
+        q_auditor.feed(q_html)
+        self.assertEqual(q_auditor.checked_boxes, [], "tcpa_consent must remain unchecked")
+        for ctrl in q_auditor.controls:
+            cid = ctrl.get("id", "")
+            self.assertTrue(cid in q_auditor.labels_for, f"Missing explicit <label for='{cid}'> on /get-quote")
+            cname = ctrl.get("name", "")
+            if cname in ("city", "zipcode", "sqft", "company", "frequency", "phone", "tcpa_consent"):
+                self.assertEqual(ctrl["_required"], "no", f"{cname} must NOT be required on /get-quote Step 1")
+            elif cname in ("name", "email"):
+                self.assertEqual(ctrl["_required"], "yes", f"{cname} must be required on /get-quote Step 1")
+
+        # 2. Verify POST /get-quote with ONLY name + email + facility_type + real aged security token -> Step 2 enrichment
+        uid = uuid.uuid4().hex[:8]
+        buyer_email = f"director.{uid}@mckinneyacademy.org"
+        buyer_name = f"Claire Vance {uid}"
+        captured_lead_id = None
+
+        with app.app_context():
+            aged_token = get_serializer().dumps(
+                {"rendered_at": time.time() - 8.0, "scope": "quote_form"}
+            )
+
+        conn = get_db(self.db_url)
+        try:
+            with (
+                patch("blueprints.public.dispatch_lead_notifications", return_value=True),
+                patch("blueprints.public.task_queue.enqueue", return_value=True),
+            ):
+                r_post = self.client.post(
+                    "/get-quote",
+                    data={
+                        "form_security_token": aged_token,
+                        "form_version": "v1",
+                        "facility_type": "daycare",
+                        "name": buyer_name,
+                        "email": buyer_email,
+                    },
+                    headers={"Origin": "https://www.hwbcleaning.com"},
+                )
+            self.assertEqual(r_post.status_code, 200)
+            succ_html = r_post.get_data(as_text=True)
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, facility_type, city, sqf FROM "Leads" WHERE LOWER(email) = LOWER(%s) ORDER BY id DESC LIMIT 1;',
+                    (buyer_email,),
+                )
+                l_row = cur.fetchone()
+            self.assertIsNotNone(l_row, "Contact-first POST /get-quote must insert row into Leads")
+            captured_lead_id = int(l_row["id"] if isinstance(l_row, dict) else l_row[0])
+            expected_ref = f"LEAD-#{captured_lead_id:05d}"
+            self.assertIn(f'name="lead_id" value="{captured_lead_id}"', succ_html)
+            self.assertIn(expected_ref, succ_html)
+
+            # Step 2: 10-Second Pricing Calibration enrichment
+            r_upd = self.client.post(
+                "/update-quote-details",
+                data={
+                    "lead_id": str(captured_lead_id),
+                    "city": "McKinney",
+                    "frequency": "Daily (5 Days/Week) - Standard Corporate",
+                    "sqft": "14,500",
+                },
+            )
+            self.assertEqual(r_upd.status_code, 200)
+            self.assertEqual(r_upd.get_json().get("status"), "success")
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT city, sqf, traffic_cycle FROM "Leads" WHERE id = %s;',
+                    (captured_lead_id,),
+                )
+                enriched = cur.fetchone()
+            e_city = enriched["city"] if isinstance(enriched, dict) else enriched[0]
+            e_sqf = int((enriched["sqf"] if isinstance(enriched, dict) else enriched[1]) or 0)
+            e_freq = enriched["traffic_cycle"] if isinstance(enriched, dict) else enriched[2]
+            self.assertEqual(e_city, "McKinney")
+            self.assertEqual(e_sqf, 14500)
+            self.assertEqual(e_freq, "Daily (5 Days/Week) - Standard Corporate")
+        finally:
+            with conn.cursor() as cur:
+                if captured_lead_id:
+                    cur.execute(
+                        'DELETE FROM "PendingOutbox" WHERE body LIKE %s;',
+                        (f"%{buyer_email}%",),
+                    )
+                    cur.execute(
+                        'DELETE FROM "SigmaInteractionLog" WHERE agent_explanation LIKE %s;',
+                        (f"%LEAD-#{captured_lead_id:05d}%",),
+                    )
+                    cur.execute('DELETE FROM "Leads" WHERE id = %s;', (captured_lead_id,))
+                else:
+                    cur.execute('DELETE FROM "Leads" WHERE LOWER(email) = LOWER(%s);', (buyer_email,))
+            conn.commit()
+
+            # 3. Verify /api/v1/telemetry/seo-employee Mandate 1 Zero Synthetic Data when env unset
+            with patch.dict(
+                os.environ,
+                {"GOOGLE_SERVICE_ACCOUNT_JSON": "", "GA4_PROPERTY_ID": ""},
+                clear=False,
+            ):
+                with _GOOGLE_CLOUD_CACHE_LOCK:
+                    _GOOGLE_CLOUD_CACHE["key"] = None
+                    _GOOGLE_CLOUD_CACHE["payload"] = None
+                r_seo = self.client.get("/api/v1/telemetry/seo-employee?refresh_google=1")
+                self.assertEqual(r_seo.status_code, 200)
+                seo_json = r_seo.get_json()
+                g_readback = seo_json.get("google_cloud_readback") or {}
+                self.assertFalse(g_readback.get("connected"))
+                self.assertEqual(
+                    seo_json.get("google_cloud_api_status"),
+                    "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT",
+                )
+                self.assertIsNone(g_readback.get("ga4_metrics_28d"))
+                self.assertIsNone(g_readback.get("gsc_metrics_28d"))
+                self.assertEqual(g_readback.get("striking_distance_keywords"), [])
+
+            # 4. Verify live RS256 OAuth2 + GA4 Data API + GSC Striking-Distance (8.0-20.0) Radar ingestion
+            test_kw = f"post construction final clean mckinney {uid}"
+            priv_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            pem_str = priv_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            ).decode("utf-8")
+            fake_sa_json = json.dumps(
+                {
+                    "type": "service_account",
+                    "client_email": "lauri-readonly@hwb-seo-test.iam.gserviceaccount.com",
+                    "private_key": pem_str,
+                    "private_key_id": "testkey123",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                }
+            )
+
+            def _mock_google_post(url: str, *args, **kwargs):  # type: ignore[no-untyped-def]
+                resp = MagicMock()
+                resp.raise_for_status.return_value = None
+                if "oauth2.googleapis.com/token" in url:
+                    resp.json.return_value = {"access_token": "ya29.readonly_test_token"}
+                elif ":runReport" in url:
+                    body = kwargs.get("json") or {}
+                    dims = [d.get("name") for d in (body.get("dimensions") or [])]
+                    if "eventName" in dims:
+                        resp.json.return_value = {
+                            "rows": [
+                                {"dimensionValues": [{"value": "generate_lead"}, {"value": "window_28d"}], "metricValues": [{"value": "7"}]},
+                                {"dimensionValues": [{"value": "click_to_call"}, {"value": "window_7d"}], "metricValues": [{"value": "3"}]},
+                            ]
+                        }
+                    elif "sessionDefaultChannelGroup" in dims:
+                        resp.json.return_value = {
+                            "rows": [
+                                {"dimensionValues": [{"value": "Organic Search"}], "metricValues": [{"value": "142"}]},
+                                {"dimensionValues": [{"value": "Direct"}], "metricValues": [{"value": "58"}]},
+                            ]
+                        }
+                    else:
+                        resp.json.return_value = {
+                            "rows": [
+                                {"dimensionValues": [{"value": "window_28d"}], "metricValues": [{"value": "210"}, {"value": "165"}, {"value": "138"}]},
+                                {"dimensionValues": [{"value": "window_7d"}], "metricValues": [{"value": "54"}, {"value": "44"}, {"value": "37"}]},
+                            ]
+                        }
+                elif "/searchAnalytics/query" in url:
+                    body = kwargs.get("json") or {}
+                    if body.get("dimensions"):
+                        resp.json.return_value = {
+                            "rows": [
+                                {
+                                    "keys": [test_kw, "https://www.hwbcleaning.com/facilities/construction-subdivisions"],
+                                    "clicks": 6,
+                                    "impressions": 180,
+                                    "ctr": 0.0333,
+                                    "position": 11.4,
+                                },
+                                {
+                                    "keys": ["hwb cleaning", "https://www.hwbcleaning.com/"],
+                                    "clicks": 40,
+                                    "impressions": 95,
+                                    "ctr": 0.421,
+                                    "position": 1.2,
+                                },
+                            ]
+                        }
+                    else:
+                        resp.json.return_value = {
+                            "rows": [{"clicks": 112, "impressions": 3840, "ctr": 0.0292, "position": 12.6}]
+                        }
+                return resp
+
+            try:
+                with (
+                    patch.dict(
+                        os.environ,
+                        {
+                            "GOOGLE_SERVICE_ACCOUNT_JSON": fake_sa_json,
+                            "GA4_PROPERTY_ID": "445566778",
+                            "GSC_SITE_URL": "https://www.hwbcleaning.com/",
+                        },
+                        clear=False,
+                    ),
+                    patch("core.ai_employee.seo_growth_engine.requests.post", side_effect=_mock_google_post),
+                ):
+                    lauri = get_lauri_seo_employee()
+                    live_res = lauri.fetch_google_cloud_search_and_ga4_metrics(force_refresh=True)
+                    self.assertTrue(live_res["connected"])
+                    self.assertEqual(live_res["google_cloud_api_status"], "CONNECTED_READONLY")
+                    self.assertEqual(live_res["ga4_metrics_28d"]["sessions"], 210)
+                    self.assertEqual(live_res["ga4_metrics_28d"]["channels"]["Organic Search"], 142)
+                    self.assertEqual(live_res["ga4_metrics_28d"]["events"]["generate_lead"], 7)
+                    self.assertEqual(live_res["gsc_metrics_28d"]["impressions"], 3840)
+                    self.assertEqual(len(live_res["striking_distance_keywords"]), 1)
+                    sd0 = live_res["striking_distance_keywords"][0]
+                    self.assertEqual(sd0["query"], test_kw)
+                    self.assertEqual(sd0["buyer_intent"], "GC_COMMERCIAL")
+                    self.assertEqual(sd0["target_city"], "McKinney")
+
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT buyer_intent, target_city, status FROM "SEOKeywordRadar" WHERE keyword_phrase = %s;',
+                            (test_kw,),
+                        )
+                        kw_row = cur.fetchone()
+                    self.assertIsNotNone(kw_row, "Striking-distance keyword must upsert into SEOKeywordRadar")
+            finally:
+                with _GOOGLE_CLOUD_CACHE_LOCK:
+                    _GOOGLE_CLOUD_CACHE["key"] = None
+                    _GOOGLE_CLOUD_CACHE["payload"] = None
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "SEOKeywordRadar" WHERE keyword_phrase = %s;', (test_kw,))
+                conn.commit()
+                conn.close()
+
+    def test_51_sec_005_w2_employee_onboarding_link_security_and_phone_only_lock(self) -> None:
+        """
+        SEC-005 (BUG-176) W-2 Employee Onboarding Link Security, Zero-Data Expired Lock & Phone-Only Gate:
+        1. Dual-Stage 7-day unopened invite window (onboarding_invited_at, onboarding_first_opened_at IS NULL)
+           and 14-day active completion window stamped on first valid GET /onboard/employee/<token>.
+        2. _is_onboarding_token_expired expires 8-day unopened W-2 invites while keeping already-signed
+           W-2 packets (onboarding_packet_signed=True) open until onboarding_token_expires_at.
+        3. Expired W-2 portal renders ONLY #w2-expired-banner and omits #w2-onboard-form, #w2-receipt-card,
+           #w2-step1-card, street address, phone, raw email, SSN last-4, and direct deposit account last-4;
+           /download-packet and /download/<doc_id> return HTTP 410 even when onboarding_packet_signed=True.
+        4. Phone-only cleaner (no email on file) with expired link stays locked (HTTP 403 PHONE_ONLY_CONTACT_HR
+           on /renew, zero self-service button in HTML, SMS/Call HR controls to (214) 586-0257), while HR
+           POST /api/v1/hr/employees/<id>/send-onboarding-link rotates the expired token and returns sms_uri.
+        """
+        import io
+        import uuid
+        from datetime import datetime as dt_cls, timedelta, timezone
+        from unittest.mock import patch
+        from blueprints.public import _is_onboarding_token_expired
+        from core.services.database import get_db
+
+        uid = uuid.uuid4().hex[:8]
+        auth_client = self.get_auth_client()
+        anon_client = app.test_client()
+        created_emp_ids: list[int] = []
+
+        try:
+            # Check _is_onboarding_token_expired W-2 unopened vs signed logic
+            unopened_w2 = {
+                "onboarding_first_opened_at": None,
+                "onboarding_packet_signed": False,
+                "onboarding_invited_at": dt_cls.now(timezone.utc) - timedelta(days=8),
+                "onboarding_token_expires_at": dt_cls.now(timezone.utc) + timedelta(days=6),
+            }
+            self.assertTrue(_is_onboarding_token_expired(unopened_w2), "Unopened W-2 invite > 7 days old must expire")
+
+            signed_w2_day_8 = {
+                "onboarding_first_opened_at": None,
+                "onboarding_packet_signed": True,
+                "onboarding_invited_at": dt_cls.now(timezone.utc) - timedelta(days=8),
+                "onboarding_token_expires_at": dt_cls.now(timezone.utc) + timedelta(days=6),
+            }
+            self.assertFalse(
+                _is_onboarding_token_expired(signed_w2_day_8),
+                "Signed W-2 packet within active window must not expire at 7-day unopened check",
+            )
+
+            with (
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.requests.post") as mock_tg_post,
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
+            ):
+                mock_tg_post.return_value.status_code = 200
+
+                # 1. Create W-2 employee with email -> verify 7-day unopened TTL -> open -> verify 14-day active TTL
+                emp_email = f"sec005.w2.{uid}@example.com"
+                r_hire = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Lucia",
+                        "last_name": f"Mendez-{uid}",
+                        "email": emp_email,
+                        "phone": "(214) 555-6421",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Full-Time",
+                        "pay_rate_hourly": 18.00,
+                        "hire_date": "2026-11-12",
+                    },
+                )
+                self.assertEqual(r_hire.status_code, 201, r_hire.get_data(as_text=True))
+                hire_json = r_hire.get_json()
+                emp_id = hire_json["employee_id"]
+                created_emp_ids.append(emp_id)
+                tok = hire_json["onboarding_token"]
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            '''
+                            SELECT onboarding_invited_at, onboarding_first_opened_at, onboarding_token_expires_at
+                            FROM "Employees" WHERE id = %s;
+                            ''',
+                            (emp_id,),
+                        )
+                        row_init = cur.fetchone()
+                        self.assertIsNotNone(row_init[0])
+                        self.assertIsNone(row_init[1])
+                        ttl_days_init = (row_init[2] - dt_cls.now(timezone.utc)).total_seconds() / 86400.0
+                        self.assertGreater(ttl_days_init, 6.5)
+                        self.assertLess(ttl_days_init, 7.5)
+                finally:
+                    conn.close()
+
+                # First valid open stamps onboarding_first_opened_at and extends window to ~14 days
+                r_open = anon_client.get(f"/onboard/employee/{tok}")
+                self.assertEqual(r_open.status_code, 200)
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT onboarding_first_opened_at, onboarding_token_expires_at FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        row_open = cur.fetchone()
+                        self.assertIsNotNone(row_open[0])
+                        ttl_days_active = (row_open[1] - dt_cls.now(timezone.utc)).total_seconds() / 86400.0
+                        self.assertGreater(ttl_days_active, 13.5)
+                        self.assertLess(ttl_days_active, 14.5)
+                finally:
+                    conn.close()
+
+                # Upload doc + complete W-2 packet so sensitive PII, SSN last-4, and bank last-4 exist in DB
+                r_up = anon_client.post(
+                    f"/api/v1/employees/onboard/{tok}/upload-doc",
+                    data={"document_type": "Driver License", "document": (io.BytesIO(b"%PDF-1.4\nTX DL"), "dl.pdf")},
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_up.status_code, 200)
+                doc_dl_url = r_up.get_json()["download_url"]
+
+                r_comp = anon_client.post(
+                    f"/api/v1/employees/onboard/{tok}/complete",
+                    json={
+                        "first_name": "Lucia",
+                        "last_name": f"Mendez-{uid}",
+                        "phone": "(214) 555-6421",
+                        "email": emp_email,
+                        "address_street": "7820 Gaston Ave Apt 4B",
+                        "address_city": "Dallas",
+                        "address_state": "TX",
+                        "address_zip": "75214",
+                        "emergency_contact_name": "Rosa Mendez",
+                        "emergency_contact_phone": "(214) 555-1009",
+                        "ssn": "123-45-6789",
+                        "state_id_number": "TX-99112233",
+                        "state_id_expiration": "2030-05-01",
+                        "w4_filing_status": "Single or Married filing separately",
+                        "w4_step2_multiple_jobs": False,
+                        "w4_step3_dependents": 0,
+                        "w4_step4c_extra_withholding": 0,
+                        "i9_citizenship_status": "1. A citizen of the United States",
+                        "direct_deposit_bank": "Wells Fargo",
+                        "direct_deposit_routing": "111900659",
+                        "direct_deposit_account": "5544332299",
+                        "signer_name": f"Lucia Mendez-{uid}",
+                    },
+                )
+                self.assertEqual(r_comp.status_code, 200)
+
+                # Expire token -> verify Zero-Data Lock Screen + 410 on /download-packet and /download/<doc_id>
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'UPDATE "Employees" SET onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL \'2 days\' WHERE id = %s;',
+                            (emp_id,),
+                        )
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                r_exp_html = anon_client.get(f"/onboard/employee/{tok}")
+                self.assertEqual(r_exp_html.status_code, 200)
+                exp_body = r_exp_html.get_data(as_text=True)
+                self.assertIn('id="w2-expired-banner"', exp_body)
+                self.assertIn('id="btn-renew-expired-w2"', exp_body)
+                self.assertNotIn('id="w2-onboard-form"', exp_body)
+                self.assertNotIn('id="w2-receipt-card"', exp_body)
+                self.assertNotIn('id="w2-step1-card"', exp_body)
+                for secret_val in (
+                    "7820 Gaston Ave",
+                    "(214) 555-6421",
+                    emp_email,
+                    "***-**-6789",
+                    "2299",
+                    "Wells Fargo",
+                    "Rosa Mendez",
+                ):
+                    self.assertNotIn(secret_val, exp_body, f"Expired W-2 portal leaked PII: {secret_val}")
+
+                r_exp_pkt = anon_client.get(f"/onboard/employee/{tok}/download-packet")
+                self.assertEqual(r_exp_pkt.status_code, 410)
+
+                r_exp_doc = anon_client.get(doc_dl_url)
+                self.assertEqual(r_exp_doc.status_code, 410)
+
+                # 2. Create Phone-Only Cleaner (no email on file) -> expire token -> verify 403 lock + HR SMS rotation
+                r_phone_hire = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Mateo",
+                        "last_name": f"Rios-{uid}",
+                        "email": "",
+                        "phone": "(214) 555-8833",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Part-Time",
+                        "pay_rate_hourly": 17.50,
+                        "hire_date": "2026-11-12",
+                    },
+                )
+                self.assertEqual(r_phone_hire.status_code, 201, r_phone_hire.get_data(as_text=True))
+                phone_emp_id = r_phone_hire.get_json()["employee_id"]
+                created_emp_ids.append(phone_emp_id)
+                phone_tok = r_phone_hire.get_json()["onboarding_token"]
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'UPDATE "Employees" SET onboarding_token_expires_at = CURRENT_TIMESTAMP - INTERVAL \'2 days\' WHERE id = %s;',
+                            (phone_emp_id,),
+                        )
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                r_phone_exp = anon_client.get(f"/onboard/employee/{phone_tok}")
+                self.assertEqual(r_phone_exp.status_code, 200)
+                phone_html = r_phone_exp.get_data(as_text=True)
+                self.assertIn('id="w2-expired-banner"', phone_html)
+                self.assertNotIn('id="btn-renew-expired-w2"', phone_html)
+                self.assertNotIn('id="w2-onboard-form"', phone_html)
+                self.assertIn("sms:+12145860257", phone_html)
+                self.assertIn("tel:+12145860257", phone_html)
+                self.assertNotIn("(214) 555-8833", phone_html)
+
+                r_phone_renew = anon_client.post(f"/onboard/employee/{phone_tok}/renew")
+                self.assertEqual(r_phone_renew.status_code, 403)
+                self.assertEqual(r_phone_renew.get_json().get("code"), "PHONE_ONLY_CONTACT_HR")
+
+                # HR sends fresh link via Backoffice -> rotates expired token and returns SMS URI with new link
+                r_hr_sms = auth_client.post(f"/api/v1/hr/employees/{phone_emp_id}/send-onboarding-link")
+                self.assertEqual(r_hr_sms.status_code, 200, r_hr_sms.get_data(as_text=True))
+                hr_sms_json = r_hr_sms.get_json()
+                self.assertFalse(hr_sms_json.get("email_sent"))
+                self.assertTrue(hr_sms_json.get("sms_uri", "").startswith("sms:+12145558833"))
+                new_phone_url = hr_sms_json.get("onboarding_url", "")
+                self.assertNotIn(phone_tok, new_phone_url)
+                self.assertEqual(anon_client.get(f"/onboard/employee/{phone_tok}").status_code, 404)
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for eid in created_emp_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Employee\' AND parent_id = %s;',
+                            (eid,),
+                        )
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                        cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                conn.commit()
+            finally:
+                conn.close()
+
+    def test_52_bug_177_termination_token_revocation_w2_post_sign_lock_and_1099_approval_gate(self) -> None:
+        """
+        BUG-177 (LEG-001) HR & 1099 Audit Hardening Phase 1:
+        1. W-2 Post-Signing Payroll Lock: Once onboarding_packet_signed=True, repeat POST /complete
+           returns HTTP 403 PACKET_ALREADY_SIGNED_LOCKED (preventing direct-deposit hijack), and
+           supplemental /upload-doc stores the file without overwriting signed banking/SSN fields.
+        2. Termination Immediate Link Revocation: DELETE /api/v1/hr/employees/<id> expires
+           onboarding_token_expires_at immediately, locks GET /onboard/employee/<token> with zero PII,
+           returns HTTP 410 on /download-packet, and blocks /renew with HTTP 403 EMPLOYMENT_INACTIVE_LOCKED.
+        3. 1099 Intake dwc83_signed Integrity & 4-Way Activation Gate: Public intake leaves dwc83_signed=False
+           until formal contract signing, expired COIs mark coi_status='Expired', and /approve-partner
+           blocks activation until msa_signed, dwc83_signed, W-9, and an unexpired COI are on file.
+        """
+        import io
+        import uuid
+        from unittest.mock import patch
+        from core.services.database import get_db
+
+        uid = uuid.uuid4().hex[:8]
+        auth_client = self.get_auth_client()
+        anon_client = app.test_client()
+        created_emp_ids: list[int] = []
+        created_sub_ids: list[int] = []
+        created_outbox_emails: list[str] = []
+
+        try:
+            with (
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.requests.post") as mock_tg_post,
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
+            ):
+                mock_tg_post.return_value.status_code = 200
+
+                # 1. W-2 Post-Signing Lock & Termination Immediate Revocation
+                emp_email = f"leg001.w2.{uid}@example.com"
+                r_hire = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Diego",
+                        "last_name": f"Salazar-{uid}",
+                        "email": emp_email,
+                        "phone": "(214) 555-7344",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Full-Time",
+                        "pay_rate_hourly": 18.50,
+                        "hire_date": "2026-11-12",
+                    },
+                )
+                self.assertEqual(r_hire.status_code, 201, r_hire.get_data(as_text=True))
+                emp_id = r_hire.get_json()["employee_id"]
+                emp_tok = r_hire.get_json()["onboarding_token"]
+                created_emp_ids.append(emp_id)
+
+                r_sign = anon_client.post(
+                    f"/api/v1/employees/onboard/{emp_tok}/complete",
+                    json={
+                        "first_name": "Diego",
+                        "last_name": f"Salazar-{uid}",
+                        "phone": "(214) 555-7344",
+                        "email": emp_email,
+                        "address_street": "3100 McKinney Ave",
+                        "address_city": "Dallas",
+                        "address_state": "TX",
+                        "address_zip": "75204",
+                        "emergency_contact_name": "Carla Salazar",
+                        "emergency_contact_phone": "(214) 555-7345",
+                        "ssn": "123-45-6789",
+                        "w4_filing_status": "Single",
+                        "i9_citizenship_status": "1. A citizen of the United States",
+                        "direct_deposit_bank": "Chase Bank",
+                        "direct_deposit_routing": "111000614",
+                        "direct_deposit_account": "1122338899",
+                        "signer_name": f"Diego Salazar-{uid}",
+                    },
+                )
+                self.assertEqual(r_sign.status_code, 200, r_sign.get_data(as_text=True))
+
+                # Attempt post-signing direct-deposit hijack -> must return 403 PACKET_ALREADY_SIGNED_LOCKED
+                r_hijack = anon_client.post(
+                    f"/api/v1/employees/onboard/{emp_tok}/complete",
+                    json={
+                        "first_name": "Diego",
+                        "last_name": f"Salazar-{uid}",
+                        "direct_deposit_bank": "Attacker Bank",
+                        "direct_deposit_routing": "111900659",
+                        "direct_deposit_account": "9999990000",
+                        "signer_name": "Attacker Signer",
+                    },
+                )
+                self.assertEqual(r_hijack.status_code, 403)
+                self.assertEqual(r_hijack.get_json().get("code"), "PACKET_ALREADY_SIGNED_LOCKED")
+
+                # Supplemental upload after signing stores file without overwriting signed direct deposit
+                void_check_pdf = b"%PDF-1.4\nBank: Attacker Bank\nRouting: 111900659\nAccount: 9999990000"
+                r_sup = anon_client.post(
+                    f"/api/v1/employees/onboard/{emp_tok}/upload-doc",
+                    data={
+                        "document_type": "Direct Deposit Void Check",
+                        "document": (io.BytesIO(void_check_pdf), "check.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertEqual(r_sup.status_code, 200)
+                self.assertEqual(r_sup.get_json().get("auto_populated_fields"), [])
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT direct_deposit_account_last_four FROM "Employees" WHERE id = %s;',
+                            (emp_id,),
+                        )
+                        self.assertEqual(cur.fetchone()[0], "8899")
+                finally:
+                    conn.close()
+
+                # Terminate employee -> token immediately expires & self-service renewal blocked (403)
+                r_term = auth_client.delete(f"/api/v1/hr/employees/{emp_id}")
+                self.assertEqual(r_term.status_code, 200)
+
+                r_term_portal = anon_client.get(f"/onboard/employee/{emp_tok}")
+                self.assertEqual(r_term_portal.status_code, 200)
+                term_html = r_term_portal.get_data(as_text=True)
+                self.assertIn('id="w2-expired-banner"', term_html)
+                self.assertNotIn("3100 McKinney Ave", term_html)
+                self.assertNotIn("8899", term_html)
+
+                r_term_dl = anon_client.get(f"/onboard/employee/{emp_tok}/download-packet")
+                self.assertEqual(r_term_dl.status_code, 410)
+
+                r_term_renew = anon_client.post(f"/onboard/employee/{emp_tok}/renew")
+                self.assertEqual(r_term_renew.status_code, 403)
+                self.assertEqual(r_term_renew.get_json().get("code"), "EMPLOYMENT_INACTIVE_LOCKED")
+
+                # 2. 1099 Public Intake dwc83_signed Integrity & 4-Way Partner Activation Gate
+                sub_email = f"leg001.sub.{uid}@example.com"
+                created_outbox_emails.append(sub_email)
+                r_sub_in = anon_client.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "company_name": f"Apex Floor Crew {uid} LLC",
+                        "contact_name": "Hector Ruiz",
+                        "email": sub_email,
+                        "phone": f"(214) 555-{uid[:4] if uid[:4].isdigit() else '6120'}",
+                        "city": "Plano",
+                        "crew_size": 4,
+                        "dwc83_agreed": "true",
+                        "sub_no_guarantee_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_sub_in.status_code, 201, r_sub_in.get_data(as_text=True))
+                sub_id = r_sub_in.get_json()["partner_id"]
+                created_sub_ids.append(sub_id)
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT dwc83_signed, msa_signed, onboarding_token FROM "SubcontractorPartners" WHERE id = %s;',
+                            (sub_id,),
+                        )
+                        sub_row = cur.fetchone()
+                        self.assertFalse(bool(sub_row[0]), "Initial public intake must never mark dwc83_signed=True")
+                        self.assertFalse(bool(sub_row[1]))
+                        sub_tok = sub_row[2]
+                finally:
+                    conn.close()
+
+                # Approve blocked before MSA + DWC-83 execution
+                r_app_blk1 = auth_client.post(f"/api/v1/workforce/subcontractors/{sub_id}/approve-partner")
+                self.assertEqual(r_app_blk1.status_code, 400)
+                self.assertEqual(r_app_blk1.get_json().get("code"), "MISSING_EXECUTED_MSA_DWC83")
+
+                # Sign digital W-9 + MSA + DWC-83 without COI first
+                r_sub_sign = anon_client.post(
+                    f"/onboard/subcontractor/{sub_tok}/submit",
+                    data={
+                        "w9_mode": "digital",
+                        "company_name": f"Apex Floor Crew {uid} LLC",
+                        "legal_entity_name": f"Apex Floor Crew {uid} LLC",
+                        "contact_name": "Hector Ruiz",
+                        "email": sub_email,
+                        "phone": "2145556120",
+                        "tax_classification": "LLC",
+                        "tax_id_mode": "ein",
+                        "ein_or_ssn": "82-7741902",
+                        "street_address": "100 Legacy Dr",
+                        "city": "Plano",
+                        "state": "TX",
+                        "zip_code": "75024",
+                        "msa_signer_name": "Hector Ruiz",
+                        "msa_signer_title": "Managing Member",
+                        "msa_agreed": "true",
+                        "dwc83_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_sub_sign.status_code, 200, r_sub_sign.get_data(as_text=True))
+
+                # Upload EXPIRED COI via Backoffice -> coi_status='Expired' and approve-partner blocked (400)
+                coi_pdf = b"%PDF-1.4\nACORD CERTIFICATE OF LIABILITY INSURANCE\nINSURER A: Next Insurance\n"
+                r_exp_coi = auth_client.post(
+                    f"/api/v1/workforce/subcontractors/{sub_id}/documents",
+                    data={
+                        "document_type": "COI",
+                        "expiration_date": "2020-01-01",
+                        "document": (io.BytesIO(coi_pdf), "expired_coi.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertIn(r_exp_coi.status_code, (200, 201))
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT coi_status FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                        self.assertEqual(cur.fetchone()[0], "Expired")
+                finally:
+                    conn.close()
+
+                r_app_blk2 = auth_client.post(f"/api/v1/workforce/subcontractors/{sub_id}/approve-partner")
+                self.assertEqual(r_app_blk2.status_code, 400)
+                self.assertEqual(r_app_blk2.get_json().get("code"), "EXPIRED_OR_MISSING_COI_DATE")
+
+                # Upload valid future COI -> approve-partner succeeds (200)
+                r_good_coi = auth_client.post(
+                    f"/api/v1/workforce/subcontractors/{sub_id}/documents",
+                    data={
+                        "document_type": "COI",
+                        "expiration_date": "2027-12-31",
+                        "document": (io.BytesIO(coi_pdf), "valid_coi.pdf"),
+                    },
+                    content_type="multipart/form-data",
+                )
+                self.assertIn(r_good_coi.status_code, (200, 201))
+
+                r_app_ok = auth_client.post(f"/api/v1/workforce/subcontractors/{sub_id}/approve-partner")
+                self.assertEqual(r_app_ok.status_code, 200, r_app_ok.get_data(as_text=True))
+                self.assertEqual(r_app_ok.get_json().get("partner_status"), "Active Partner")
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for eid in created_emp_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Employee\' AND parent_id = %s;',
+                            (eid,),
+                        )
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                        cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                    for sid in created_sub_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Subcontractor\' AND parent_id = %s;',
+                            (sid,),
+                        )
+                        cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sid,))
+                        cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                    for em in created_outbox_emails:
+                        cur.execute('DELETE FROM "PendingOutbox" WHERE recipient = %s;', (em,))
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE subject ILIKE %s;', (f"%Apex Floor Crew {uid}%",))
+                conn.commit()
+            finally:
+                conn.close()
+
+    def test_53_workforce_module_delete_compliance_gate_and_academy_auth_bug_178_179(self) -> None:
+        """
+        BUG-178 & BUG-179 Workforce / HR & Personnel Operations End-to-End Hardening:
+        1. Academy Auth Gate (BUG-179.1, BUG-179.7): Unauthenticated /api/v1/academy/enrollments
+           and /api/v1/academy/assign are blocked (401/302), while authenticated assignment and
+           link refresh ('already_registered') succeed.
+        2. 2-Stage Employee Delete + Linked Applicant Sync + Inactive Link Lock + Restore (BUG-178,
+           BUG-179.3, BUG-179.5, BUG-179.6): Stage 1 soft-terminates employee & linked applicant,
+           blocks send-onboarding-link (403 EMPLOYMENT_INACTIVE_LOCKED), hides Terminated rows on
+           initial Workforce render, safely escapes apostrophe names via data-name attributes, and
+           Stage 2 (?purge=1) permanently deletes with snapshot Undo restore support.
+        3. 1099 Subcontractor Compliance Gate & UI Parity (BUG-179.2, BUG-179.4, BUG-179.10):
+           POST /api/v1/workforce/subcontractors downgrades unverified 'Active Partner' to 'Vetting',
+           PATCH /api/v1/workforce/subcontractors/<id> blocks 'Active Partner' without 4-way compliance,
+           and Workforce modals expose full status options, dynamic roles, and plain business copy.
+        """
+        import uuid
+        from unittest.mock import patch
+        from core.services.database import get_db
+
+        uid = uuid.uuid4().hex[:8]
+        auth_client = self.get_auth_client()
+        anon_client = app.test_client()
+        created_emp_ids: list[int] = []
+        created_app_ids: list[int] = []
+        created_sub_ids: list[int] = []
+        created_enroll_emails: list[str] = []
+
+        try:
+            with (
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.requests.post") as mock_tg_post,
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
+            ):
+                mock_tg_post.return_value.status_code = 200
+
+                # 1. Academy Auth Gate (BUG-179.1 & BUG-179.7)
+                r_anon_enr = anon_client.get("/api/v1/academy/enrollments")
+                self.assertIn(r_anon_enr.status_code, (302, 401), "Anonymous enrollments list must be blocked")
+
+                acad_email = f"academy.bug179.{uid}@example.com"
+                created_enroll_emails.append(acad_email)
+                r_anon_assign = anon_client.post(
+                    "/api/v1/academy/assign",
+                    json={
+                        "student_name": f"Test Learner {uid}",
+                        "student_email": acad_email,
+                        "worker_type": "W2_EMPLOYEE",
+                        "assignment_type": "COURSE",
+                        "target_code": "TRN-SAF-01",
+                    },
+                )
+                self.assertIn(r_anon_assign.status_code, (302, 401), "Anonymous academy assign must be blocked")
+
+                r_auth_assign = auth_client.post(
+                    "/api/v1/academy/assign",
+                    json={
+                        "student_name": f"Test Learner {uid}",
+                        "student_email": acad_email,
+                        "worker_type": "W2_EMPLOYEE",
+                        "assignment_type": "COURSE",
+                        "target_code": "TRN-SAF-01",
+                    },
+                )
+                self.assertIn(r_auth_assign.status_code, (200, 201), r_auth_assign.get_data(as_text=True))
+                self.assertTrue(r_auth_assign.get_json().get("magic_url"))
+
+                r_auth_reassign = auth_client.post(
+                    "/api/v1/academy/assign",
+                    json={
+                        "student_name": f"Test Learner {uid}",
+                        "student_email": acad_email,
+                        "worker_type": "W2_EMPLOYEE",
+                        "assignment_type": "COURSE",
+                        "target_code": "TRN-SAF-01",
+                    },
+                )
+                self.assertEqual(r_auth_reassign.status_code, 200)
+                reassign_json = r_auth_reassign.get_json()
+                self.assertEqual(reassign_json.get("status"), "already_registered")
+                self.assertTrue(reassign_json.get("magic_url"))
+
+                # 2. 2-Stage Employee Delete, Apostrophe Safety, Linked Applicant Sync & Undo Restore
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """
+                            INSERT INTO "JobApplicants" (full_name, email, phone, status)
+                            VALUES (%s, %s, %s, 'Bench Ready')
+                            RETURNING id;
+                            """,
+                            (f"Sean O'Connor-{uid}", f"sean.oconnor.{uid}@example.com", "(214) 555-8821"),
+                        )
+                        applicant_id = cur.fetchone()[0]
+                        created_app_ids.append(applicant_id)
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                r_hire = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "applicant_id": applicant_id,
+                        "first_name": "Sean",
+                        "last_name": f"O'Connor-{uid}",
+                        "email": f"sean.oconnor.{uid}@example.com",
+                        "phone": "(214) 555-8821",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_type": "W-2 Full-Time",
+                        "pay_rate_hourly": 17.50,
+                    },
+                )
+                self.assertEqual(r_hire.status_code, 201, r_hire.get_data(as_text=True))
+                emp_id = r_hire.get_json()["employee_id"]
+                created_emp_ids.append(emp_id)
+
+                # Verify Workforce HTML uses data-name (no broken inline single-quoted apostrophe)
+                r_wf_active = auth_client.get("/admin/operations?view=workforce")
+                self.assertEqual(r_wf_active.status_code, 200)
+                wf_html_active = r_wf_active.get_data(as_text=True)
+                self.assertNotIn(f"'Sean O'Connor-{uid}'", wf_html_active)
+                self.assertIn("Saved to Workforce Record History", wf_html_active)
+                self.assertNotIn("Persists to PostgreSQL SigmaSystemCore", wf_html_active)
+                self.assertIn('<option value="Terminated"', wf_html_active)
+                self.assertIn('<option value="Pending COI">Pending COI</option>', wf_html_active)
+                self.assertIn('<option value="Docs Submitted">Docs Submitted</option>', wf_html_active)
+
+                # Stage 1 Delete -> Soft-Terminates Employee + Linked Applicant
+                r_del_stage1 = auth_client.delete(f"/api/v1/hr/employees/{emp_id}")
+                self.assertEqual(r_del_stage1.status_code, 200, r_del_stage1.get_data(as_text=True))
+                del1_json = r_del_stage1.get_json()
+                self.assertEqual(del1_json.get("action"), "terminated")
+                self.assertEqual(del1_json.get("employment_status"), "Terminated")
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT status FROM "JobApplicants" WHERE id = %s;', (applicant_id,))
+                        self.assertEqual(cur.fetchone()[0], "Terminated")
+                finally:
+                    conn.close()
+
+                # Terminated employee row must be hidden on initial Workforce render (display: none;)
+                r_wf_term = auth_client.get("/admin/operations?view=workforce")
+                self.assertEqual(r_wf_term.status_code, 200)
+                wf_html_term = r_wf_term.get_data(as_text=True)
+                row_marker = f'id="employee-row-{emp_id}"'
+                self.assertIn(row_marker, wf_html_term)
+                row_snippet = wf_html_term.split(row_marker, 1)[1].split(">", 1)[0]
+                self.assertIn("display: none;", row_snippet)
+
+                # Sending onboarding link to Terminated employee must be blocked (403)
+                r_send_blocked = auth_client.post(f"/api/v1/hr/employees/{emp_id}/send-onboarding-link")
+                self.assertEqual(r_send_blocked.status_code, 403)
+                self.assertEqual(r_send_blocked.get_json().get("code"), "EMPLOYMENT_INACTIVE_LOCKED")
+
+                # Stage 2 Delete (?purge=1) -> Permanently removes record and returns restore_token
+                r_del_stage2 = auth_client.delete(f"/api/v1/hr/employees/{emp_id}?purge=1")
+                self.assertEqual(r_del_stage2.status_code, 200, r_del_stage2.get_data(as_text=True))
+                del2_json = r_del_stage2.get_json()
+                self.assertEqual(del2_json.get("action"), "purged")
+                restore_tok = del2_json.get("restore_token")
+                self.assertTrue(restore_tok, "Permanent purge must return undo restore_token")
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT COUNT(*) FROM "Employees" WHERE id = %s;', (emp_id,))
+                        self.assertEqual(cur.fetchone()[0], 0)
+                finally:
+                    conn.close()
+
+                # Verify Undo restore brings the employee back cleanly
+                r_restore = auth_client.post("/api/v1/crm/restore-deleted", json={"restore_token": restore_tok})
+                self.assertEqual(r_restore.status_code, 200, r_restore.get_data(as_text=True))
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT COUNT(*) FROM "Employees" WHERE id = %s;', (emp_id,))
+                        self.assertEqual(cur.fetchone()[0], 1)
+                finally:
+                    conn.close()
+
+                # 3. 1099 Subcontractor Compliance Gate on POST & PATCH (BUG-179.2)
+                r_sub_post = auth_client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"GateCheck Trade {uid} LLC",
+                        "contact_name": "Marco Diaz",
+                        "phone": "(972) 555-3301",
+                        "email": f"marco.gate.{uid}@example.com",
+                        "status": "Active Partner",
+                        "coi_status": "Pending",
+                    },
+                )
+                self.assertEqual(r_sub_post.status_code, 201, r_sub_post.get_data(as_text=True))
+                sub_id = r_sub_post.get_json()["subcontractor_id"]
+                created_sub_ids.append(sub_id)
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT status FROM "SubcontractorPartners" WHERE id = %s;', (sub_id,))
+                        self.assertEqual(
+                            cur.fetchone()[0],
+                            "Vetting",
+                            "Unverified subcontractor POST must auto-downgrade status from Active Partner to Vetting",
+                        )
+                finally:
+                    conn.close()
+
+                r_sub_patch_blk = auth_client.patch(
+                    f"/api/v1/workforce/subcontractors/{sub_id}",
+                    json={"status": "Active Partner"},
+                )
+                self.assertEqual(r_sub_patch_blk.status_code, 400)
+                self.assertEqual(r_sub_patch_blk.get_json().get("code"), "MISSING_EXECUTED_MSA_DWC83")
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for em in created_enroll_emails:
+                        cur.execute('DELETE FROM "AcademyEnrollments" WHERE student_email = %s;', (em,))
+                    for eid in created_emp_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Employee\' AND parent_id = %s;',
+                            (eid,),
+                        )
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                        cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                    for aid in created_app_ids:
+                        cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (aid,))
+                    for sid in created_sub_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Subcontractor\' AND parent_id = %s;',
+                            (sid,),
+                        )
+                        cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sid,))
+                        cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE subject ILIKE %s;', (f"%GateCheck Trade {uid}%",))
+                conn.commit()
+            finally:
+                conn.close()
+
+    def test_54_empirical_data_hygiene_and_zero_synthetic_reseed_bug_180_181(self) -> None:
+        """
+        BUG-180 & BUG-181 Empirical Data Integrity & Zero Synthetic Re-Seed Sentinel:
+        1. Asserts zero synthetic CAD Hunter leads exist in "Leads" and running
+           commercial_cad_hunter.run_commercial_cad_hunting_cycle() inserts 0 rows.
+        2. Asserts zero demo certificates (cert-demo-7f8a9b2c3d4e) exist in "AcademyEnrollments".
+        3. Asserts zero unverified PDF claims exist in "TenantCertificationEvidence".
+        4. Asserts zero test takeoff notes ('Enterprise SOC 2 Takeoff Audit Verification')
+           or leaked test notifications ('VERIF-LABOR-TEST-2026', 'Shield Verification Corp')
+           remain in "ConstructionBids" or "PendingOutbox".
+        """
+        from core.services.database import get_db
+        from scripts.commercial_cad_hunter import run_commercial_cad_hunting_cycle
+
+        staged = run_commercial_cad_hunting_cycle()
+        self.assertEqual(staged, 0, "commercial_cad_hunter must stage 0 synthetic rows")
+
+        conn = get_db(self.db_url)
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    SELECT COUNT(*) FROM "Leads"
+                    WHERE lead_source IN (
+                        'CAD Multi-Family Registry',
+                        'CAD Commercial F1 Registry',
+                        'CAD Industrial F2 Registry',
+                        'TDLR Architectural Barriers Registry'
+                    );
+                    '''
+                )
+                self.assertEqual(cur.fetchone()[0], 0, "Synthetic CAD Hunter leads must remain 0")
+
+                cur.execute(
+                    'SELECT COUNT(*) FROM "AcademyEnrollments" WHERE enrollment_uuid = %s;',
+                    ("cert-demo-7f8a9b2c3d4e",),
+                )
+                self.assertEqual(cur.fetchone()[0], 0, "Sample demo certificate must remain purged")
+
+                cur.execute(
+                    '''
+                    SELECT COUNT(*) FROM "TenantCertificationEvidence"
+                    WHERE COALESCE(file_size, 0) = 0 AND verification_status = 'Verified Compliant';
+                    '''
+                )
+                self.assertEqual(cur.fetchone()[0], 0, "Zero-byte missing PDFs cannot claim Verified Compliant")
+
+                cur.execute(
+                    '''
+                    SELECT COUNT(*) FROM "ConstructionBids"
+                    WHERE notes = 'Enterprise SOC 2 Takeoff Audit Verification';
+                    '''
+                )
+                self.assertEqual(cur.fetchone()[0], 0, "Leaked Rack 9 test takeoff notes must remain 0")
+
+                cur.execute(
+                    '''
+                    SELECT COUNT(*) FROM "PendingOutbox"
+                    WHERE COALESCE(subject, '') ILIKE '%VERIF-LABOR-TEST-2026%'
+                       OR COALESCE(subject, '') ILIKE '%Shield Verification Corp%'
+                       OR COALESCE(subject, '') ILIKE '%Apex Floor Crew%';
+                    '''
+                )
+                self.assertEqual(cur.fetchone()[0], 0, "Leaked test PendingOutbox rows must remain 0")
+        finally:
+            conn.close()
+
+    def test_55_workforce_w2_1099_dedup_tin_hmac_and_crosstrack_gate_bug_182(self) -> None:
+        """
+        BUG-182 Full Workforce, HR (W-2), Candidate Pool & 1099 Anti-Duplicate + Offboarding Suite:
+        1. Verifies DB partial UNIQUE indexes exist and PATCH contact collisions return 409.
+        2. Verifies salted HMAC-SHA256 Tax-ID blind hashes (`ssn_hmac` / `ein_hmac`) block
+           duplicate 9-digit SSNs (409 DUPLICATE_SSN_DETECTED) and 9-digit EINs
+           (409 DUPLICATE_EIN_DETECTED) even across different phone numbers and emails,
+           while never exposing `ssn_hmac` or `ein_hmac` in GET responses.
+        3. Verifies Active W-2 <-> Active 1099 Dual-Engagement hard blocks (409).
+        4. Verifies normalized person-name cross-track flagging (`Joycelyn Hevens` vs
+           `Joycelyn Hevens, Owner` with different phone & email) holds auto-invite to False.
+        5. Verifies Employee Termination revokes `AcademyEnrollments` tokens and suspends
+           matching non-Executive `Users`.
+        """
+        import uuid
+        from unittest.mock import patch
+        from main_app import app
+        from core.security import normalize_person_name_key
+        from core.services.database import get_db
+
+        self.assertEqual(
+            normalize_person_name_key("Joycelyn Hevens, Owner"),
+            normalize_person_name_key("Joycelyn Hevens"),
+        )
+        self.assertEqual(
+            normalize_person_name_key("Maddie Soto/ Operations Manager"),
+            "maddie soto",
+        )
+
+        uid = uuid.uuid4().hex[:6]
+        created_app_ids = []
+        created_emp_ids = []
+        created_sub_ids = []
+        created_enr_ids = []
+        created_user_ids = []
+
+        auth_client = self.get_auth_client()
+        anon_client = app.test_client()
+
+        try:
+            with (
+                patch("core.services.email_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.transmit_email", return_value=(True, "mocked")),
+                patch("core.services.notification_service.requests.post") as mock_tg_post,
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
+            ):
+                mock_tg_post.return_value.status_code = 200
+                # 1. Verify all 8 partial UNIQUE workforce indexes exist in PostgreSQL
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            "SELECT indexname FROM pg_indexes WHERE indexname LIKE 'idx_%unique_%';"
+                        )
+                        idx_names = {r[0] for r in cur.fetchall()}
+                    for expected_idx in (
+                        "idx_jobapplicants_unique_phone_digits",
+                        "idx_jobapplicants_unique_email_lower",
+                        "idx_employees_unique_phone_digits",
+                        "idx_employees_unique_email_lower",
+                        "idx_employees_unique_ssn_hmac",
+                        "idx_subcontractors_unique_phone_digits",
+                        "idx_subcontractors_unique_email_lower",
+                        "idx_subcontractors_unique_ein_hmac",
+                    ):
+                        self.assertIn(expected_idx, idx_names)
+                finally:
+                    conn.close()
+
+                # 2. Candidate Pool <-> 1099 Person-Name Cross-Track Flagging (Different Phone & Email)
+                r_app1 = anon_client.post(
+                    "/api/v1/workforce/apply",
+                    json={
+                        "full_name": f"Camila Ortega {uid}",
+                        "phone": "(214) 555-8201",
+                        "email": f"camila.w2.{uid}@example.com",
+                        "city": "Dallas",
+                        "desired_role": "Commercial Cleaning Technician",
+                    },
+                )
+                self.assertEqual(r_app1.status_code, 201, r_app1.get_data(as_text=True))
+                app1_id = r_app1.get_json()["applicant_id"]
+                created_app_ids.append(app1_id)
+
+                r_app2 = anon_client.post(
+                    "/api/v1/workforce/apply",
+                    json={
+                        "full_name": f"Bruno Silva {uid}",
+                        "phone": "(214) 555-8202",
+                        "email": f"bruno.w2.{uid}@example.com",
+                        "city": "Plano",
+                        "desired_role": "Floor Care Specialist",
+                    },
+                )
+                self.assertEqual(r_app2.status_code, 201)
+                app2_id = r_app2.get_json()["applicant_id"]
+                created_app_ids.append(app2_id)
+
+                # PATCH collision on JobApplicants -> 409 DUPLICATE_CONTACT_DETECTED
+                r_app_patch_dup = auth_client.patch(
+                    f"/api/v1/workforce/applicants/{app2_id}",
+                    json={"phone": "(214) 555-8201"},
+                )
+                self.assertEqual(r_app_patch_dup.status_code, 409)
+                self.assertEqual(r_app_patch_dup.get_json().get("code"), "DUPLICATE_CONTACT_DETECTED")
+
+                # Same person registers 1099 LLC with DIFFERENT phone & email + ", Owner" suffix
+                r_sub_cross = anon_client.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "company_name": f"Ortega Commercial Crew {uid} LLC",
+                        "contact_name": f"Camila Ortega {uid}, Owner",
+                        "phone": "(469) 555-8299",
+                        "email": f"dispatch.ortega.{uid}@example.com",
+                        "city": "Dallas",
+                        "crew_size": 3,
+                        "dwc83_agreed": "true",
+                        "sub_no_guarantee_agreed": "true",
+                    },
+                )
+                self.assertEqual(r_sub_cross.status_code, 201, r_sub_cross.get_data(as_text=True))
+                sub_cross_json = r_sub_cross.get_json()
+                sub_cross_id = sub_cross_json["partner_id"]
+                created_sub_ids.append(sub_cross_id)
+                self.assertFalse(sub_cross_json["auto_invited"])
+                self.assertEqual(sub_cross_json["onboarding_status"], "Initial Review")
+
+                r_sub_get = auth_client.get(f"/api/v1/workforce/subcontractors/{sub_cross_id}")
+                self.assertEqual(r_sub_get.status_code, 200)
+                sub_cross_data = r_sub_get.get_json()["subcontractor"]
+                self.assertNotIn("ein_hmac", sub_cross_data)
+                self.assertIn("CROSS-TRACK W-2 CANDIDATE", sub_cross_data.get("notes") or "")
+
+                # 3. Salted SSN HMAC Uniqueness + Active W-2 -> 1099 Hard Block + Termination Offboarding Sync
+                emp_email_1 = f"emp1.bug182.{uid}@example.com"
+                r_emp1 = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Mateo",
+                        "last_name": f"Rivas-{uid}",
+                        "phone": "(214) 555-8301",
+                        "email": emp_email_1,
+                        "primary_role": "Commercial Cleaning Technician",
+                        "employment_status": "Active",
+                        "ssn_plain": "642-81-3904",
+                    },
+                )
+                self.assertEqual(r_emp1.status_code, 201, r_emp1.get_data(as_text=True))
+                emp1_id = r_emp1.get_json()["employee_id"]
+                created_emp_ids.append(emp1_id)
+
+                r_emp1_get = auth_client.get(f"/api/v1/hr/employees/{emp1_id}")
+                self.assertEqual(r_emp1_get.status_code, 200)
+                self.assertNotIn("ssn_hmac", r_emp1_get.get_json()["employee"])
+
+                # Different phone + different email, SAME 9-digit SSN -> 409 DUPLICATE_SSN_DETECTED
+                r_emp_dup_ssn = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Mateo",
+                        "last_name": "Alias",
+                        "phone": "(972) 555-8309",
+                        "email": f"emp2.bug182.{uid}@example.com",
+                        "primary_role": "Commercial Cleaning Technician",
+                        "ssn_plain": "642813904",
+                    },
+                )
+                self.assertEqual(r_emp_dup_ssn.status_code, 409)
+                self.assertEqual(r_emp_dup_ssn.get_json().get("code"), "DUPLICATE_SSN_DETECTED")
+
+                # Active W-2 employee attempts 1099 subcontractor registration -> 409 ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED
+                r_w2_to_1099 = anon_client.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "company_name": f"Rivas Side Crew {uid} LLC",
+                        "contact_name": f"Mateo Rivas-{uid}",
+                        "phone": "(214) 555-8301",
+                        "email": emp_email_1,
+                        "city": "Dallas",
+                    },
+                )
+                self.assertEqual(r_w2_to_1099.status_code, 409)
+                self.assertEqual(
+                    r_w2_to_1099.get_json().get("code"),
+                    "ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED",
+                )
+
+                # Create AcademyEnrollment + non-Executive User for emp1, then Terminate emp1 -> verify offboarding sync
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('SELECT id FROM "AcademyCourses" ORDER BY id ASC LIMIT 1;')
+                        course_row = cur.fetchone()
+                        course_id = course_row[0] if course_row else 1
+                        cur.execute(
+                            '''
+                            INSERT INTO "AcademyEnrollments" (
+                                enrollment_uuid, course_id, worker_type, employee_id,
+                                student_name, student_email, status, magic_token
+                            ) VALUES (%s, %s, 'W2_EMPLOYEE', %s, %s, %s, 'ASSIGNED', %s)
+                            RETURNING id;
+                            ''',
+                            (
+                                f"enr-bug182-{uid}",
+                                course_id,
+                                emp1_id,
+                                f"Mateo Rivas-{uid}",
+                                emp_email_1,
+                                f"tok_bug182_{uid}",
+                            ),
+                        )
+                        enr_id = cur.fetchone()[0]
+                        created_enr_ids.append(enr_id)
+
+                        cur.execute(
+                            '''
+                            INSERT INTO "Users" (username, password_hash, full_name, email, role, status)
+                            VALUES (%s, 'pbkdf2:sha256:test', %s, %s, 'Technician', 'Active')
+                            RETURNING id;
+                            ''',
+                            (f"tech_bug182_{uid}", f"Mateo Rivas-{uid}", emp_email_1),
+                        )
+                        usr_id = cur.fetchone()[0]
+                        created_user_ids.append(usr_id)
+                    conn.commit()
+                finally:
+                    conn.close()
+
+                r_term = auth_client.delete(f"/api/v1/hr/employees/{emp1_id}")
+                self.assertEqual(r_term.status_code, 200)
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT status, magic_token FROM "AcademyEnrollments" WHERE id = %s;',
+                            (enr_id,),
+                        )
+                        enr_after = cur.fetchone()
+                        self.assertEqual(enr_after[0], "REVOKED")
+                        self.assertIsNone(enr_after[1])
+
+                        cur.execute('SELECT status FROM "Users" WHERE id = %s;', (usr_id,))
+                        self.assertEqual(cur.fetchone()[0], "Suspended")
+                finally:
+                    conn.close()
+
+                # 4. Salted EIN HMAC Uniqueness + Active 1099 -> W-2 Hard Block
+                r_sub1 = auth_client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"LoneStar Floor Partner {uid} LLC",
+                        "contact_name": f"Sofia Mendez {uid}",
+                        "phone": "(214) 555-8401",
+                        "email": f"sofia.1099.{uid}@example.com",
+                        "ein_or_ssn": "83-6549120",
+                        "city": "Irving",
+                        "coi_status": "Verified",
+                        "coi_expiration_date": "2028-12-31",
+                        "w9_status": "Verified",
+                        "msa_signed": True,
+                        "dwc83_signed": True,
+                        "status": "Active Partner",
+                    },
+                )
+                self.assertEqual(r_sub1.status_code, 201, r_sub1.get_data(as_text=True))
+                sub1_id = r_sub1.get_json()["subcontractor_id"]
+                created_sub_ids.append(sub1_id)
+
+                # Different company, different phone, different email, SAME 9-digit EIN -> 409 DUPLICATE_EIN_DETECTED
+                r_sub_dup_ein = auth_client.post(
+                    "/api/v1/workforce/subcontractors",
+                    json={
+                        "company_name": f"Second Shell Crew {uid} LLC",
+                        "contact_name": "Carlos Shell",
+                        "phone": "(817) 555-8409",
+                        "email": f"shell.1099.{uid}@example.com",
+                        "ein_or_ssn": "836549120",
+                        "city": "Fort Worth",
+                    },
+                )
+                self.assertEqual(r_sub_dup_ein.status_code, 409)
+                self.assertEqual(r_sub_dup_ein.get_json().get("code"), "DUPLICATE_EIN_DETECTED")
+
+                # Active 1099 Partner onboarded onto W-2 payroll -> 409 ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED
+                r_1099_to_w2 = auth_client.post(
+                    "/api/v1/hr/onboard",
+                    json={
+                        "first_name": "Sofia",
+                        "last_name": f"Mendez {uid}",
+                        "phone": "(214) 555-8401",
+                        "email": f"sofia.1099.{uid}@example.com",
+                        "primary_role": "Commercial Cleaning Technician",
+                    },
+                )
+                self.assertEqual(r_1099_to_w2.status_code, 409)
+                self.assertEqual(
+                    r_1099_to_w2.get_json().get("code"),
+                    "ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED",
+                )
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    for uid_del in created_user_ids:
+                        cur.execute('DELETE FROM "Users" WHERE id = %s;', (uid_del,))
+                    for eid_enr in created_enr_ids:
+                        cur.execute('DELETE FROM "AcademyEnrollments" WHERE id = %s;', (eid_enr,))
+                    for eid in created_emp_ids:
+                        cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = %s;', (eid,))
+                        cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                    for sid in created_sub_ids:
+                        cur.execute('DELETE FROM "SubcontractorDocuments" WHERE subcontractor_id = %s;', (sid,))
+                        cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                    for aid in created_app_ids:
+                        cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (aid,))
+                    cur.execute(
+                        'DELETE FROM "PendingOutbox" WHERE subject ILIKE %s OR body ILIKE %s;',
+                        (f"%{uid}%", f"%{uid}%"),
+                    )
+                conn.commit()
+            finally:
+                conn.close()
 
 
 if __name__ == "__main__":

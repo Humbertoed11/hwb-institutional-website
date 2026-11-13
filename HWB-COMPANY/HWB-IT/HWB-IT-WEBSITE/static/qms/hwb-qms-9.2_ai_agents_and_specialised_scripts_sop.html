@@ -6,7 +6,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.5.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.1 (Operational Planning &amp; Control)</span></div>
     </div>
@@ -22,11 +22,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>AI Agents &amp; Specialized Automation Scripts SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.2</td></tr>
-                <tr><td><strong>Version</strong></td><td>4.2.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>4.5.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Effective Date</strong></td><td>10/29/2026</td></tr>
+                <tr><td><strong>Effective Date</strong></td><td>11/12/2026</td></tr>
                 <tr><td><strong>Department</strong></td><td>IT / Artificial Intelligence Department</td></tr>
                 <tr><td><strong>ISO Standard</strong></td><td>ISO 9001:2026 (ISO 9001:2015+Amd 1:2024) Clause 8.1 &amp; Clause 7.1.3 (Infrastructure)</td></tr>
             </tbody>
@@ -68,8 +68,8 @@
                 <tr>
                     <td><strong>watchdog.py</strong></td>
                     <td>Container (hwb_agent_worker)</td>
-                    <td>Continuous Tail</td>
-                    <td>Monitors application logs for template syntax errors and database locks; performs 60-second HTTP health checks with auto-healing restart.</td>
+                    <td>60-Second Loop (<code>BUG-174</code>)</td>
+                    <td>Monitors application logs for template syntax errors and database locks; performs 60-second HTTP health checks directly against the Docker bridge container IP alongside 60-second coalesced worker heartbeats.</td>
                 </tr>
                 <tr>
                     <td><strong>telegram_listener.py</strong></td>
@@ -126,16 +126,28 @@
                     <td>Provisions ClientBreadcrumbs table and deploys purge_expired_client_breadcrumbs(30) automated data lifecycle procedure for ISO 27001 data minimization.</td>
                 </tr>
                 <tr>
-                    <td><strong>peter_sentinel.py</strong></td>
-                    <td>Linux Host (PID 872)</td>
-                    <td>Hourly Daemon Loop</td>
-                    <td>Peter's host backup sentinel; executes automated binary PostgreSQL dumps, archives .env states, and enforces the 500MB log surge limit.</td>
+                    <td><strong>scripts/hwb_hourly_backup.sh</strong></td>
+                    <td>Linux Host Cron (<code>:00</code>)</td>
+                    <td>Hourly Native <code>ext4</code> Snapshot</td>
+                    <td>Replaces the retired <code>sigma-peter.service</code> 15m daemon and OneDrive <code>9P</code> sync (<code>BUG-173</code> / <code>SO-SCAR-023</code>); writes 24-hour rolling <code>pg_dump -Fc</code> PostgreSQL 16.15 binary snapshots to <code>backups/hourly/</code> and <code>backups/latest/</code> with owner-only <code>chmod 600</code> permissions, SHA-256 checksums (<code>hwb_dev_db.dump.sha256</code>), 24-hour rotation (<code>-mmin +1440</code>), and disk space checks.</td>
+                </tr>
+                <tr>
+                    <td><strong>scripts/peter_sentinel.py</strong> (<code>v2.0.0</code>)</td>
+                    <td>Linux Host CLI (Peter)</td>
+                    <td>On-Demand / Pre-Change / Audit</td>
+                    <td>Unified 3-command local recovery tool strictly scoped to <code>/home/humbertoed/gemini_projects</code>: (1) <code>checkpoint --label &lt;name&gt;</code> pins <code>chmod 600</code> PG16 <code>pg_dump -Fc</code>, <code>chmod 600</code> <code>.env</code>, and active code/QMS archive (<code>hwb_code_bundle.tar.gz</code>) in <code>backups/checkpoints/&lt;name&gt;/</code> with <code>SHA256SUMS.txt</code> and live test-restore into temporary DB <code>hwb_peter_verify_tmp</code>; (2) <code>rollback --label &lt;name&gt; [--code-only | --full]</code> restores code or swaps <code>hwb_dev_db</code> via clean staging DB <code>hwb_restore_stage</code> to prevent open-socket and <code>"SecurityAuditLogs"</code> WORM conflicts, restarting containers and verifying all 4 worker processes; (3) <code>verify</code> checks <code>&lt;90m</code> freshness, <code>chmod 600</code>, and SHA-256 integrity, logging status in PostgreSQL <code>"AIEmployeeHeartbeat"</code> and <code>"SecurityAuditLogs"</code>.</td>
                 </tr>
                 <tr>
                     <td><strong>core/ai_employee/engine.py</strong></td>
                     <td>Web App &amp; Worker Singleton</td>
                     <td>24/7 Real-Time &amp; Scheduled</td>
                     <td>24/7 Enterprise AI Employee Engine (<code>BUG-163</code>). Provides persistent Working Memory (<code>"AIEmployeeWorkingMemory"</code>), Standing Orders (<code>"AIEmployeeStandingOrders"</code>), Pre-Change Snapshot &amp; 1-Tap Rollback Ledger (<code>"AIEmployeeChangeLedger"</code>), FinOps Budget Circuit Breaker (<code>"AIEmployeeBudgetLedger"</code>: $0.50/day, $15.00/mo), 60s Heartbeat Telemetry (<code>"AIEmployeeHeartbeat"</code>), Read-Only SQL Analyst, and Deterministic Citation Firewall.</td>
+                </tr>
+                <tr>
+                    <td><strong>core/ai_employee/seo_growth_engine.py</strong></td>
+                    <td>Web App &amp; Worker Singleton (Lauri Tells #11)</td>
+                    <td>24/7 Patrol + 900s Cloud Cache</td>
+                    <td>Lauri Tells 24/7 SEO &amp; Client Growth Engine. Audits all 18 DFW City Hubs, 8 Facility Hubs, and 47 Sitemap URLs; executes read-only Google Analytics 4 Data API (<code>GA4_PROPERTY_ID</code>) and Google Search Console Search Analytics API (<code>GSC_SITE_URL</code> + <code>GOOGLE_SERVICE_ACCOUNT_JSON</code>) queries with deterministic <code>GRO-09</code> Striking-Distance (positions <code>8.0–20.0</code>) keyword ingestion into <code>"SEOKeywordRadar"</code> (returning <code>"DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT"</code> when credentials are absent).</td>
                 </tr>
                 <tr>
                     <td><strong>sigma_sync.py</strong></td>
@@ -162,13 +174,14 @@
             </li>
             <li><strong>Enterprise Context Resolver &amp; Anti-Narrowing Governance (ARCH-014):</strong> The Telegram listener and interactive assistant daemons must enforce Poka-Yoke anti-narrowing controls. Unconstrained <code>ILIKE</code> full-text matching against jobsite notes fields is strictly prohibited to prevent general business queries from binding to dense historical records (e.g. Bid #39). All inquiries must filter against the 120+ enterprise stop-word catalog, detect broad semantic phrases (<em>"our cost"</em>, <em>"system to be used"</em>, <em>"receive payments"</em>, <em>"website capabilities"</em>), fall back to <code>GENERAL_OPERATIONAL_CONTEXT</code>, and enforce Rule 7 prompt governance across all 4 core service lines.</li>
             <li><strong>24/7 Enterprise AI Employee Governance, Pre-Change Rollback Ledger &amp; FinOps Circuit Breaker (<code>BUG-163</code>):</strong> All autonomous and executive-directed mutations executed via <code>@Georgebytesbot</code> or <code>/api/v1/ai-employee/*</code> must first snapshot every affected database row's <code>before_state</code> into <code>"AIEmployeeChangeLedger"</code> and stage a Change-Set (<code>#CS-&lt;id&gt;</code>) with 1-tap Telegram inline buttons (<code>[✅ Apply #CS-&lt;id&gt;]</code> / <code>[↩️ Rollback #CS-&lt;id&gt;]</code>). Outbound Telegram messages enforce <code>link_preview_options: {"is_disabled": True}</code> to prevent third-party preview cards from obscuring reports. Every AI response is verified by the Deterministic Citation Firewall against live PostgreSQL IDs, and daily/monthly API spend is enforced by <code>"AIEmployeeBudgetLedger"</code> (<code>$0.50/day</code> and <code>$15.00/month</code> hard ceiling with zero-cost SQL fallback).</li>
+            <li><strong>Proportional First-Pass Engineering &amp; Host PC Approval Gate (<code>GOV-04 Revised</code> / <code>SigmaKnowledgeScars #268</code> — <code>11/12/2026</code>):</strong> Mandatory chat-hook injection (<code>fortune500-closed-loop-governor</code> / <code>scripts/agy_fortune500_gate_hook.py</code>) is set to <code>"enabled": false</code> in <code>.agents/hooks.json</code> to prevent per-turn prompt bloat and speculative 4-layer wrapper inflation. All agent engineering enforces <strong>Smallest Proven Fix First</strong> (never invent new tables, daemons, cron loops, or multi-layer wrappers when a config edit, SQL index, or deleting dead code solves the measured bottleneck), freezes new meta-infrastructure unless required by an active customer or revenue campaign, and pauses for explicit CEO Humberto Dominguez approval before modifying any host PC file (<code>/mnt/c/...</code>, <code>.wslconfig</code>, Docker Desktop, <code>crontab</code>, <code>systemd</code>, or <code>.bashrc</code>).</li>
         </ol>
 
         <h2>5.0 Verification (Zero-Defect Check)</h2>
         <ul>
-            <li>Run <code>docker top hwb_agent_worker</code> to verify all supervisor processes are actively executing.</li>
+            <li>Run <code>docker top hwb_agent_worker</code> to verify all 4 supervisor processes are actively executing.</li>
             <li>Inspect <code>HWB-IT-SYSTEM-LOGS/tessa_regression_audit.log</code> to confirm the latest regression audit passed with Grade A+ certification.</li>
-            <li>Verify that Peter's host sentinel is running on the host via <code>ps aux | grep peter_sentinel</code>.</li>
+            <li>Run <code>python3 scripts/peter_sentinel.py verify</code> to confirm <code>backups/latest/hwb_dev_db.dump</code> is under 90 minutes old, locked to <code>chmod 600</code>, and passes SHA-256 verification (with <code>sigma-peter.service</code> permanently disabled).</li>
             <li>Execute the 4-tier regression battery and verify 100% pass rates across all modules.</li>
         </ul>
 
@@ -183,6 +196,24 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.5.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Lauri Tells &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified Lauri Tells (#11) Read-Only Google Analytics 4 Data API and Google Search Console Search Analytics API connector in <code>core/ai_employee/seo_growth_engine.py</code> (900s cached OAuth2 Service Account queries, deterministic <code>GRO-09</code> Striking-Distance 8.0–20.0 keyword ingestion into <code>"SEOKeywordRadar"</code>, and zero-synthetic-data gate). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.4.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Standardized <code>scripts/peter_sentinel.py v2.0.0</code> on the unified 3-command local recovery standard (<code>checkpoint --label &lt;name&gt;</code> with <code>hwb_peter_verify_tmp</code> test-restore, <code>rollback --label &lt;name&gt; [--code-only | --full]</code> via clean staging DB <code>hwb_restore_stage</code>, and <code>verify</code> reporting to PostgreSQL <code>"AIEmployeeHeartbeat"</code> / <code>"SecurityAuditLogs"</code>) and hardened <code>scripts/hwb_hourly_backup.sh</code> with <code>chmod 600</code> owner-only permissions and <code>.sha256</code> checksums. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.3.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified BUG-173 (retired <code>sigma-peter.service</code> 15m daemon and OneDrive <code>9P</code> sync in favor of <code>scripts/hwb_hourly_backup.sh</code> at <code>:00</code> cron on native <code>ext4</code>), BUG-174 (<code>watchdog.py</code> 60s loop with direct Docker bridge container IP health check and 60s coalesced worker heartbeats), and GOV-04 Revised / <code>SigmaKnowledgeScars #268</code> (disabled <code>fortune500-closed-loop-governor</code> chat hook, enforcing Smallest Proven Fix First, Meta-Infrastructure Freeze, and Host PC Approval Gate). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">4.2.0</td>
                     <td style="text-align: left;">10/29/2026</td>

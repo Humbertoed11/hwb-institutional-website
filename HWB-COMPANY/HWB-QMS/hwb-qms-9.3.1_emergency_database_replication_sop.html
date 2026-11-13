@@ -7,7 +7,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3.1-RECOVERY</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.0.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.2.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">9.3 (Disaster Recovery)</span></div>
     </div>
@@ -23,11 +23,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Emergency Database Replication SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-9.3.1-RECOVERY</td></tr>
-                <tr><td><strong>Version</strong></td><td>2.0.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>2.2.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
-                <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
+                <tr><td><strong>Author</strong></td><td>Peter (Recovery Specialist) &amp; George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>09/21/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>11/12/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>9.3</td></tr>
             </tbody>
         </table>
@@ -77,15 +77,16 @@
         </ul>
 
         <div class="callout callout-note">
-            <strong>Industrial Note</strong>
-            <p>Always rebuild the "Memory Core" first. Without it, the AI cannot help you find the data for the other three cores.</p>
+            <strong>Industrial Note (PostgreSQL 16.15 Staging-Swap Restore &amp; Checksum Verification)</strong>
+            <p>Operators restore from hardened hourly snapshots (<code>scripts/hwb_hourly_backup.sh</code> writing <code>chmod 600</code> dumps + <code>hwb_dev_db.dump.sha256</code> in <code>backups/latest/</code> and <code>backups/hourly/</code>) or from a pinned Peter checkpoint via <code>python3 scripts/peter_sentinel.py rollback --label &lt;name&gt; --full</code>. Because <code>"SecurityAuditLogs"</code> enforces an immutable Write-Once (WORM) trigger blocking row drops and updates in place, <code>peter_sentinel.py</code> (<code>v2.0.0</code>) restores into clean staging database <code>hwb_restore_stage</code> first, stops <code>hwb_web_app</code> and <code>hwb_agent_worker</code> briefly, swaps <code>hwb_dev_db</code> cleanly, and restarts the containers. Pre-change checkpoints (<code>python3 scripts/peter_sentinel.py checkpoint --label &lt;name&gt;</code>) also test-restore into temporary database <code>hwb_peter_verify_tmp</code> (<code>80+</code> public tables verified) before dropping it, while <code>python3 scripts/peter_sentinel.py verify</code> checks <code>&lt;90</code>-minute snapshot freshness, <code>chmod 600</code> permissions, and SHA-256 integrity.</p>
         </div>
 
         <h2>4.0 Verification (Zero-Defect Check)</h2>
         <ul>
-            <li>Are all 41 core tables listed in the new database?</li>
-            <li>Can the AI retrieve a rule from the <code>sigma_kb</code> table?</li>
-            <li>Can the CEO see the active <code>Leads</code> on the dashboard?</li>
+            <li>Does <code>python3 scripts/peter_sentinel.py verify</code> pass with <code>chmod 600</code>, <code>&lt;90</code>-minute freshness, SHA-256 match, and status logged in <code>"AIEmployeeHeartbeat"</code> and <code>"SecurityAuditLogs"</code>?</li>
+            <li>Are all <code>84+</code> PostgreSQL 16.15 public tables listed in <code>hwb_dev_db</code> / <code>sigmajan-server</code> with <code>SecurityAuditLogs</code> WORM protection active?</li>
+            <li>Can the AI retrieve canonical rules from <code>sigma_kb</code> and negative constraints from <code>"SigmaKnowledgeScars"</code>?</li>
+            <li>Can the CEO see the active <code>Leads</code> and bid pipelines on the backoffice dashboard?</li>
         </ul>
 
         <h2>5.0 Revision History</h2>
@@ -99,6 +100,18 @@
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">2.2.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Codified hardened <code>chmod 600</code> and <code>.sha256</code> hourly PostgreSQL 16.15 backups (<code>scripts/hwb_hourly_backup.sh</code>) and the unified 3-command Peter Recovery Standard in <code>scripts/peter_sentinel.py v2.0.0</code> (<code>checkpoint</code> with <code>hwb_peter_verify_tmp</code> test-restore, <code>rollback --full</code> via clean staging database <code>hwb_restore_stage</code> to avoid open-socket and <code>"SecurityAuditLogs"</code> WORM conflicts, and <code>verify</code> recording status in <code>"AIEmployeeHeartbeat"</code> / <code>"SecurityAuditLogs"</code>). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">2.1.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter &amp; George (Systems Architect)</td>
+                    <td style="text-align: left;">Aligned database replication baseline with PostgreSQL 16.15 (<code>84+</code> public tables, <code>"SigmaKnowledgeScars"</code>, and <code>"SecurityAuditLogs"</code> WORM ledger), hourly native <code>ext4</code> <code>pg_dump -Fc</code> snapshots (<code>scripts/hwb_hourly_backup.sh</code>), and Two-Tier Drive <code>D:\</code> Nuclear Recovery (<code>HWB-QMS-9.3 v4.4.0</code>). Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td>1.0.0</td>
                     <td>06-04-2026</td>

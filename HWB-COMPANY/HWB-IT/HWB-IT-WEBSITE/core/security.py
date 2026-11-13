@@ -361,3 +361,94 @@ def sanitize_csv_cell_value(val: str) -> str:
     return cleaned
 
 
+def compute_tax_id_hmac(raw_tax_id: str | None) -> str | None:
+    """
+    Computes a deterministic, keyed HMAC-SHA256 blind hash over a 9-digit SSN or EIN
+    so duplicate Tax IDs are blocked at the database and API layers without exposing
+    plaintext Tax IDs in SQL indexes.
+    """
+    import hmac
+    if not raw_tax_id:
+        return None
+    raw_str = str(raw_tax_id).strip()
+    if "*" in raw_str or "•" in raw_str:
+        return None
+    digits = re.sub(r"\D", "", raw_str)
+    if len(digits) != 9:
+        return None
+    key_material = (
+        os.getenv("PII_ENCRYPTION_KEY") or os.getenv("SECRET_KEY") or ""
+    ).strip()
+    if not key_material:
+        raise RuntimeError(
+            "Cryptographic configuration error: PII_ENCRYPTION_KEY or SECRET_KEY required."
+        )
+    msg = f"hwb-tax-id-hmac-v1:{digits}".encode("utf-8")
+    return hmac.new(key_material.encode("utf-8"), msg, hashlib.sha256).hexdigest()
+
+
+_PERSON_TITLE_STOPWORDS = frozenset({
+    "owner",
+    "coowner",
+    "bid",
+    "contact",
+    "operations",
+    "operation",
+    "operating",
+    "officer",
+    "managing",
+    "member",
+    "manager",
+    "principal",
+    "president",
+    "founder",
+    "partner",
+    "director",
+    "supervisor",
+    "ceo",
+    "coo",
+    "cfo",
+    "vp",
+    "llc",
+    "inc",
+    "corp",
+    "corporation",
+    "company",
+    "co",
+    "services",
+    "service",
+    "cleaning",
+    "janitorial",
+    "dba",
+})
+
+
+def normalize_person_name_key(raw_name: str | None) -> str:
+    """
+    Normalizes an individual's full name across JobApplicants, Employees, and
+    SubcontractorPartners (stripping role titles such as ', Owner' or '/ Operations Manager')
+    for cross-track person matching. Returns empty string unless at least 2 name tokens remain.
+    """
+    import unicodedata
+    if not raw_name:
+        return ""
+    base = str(raw_name).strip()
+    base = re.split(r"[,/|(\[]|\s+-\s+", base, maxsplit=1)[0].strip()
+    folded = (
+        unicodedata.normalize("NFKD", base)
+        .encode("ascii", "ignore")
+        .decode("ascii")
+        .lower()
+    )
+    tokens = [
+        tok
+        for tok in re.findall(r"[a-z]+", folded)
+        if tok not in _PERSON_TITLE_STOPWORDS
+    ]
+    if len(tokens) < 2:
+        return ""
+    joined = " ".join(tokens)
+    return joined if len(joined) >= 6 else ""
+
+
+

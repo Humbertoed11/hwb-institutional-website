@@ -21,8 +21,8 @@
     <h1>HWB-QMS-8.4: AI Search, LLM Visibility &amp; Generative Engine Optimization (GEO) SOP</h1>
     <div class="meta-grid">
         <div><strong>Document Code:</strong> HWB-QMS-8.4</div>
-        <div><strong>Version:</strong> v2.0.0 (BUG-151)</div>
-        <div><strong>Effective Date:</strong> 10/24/2026</div>
+        <div><strong>Version:</strong> v2.1.0</div>
+        <div><strong>Effective Date:</strong> 11/12/2026</div>
         <div><strong>Approval Authority:</strong> Humberto Dominguez (CEO)</div>
     </div>
 
@@ -81,6 +81,40 @@ flowchart LR
                 <td><strong>Canonical Website</strong></td>
                 <td>https://www.hwbcleaning.com</td>
                 <td>7. Clutch.co / Expertise.com / ISSA Member Directory / Texas CMBL</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. Lauri Tells (#11) Read-Only Google Analytics 4 &amp; Search Console Connector (<code>GRO-09</code>)</h2>
+    <p>Within <code>core/ai_employee/seo_growth_engine.py</code> and <code>/api/v1/telemetry/seo-employee</code>, Lauri Tells (#11) operates a read-only Google Cloud OAuth2 Service Account connector cached for 900 seconds in memory so web requests never wait on external network calls:</p>
+    <ul>
+        <li><strong>Google Analytics 4 Data API (<code>GA4_PROPERTY_ID</code>):</strong> Queries <code>analyticsdata.googleapis.com/v1beta</code> for 28-day and 7-day <code>sessions</code>, <code>totalUsers</code>, <code>engagedSessions</code>, conversion <code>eventCount</code> (<code>generate_lead</code> and <code>click_to_call</code>), and session channel breakdown (<code>Organic Search</code>, <code>Direct</code>, <code>Referral</code>).</li>
+        <li><strong>Google Search Console Search Analytics API (<code>GSC_SITE_URL</code> + <code>GOOGLE_SERVICE_ACCOUNT_JSON</code>):</strong> Queries <code>www.googleapis.com/webmasters/v3</code> for 28-day <code>clicks</code>, <code>impressions</code>, <code>ctr</code>, and average <code>position</code>, automatically filtering <strong>Striking-Distance Queries (positions 8.0 to 20.0)</strong>, classifying buyer intent deterministically (<code>GC_COMMERCIAL</code>, <code>INDUSTRIAL_3PL</code>, <code>HIGH_COMMERCIAL</code>), and upserting discovered opportunities into PostgreSQL 16.15 <code>"SEOKeywordRadar"</code>.</li>
+        <li><strong>Empirical Data Integrity Gate:</strong> When <code>GOOGLE_SERVICE_ACCOUNT_JSON</code> or <code>GA4_PROPERTY_ID</code> is not yet configured in <code>.env</code>, the system never invents numbers; instead, it returns <code>"DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT"</code> along with clear setup instructions.</li>
+    </ul>
+
+    <h2>6. Revision History</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Version</th>
+                <th>Date</th>
+                <th>Author</th>
+                <th>Change Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>2.1.0</td>
+                <td>11/12/2026</td>
+                <td>Lauri Tells &amp; George (Systems Architect)</td>
+                <td>Codified Lauri Tells (#11) Read-Only Google Analytics 4 Data API and Google Search Console Search Analytics API connector (<code>GRO-09</code> Striking-Distance 8.0–20.0 keyword ingestion, 900s cache, and zero-synthetic-data gate) alongside Contact-First hub-to-quote pre-selection. Approved by Humberto Dominguez, CEO.</td>
+            </tr>
+            <tr>
+                <td>2.0.0</td>
+                <td>10/24/2026</td>
+                <td>George (Systems Architect)</td>
+                <td>Codified 8-Pillar GEO technical controls, AI manifests, 1:1 visible FAQ parity, and NAP directory standard (BUG-151). Approved by Humberto Dominguez, CEO.</td>
             </tr>
         </tbody>
     </table>

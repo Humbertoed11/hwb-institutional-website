@@ -821,6 +821,7 @@
  const statusText = statusBadge && statusBadge.childNodes.length > 0 ? statusBadge.childNodes[statusBadge.childNodes.length - 1] : null;
 
  function updateHeartbeat() {
+ if (document.hidden) return;
  const now = Date.now();
  const idleElapsed = now - lastActivity;
 
@@ -881,7 +882,10 @@
  }, { passive: true });
  });
 
- // Start Heartbeat (Every 30 seconds)
+ // Start Heartbeat (Every 30 seconds; paused while tab is hidden)
+ document.addEventListener('visibilitychange', () => {
+ if (!document.hidden) updateHeartbeat();
+ });
  setInterval(updateHeartbeat, 30000);
  updateHeartbeat();
 

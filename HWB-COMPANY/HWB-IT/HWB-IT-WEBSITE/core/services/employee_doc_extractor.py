@@ -32,7 +32,13 @@ import secrets
 import zlib
 from typing import Any, Dict, List, Optional, Tuple
 
-from core.security import decrypt_pii, encrypt_pii, mask_account, mask_ssn
+from core.security import (
+    compute_tax_id_hmac,
+    decrypt_pii,
+    encrypt_pii,
+    mask_account,
+    mask_ssn,
+)
 
 
 HR_VAULT_DIR = os.path.abspath(
@@ -707,9 +713,27 @@ def apply_extracted_fields_to_employee(
         if extracted.get("ssn_raw"):
             digits = re.sub(r"\D", "", extracted["ssn_raw"])
             if len(digits) == 9:
+                ssn_hmac_val = compute_tax_id_hmac(digits)
+                if ssn_hmac_val:
+                    cur.execute(
+                        'SELECT id, employee_number FROM "Employees" '
+                        'WHERE ssn_hmac = %s AND id <> %s LIMIT 1;',
+                        (ssn_hmac_val, employee_id),
+                    )
+                    dup_emp = cur.fetchone()
+                    if dup_emp:
+                        dup_num = (
+                            dup_emp["employee_number"]
+                            if isinstance(dup_emp, dict)
+                            else dup_emp[1]
+                        ) or f"#{dup_emp['id'] if isinstance(dup_emp, dict) else dup_emp[0]}"
+                        raise ValueError(
+                            f"DUPLICATE_SSN_DETECTED: This Social Security Number is already on file for employee {dup_num}."
+                        )
                 formatted_ssn = f"{digits[:3]}-{digits[3:5]}-{digits[5:]}"
                 updates["ssn_encrypted"] = encrypt_pii(formatted_ssn)
                 updates["ssn_last_four"] = digits[-4:]
+                updates["ssn_hmac"] = ssn_hmac_val
                 updated_labels.append(f"SSN (***-**-{digits[-4:]})")
 
         if extracted.get("w4_filing_status"):

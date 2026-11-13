@@ -1346,6 +1346,64 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 052 sync skipped: {adb_err}", flush=True)
 
+            # Migration 053: BUG-180 & BUG-181 Empirical Data Hygiene — Purge Synthetic Seed & Leftover Test Rows
+            if "053_purge_synthetic_seed_and_test_data_bug_180_181" not in applied:
+                print("[MIGRATION] Applying 053_purge_synthetic_seed_and_test_data_bug_180_181...", flush=True)
+                apply_migration_053_purge_synthetic_seed_and_test_data(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '053_purge_synthetic_seed_and_test_data_bug_180_181',
+                        'Purge synthetic seed records, Bosanna/sample demo rows, internal draft quote bids, duplicate BidDocuments, and uncleaned test rows across Leads, Employees, JobApplicants, WorkOrders, AcademyEnrollments, AcademyTenants, InstitutionalBids, ConstructionBids, PendingOutbox, Analytics, KPIVs, and COPQ (BUG-180 & BUG-181)'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("053_purge_synthetic_seed_and_test_data_bug_180_181")
+                print("[MIGRATION] 053_purge_synthetic_seed_and_test_data_bug_180_181 successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            apply_migration_053_purge_synthetic_seed_and_test_data(adb_conn)
+                            print("[MIGRATION] 053 synchronized to sibling Azure database sigmajan-adb.", flush=True)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 053 sync skipped: {adb_err}", flush=True)
+
+            # Migration 054: BUG-182 Workforce Anti-Duplicate Unique Indexes, Salted Tax-ID HMAC & Cross-Track Gate
+            if "054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182" not in applied:
+                print("[MIGRATION] Applying 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182...", flush=True)
+                apply_migration_054_workforce_dedup_and_tin_hmac(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182',
+                        'Add partial UNIQUE normalized phone and lowercase email indexes across JobApplicants, Employees, and SubcontractorPartners, backfill salted HMAC-SHA256 Tax-ID blind hashes (ssn_hmac / ein_hmac), merge existing Candidate Pool duplicates, and stamp cross-track 1099 overlaps (BUG-182)'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182")
+                print("[MIGRATION] 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182 successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            apply_migration_054_workforce_dedup_and_tin_hmac(adb_conn)
+                            print("[MIGRATION] 054 synchronized to sibling Azure database sigmajan-adb.", flush=True)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 054 sync skipped: {adb_err}", flush=True)
+
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
                     print(f"[MIGRATION] Applying modular migration {v_tag} ({mod_path})...", flush=True)
@@ -2081,6 +2139,7 @@ def ensure_subcontractor_onboarding_schema(conn: Any) -> None:
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMP WITH TIME ZONE;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS w9_tin_encrypted TEXT;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS w9_ein_last4 VARCHAR(10);
+                ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS ein_hmac VARCHAR(64);
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS w9_extracted_json TEXT;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS coi_extracted_json TEXT;
                 ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS coi_reminder_sent_at TIMESTAMP WITH TIME ZONE;
@@ -2089,6 +2148,9 @@ def ensure_subcontractor_onboarding_schema(conn: Any) -> None:
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_onboarding_token
                 ON "SubcontractorPartners" (onboarding_token)
                 WHERE onboarding_token IS NOT NULL;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_ein_hmac
+                ON "SubcontractorPartners" (ein_hmac)
+                WHERE ein_hmac IS NOT NULL AND BTRIM(ein_hmac) <> '';
                 UPDATE "SubcontractorPartners"
                 SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days'
                 WHERE onboarding_token_expires_at IS NULL;
@@ -2277,10 +2339,14 @@ def ensure_employee_onboarding_schema(conn: Any) -> None:
                 ALTER TABLE "Employees" ADD COLUMN IF NOT EXISTS onboarding_signature_hash VARCHAR(128);
                 ALTER TABLE "Employees" ADD COLUMN IF NOT EXISTS onboarding_packet_file_url VARCHAR(255);
                 ALTER TABLE "Employees" ADD COLUMN IF NOT EXISTS id_reminder_sent_at TIMESTAMP WITH TIME ZONE;
+                ALTER TABLE "Employees" ADD COLUMN IF NOT EXISTS ssn_hmac VARCHAR(64);
 
                 CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_onboarding_token
                 ON "Employees" (onboarding_token)
                 WHERE onboarding_token IS NOT NULL;
+                CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_unique_ssn_hmac
+                ON "Employees" (ssn_hmac)
+                WHERE ssn_hmac IS NOT NULL AND BTRIM(ssn_hmac) <> '';
 
                 ALTER TABLE "EmployeeDocuments" ADD COLUMN IF NOT EXISTS version_number INTEGER NOT NULL DEFAULT 1;
                 ALTER TABLE "EmployeeDocuments" ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT TRUE;
@@ -3097,6 +3163,696 @@ def sync_bug_169_170_171_error_and_change_ledgers(conn: Any) -> dict:
 
     conn.commit()
     return receipt
+
+
+def apply_migration_053_purge_synthetic_seed_and_test_data(conn: Any) -> dict:
+    """
+    BUG-180 & BUG-181 Empirical Data Hygiene Migration:
+    Idempotently removes hardcoded synthetic seed records, sample demo profiles,
+    internal draft quote ingestions, duplicate BidDocuments, and leftover test-suite
+    rows across both Local Dev and Azure Production PostgreSQL databases.
+    """
+    summary: dict[str, int] = {}
+    with conn.cursor() as cur:
+        # 1. Predicate-guarded synthetic & test Leads (protects empirical leads across divergent ID sequences)
+        cur.execute("""
+            SELECT id FROM "Leads"
+            WHERE lead_source IN (
+                'CAD Multi-Family Registry',
+                'CAD Commercial F1 Registry',
+                'CAD Industrial F2 Registry',
+                'TDLR Architectural Barriers Registry'
+            )
+            OR (id = 72379 AND phone = '(111)-111-1112')
+            OR (id IN (56543, 56544, 56545, 56766) AND COALESCE(email, '') ILIKE '%@mailinator.com')
+            OR (id IN (72358, 72359, 72360, 72361, 72364) AND COALESCE(email, '') ILIKE '%@hwbcleaning.com')
+            OR (id = 82521 AND phone = '(972)-555-0199')
+            OR (id = 999999 AND center_name = 'TEST_LEAD')
+            OR (id IN (1000019, 1000020) AND phone = '(214)-555-5555')
+            OR (id IN (84594, 84595) AND COALESCE(center_name, '') ILIKE '%Test');
+        """)
+        lead_ids = [r[0] for r in cur.fetchall()]
+        if lead_ids:
+            cur.execute('DELETE FROM "Contacts" WHERE lead_id = ANY(%s);', (lead_ids,))
+            cur.execute('DELETE FROM "LeadStageHistory" WHERE lead_id = ANY(%s);', (lead_ids,))
+            cur.execute('UPDATE "CampaignRecipients" SET lead_id = NULL WHERE lead_id = ANY(%s);', (lead_ids,))
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);',
+                (lead_ids,),
+            )
+            cur.execute('DELETE FROM "Leads" WHERE id = ANY(%s);', (lead_ids,))
+            summary["purged_leads"] = cur.rowcount
+        else:
+            summary["purged_leads"] = 0
+
+        # 2. Synthetic Contacts
+        cur.execute("""
+            DELETE FROM "Contacts"
+            WHERE LOWER(COALESCE(email, '')) = 'breach@hwb.test'
+               OR COALESCE(full_name, '') = 'SECURITY BREACH Contact';
+        """)
+        summary["purged_contacts"] = cur.rowcount
+
+        # 3. Demo WorkOrders (orphaned Customer #4 / KEY-FOB-BAY-04)
+        cur.execute("""
+            SELECT work_order_id FROM "WorkOrders"
+            WHERE COALESCE(security_access_code, '') = 'KEY-FOB-BAY-04'
+               OR (
+                   customer_id = 4
+                   AND NOT EXISTS (SELECT 1 FROM "Customers" c WHERE c.customer_id = 4)
+               );
+        """)
+        wo_ids = [r[0] for r in cur.fetchall()]
+        if wo_ids:
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'WorkOrder\' AND parent_id = ANY(%s);',
+                (wo_ids,),
+            )
+            cur.execute('DELETE FROM "WorkOrders" WHERE work_order_id = ANY(%s);', (wo_ids,))
+            summary["purged_work_orders"] = cur.rowcount
+        else:
+            summary["purged_work_orders"] = 0
+
+        # 4. Synthetic AcademyEnrollments & non-HWB demo AcademyTenants
+        cur.execute("""
+            DELETE FROM "AcademyEnrollments"
+            WHERE enrollment_uuid = 'cert-demo-7f8a9b2c3d4e'
+               OR LOWER(COALESCE(student_email, '')) IN (
+                   'carlos.mendoza@hwbcleaning.com',
+                   'maria.santos@hwbcleaning.com',
+                   'test@example.com',
+                   'marcus.vance@example.com',
+                   'roberto@lonestarelite.com'
+               );
+        """)
+        summary["purged_academy_enrollments"] = cur.rowcount
+
+        cur.execute("""
+            SELECT id FROM "AcademyTenants"
+            WHERE slug IN ('collin-college', 'bright-horizons', 'bosanna');
+        """)
+        demo_tenant_ids = [r[0] for r in cur.fetchall()]
+        if demo_tenant_ids:
+            for fk_tbl in (
+                "Contacts",
+                "InstitutionalBids",
+                "GovernmentPrograms",
+                "PendingOutbox",
+                "Opportunities",
+                "Customers",
+                "TenantCertificationEvidence",
+                "crm_ingestion_quarantine",
+                "JobApplicants",
+                "WorkOrders",
+                "ConstructionBids",
+                "SubcontractorPartners",
+                "Employees",
+                "Leads",
+                "GlobalActivities",
+            ):
+                cur.execute(
+                    f'UPDATE "{fk_tbl}" SET tenant_id = 1 WHERE tenant_id = ANY(%s);',
+                    (demo_tenant_ids,),
+                )
+            cur.execute('DELETE FROM "AcademyTenants" WHERE id = ANY(%s);', (demo_tenant_ids,))
+            summary["purged_academy_tenants"] = cur.rowcount
+        else:
+            summary["purged_academy_tenants"] = 0
+
+        # 5. TenantCertificationEvidence — keep 4 required slots, clear unverified PDF claims
+        cur.execute("""
+            UPDATE "TenantCertificationEvidence"
+            SET file_path = '',
+                verification_status = 'Pending Upload',
+                defect_notes = 'Required certification document slot — awaiting PDF upload.',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE COALESCE(file_size, 0) = 0
+              AND verification_status = 'Verified Compliant';
+        """)
+        summary["reset_certification_slots"] = cur.rowcount
+
+        # 6. Synthetic / Demo Employees (preserves real onboarded staff such as HWB-EMP-1003)
+        cur.execute("""
+            SELECT id FROM "Employees"
+            WHERE LOWER(COALESCE(email, '')) IN (
+                'carlos.mendoza@hwbcleaning.com',
+                'h@h.com',
+                'elena.morales@example.com'
+            )
+            OR (employee_number = 'HWB-EMP-1002' AND COALESCE(state_id_number, '') = 'TX-32151555');
+        """)
+        emp_ids = [r[0] for r in cur.fetchall()]
+        if emp_ids:
+            cur.execute(
+                'UPDATE "WorkOrders" SET assigned_technician_id = NULL WHERE assigned_technician_id = ANY(%s);',
+                (emp_ids,),
+            )
+            cur.execute(
+                'UPDATE "WorkOrders" SET crew_lead_id = NULL WHERE crew_lead_id = ANY(%s);',
+                (emp_ids,),
+            )
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'Employee\' AND parent_id = ANY(%s);',
+                (emp_ids,),
+            )
+            cur.execute('DELETE FROM "EmployeeDocuments" WHERE employee_id = ANY(%s);', (emp_ids,))
+            cur.execute('DELETE FROM "Employees" WHERE id = ANY(%s);', (emp_ids,))
+            summary["purged_employees"] = cur.rowcount
+        else:
+            summary["purged_employees"] = 0
+
+        # 7. Synthetic / Demo JobApplicants (preserves real public job applicants)
+        cur.execute("""
+            SELECT id FROM "JobApplicants"
+            WHERE COALESCE(email, '') ILIKE '%@example.com'
+               OR COALESCE(email, '') ILIKE '%@bosanna.com'
+               OR LOWER(COALESCE(email, '')) = 'h@h.com'
+               OR COALESCE(notes, '') LIKE '%[BOSANNA ONBOARDING]%'
+               OR (
+                   id = 9
+                   AND LOWER(COALESCE(email, '')) = 'gbolanos@gmail.com'
+                   AND COALESCE(phone, '') = '(214)-566-9999'
+               );
+        """)
+        app_ids = [r[0] for r in cur.fetchall()]
+        if app_ids:
+            cur.execute('UPDATE "Employees" SET applicant_id = NULL WHERE applicant_id = ANY(%s);', (app_ids,))
+            cur.execute(
+                'DELETE FROM "EmployeeDocuments" WHERE applicant_id = ANY(%s) AND employee_id IS NULL;',
+                (app_ids,),
+            )
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'Applicant\' AND parent_id = ANY(%s);',
+                (app_ids,),
+            )
+            cur.execute('DELETE FROM "JobApplicants" WHERE id = ANY(%s);', (app_ids,))
+            summary["purged_job_applicants"] = cur.rowcount
+        else:
+            summary["purged_job_applicants"] = 0
+
+        # 8. Orphaned Opportunities, Services, and synthetic ClientActivities
+        cur.execute("""
+            DELETE FROM "Opportunities" o
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "Customers" c WHERE c.customer_id = o.account_id
+            );
+        """)
+        summary["purged_orphaned_opportunities"] = cur.rowcount
+
+        cur.execute("""
+            UPDATE "WorkOrders" w
+            SET service_id = NULL
+            WHERE service_id IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1 FROM "Services" s
+                  JOIN "Customers" c ON c.customer_id = s.customer_id
+                  WHERE s.service_id = w.service_id
+              );
+        """)
+        cur.execute("""
+            DELETE FROM "Services" s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM "Customers" c WHERE c.customer_id = s.customer_id
+            );
+        """)
+        summary["purged_orphaned_services"] = cur.rowcount
+
+        cur.execute("""
+            DELETE FROM "ClientActivities"
+            WHERE COALESCE(description, '') ILIKE '%Unknown Facility%'
+               OR COALESCE(description, '') ILIKE '%Silas Sync%'
+               OR COALESCE(description, '') ILIKE '%Fort Gordon Base%';
+        """)
+        summary["purged_client_activities"] = cur.rowcount
+
+        # 9. Synthetic & leaked test PendingOutbox rows
+        cur.execute("""
+            DELETE FROM "PendingOutbox"
+            WHERE LOWER(COALESCE(recipient, '')) = 'ahudgins@bosanna.com'
+               OR COALESCE(subject, '') ILIKE '%VERIF-LABOR-TEST-2026%'
+               OR COALESCE(subject, '') ILIKE '%Shield Verification Corp%'
+               OR COALESCE(subject, '') ILIKE '%Apex Floor Crew%'
+               OR COALESCE(subject, '') ILIKE '%GateCheck Trade%'
+               OR COALESCE(subject, '') ILIKE '%Compliance Test Candidate%'
+               OR COALESCE(subject, '') ILIKE '%Compliance Sub LLC%'
+               OR COALESCE(subject, '') ILIKE '%[TEST PROOF]%'
+               OR COALESCE(subject, '') ILIKE '%Horizon at Premier%'
+               OR COALESCE(subject, '') ILIKE '%The Canopy at Frisco Station%'
+               OR COALESCE(subject, '') ILIKE '%Preserve at Craig Ranch%'
+               OR COALESCE(subject, '') ILIKE '%Legacy Professional Center%'
+               OR COALESCE(subject, '') ILIKE '%Frisco Wealth Management%'
+               OR COALESCE(subject, '') ILIKE '%McKinney Specialty Surgical%'
+               OR COALESCE(subject, '') ILIKE '%Apex Global Logistics HQ%'
+               OR COALESCE(subject, '') ILIKE '%Alliance North Distribution Center%';
+        """)
+        summary["purged_pending_outbox"] = cur.rowcount
+
+        # 10. Internal draft PDFs in InstitutionalBids & duplicate BidDocuments
+        cur.execute("""
+            SELECT id FROM "InstitutionalBids"
+            WHERE solicitation_number IN ('Collin-college-preliminary-', '-2026-FW01');
+        """)
+        bad_inst_ids = [r[0] for r in cur.fetchall()]
+        if bad_inst_ids:
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'InstitutionalBid\' AND parent_id = ANY(%s);',
+                (bad_inst_ids,),
+            )
+            cur.execute('DELETE FROM "InstitutionalBids" WHERE id = ANY(%s);', (bad_inst_ids,))
+            summary["purged_institutional_bids"] = cur.rowcount
+        else:
+            summary["purged_institutional_bids"] = 0
+
+        cur.execute("""
+            DELETE FROM "BidDocuments" a
+            USING "BidDocuments" b
+            WHERE a.id > b.id
+              AND COALESCE(a.institutional_bid_id, -1) = COALESCE(b.institutional_bid_id, -1)
+              AND COALESCE(a.construction_bid_id, -1) = COALESCE(b.construction_bid_id, -1)
+              AND COALESCE(a.document_name, '') = COALESCE(b.document_name, '');
+        """)
+        summary["deduped_bid_documents"] = cur.rowcount
+
+        # 11. Non-empirical ConstructionBids & test takeoff notes on real GC bids
+        cur.execute("""
+            SELECT id FROM "ConstructionBids"
+            WHERE gc_name IN (
+                'Test Pilot',
+                'Field Verification',
+                'Bosanna LLC / Collin College',
+                'TEMP_RACK09_GC'
+            )
+            OR COALESCE(project_name, '') LIKE 'Request to join your office from Humberto%';
+        """)
+        bad_cb_ids = [r[0] for r in cur.fetchall()]
+        if bad_cb_ids:
+            cur.execute(
+                'DELETE FROM "GlobalActivities" WHERE parent_type = \'ConstructionBid\' AND parent_id = ANY(%s);',
+                (bad_cb_ids,),
+            )
+            cur.execute('DELETE FROM "ConstructionBids" WHERE id = ANY(%s);', (bad_cb_ids,))
+            summary["purged_construction_bids"] = cur.rowcount
+        else:
+            summary["purged_construction_bids"] = 0
+
+        cur.execute("""
+            UPDATE "ConstructionBids"
+            SET cleanable_sqft = CASE WHEN id = 1 THEN cleanable_sqft ELSE 0 END,
+                estimated_value = CASE WHEN id = 1 THEN estimated_value ELSE 0 END,
+                status = CASE WHEN id = 1 THEN status ELSE 'Invited' END,
+                notes = ''
+            WHERE notes = 'Enterprise SOC 2 Takeoff Audit Verification';
+        """)
+        summary["cleaned_construction_bid_notes"] = cur.rowcount
+
+        # 12. Hardcoded Six Sigma / COPQ / KPIVs seed metrics
+        cur.execute("""
+            DELETE FROM "Analytics"
+            WHERE tool_name IN ('cpk', 'dpmo', 'rty', 'alt_prediction', 'control_status');
+        """)
+        summary["purged_analytics"] = cur.rowcount
+
+        cur.execute("""
+            DELETE FROM "KPIVs"
+            WHERE metric_name IN (
+                'Lead Fidelity',
+                'Verified Inventory',
+                'LinkedIn Impressions',
+                'System Uptime',
+                'Authentication Reliability'
+            );
+        """)
+        summary["purged_kpivs"] = cur.rowcount
+
+        cur.execute('DELETE FROM "COPQ" WHERE id <= 7;')
+        summary["purged_copq"] = cur.rowcount
+
+    conn.commit()
+    return summary
+
+
+def apply_migration_054_workforce_dedup_and_tin_hmac(conn: Any) -> dict:
+    """
+    Migration 054 (BUG-182): Workforce, Candidate Pool, W-2 & 1099 Anti-Duplicate Hardening.
+    1. Pre-merges any duplicate 10-digit phone or lowercase email rows across JobApplicants,
+       Employees, and SubcontractorPartners so partial UNIQUE index creation succeeds cleanly.
+    2. Backfills salted HMAC-SHA256 Tax-ID blind hashes (`ssn_hmac` / `ein_hmac`) from existing
+       AES-256 encrypted Tax IDs.
+    3. Creates partial UNIQUE indexes on normalized 10-digit phone, lowercase non-empty email,
+       and salted Tax-ID HMAC across Workforce tables.
+    4. Flags existing Candidate Pool <-> 1099 Subcontractor cross-track overlaps (phone, email,
+       or normalized person name) and sets `New` cross-track duplicates to `Archived`.
+    """
+    import re
+    from core.security import (
+        compute_tax_id_hmac,
+        decrypt_pii,
+        normalize_person_name_key,
+    )
+
+    ensure_subcontractor_onboarding_schema(conn)
+    ensure_employee_onboarding_schema(conn)
+
+    summary = {
+        "merged_applicants": 0,
+        "merged_employees": 0,
+        "merged_subcontractors": 0,
+        "backfilled_ssn_hmac": 0,
+        "backfilled_ein_hmac": 0,
+        "flagged_crosstrack_applicants": 0,
+    }
+
+    def _norm_phone(val: Any) -> str:
+        digits = re.sub(r"\D", "", str(val or ""))
+        return digits[-10:] if len(digits) >= 10 else ""
+
+    def _norm_email(val: Any) -> str:
+        return str(val or "").strip().lower()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            'ALTER TABLE "SubcontractorPartners" ADD COLUMN IF NOT EXISTS ein_hmac VARCHAR(64);'
+        )
+        cur.execute(
+            'ALTER TABLE "Employees" ADD COLUMN IF NOT EXISTS ssn_hmac VARCHAR(64);'
+        )
+
+        # 1. Pre-deduplicate JobApplicants by 10-digit phone or lowercase email
+        cur.execute(
+            'SELECT id, full_name, phone, email, desired_role, desired_shift, notes '
+            'FROM "JobApplicants" ORDER BY id ASC;'
+        )
+        app_rows = cur.fetchall()
+        seen_app_phones: dict[str, int] = {}
+        seen_app_emails: dict[str, int] = {}
+        for row in app_rows:
+            rid = row["id"] if isinstance(row, dict) else row[0]
+            rphone = _norm_phone(row["phone"] if isinstance(row, dict) else row[2])
+            remail = _norm_email(row["email"] if isinstance(row, dict) else row[3])
+            rrole = (row["desired_role"] if isinstance(row, dict) else row[4]) or ""
+            rshift = (row["desired_shift"] if isinstance(row, dict) else row[5]) or ""
+            rnotes = (row["notes"] if isinstance(row, dict) else row[6]) or ""
+
+            master_id = None
+            if rphone and rphone in seen_app_phones:
+                master_id = seen_app_phones[rphone]
+            elif remail and remail in seen_app_emails:
+                master_id = seen_app_emails[remail]
+
+            if master_id and master_id != rid:
+                merge_tag = (
+                    f"[Merged Duplicate APP-#{int(rid):04d}: Role={rrole}, Shift={rshift}]"
+                )
+                cur.execute(
+                    'UPDATE "Employees" SET applicant_id = %s WHERE applicant_id = %s;',
+                    (master_id, rid),
+                )
+                cur.execute(
+                    'UPDATE "EmployeeDocuments" SET applicant_id = %s WHERE applicant_id = %s;',
+                    (master_id, rid),
+                )
+                cur.execute(
+                    """
+                    UPDATE "JobApplicants"
+                    SET notes = TRIM(BOTH ' |' FROM COALESCE(notes, '') || ' | ' || %s),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s AND POSITION(%s IN COALESCE(notes, '')) = 0;
+                    """,
+                    (
+                        f"{merge_tag} {rnotes}".strip(),
+                        master_id,
+                        f"APP-#{int(rid):04d}",
+                    ),
+                )
+                cur.execute('DELETE FROM "JobApplicants" WHERE id = %s;', (rid,))
+                summary["merged_applicants"] += 1
+            else:
+                if rphone:
+                    seen_app_phones[rphone] = rid
+                if remail:
+                    seen_app_emails[remail] = rid
+
+        # 2. Pre-deduplicate Employees by 10-digit phone or lowercase email
+        cur.execute(
+            'SELECT id, employee_number, phone, email, notes, ssn_encrypted '
+            'FROM "Employees" ORDER BY id ASC;'
+        )
+        emp_rows = cur.fetchall()
+        seen_emp_phones: dict[str, int] = {}
+        seen_emp_emails: dict[str, int] = {}
+        seen_ssn_hmacs: set[str] = set()
+        for row in emp_rows:
+            eid = row["id"] if isinstance(row, dict) else row[0]
+            enum = (row["employee_number"] if isinstance(row, dict) else row[1]) or ""
+            ephone = _norm_phone(row["phone"] if isinstance(row, dict) else row[2])
+            eemail = _norm_email(row["email"] if isinstance(row, dict) else row[3])
+            enotes = (row["notes"] if isinstance(row, dict) else row[4]) or ""
+            ssn_enc = row["ssn_encrypted"] if isinstance(row, dict) else row[5]
+
+            master_eid = None
+            if ephone and ephone in seen_emp_phones:
+                master_eid = seen_emp_phones[ephone]
+            elif eemail and eemail in seen_emp_emails:
+                master_eid = seen_emp_emails[eemail]
+
+            if master_eid and master_eid != eid:
+                cur.execute(
+                    'UPDATE "EmployeeDocuments" SET employee_id = %s WHERE employee_id = %s;',
+                    (master_eid, eid),
+                )
+                cur.execute(
+                    'UPDATE "WorkOrders" SET assigned_technician_id = %s WHERE assigned_technician_id = %s;',
+                    (master_eid, eid),
+                )
+                cur.execute(
+                    'UPDATE "WorkOrders" SET crew_lead_id = %s WHERE crew_lead_id = %s;',
+                    (master_eid, eid),
+                )
+                cur.execute(
+                    'UPDATE "AcademyEnrollments" SET employee_id = %s WHERE employee_id = %s;',
+                    (master_eid, eid),
+                )
+                cur.execute(
+                    """
+                    UPDATE "Employees"
+                    SET notes = TRIM(BOTH ' |' FROM COALESCE(notes, '') || ' | ' || %s),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    """,
+                    (f"[Merged Duplicate {enum}] {enotes}".strip(), master_eid),
+                )
+                cur.execute('DELETE FROM "Employees" WHERE id = %s;', (eid,))
+                summary["merged_employees"] += 1
+                continue
+
+            if ephone:
+                seen_emp_phones[ephone] = eid
+            if eemail:
+                seen_emp_emails[eemail] = eid
+
+            if ssn_enc:
+                plain_ssn = decrypt_pii(ssn_enc)
+                ssn_h = compute_tax_id_hmac(plain_ssn)
+                if ssn_h and ssn_h not in seen_ssn_hmacs:
+                    seen_ssn_hmacs.add(ssn_h)
+                    cur.execute(
+                        'UPDATE "Employees" SET ssn_hmac = %s WHERE id = %s;',
+                        (ssn_h, eid),
+                    )
+                    summary["backfilled_ssn_hmac"] += 1
+
+        # 3. Pre-deduplicate SubcontractorPartners by 10-digit phone or lowercase email + backfill ein_hmac
+        cur.execute(
+            'SELECT id, company_name, contact_name, legal_entity_name, msa_signer_name, '
+            'phone, email, notes, w9_tin_encrypted, status, onboarding_status '
+            'FROM "SubcontractorPartners" ORDER BY id ASC;'
+        )
+        sub_rows = cur.fetchall()
+        seen_sub_phones: dict[str, int] = {}
+        seen_sub_emails: dict[str, int] = {}
+        seen_ein_hmacs: set[str] = set()
+        kept_subs: list[dict[str, Any]] = []
+        for row in sub_rows:
+            rdict = (
+                dict(row)
+                if isinstance(row, dict)
+                else {
+                    "id": row[0],
+                    "company_name": row[1],
+                    "contact_name": row[2],
+                    "legal_entity_name": row[3],
+                    "msa_signer_name": row[4],
+                    "phone": row[5],
+                    "email": row[6],
+                    "notes": row[7],
+                    "w9_tin_encrypted": row[8],
+                    "status": row[9],
+                    "onboarding_status": row[10],
+                }
+            )
+            sid = rdict["id"]
+            sphone = _norm_phone(rdict.get("phone"))
+            semail = _norm_email(rdict.get("email"))
+
+            master_sid = None
+            if sphone and sphone in seen_sub_phones:
+                master_sid = seen_sub_phones[sphone]
+            elif semail and semail in seen_sub_emails:
+                master_sid = seen_sub_emails[semail]
+
+            if master_sid and master_sid != sid:
+                cur.execute(
+                    'UPDATE "SubcontractorDocuments" SET subcontractor_id = %s WHERE subcontractor_id = %s;',
+                    (master_sid, sid),
+                )
+                cur.execute(
+                    'UPDATE "AcademyEnrollments" SET subcontractor_id = %s WHERE subcontractor_id = %s;',
+                    (master_sid, sid),
+                )
+                cur.execute(
+                    """
+                    UPDATE "SubcontractorPartners"
+                    SET notes = TRIM(BOTH ' |' FROM COALESCE(notes, '') || ' | ' || %s),
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    """,
+                    (
+                        f"[Merged Duplicate SUB-#{int(sid):04d}: {rdict.get('company_name') or ''}]",
+                        master_sid,
+                    ),
+                )
+                cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = %s;', (sid,))
+                summary["merged_subcontractors"] += 1
+                continue
+
+            if sphone:
+                seen_sub_phones[sphone] = sid
+            if semail:
+                seen_sub_emails[semail] = sid
+
+            tin_enc = rdict.get("w9_tin_encrypted")
+            if tin_enc:
+                plain_ein = decrypt_pii(tin_enc)
+                ein_h = compute_tax_id_hmac(plain_ein)
+                if ein_h and ein_h not in seen_ein_hmacs:
+                    seen_ein_hmacs.add(ein_h)
+                    cur.execute(
+                        'UPDATE "SubcontractorPartners" SET ein_hmac = %s WHERE id = %s;',
+                        (ein_h, sid),
+                    )
+                    summary["backfilled_ein_hmac"] += 1
+
+            kept_subs.append(rdict)
+
+        # 4. Create Partial UNIQUE Indexes Across Workforce Tables
+        cur.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_jobapplicants_unique_phone_digits
+            ON "JobApplicants" ((RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10)))
+            WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')) >= 10;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_jobapplicants_unique_email_lower
+            ON "JobApplicants" ((LOWER(BTRIM(email))))
+            WHERE email IS NOT NULL AND BTRIM(email) <> '';
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_unique_phone_digits
+            ON "Employees" ((RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10)))
+            WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')) >= 10;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_unique_email_lower
+            ON "Employees" ((LOWER(BTRIM(email))))
+            WHERE email IS NOT NULL AND BTRIM(email) <> '';
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_unique_ssn_hmac
+            ON "Employees" (ssn_hmac)
+            WHERE ssn_hmac IS NOT NULL AND BTRIM(ssn_hmac) <> '';
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_phone_digits
+            ON "SubcontractorPartners" ((RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10)))
+            WHERE LENGTH(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')) >= 10;
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_email_lower
+            ON "SubcontractorPartners" ((LOWER(BTRIM(email))))
+            WHERE email IS NOT NULL AND BTRIM(email) <> '';
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_subcontractors_unique_ein_hmac
+            ON "SubcontractorPartners" (ein_hmac)
+            WHERE ein_hmac IS NOT NULL AND BTRIM(ein_hmac) <> '';
+        """)
+
+        # 5. Cross-track Candidate Pool <-> 1099 Subcontractor audit stamp
+        cur.execute(
+            'SELECT id, full_name, phone, email, status, notes FROM "JobApplicants" ORDER BY id ASC;'
+        )
+        remaining_apps = cur.fetchall()
+        for arow in remaining_apps:
+            adict = (
+                dict(arow)
+                if isinstance(arow, dict)
+                else {
+                    "id": arow[0],
+                    "full_name": arow[1],
+                    "phone": arow[2],
+                    "email": arow[3],
+                    "status": arow[4],
+                    "notes": arow[5],
+                }
+            )
+            aid = adict["id"]
+            aphone = _norm_phone(adict.get("phone"))
+            aemail = _norm_email(adict.get("email"))
+            aname_key = normalize_person_name_key(adict.get("full_name"))
+
+            matched_sub = None
+            for s in kept_subs:
+                sphone = _norm_phone(s.get("phone"))
+                semail = _norm_email(s.get("email"))
+                s_names = {
+                    normalize_person_name_key(s.get("contact_name")),
+                    normalize_person_name_key(s.get("legal_entity_name")),
+                    normalize_person_name_key(s.get("msa_signer_name")),
+                }
+                s_names.discard("")
+                if (
+                    (aphone and aphone == sphone)
+                    or (aemail and aemail == semail)
+                    or (aname_key and aname_key in s_names)
+                ):
+                    matched_sub = s
+                    break
+
+            if matched_sub:
+                sub_code = f"SUB-#{int(matched_sub['id']):04d}"
+                stamp = (
+                    f"[CROSS-TRACK 1099 PARTNER: Matches {sub_code} "
+                    f"{matched_sub.get('company_name') or ''} "
+                    f"({matched_sub.get('status') or 'Vetting'})]"
+                )
+                curr_notes = (adict.get("notes") or "").strip()
+                next_notes = (
+                    f"{curr_notes} | {stamp}".strip(" |")
+                    if sub_code not in curr_notes
+                    else curr_notes
+                )
+                next_status = (
+                    "Archived"
+                    if (adict.get("status") or "New") == "New"
+                    else adict.get("status")
+                )
+                cur.execute(
+                    """
+                    UPDATE "JobApplicants"
+                    SET status = %s,
+                        notes = %s,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    """,
+                    (next_status, next_notes, aid),
+                )
+                summary["flagged_crosstrack_applicants"] += 1
+
+    conn.commit()
+    return summary
+
 
 
 

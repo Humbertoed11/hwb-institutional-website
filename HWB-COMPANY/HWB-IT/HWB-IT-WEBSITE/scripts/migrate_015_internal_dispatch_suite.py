@@ -44,54 +44,7 @@ def run_migration(db_url: str):
                 CREATE INDEX IF NOT EXISTS "idx_workorders_status" ON "WorkOrders"(status);
             """)
             print("  ✓ Created performance indexes on WorkOrders.")
-
-            # 3. Ensure Gonzalo Bolanos is onboarded into Employees as HWB-EMP-1002 if not already present
-            cur.execute("""
-                INSERT INTO "JobApplicants" (id, full_name, email, phone, desired_role, status)
-                VALUES (9, 'Gonzalo Bolanos', 'gbolanos@gmail.com', '(214)-566-9999', 'Commercial Cleaning Technician', 'Hired')
-                ON CONFLICT (id) DO NOTHING;
-            """)
-
-            # Check if Customer 4 exists in Customers
-            cur.execute('SELECT customer_id FROM "Customers" WHERE customer_id = 4;')
-            cust_exists = cur.fetchone()
-            assigned_cust = 4 if cust_exists else None
-
-            cur.execute('SELECT id FROM "Employees" WHERE phone = %s OR employee_number = %s;', ('(214)-566-9999', 'HWB-EMP-1002'))
-            existing_gonzalo = cur.fetchone()
-            if not existing_gonzalo:
-                cur.execute("""
-                    INSERT INTO "Employees" (
-                        employee_number, applicant_id, first_name, last_name, phone, email,
-                        hire_date, employment_status, employment_type, primary_role,
-                        pay_rate_hourly, overtime_rate_hourly, pay_frequency, primary_language,
-                        address_city, address_state, assigned_customer_id, weekly_hours_allocated,
-                        badge_status, state_id_number, state_id_expiration, dps_clearance_date, notes
-                    ) VALUES (
-                        'HWB-EMP-1002', 9, 'Gonzalo', 'Bolanos', '(214)-566-9999', 'gbolanos@gmail.com',
-                        CURRENT_DATE, 'Active', 'W-2 Full-Time', 'Commercial Cleaning Technician',
-                        18.00, 27.00, 'Bi-Weekly', 'English',
-                        'Dallas', 'TX', %s, 40.00,
-                        'Active', 'TX-32151555', '2026-10-31', '2026-09-20',
-                        'TIPS #260102 Prime Dispatch Technician for Collin College Frisco Campus. Badge ID: BOS-2026-9566.'
-                    );
-                """, (assigned_cust,))
-                print("  ✓ Onboarded Gonzalo Bolanos (HWB-EMP-1002) into Employees with DPS FACT clearance.")
-            else:
-                print("  ✓ Gonzalo Bolanos already present in Employees.")
-
-            # 4. Synchronize Work Order #2 (Bosanna LLC Collin College Frisco) with Carlos Mendoza (ID 2)
-            cur.execute("""
-                UPDATE "WorkOrders"
-                SET assigned_technician_id = COALESCE(assigned_technician_id, 2),
-                    crew_lead_id = COALESCE(crew_lead_id, 2),
-                    shift_window = 'Evening Shift (6:00 PM – 11:00 PM)',
-                    service_type = 'Routine Nightly Custodial',
-                    dock_ingress_instructions = 'Dock Ingress: Access loading bay via 9700 Wade Blvd, Frisco, TX 75035. Must wear Bosanna / TIPS photo ID badge at all times.',
-                    security_access_code = 'KEY-FOB-BAY-04'
-                WHERE work_order_id = 2;
-            """)
-            print("  ✓ Updated Work Order #2 with dispatch metadata and assigned technician Carlos Mendoza.")
+            # BUG-180 Empirical Data Integrity Gate: Synthetic employee/work-order seed rows removed.
 
             conn.commit()
             print("  ✓ Migration 015 completed successfully!\n")

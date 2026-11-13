@@ -45,6 +45,10 @@ class WorkforceAndCyberTestSuite(unittest.TestCase):
                 cur.execute('DELETE FROM "Leads" WHERE center_name LIKE %s;', (f"%{self.test_tag}%",))
                 cur.execute('DELETE FROM "ConstructionBids" WHERE project_name LIKE %s;', (f"%{self.test_tag}%",))
                 cur.execute('DELETE FROM "InstitutionalBids" WHERE solicitation_number LIKE %s;', (f"%{self.test_tag}%",))
+                cur.execute(
+                    'DELETE FROM "PendingOutbox" WHERE subject ILIKE %s OR body ILIKE %s;',
+                    (f"%{self.test_tag}%", f"%{self.test_tag}%"),
+                )
             conn.commit()
         finally:
             conn.close()

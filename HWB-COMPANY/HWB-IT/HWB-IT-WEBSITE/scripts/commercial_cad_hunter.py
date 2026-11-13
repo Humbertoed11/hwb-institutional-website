@@ -570,142 +570,18 @@ def stage_industrial_logistics_target(target: Dict[str, Any]) -> bool:
     return True
 
 
-def run_commercial_cad_hunting_cycle():
+def run_commercial_cad_hunting_cycle() -> int:
     """
     Master execution entrypoint for the Commercial CAD Hunter Engine.
-    Executes Pattern Recognition across Collin, Dallas, and Denton CAD targets.
+    BUG-180 Empirical Data Integrity Gate: Hardcoded sample/archetype target
+    dictionaries are permanently disabled so zero synthetic rows can ever be
+    inserted into PostgreSQL "Leads" or "PendingOutbox".
     """
     print("================================================================================")
-    print("🏢  SigmaFidelity™ Autonomous Commercial & Multi-Family CAD Hunter Engine")
-    print(f"🕒  Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("📍  Territory: DFW Metroplex (Plano, Frisco, McKinney, Dallas, Richardson, Denton)")
+    print("[DISABLED - BUG-180] Hardcoded archetype seeding disabled per Empirical Data Integrity Mandate.")
+    print("Zero synthetic rows staged into Leads or PendingOutbox.")
     print("================================================================================")
-
-    # 1. Pattern A: Multi-Family & Built-to-Rent Communities (Valet Waste Playbook)
-    multi_family_fleet = [
-        {
-            "lead_id": "BTR-PLANO-HORIZON-01",
-            "property_name": "Horizon at Premier",
-            "address": "3409 Premier Drive, Plano, TX 75023",
-            "city": "Plano",
-            "units": 122,
-            "management_company": "Avenue5 Residential",
-            "pet_stations": 5,
-            "sector": "Multi-Family BTR",
-            "procurement_officer": "Community Manager / Regional Facilities Director"
-        },
-        {
-            "lead_id": "MF-FRISCO-CANOPY-02",
-            "property_name": "The Canopy at Frisco Station",
-            "address": "4000 Frisco Station Blvd, Frisco, TX 75034",
-            "city": "Frisco",
-            "units": 240,
-            "management_company": "Greystar Real Estate Partners",
-            "pet_stations": 6,
-            "sector": "Multi-Family Luxury",
-            "procurement_officer": "Community Manager / Regional Facilities Director"
-        },
-        {
-            "lead_id": "BTR-MCKINNEY-PARK-03",
-            "property_name": "Preserve at Craig Ranch",
-            "address": "7900 Craig Ranch Pkwy, McKinney, TX 75070",
-            "city": "McKinney",
-            "units": 185,
-            "management_company": "Cortland Communities",
-            "pet_stations": 4,
-            "sector": "Multi-Family BTR",
-            "procurement_officer": "Community Manager / Regional Facilities Director"
-        }
-    ]
-
-    print("\n--- Phase 1: Harvesting Multi-Family / BTR Valet Waste Accounts ---")
-    for mf in multi_family_fleet:
-        stage_valet_waste_target(mf)
-
-    # 2. Pattern B: Independent Owner-Occupied Commercial Buildings (Direct Authority)
-    owner_occupant_fleet = [
-        {
-            "lead_id": "OWNER-PLANO-LEGALLAW-01",
-            "company_name": "Legacy Professional Center (Boutique Legal Practice)",
-            "address": "5700 Tennyson Pkwy, Plano, TX 75024",
-            "city": "Plano",
-            "cleanable_sqft": 14500.0,
-            "owner_ceo": "David Vance, Managing Partner",
-            "sector_type": "Legal & Corporate Practice",
-            "facility_type": "legal",
-            "cleanings_per_week": 5,
-            "situs_matches_mailing": True
-        },
-        {
-            "lead_id": "OWNER-FRISCO-WEALTH-02",
-            "company_name": "Frisco Wealth Management & Advisory Center",
-            "address": "8500 Warren Pkwy, Frisco, TX 75034",
-            "city": "Frisco",
-            "cleanable_sqft": 11200.0,
-            "owner_ceo": "Marcus Chen, President & CEO",
-            "sector_type": "Private Wealth & Financial Services",
-            "facility_type": "financial",
-            "cleanings_per_week": 3,
-            "situs_matches_mailing": True
-        },
-        {
-            "lead_id": "OWNER-MCKINNEY-SURGICAL-03",
-            "company_name": "McKinney Specialty Surgical & Diagnostic Pavilion",
-            "address": "4510 Medical Center Dr, McKinney, TX 75069",
-            "city": "McKinney",
-            "cleanable_sqft": 18600.0,
-            "owner_ceo": "Dr. Robert Sterling, Medical Director",
-            "sector_type": "Healthcare / Specialty Surgical",
-            "facility_type": "surgical",
-            "cleanings_per_week": 5,
-            "situs_matches_mailing": True
-        }
-    ]
-
-    print("\n--- Phase 2: Harvesting Independent Commercial Owner-Occupants ---")
-    for occ in owner_occupant_fleet:
-        stage_owner_occupant_target(occ)
-
-    # 3. Pattern C: Class A Corporate Tenant Finish-Outs (TDLR Move-In Radar)
-    finishout_fleet = [
-        {
-            "lead_id": "CORP-PLANO-LEGACYWEST-01",
-            "project_name": "Legacy West Tower Corporate Tenant Finish-Out",
-            "tenant_name": "Apex Global Logistics HQ",
-            "gc_name": "DPR Construction",
-            "address": "5900 Legacy Dr, Plano, TX 75024",
-            "city": "Plano",
-            "cleanable_sqft": 32000.0,
-            "sector_type": "Corporate Tenant Finish-Out",
-            "procurement_officer": "Project Director, DPR Construction / Apex Facilities Director"
-        }
-    ]
-
-    print("\n--- Phase 3: Harvesting Corporate Tenant Finish-Out Move-Ins ---")
-    for fo in finishout_fleet:
-        stage_corporate_finishout_target(fo)
-
-    # 4. Pattern D: Industrial Logistics & Flex Distribution Warehouses
-    industrial_fleet = [
-        {
-            "lead_id": "IND-DENTON-ALLIANCE-01",
-            "facility_name": "Alliance North Distribution Center",
-            "address": "1500 Western Blvd, Denton, TX 76207",
-            "city": "Denton",
-            "cleanable_sqft": 75000.0,
-            "operations_director": "Kevin Mitchell, Director of Warehouse Operations",
-            "sector_type": "Industrial Logistics & Flex Distribution"
-        }
-    ]
-
-    print("\n--- Phase 4: Harvesting Industrial Logistics & Flex Distribution Hubs ---")
-    for ind in industrial_fleet:
-        stage_industrial_logistics_target(ind)
-
-    print("\n================================================================================")
-    print("🏁  Commercial CAD Hunting Cycle Complete. All proposals staged in Leads table.")
-    print("🔒  Strict Executive Freeze Enforced: Zero outbound communications dispatched.")
-    print("================================================================================")
+    return 0
 
 
 if __name__ == "__main__":

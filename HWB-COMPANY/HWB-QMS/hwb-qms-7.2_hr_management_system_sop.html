@@ -5,7 +5,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2-MGMT</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.1.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.2 (People) &amp; 7.2 (Competence)</span></div>
     </div>
@@ -29,7 +29,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.1.0</td>
+<td style="text-align: left;">3.1.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -45,7 +45,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">10/17/2026</td>
+<td style="text-align: left;">11/12/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
@@ -79,7 +79,14 @@
         <li>Assigning training courses via <code>POST /api/v1/academy/assign</code> checks <code>"AcademyEnrollments"</code> for existing enrollments and reuses the active <code>magic_token</code> instead of creating duplicate training rows.</li>
     </ul>
 </li>
-<li><strong>Certification Tracking:</strong> All equipment operators and field crews must complete assigned SigmaAcademy™ safety modules before deployment.</li>
+<li><strong>Certification Tracking &amp; Authenticated Academy Access (BUG-179):</strong> All equipment operators and field crews must complete assigned SigmaAcademy™ safety modules before deployment, and all backoffice Academy assignment and enrollment endpoints require authenticated staff login (<code>@login_required</code>).</li>
+<li><strong>8 Unique Indexes, Salted Tax-ID Blind Hash, Cross-Track Separation &amp; Offboarding Sync (BUG-178 &amp; BUG-182 / Migration 054):</strong>
+    <ul>
+        <li>PostgreSQL 16.15 enforces 8 partial <code>UNIQUE</code> indexes across <code>"JobApplicants"</code>, <code>"Employees"</code>, and <code>"SubcontractorPartners"</code> on 10-digit US phone numbers, lowercase emails, and keyed HMAC-SHA256 blind Tax-ID hashes (<code>ssn_hmac</code> and <code>ein_hmac</code>), blocking duplicate contact edits and duplicate 9-digit SSNs/EINs with <code>HTTP 409</code>.</li>
+        <li>Active W-2 employees are blocked from registering or activating as 1099 subcontractor partners (<code>409 ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED</code>), Active 1099 Partners are blocked from W-2 payroll onboarding (<code>409 ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED</code>), and Candidate Pool crossovers are flagged for manual HR review.</li>
+        <li>Terminating an employee immediately hides the row from the default <code>Active Only</code> view, revokes employee badges and onboarding links, revokes <code>"AcademyEnrollments"</code> magic tokens, and suspends matching non-Executive <code>"Users"</code> accounts, with Stage 2 <code>?purge=1</code> supporting 1-click <code>[↩ Undo]</code> snapshot restore.</li>
+    </ul>
+</li>
 </ol>
 
         <h2 id="35-hr-architecture-flowchart">3.5 Dual-Track W-2 &amp; 1099 Human Resources Architecture Flowchart</h2>
@@ -108,7 +115,7 @@ flowchart TD
 <ul>
 <li>Quarterly audit of training records in <code>"AcademyEnrollments"</code>.</li>
 <li>100% compliance with GHS Hazard Communication training.</li>
-<li>Zero duplicate rows across <code>"SubcontractorPartners"</code>, <code>"JobApplicants"</code>, and <code>"Employees"</code> verified by <code>scripts/test_labor_recruitment_and_cyber_suite.py</code> (5/5 tests passing).</li>
+<li>Zero duplicate rows across <code>"SubcontractorPartners"</code>, <code>"JobApplicants"</code>, and <code>"Employees"</code> verified by <code>scripts/test_web_performance_rack_14.py</code> (<code>54/54</code> tests passing, including <code>test_55</code>) and <code>scripts/test_labor_recruitment_and_cyber_suite.py</code> (5/5 tests passing).</li>
 </ul>
 <hr />
 <h2 id="50-revision-history">5.0 Revision History</h2>
@@ -122,6 +129,12 @@ flowchart TD
 </tr>
 </thead>
 <tbody>
+                <tr>
+                    <td style="text-align: left;">3.1.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed BUG-178, BUG-179 &amp; BUG-182 (Migration 054): 8 PostgreSQL partial UNIQUE phone/email/Tax-ID HMAC indexes, keyed HMAC-SHA256 SSN/EIN blind hashing, calibrated W-2 &lt;-&gt; 1099 dual-engagement blocks, Academy authentication &amp; 4-way 1099 compliance gates, 2-stage employee termination with 1-click Undo, and automatic Academy/User offboarding revocation. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">10/24/2026</td>

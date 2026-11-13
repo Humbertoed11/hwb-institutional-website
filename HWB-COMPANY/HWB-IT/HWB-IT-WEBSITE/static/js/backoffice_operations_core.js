@@ -7318,11 +7318,44 @@
         }
     }
 
-    function openAssignTrainingModal(workerType, id, name, email) {
+    async function populateAcademyCourseDropdown() {
+        const courseSelect = document.getElementById('assign-select-course');
+        if (!courseSelect) return;
+        if (!Array.isArray(window._academyCoursesCache)) {
+            try {
+                const res = await fetch('/api/v1/academy/courses');
+                const data = await res.json();
+                if (data.status === 'success' && Array.isArray(data.courses) && data.courses.length > 0) {
+                    window._academyCoursesCache = data.courses;
+                }
+            } catch (_) {}
+        }
+        if (Array.isArray(window._academyCoursesCache) && window._academyCoursesCache.length > 0) {
+            const prevVal = courseSelect.value;
+            courseSelect.innerHTML = window._academyCoursesCache.map(c =>
+                `<option value="${c.course_code}">${c.course_code}: ${c.title}</option>`
+            ).join('');
+            if (prevVal && Array.from(courseSelect.options).some(o => o.value === prevVal)) {
+                courseSelect.value = prevVal;
+            }
+        }
+    }
+
+    function openAssignTrainingModal(workerType, id, btnOrName, maybeEmail) {
+        let name = '';
+        let email = '';
+        if (btnOrName && typeof btnOrName === 'object' && typeof btnOrName.getAttribute === 'function') {
+            name = btnOrName.getAttribute('data-name') || '';
+            email = btnOrName.getAttribute('data-email') || '';
+        } else {
+            name = btnOrName || '';
+            email = maybeEmail || '';
+        }
+
         document.getElementById('assign-target-worker-type').value = workerType || 'W2_EMPLOYEE';
         document.getElementById('assign-target-id').value = id || '';
-        document.getElementById('assign-target-name').value = name || '';
-        document.getElementById('assign-target-email').value = email || '';
+        document.getElementById('assign-target-name').value = name;
+        document.getElementById('assign-target-email').value = email;
 
         const labelEl = document.getElementById('assign-training-worker-label');
         if (labelEl) {
@@ -7347,6 +7380,7 @@
             packageRadio.checked = true;
         }
         toggleAssignmentMode('PACKAGE');
+        populateAcademyCourseDropdown();
 
         const resultBox = document.getElementById('assign-result-box');
         if (resultBox) resultBox.style.display = 'none';
@@ -7369,6 +7403,7 @@
         } else {
             if (pkgBox) pkgBox.style.display = 'none';
             if (crsBox) crsBox.style.display = 'block';
+            populateAcademyCourseDropdown();
         }
     }
 
@@ -7413,20 +7448,26 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (data.status === 'success') {
+            if (data.status === 'success' || data.status === 'already_registered') {
                 const resultBox = document.getElementById('assign-result-box');
                 const magicInput = document.getElementById('assign-magic-url-input');
                 const openBtn = document.getElementById('assign-magic-open-btn');
-                if (resultBox && magicInput && openBtn) {
-                    const fullUrl = window.location.origin + data.magic_url;
+                if (resultBox && magicInput && openBtn && data.magic_url) {
+                    const fullUrl = data.magic_url.startsWith('http') ? data.magic_url : (window.location.origin + data.magic_url);
                     magicInput.value = fullUrl;
                     openBtn.href = data.magic_url;
                     resultBox.style.display = 'block';
                 }
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Assigned Successfully';
+                    submitBtn.innerHTML = data.status === 'already_registered'
+                        ? '<i class="fas fa-sync-alt"></i> Link Refreshed'
+                        : '<i class="fas fa-check"></i> Assigned Successfully';
                 }
+                showToast(
+                    data.message || (data.status === 'already_registered' ? 'Training link refreshed.' : 'Training assigned successfully.'),
+                    'success'
+                );
                 if (typeof loadAcademyEnrollmentsTable === 'function') {
                     loadAcademyEnrollmentsTable();
                 }
@@ -8051,7 +8092,17 @@
             document.getElementById('edit-emp-badge-status').value = e.badge_status || 'Active';
 
             // Tab 4: Facility & Shift
-            document.getElementById('edit-emp-role').value = e.primary_role || 'Commercial Cleaning Technician';
+            const roleSelect = document.getElementById('edit-emp-role');
+            const targetRole = e.primary_role || 'Commercial Cleaning Technician';
+            if (roleSelect) {
+                if (!Array.from(roleSelect.options).some(opt => opt.value === targetRole)) {
+                    const customOpt = document.createElement('option');
+                    customOpt.value = targetRole;
+                    customOpt.textContent = targetRole;
+                    roleSelect.appendChild(customOpt);
+                }
+                roleSelect.value = targetRole;
+            }
             document.getElementById('edit-emp-type').value = e.employment_type || 'W-2 Full-Time';
             document.getElementById('edit-emp-facility').value = e.assigned_customer_id || '';
             document.getElementById('edit-emp-language').value = e.primary_language || 'Spanish';
@@ -8176,11 +8227,20 @@
         }
     }
 
-    async function openDocUploadModal(empId, empName, empNum) {
+    async function openDocUploadModal(empId, btnOrName, maybeEmpNum) {
+        let empName = '';
+        let empNum = '';
+        if (btnOrName && typeof btnOrName === 'object' && typeof btnOrName.getAttribute === 'function') {
+            empName = btnOrName.getAttribute('data-name') || `Employee #${empId}`;
+            empNum = btnOrName.getAttribute('data-emp-num') || `EMP #${empId}`;
+        } else {
+            empName = btnOrName || `Employee #${empId}`;
+            empNum = maybeEmpNum || `EMP #${empId}`;
+        }
         document.getElementById('form-upload-emp-doc').reset();
         document.getElementById('upload-doc-emp-id').value = empId;
         document.getElementById('doc-vault-emp-name').innerText = `${empName} — Documents`;
-        document.getElementById('doc-vault-emp-num').innerText = empNum || `EMP #${empId}`;
+        document.getElementById('doc-vault-emp-num').innerText = empNum;
         
         await refreshDocVaultList(empId);
         openModal('modal-employee-doc-upload');
@@ -8281,10 +8341,54 @@
         }
     }
 
-    function deleteEmployeeRecord(id, name) {
+    function deleteEmployeeRecord(id, btnOrName) {
+        const row = document.getElementById(`employee-row-${id}`);
+        let name = 'Employee';
+        let currentStatus = row ? (row.getAttribute('data-status') || 'Active') : 'Active';
+        if (btnOrName && typeof btnOrName === 'object' && typeof btnOrName.getAttribute === 'function') {
+            name = btnOrName.getAttribute('data-name') || name;
+            currentStatus = btnOrName.getAttribute('data-status') || currentStatus;
+        } else if (typeof btnOrName === 'string' && btnOrName) {
+            name = btnOrName;
+        }
+
+        const isAlreadyTerminated = currentStatus === 'Terminated';
+
+        if (isAlreadyTerminated) {
+            showDecision({
+                title: "Permanently Delete Terminated Record?",
+                text: `Permanently delete employee #${id} (${name}) from the roster? You can undo this immediately from the notification banner if needed.`,
+                confirmText: "Permanently Delete",
+                isDestructive: true,
+                icon: "fa-trash-alt",
+                onConfirm: async () => {
+                    try {
+                        const res = await fetch(`/api/v1/hr/employees/${id}?purge=1`, { method: 'DELETE' });
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            if (row) row.remove();
+                            filterEmployeesTable();
+                            const toastOpts = data.restore_token ? {
+                                actionLabel: '↩ Undo',
+                                onAction: () => restoreDeletedCrmRecord(data.restore_token, () => window.location.reload()),
+                                durationMs: 9000
+                            } : null;
+                            showToast(`Employee #${id} (${name}) permanently removed.`, "info", toastOpts);
+                        } else {
+                            showToast("Delete failed: " + (data.message || 'Error'), "error");
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToast("Network error deleting employee.", "error");
+                    }
+                }
+            });
+            return;
+        }
+
         showDecision({
-            title: "Terminate Personnel Record?",
-            text: `Mark employee #${id} (${name}) as Terminated? Their status will change to Terminated, retaining historical timesheets and audit logs.`,
+            title: "Terminate Staff Member?",
+            text: `Mark employee #${id} (${name}) as Terminated? Facility badge and onboarding links will be revoked immediately, and the record will move out of Active Staff into Terminated history.`,
             confirmText: "Confirm Termination",
             isDestructive: true,
             icon: "fa-user-slash",
@@ -8293,8 +8397,31 @@
                     const res = await fetch(`/api/v1/hr/employees/${id}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.status === 'success') {
-                        showToast(`Employee #${id} marked Terminated.`, "info");
-                        setTimeout(() => window.location.reload(), 600);
+                        if (row) {
+                            const wasActive = row.getAttribute('data-status') === 'Active';
+                            row.setAttribute('data-status', 'Terminated');
+                            const pill = document.getElementById(`employee-status-pill-${id}`);
+                            if (pill) {
+                                pill.textContent = 'Terminated';
+                                pill.style.background = '#fee2e2';
+                                pill.style.color = '#991b1b';
+                            }
+                            if (btnOrName && typeof btnOrName === 'object' && typeof btnOrName.setAttribute === 'function') {
+                                btnOrName.setAttribute('data-status', 'Terminated');
+                                btnOrName.setAttribute('title', 'Permanently Delete Terminated Record');
+                                btnOrName.setAttribute('aria-label', 'Permanently Delete Terminated Record');
+                                btnOrName.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                            }
+                            if (wasActive) {
+                                const badgeEl = document.getElementById('tab-badge-active-employees');
+                                if (badgeEl) {
+                                    const cur = parseInt(badgeEl.textContent, 10);
+                                    if (!isNaN(cur) && cur > 0) badgeEl.textContent = String(cur - 1);
+                                }
+                            }
+                        }
+                        filterEmployeesTable();
+                        showToast(`Employee #${id} (${name}) marked Terminated and removed from Active Staff.`, "info");
                     } else {
                         showToast("Termination failed: " + (data.message || 'Error'), "error");
                     }
@@ -8310,14 +8437,17 @@
         window.location.href = '/api/v1/hr/payroll/export';
     }
 
-    async function sendEmployeeOnboardingLink(empId, empName) {
+    async function sendEmployeeOnboardingLink(empId, btnOrName) {
+        const empName = (btnOrName && typeof btnOrName === 'object' && typeof btnOrName.getAttribute === 'function')
+            ? (btnOrName.getAttribute('data-name') || `Employee #${empId}`)
+            : (btnOrName || `Employee #${empId}`);
         try {
             const res = await fetch(`/api/v1/hr/employees/${empId}/send-onboarding-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
-            if (data.status === 'success' && data.onboarding_url) {
+            if (res.ok && data.status === 'success' && data.onboarding_url) {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(data.onboarding_url);
                 }
@@ -8402,6 +8532,9 @@
                     } else if (newStatus === 'Hired') {
                         selectElement.style.background = '#eff6ff';
                         selectElement.style.color = '#1e40af';
+                    } else if (newStatus === 'Terminated') {
+                        selectElement.style.background = '#fee2e2';
+                        selectElement.style.color = '#991b1b';
                     } else if (newStatus === 'Archived') {
                         selectElement.style.background = '#f8fafc';
                         selectElement.style.color = '#64748b';
@@ -8477,7 +8610,42 @@
         });
     }
 
+    function applySubcontractorSelectStyle(selectElement, field, value) {
+        if (!selectElement) return;
+        if (field === 'coi_status') {
+            if (value === 'Verified') {
+                selectElement.style.background = '#ecfdf5';
+                selectElement.style.color = '#065f46';
+            } else if (value === 'Expired') {
+                selectElement.style.background = '#fee2e2';
+                selectElement.style.color = '#991b1b';
+            } else {
+                selectElement.style.background = '#fffbeb';
+                selectElement.style.color = '#92400e';
+            }
+        } else if (field === 'status') {
+            if (value === 'Active Partner') {
+                selectElement.style.background = '#ecfdf5';
+                selectElement.style.color = '#065f46';
+            } else if (value === 'Do Not Use') {
+                selectElement.style.background = '#fee2e2';
+                selectElement.style.color = '#991b1b';
+            } else if (value === 'Pending COI') {
+                selectElement.style.background = '#fffbeb';
+                selectElement.style.color = '#92400e';
+            } else if (value === 'On Standby') {
+                selectElement.style.background = '#f8fafc';
+                selectElement.style.color = '#64748b';
+            } else {
+                selectElement.style.background = '#eff6ff';
+                selectElement.style.color = '#1e40af';
+            }
+        }
+    }
+
     async function updateSubcontractorField(id, field, value, selectElement) {
+        const row = document.getElementById(`subcontractor-row-${id}`);
+        const prevVal = row ? (field === 'status' ? row.getAttribute('data-status') : row.getAttribute('data-coi')) : null;
         const payload = {};
         payload[field] = value;
         try {
@@ -8487,46 +8655,26 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
-            if (data.status === 'success') {
-                const row = document.getElementById(`subcontractor-row-${id}`);
+            if (res.ok && data.status === 'success') {
                 if (row) {
                     if (field === 'status') row.setAttribute('data-status', value);
                     if (field === 'coi_status') row.setAttribute('data-coi', value);
                 }
-                if (selectElement) {
-                    if (field === 'coi_status') {
-                        if (value === 'Verified') {
-                            selectElement.style.background = '#ecfdf5';
-                            selectElement.style.color = '#065f46';
-                        } else if (value === 'Expired') {
-                            selectElement.style.background = '#fee2e2';
-                            selectElement.style.color = '#991b1b';
-                        } else {
-                            selectElement.style.background = '#fffbeb';
-                            selectElement.style.color = '#92400e';
-                        }
-                    } else if (field === 'status') {
-                        if (value === 'Active Partner') {
-                            selectElement.style.background = '#ecfdf5';
-                            selectElement.style.color = '#065f46';
-                        } else if (value === 'Do Not Use') {
-                            selectElement.style.background = '#fee2e2';
-                            selectElement.style.color = '#991b1b';
-                        } else if (value === 'On Standby') {
-                            selectElement.style.background = '#f8fafc';
-                            selectElement.style.color = '#64748b';
-                        } else {
-                            selectElement.style.background = '#eff6ff';
-                            selectElement.style.color = '#1e40af';
-                        }
-                    }
-                }
+                applySubcontractorSelectStyle(selectElement, field, value);
                 if (typeof showToast === 'function') showToast(`Subcontractor #${id} updated.`, "success");
             } else {
+                if (selectElement && prevVal) {
+                    selectElement.value = prevVal;
+                    applySubcontractorSelectStyle(selectElement, field, prevVal);
+                }
                 showToast("Failed to update: " + (data.message || 'Error'), "error");
             }
         } catch (err) {
             console.error("Subcontractor update error:", err);
+            if (selectElement && prevVal) {
+                selectElement.value = prevVal;
+                applySubcontractorSelectStyle(selectElement, field, prevVal);
+            }
             showToast("Network error updating subcontractor.", "error");
         }
     }
@@ -8563,6 +8711,9 @@
         const txt = document.getElementById('wf-notes-textarea');
         if (txt) txt.addEventListener('input', updateWfNotesCharCount);
 
+        if (document.getElementById('table-workforce-employees')) {
+            filterEmployeesTable();
+        }
         const params = new URLSearchParams(window.location.search);
         if (params.get('view') === 'workforce') {
             const requestedSubtab = params.get('subtab');
@@ -8733,16 +8884,26 @@
             }
             document.getElementById('edit-sub-header-name').innerText = s.company_name;
             document.getElementById('edit-sub-company').value = s.company_name || '';
-            document.getElementById('edit-sub-status').value = s.status || 'Active Partner';
+            const editSubStatusEl = document.getElementById('edit-sub-status');
+            if (editSubStatusEl) {
+                const subSt = s.status || 'Vetting';
+                if (!Array.from(editSubStatusEl.options).some(opt => opt.value === subSt)) {
+                    const extraOpt = document.createElement('option');
+                    extraOpt.value = subSt;
+                    extraOpt.textContent = subSt;
+                    editSubStatusEl.appendChild(extraOpt);
+                }
+                editSubStatusEl.value = subSt;
+            }
             document.getElementById('edit-sub-contact').value = s.contact_name || '';
             document.getElementById('edit-sub-phone').value = s.phone || '';
             document.getElementById('edit-sub-email').value = s.email || '';
             const editEinEl = document.getElementById('edit-sub-ein');
             if (editEinEl) {
                 editEinEl.value = s.ein_or_ssn || '';
-                const isSsnMask = String(s.ein_or_ssn || '').indexOf('***-') === 0 || /^\d{3}-\d{2}-/.test(String(s.ein_or_ssn || ''));
+                editEinEl.setAttribute('data-tax-mode', 'ein');
                 if (typeof window.setTaxIdMode === 'function') {
-                    window.setTaxIdMode('edit-sub-ein', isSsnMask ? 'ssn' : 'ein');
+                    window.setTaxIdMode('edit-sub-ein', 'ein');
                 }
             }
             document.getElementById('edit-sub-city').value = s.city || '';

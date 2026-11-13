@@ -724,17 +724,22 @@ def persist_parsed_scope_and_proposal(meta: Dict[str, Any], proposal: Dict[str, 
             except Exception:
                 pass
 
-    # Register document in BidDocuments
+    # Register document in BidDocuments (idempotent guard prevents duplicate document rows)
     if inst_id:
         doc_sql = f"""
         INSERT INTO "BidDocuments" (
             bid_type, institutional_bid_id, document_name, document_type,
             file_path, file_size, mime_type, file_hash, notes
-        ) VALUES (
+        )
+        SELECT
             'Institutional', {inst_id}, {esc(meta['file_name'])}, 'RFP / Scope Specifications',
             {esc(meta['file_path'])}, {meta['file_size']}, 'application/pdf', {esc(meta['file_hash'])},
             'Autonomous PyMuPDF Scope Harvested & Verified'
-        ) ON CONFLICT DO NOTHING;
+        WHERE NOT EXISTS (
+            SELECT 1 FROM "BidDocuments"
+            WHERE institutional_bid_id = {inst_id}
+              AND document_name = {esc(meta['file_name'])}
+        );
         """
         execute_db_query(doc_sql)
 
@@ -822,8 +827,8 @@ def scan_and_sync_all_quotes():
         print(f"[SCANNER] Searching {c_dir} for institutional RFP/RFB documents...")
         for pdf_file in c_dir.glob("**/*.pdf"):
             fname_lower = pdf_file.name.lower()
-            # Match solicitation/RFP specs while excluding addenda, drawings, layouts, waivers
-            if any(k in fname_lower for k in ["solicitation", "rfp", "rfb", "csp", "quote", "spec"]) and not any(ign in fname_lower for ign in ["drawing", "layout", "addendum", "waiver", "no bid", "checklist"]):
+            # Match solicitation/RFP specs while excluding internal draft quotes, addenda, drawings, layouts, waivers
+            if any(k in fname_lower for k in ["solicitation", "rfp", "rfb", "csp", "spec"]) and not any(ign in fname_lower for ign in ["drawing", "layout", "addendum", "waiver", "no bid", "checklist", "preliminary", "bosanna", "discount"]):
                 res = parse_and_process_file(str(pdf_file))
                 if res and res.get("metadata", {}).get("solicitation_number") not in invalid_solicitations:
                     processed_count += 1

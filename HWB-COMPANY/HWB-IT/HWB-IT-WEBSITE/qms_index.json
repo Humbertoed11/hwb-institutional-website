@@ -294,9 +294,9 @@
     "id": "HWB-QMS-7.2",
     "dept": "HR",
     "file": "hwb-qms-7.2_employee_onboarding_sop.html",
-    "version": "3.0.0",
+    "version": "3.5.0",
     "compliance": "UPDATED",
-    "date": "10/24/2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -304,9 +304,9 @@
     "id": "HWB-QMS-7.2-MGMT",
     "dept": "HR",
     "file": "hwb-qms-7.2_hr_management_system_sop.html",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "compliance": "UPDATED",
-    "date": "10/24/2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -354,9 +354,9 @@
     "id": "HWB-QMS-9.2",
     "dept": "IT",
     "file": "hwb-qms-9.2_ai_agents_and_specialised_scripts_sop.html",
-    "version": "4.0.0",
+    "version": "4.5.0",
     "compliance": "UPDATED",
-    "date": "10-01-2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -404,9 +404,9 @@
     "id": "HWB-QMS-9.3",
     "dept": "IT",
     "file": "hwb-qms-9.3_disaster_recovery_and_data_restoration_sop.html",
-    "version": "3.1.0",
+    "version": "4.5.0",
     "compliance": "UPDATED",
-    "date": "10/24/2026",
+    "date": "11/12/2026",
     "access_tier": "AUDITOR"
   },
   {
@@ -534,9 +534,9 @@
     "id": "HWB-QMS-11.1_INSTITUTIONAL_MEMORY_NEURAL_INTEGRATION_SOP.HTML",
     "dept": "IT",
     "file": "hwb-qms-11.1_institutional_memory_neural_integration_sop.html",
-    "version": "3.0.0",
+    "version": "3.3.0",
     "compliance": "UPDATED",
-    "date": "10/24/2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -654,9 +654,9 @@
     "id": "HWB-ACADEMY-BOOK-001",
     "dept": "OPERATIONS",
     "file": "hwb-qms-book-01_from_mops_to_machines_the_creation_of_sigma_academy.html",
-    "version": "4.2.0",
+    "version": "5.7.0",
     "compliance": "UPDATED",
-    "date": "10-01-2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -1340,23 +1340,23 @@
     "access_tier": "STAFF"
   },
   {
-    "title": "Standard Operating Procedure: Emergency Database Replication",
-    "id": "HWB-QMS-9.3.1_EMERGENCY_DATABASE_REPLICATION_SOP.HTML",
+    "title": "Standard Operating Procedure: Emergency Database Replication SOP",
+    "id": "HWB-QMS-9.3.1",
     "dept": "QMS",
     "file": "hwb-qms-9.3.1_emergency_database_replication_sop.html",
-    "version": "1.0.0",
+    "version": "2.2.0",
     "compliance": "UPDATED",
-    "date": "09-21-2026",
+    "date": "11/12/2026",
     "access_tier": "AUDITOR"
   },
   {
-    "title": "1.0 Objective",
-    "id": "HWB-QMS-9.3.2_DISASTER_RECOVERY_-_THE_PANIC_BUTTON_SOP.HTML",
+    "title": "Standard Operating Procedure: Disaster Recovery - The Panic Button SOP",
+    "id": "HWB-QMS-9.3.2",
     "dept": "QMS",
     "file": "hwb-qms-9.3.2_disaster_recovery_-_the_panic_button_sop.html",
-    "version": "1.0.0",
+    "version": "3.1.0",
     "compliance": "UPDATED",
-    "date": "09-21-2026",
+    "date": "11/12/2026",
     "access_tier": "AUDITOR"
   },
   {
@@ -1544,9 +1544,9 @@
     "id": "HWB-MKT-FORM-001",
     "dept": "SALES-MARKETING",
     "file": "hwb-mkt-form-001_digital_lead_capture_form.html",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "compliance": "UPDATED",
-    "date": "05/21/2026",
+    "date": "11/12/2026",
     "access_tier": "STAFF"
   },
   {
@@ -1634,9 +1634,9 @@
     "id": "HWB-QMS-8.4",
     "dept": "MARKETING",
     "file": "hwb-qms-8.4_ai_search_and_llm_visibility_sop.html",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "compliance": "UPDATED",
-    "date": "10/24/2026",
+    "date": "11/12/2026",
     "access_tier": "EXECUTIVE"
   }
 ]

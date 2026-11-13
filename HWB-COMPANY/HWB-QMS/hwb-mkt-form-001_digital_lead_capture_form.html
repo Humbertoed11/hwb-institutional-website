@@ -3,7 +3,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-MKT-FORM-001</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">2.1.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.0.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">8.2.1 (Communication)</span></div>
     </div>
@@ -13,13 +13,13 @@
 <thead>
 <tr>
 <th style="text-align: left;"><strong>Document Control</strong></th>
-<th style="text-align: left;"></th>
+<th style="text-align: left;"><strong>Institutional Specification</strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td style="text-align: left;"><strong>Document Title</strong></td>
-<td style="text-align: left;"><strong>Marketing Form Standard</strong></td>
+<td style="text-align: left;"><strong>Marketing Form &amp; Contact-First Quote Intake Standard</strong></td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Document ID</strong></td>
@@ -27,7 +27,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Version</strong></td>
-<td style="text-align: left;">2.1.0</td>
+<td style="text-align: left;">3.0.0</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Status</strong></td>
@@ -35,7 +35,7 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Author</strong></td>
-<td style="text-align: left;">George (Systems Architect)</td>
+<td style="text-align: left;">Lauri Tells &amp; George (Systems Architect)</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Approved By</strong></td>
@@ -43,51 +43,44 @@
 </tr>
 <tr>
 <td style="text-align: left;"><strong>Date</strong></td>
-<td style="text-align: left;">09/21/2026</td>
+<td style="text-align: left;">11/12/2026</td>
 </tr>
 <tr>
 <td style="text-align: left;"><strong>ISO 9001 Clause</strong></td>
-<td style="text-align: left;">8.2.1 (Communication)</td>
+<td style="text-align: left;">8.2.1 (Customer Communication)</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h1 id="standard-operating-procedure-marketing-form-standard">Standard Operating Procedure: <strong>Marketing Form Standard</strong></h1>
+<h1 id="standard-operating-procedure-marketing-form-standard">Standard Operating Procedure: <strong>Marketing Form &amp; Contact-First Quote Intake Standard</strong></h1>
 <h2 id="10-purpose">1.0 Purpose</h2>
-<p>To define how our website forms should look and work. This ensures we get the right information from customers and can help them quickly.</p>
+<p>This procedure defines how public quote and walkthrough forms operate across <code>www.hwbcleaning.com</code> so busy commercial buyers can request a cleaning proposal in seconds without hitting unnecessary form barriers.</p>
 <h2 id="20-scope">2.0 Scope</h2>
-<p>Applies to the Home Page Form and the Quote Form.</p>
-<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates (2026 Baseline)</h2>
+<p>Applies to the main quote form (<code>/get-quote</code>), the post-submission pricing calibration card (<code>quote_success.html</code> / <code>POST /update-quote-details</code>), the homepage form (<code>/</code>), all 8 Facility Hubs (<code>/facilities/&lt;slug&gt;</code>), and all 18 North Texas City Hubs (<code>/locations/&lt;city&gt;</code>).</p>
+<h2 id="30-universal-mandates-2026-baseline">3.0 Universal Mandates</h2>
 <ol>
-<li><strong>Physical Truth:</strong> Use absolute paths for form templates.</li>
-<li><strong>Clinical Hardening:</strong> All inputs must look clean and professional.</li>
-<li><strong>No Synthetic Data:</strong> Examples must be clearly marked.</li>
+<li><strong>Contact-First Step 1 (Zero Mandatory Zip/City/Schedule Wall):</strong> On both desktop and mobile, Step 1 requires only <strong>Facility Type</strong>, <strong>Contact Name *</strong>, and <strong>Work Email *</strong> (with <strong>Phone</strong> and <strong>Company / Building Name</strong> optional). Building City, Zip Code, Square Footage, and Cleaning Schedule sit inside an optional collapsible <code>&lt;details&gt;</code> drawer with zero HTML <code>required</code> attributes on <code>city</code>, <code>zipcode</code>, <code>sqft</code>, or <code>company</code>.</li>
+<li><strong>8 Core Facility Type Chips &amp; Hub Pre-Selection:</strong> <code>/get-quote</code> presents all 8 commercial verticals (<code>Office</code>, <code>School / Daycare</code>, <code>Medical Clinic</code>, <code>Warehouse</code>, <code>Church / Worship</code>, <code>Post-Construction</code>, <code>Auto Dealership</code>, and <code>Other Commercial</code>). Clicking a quote link from any Facility Hub or City Hub passes <code>?facility=...&amp;city=...</code> so the form automatically selects the matching chip and pre-fills the city.</li>
+<li><strong>Step 2 Post-Capture Calibration:</strong> Every non-bot submission writes or updates a verified record in PostgreSQL 16.15 <code>"Leads"</code> and passes <code>lead_id</code> and <code>reference_code</code> to <code>quote_success.html</code> so the buyer can optionally tap City, Cleaning Schedule, and Square Footage in 10 seconds via <code>POST /update-quote-details</code>.</li>
+<li><strong>Accessibility &amp; Consent Shield:</strong> Every <code>&lt;input&gt;</code> and <code>&lt;select&gt;</code> has an explicit <code>&lt;label for="..."&gt;</code>, every phone consent checkbox (<code>tcpa_consent</code>) renders unchecked by default, and public pages display clear everyday business language with zero internal system terms.</li>
 </ol>
-<h2 id="40-standard-form-protocols">4.0 Standard Form Protocols</h2>
-<h3 id="41-detailed-plan-version-1">4.1 Detailed Plan (Version 1)</h3>
+<h2 id="40-standard-form-protocols">4.0 Two-Step Conversion Architecture</h2>
+<h3 id="41-detailed-plan-version-1">4.1 Step 1 — Fast Quote Request (<code>/get-quote</code> &amp; <code>/facilities/&lt;slug&gt;</code>)</h3>
 <ul>
-<li><strong>Use Case:</strong> Special service pages (Janitorial, Industrial).</li>
-<li><strong>Fields:</strong> Name, Email, Phone, Building Type, Size Slider.</li>
-<li><strong>Goal:</strong> Get full details for a complete cleaning plan.</li>
+<li><strong>Required Fields:</strong> Facility Type Chip, Contact Name, Work Email.</li>
+<li><strong>Optional Immediate Fields:</strong> Phone Number (<code>(214)-000-0000</code> mask), Company or Building Name, plus optional expandable drawer for City, Zip Code, Approximate Square Footage, and Cleaning Schedule Frequency.</li>
 </ul>
-<h3 id="42-simple-registration-version-2">4.2 Simple Registration (Version 2)</h3>
+<h3 id="42-simple-registration-version-2">4.2 Step 2 — 10-Second Pricing Calibration (<code>quote_success.html</code>)</h3>
 <ul>
-<li><strong>Use Case:</strong> Home Page.</li>
-<li><strong>Fields:</strong> Business Name, Your Name, Email, Phone.</li>
-<li><strong>Goal:</strong> Make it fast and easy for customers to connect with us. A team member will call later to get more details.</li>
+<li><strong>Route:</strong> <code>POST /update-quote-details</code> linked by <code>lead_id</code>.</li>
+<li><strong>Fields:</strong> Quick-tap City chips, Cleaning Schedule chips, and Approximate Square Footage, enriching the captured <code>"Leads"</code> record without risking Step-1 drop-off.</li>
 </ul>
-<h2 id="50-technical-logic">5.0 Technical Logic</h2>
+<h2 id="50-verification-zero-defect-check">5.0 Verification (Zero-Defect Check)</h2>
 <ul>
-<li><strong>Method:</strong> <code>POST</code>.</li>
-<li><strong>Route:</strong> <code>/get-quote</code>.</li>
-<li><strong>Result:</strong> Data added to our list; Team member gets an alert.</li>
+<li><code>GET /get-quote?facility=daycare&amp;city=McKinney</code> returns HTTP 200 with zero <code>required</code> attributes on <code>city</code>, <code>zipcode</code>, or <code>company</code>, explicit <code>&lt;label for="..."&gt;</code> bindings, and unchecked <code>tcpa_consent</code>.</li>
+<li><code>POST /get-quote</code> with Contact Name + Work Email + Facility Type saves the lead in <code>"Leads"</code>, logs the consent receipt in <code>"SecurityAuditLogs"</code>, and renders <code>quote_success.html</code> with a valid <code>lead_id</code> and <code>reference_code</code>.</li>
 </ul>
-<h2 id="60-verification-zero-defect-check">6.0 Verification (Zero-Defect Check)</h2>
-<ul>
-<li>Form works and shows a "Success" page.</li>
-<li>The action is logged in our system.</li>
-</ul>
-<h2 id="70-revision-history">7.0 Revision History</h2>
+<h2 id="60-revision-history">6.0 Revision History</h2>
 <table>
 <thead>
 <tr>
@@ -98,6 +91,12 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td style="text-align: left;">3.0.0</td>
+<td style="text-align: left;">11/12/2026</td>
+<td style="text-align: left;">Lauri Tells &amp; George</td>
+<td style="text-align: left;">Standardized Contact-First 2-Step Quote Intake across <code>/get-quote</code>, all 8 Facility Hubs, and all 18 City Hubs: promoted Contact Name + Work Email + 8 Facility Chips to Step 1, moved City/Zip/SqFt/Schedule to an optional collapsible drawer, added <code>?facility=...&amp;city=...</code> pre-selection, and verified <code>lead_id</code> calibration continuity. Approved by Humberto Dominguez, CEO.</td>
+</tr>
 <tr>
 <td style="text-align: left;">2.1.0</td>
 <td style="text-align: left;">05/21/2026</td>

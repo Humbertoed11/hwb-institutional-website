@@ -665,6 +665,13 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
     def _compute() -> Dict[str, Any]:
         ga_id = os.environ.get('GA_MEASUREMENT_ID') or 'G-8BX5Q7THYR'
         gsc_token = os.environ.get('GOOGLE_SITE_VERIFICATION') or 'rWfL3H77Qz2W7oG6sNnO8L5E_9m4Y1X9Z'
+        gcloud_sa_set = bool((os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON') or '').strip())
+        ga4_prop_set = bool((os.environ.get('GA4_PROPERTY_ID') or '').strip())
+        gcloud_api_status = (
+            'CONFIGURED_READONLY'
+            if (gcloud_sa_set and ga4_prop_set)
+            else 'DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT'
+        )
 
         quote_leads_24h = 0
         phone_taps_24h = 0
@@ -873,9 +880,11 @@ def get_web_analytics_telemetry(db_url: Optional[str] = None, force_refresh: boo
             "composite_score": 99.5,
             "letter_grade": "A+",
             "measurement_id": ga_id,
+            "google_cloud_api_status": gcloud_api_status,
             "container_status": "ONLINE (gtag.js + Consent Mode v2 + Dual-Funnel Tagging)",
             "google_search_console": {
                 "status": "CONNECTED",
+                "search_analytics_api_status": gcloud_api_status,
                 "verification_token": gsc_token[:16] + "..." if len(gsc_token) > 16 else gsc_token,
                 "sitemap_url": "https://www.hwbcleaning.com/sitemap.xml",
                 "sitemap_pages_count": public_surface_count,

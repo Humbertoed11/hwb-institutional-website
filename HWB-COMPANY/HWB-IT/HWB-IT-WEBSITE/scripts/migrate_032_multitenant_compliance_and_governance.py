@@ -72,12 +72,12 @@ def run_migration():
                 ON "TenantCertificationEvidence" (tenant_id, program_code);
             ''')
 
-            # Seed baseline evidence items for HWB (Tenant 1)
+            # Seed required certification checklist slots for HWB (Tenant 1) without claiming unverified PDFs exist
             baseline_evidence = [
-                (1, "SBA_8A", "2025 Form 1065 Federal Business Tax Return", "Tax Return", "HWB-COMPANY/HWB-LEGAL/SAM-REG/2025_Form1065.pdf", "Verified Compliant", "Filed return verifies commercial revenue runway."),
-                (1, "SBA_8A", "HWB Cleaning Services LLC Operating Agreement", "Operating Agreement", "HWB-COMPANY/HWB-LEGAL/HWB-LLC-Operating-Agreement.pdf", "Verified Compliant", "Sovereign 100% executive authority verified for CEO Humberto Dominguez."),
-                (1, "TX_HUB", "Texas Secretary of State Certificate of Filing", "Formation", "HWB-COMPANY/HWB-LEGAL/SAM-REG/Texas_Certificate_of_Filing.pdf", "Verified Compliant", "Domestic Texas LLC in active good standing."),
-                (1, "NCTRCA_MBE", "Proof of Hispanic / Disadvantaged Heritage", "Identity", "HWB-COMPANY/HWB-LEGAL/CERTIFICATIONS/Humberto_Citizenship_Proof.pdf", "Verified Compliant", "U.S. Citizenship and disadvantaged ownership authenticated.")
+                (1, "SBA_8A", "2025 Form 1065 Federal Business Tax Return", "Tax Return", "", "Pending Upload", "Required certification document slot — awaiting PDF upload."),
+                (1, "SBA_8A", "HWB Cleaning Services LLC Operating Agreement", "Operating Agreement", "", "Pending Upload", "Required certification document slot — awaiting PDF upload."),
+                (1, "TX_HUB", "Texas Secretary of State Certificate of Filing", "Formation", "", "Pending Upload", "Required certification document slot — awaiting PDF upload."),
+                (1, "NCTRCA_MBE", "Proof of Hispanic / Disadvantaged Heritage", "Identity", "", "Pending Upload", "Required certification document slot — awaiting PDF upload.")
             ]
 
             for item in baseline_evidence:

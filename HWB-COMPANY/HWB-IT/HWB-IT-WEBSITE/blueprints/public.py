@@ -1641,6 +1641,34 @@ def location_page(city):
     return render_template('location.html', data=data, facilities_list=enriched_facilities)
 
 
+QUOTE_FACILITY_CHIP_MAP = {
+    'office': 'office',
+    'corporate-offices': 'office',
+    'executive-office': 'office',
+    'daycare': 'daycare',
+    'daycare-childcare': 'daycare',
+    'schools-education': 'daycare',
+    'school': 'daycare',
+    'childcare': 'daycare',
+    'medical': 'medical',
+    'medical-dental': 'medical',
+    'clinic': 'medical',
+    'industrial': 'industrial',
+    'warehouses-industrial': 'industrial',
+    'warehouse': 'industrial',
+    'worship': 'worship',
+    'churches-nonprofits': 'worship',
+    'church': 'worship',
+    'construction': 'construction',
+    'construction-subdivisions': 'construction',
+    'post-construction': 'construction',
+    'automotive': 'automotive',
+    'auto-dealerships': 'automotive',
+    'dealership': 'automotive',
+    'other': 'other',
+}
+
+
 @public_bp.route('/facilities/<facility_slug>', endpoint='facility_page')
 def facility_page(facility_slug: str):
     """Dedicated SEO & AI Search (GEO) Facility Hub with statutory citations and inline walkthrough capture."""
@@ -1654,11 +1682,15 @@ def facility_page(facility_slug: str):
         SEOMediaEngine.enrich_facility_media(f, static_dir)
         for f in FACILITIES_DATA.values()
     ]
+    prefill_city = (request.args.get('city') or '').strip()[:80]
+    mapped_chip = QUOTE_FACILITY_CHIP_MAP.get(slug_clean, 'office')
     return render_template(
         'facility.html',
         data=data,
         facilities_list=enriched_list,
         locations_list=list(LOCATIONS_DATA.items()),
+        prefill_city=prefill_city,
+        mapped_facility_chip=mapped_chip,
     )
 
 
@@ -1672,26 +1704,33 @@ def get_quote():
             form_version = data.get('form_version', 'v1')
             
             if form_version == "v2":
-                sqf_v2_raw = str(data.get('sqft', '') or '').strip().replace(',', '')
+                sqf_v2_raw = re.sub(r'[^0-9.]', '', str(data.get('sqft', '') or ''))
                 try:
                     sqf = float(sqf_v2_raw) if sqf_v2_raw else 0.0
                 except ValueError:
                     sqf = 0.0
                 need = 2
                 facility_type = (data.get('facility_type') or 'Not Specified').strip()
-                frequency = (data.get('frequency') or 'TBD (Handshake)').strip()
+                frequency = (data.get('frequency') or '').strip() or 'Standard Business (Pending Verification)'
                 need_label = "Handshake Protocol"
                 city = (data.get('city') or '').strip()
-                zipcode = ""
+                zipcode = (data.get('zipcode') or '').strip()
                 job_title = ""
                 target_start = "Within 30 Days"
                 scope_addons = []
             else:
-                sqf_raw = str(data.get('sqft', '') or '').strip().replace(',', '')
-                sqf = float(sqf_raw) if sqf_raw else 0.0
-                need = int(data.get('need', 2))
-                facility_type = data.get('facility_type', 'office')
-                frequency = data.get('frequency', 'Standard')
+                sqf_raw = re.sub(r'[^0-9.]', '', str(data.get('sqft', '') or ''))
+                try:
+                    sqf = float(sqf_raw) if sqf_raw else 0.0
+                except ValueError:
+                    sqf = 0.0
+                try:
+                    need = int(data.get('need', 2) or 2)
+                except ValueError:
+                    need = 2
+                raw_fac_post = (data.get('facility_type') or 'office').strip()
+                facility_type = QUOTE_FACILITY_CHIP_MAP.get(raw_fac_post.lower(), raw_fac_post)
+                frequency = (data.get('frequency') or '').strip() or 'Standard'
                 need_labels = { "1": "Slow Traffic", "2": "High Traffic", "3": "24/7 Production" }
                 need_label = need_labels.get(data.get('need'), "Standard")
                 city = (data.get('city') or '').strip()
@@ -1722,6 +1761,8 @@ def get_quote():
             is_bot, bot_reason = evaluate_bot_defense(request)
             
             data_dict = {
+                'lead_id': None,
+                'reference_code': 'LEAD-#00000',
                 'name': name,
                 'company': company,
                 'email': email,
@@ -1978,7 +2019,18 @@ def get_quote():
             print(f"Quote Error: {e}")
             flash("Processing error. Please call (214)-586-0257.")
             
-    return render_template('quote_form.html')
+    raw_facility_arg = (
+        request.args.get('facility') or request.args.get('type') or 'office'
+    ).strip().lower()
+    prefill_facility = QUOTE_FACILITY_CHIP_MAP.get(raw_facility_arg, 'office')
+    prefill_city = (request.args.get('city') or '').strip()[:80]
+    prefill_zip = (request.args.get('zip') or '').strip()[:10]
+    return render_template(
+        'quote_form.html',
+        prefill_facility=prefill_facility,
+        prefill_city=prefill_city,
+        prefill_zip=prefill_zip,
+    )
 
 @public_bp.route('/update-quote-details', methods=['POST'], endpoint='update_quote_details')
 @public_bp.route('/update-quote-sqft', methods=['POST'], endpoint='update_quote_sqft')
@@ -2144,16 +2196,25 @@ def _mask_partner_email_hint(raw_email: str) -> str:
 
 def _is_onboarding_token_expired(partner_row: dict) -> bool:
     """
-    Enforces the Fortune 500 Dual-Stage Onboarding Link Expiration Policy (SEC-004):
+    Enforces the Fortune 500 Dual-Stage Onboarding Link Expiration Policy (SEC-004 / SEC-005 / BUG-177):
+    0. Inactive / Terminated Lock: Any employee marked Terminated, Fired, or Suspended (or Revoked badge)
+       is treated as immediately expired.
     1. Unopened Invite Window (7 Days): If onboarding_first_opened_at IS NULL and the link has not
-       been signed, an unopened invitation expires 7 days after onboarding_invited_at.
+       been signed (msa_signed or onboarding_packet_signed), an unopened invitation expires 7 days
+       after onboarding_invited_at.
     2. Explicit / Active Window (14 Days after first open, or explicit onboarding_token_expires_at):
        Any link whose onboarding_token_expires_at is in the past is expired.
     """
     from datetime import datetime as dt_cls, timedelta, timezone
 
+    emp_status = str(partner_row.get('employment_status') or '').strip()
+    badge_st = str(partner_row.get('badge_status') or '').strip()
+    if emp_status in ('Terminated', 'Fired', 'Suspended') or badge_st == 'Revoked':
+        return True
+
     # 1. Check 7-day unopened invitation TTL if never opened and not yet signed
-    if not partner_row.get('onboarding_first_opened_at') and not partner_row.get('msa_signed'):
+    is_signed = bool(partner_row.get('msa_signed') or partner_row.get('onboarding_packet_signed'))
+    if not partner_row.get('onboarding_first_opened_at') and not is_signed:
         inv_val = partner_row.get('onboarding_invited_at')
         if inv_val:
             if isinstance(inv_val, str):
@@ -2633,6 +2694,30 @@ def subcontractor_onboarding_extract(token: str):
                     or bool(_re_tin.match(r'^(\*{3}|\d{3})-(\*{2}|\d{2})-\d{4}$', raw_extracted_tin))
                 )
             )
+            from core.security import compute_tax_id_hmac
+            extracted_ein_hmac = (
+                compute_tax_id_hmac(raw_extracted_tin)
+                if (tag == 'W9' and not is_extracted_ssn)
+                else None
+            )
+            if extracted_ein_hmac:
+                cur.execute(
+                    'SELECT id, company_name FROM "SubcontractorPartners" '
+                    'WHERE ein_hmac = %s AND id <> %s LIMIT 1;',
+                    (extracted_ein_hmac, sub_id),
+                )
+                dup_sub = cur.fetchone()
+                if dup_sub:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_EIN_DETECTED',
+                        'message': (
+                            'This 9-digit Federal Business EIN is already registered to an existing '
+                            'subcontractor account. Please use your existing partner link or contact '
+                            'HWB Operations at (214) 586-0257.'
+                        ),
+                    }), 409
+
             vault_receipt = None
             if not is_extracted_ssn:
                 vault_receipt = deposit_subcontractor_document_vault(
@@ -2716,6 +2801,7 @@ def subcontractor_onboarding_extract(token: str):
                             ein_or_ssn = COALESCE(NULLIF(%s, ''), ein_or_ssn),
                             w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
                             w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                            ein_hmac = COALESCE(%s, ein_hmac),
                             w9_extracted_json = %s,
                             updated_at = CURRENT_TIMESTAMP
                         WHERE id = %s;
@@ -2731,6 +2817,7 @@ def subcontractor_onboarding_extract(token: str):
                             masked_tin or raw_tin,
                             last4,
                             encrypted_tin,
+                            extracted_ein_hmac,
                             json.dumps({**extracted, 'ein_or_ssn': masked_tin or raw_tin}),
                             sub_id,
                         ),
@@ -3116,6 +3203,73 @@ def subcontractor_onboarding_submit(token: str):
                         ),
                     }), 403
 
+            # BUG-182: Salted Tax-ID HMAC Duplicate Gate, Contact Collision Check & Active W-2 Dual-Engagement Block
+            from core.security import compute_tax_id_hmac
+            submit_ein_hmac = compute_tax_id_hmac(raw_ein_input)
+            if submit_ein_hmac:
+                cur.execute(
+                    'SELECT id, company_name FROM "SubcontractorPartners" '
+                    'WHERE ein_hmac = %s AND id <> %s LIMIT 1;',
+                    (submit_ein_hmac, sub_id),
+                )
+                dup_ein_row = cur.fetchone()
+                if dup_ein_row:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_EIN_DETECTED',
+                        'message': (
+                            'This 9-digit Federal Business EIN is already registered to another '
+                            'subcontractor partner account. Please contact HWB Operations at (214) 586-0257.'
+                        ),
+                    }), 409
+
+            sub_phone_digits = _re_tin_submit.sub(r'\D', '', phone or '')[-10:]
+            sub_email_norm = (email or '').strip().lower()
+            if len(sub_phone_digits) == 10 or sub_email_norm:
+                cur.execute(
+                    '''
+                    SELECT id, company_name FROM "SubcontractorPartners"
+                    WHERE id <> %s AND (
+                        (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    LIMIT 1;
+                    ''',
+                    (sub_id, sub_phone_digits, sub_phone_digits, sub_email_norm, sub_email_norm),
+                )
+                dup_contact_sub = cur.fetchone()
+                if dup_contact_sub:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_CONTACT_DETECTED',
+                        'message': (
+                            'That phone number or email address is already linked to another subcontractor '
+                            'partner account. Please contact HWB Operations at (214) 586-0257.'
+                        ),
+                    }), 409
+
+                cur.execute(
+                    '''
+                    SELECT id, employee_number FROM "Employees"
+                    WHERE employment_status = 'Active' AND (
+                        (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    LIMIT 1;
+                    ''',
+                    (sub_phone_digits, sub_phone_digits, sub_email_norm, sub_email_norm),
+                )
+                active_w2_row = cur.fetchone()
+                if active_w2_row:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED',
+                        'message': (
+                            'Active W-2 employees cannot simultaneously complete 1099 subcontractor onboarding. '
+                            'Please contact HWB Human Resources at (214) 586-0257.'
+                        ),
+                    }), 409
+
             signer_ip = extract_client_ip()
             now_dt = dt_cls.now()
             ts_int = int(now_dt.timestamp())
@@ -3234,6 +3388,7 @@ def subcontractor_onboarding_submit(token: str):
                     ein_or_ssn = %s,
                     w9_ein_last4 = COALESCE(NULLIF(%s, ''), w9_ein_last4),
                     w9_tin_encrypted = COALESCE(%s, w9_tin_encrypted),
+                    ein_hmac = COALESCE(%s, ein_hmac),
                     street_address = %s,
                     city = %s,
                     state = %s,
@@ -3271,6 +3426,7 @@ def subcontractor_onboarding_submit(token: str):
                     ein_or_ssn,
                     last4_tin,
                     encrypted_tin,
+                    submit_ein_hmac,
                     street_address,
                     city,
                     state,
@@ -3392,8 +3548,11 @@ def employee_onboarding_portal(token: str):
     """
     Renders the pre-filled 4-Stage Self-Service W-2 Employee Onboarding Portal
     (/onboard/employee/<token>) with Form W-4, Form I-9, State ID, Direct Deposit
-    auto-extraction, and Job Description e-signature.
+    auto-extraction, Job Description e-signature, and SEC-005 Dual-Stage Link
+    Expiration (7-day unopened / 14-day active) + Zero-Data Expired Lock Screen.
     """
+    import hashlib
+    from core.services.security_logger import log_security_event
     from database.schema_engine import ensure_employee_onboarding_schema
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
@@ -3418,22 +3577,80 @@ def employee_onboarding_portal(token: str):
                 return render_template('404.html'), 404
 
             emp_dict = dict(emp)
+            emp_id = emp_dict['id']
+            emp_num = emp_dict.get('employee_number') or f"HWB-EMP-{emp_id}"
             token_expired = _is_onboarding_token_expired(emp_dict)
 
-            cur.execute(
-                '''
-                SELECT id, document_type, file_name, version_number, sha256_checksum, created_at
-                FROM "EmployeeDocuments"
-                WHERE employee_id = %s AND is_current = TRUE
-                ORDER BY created_at DESC;
-                ''',
-                (emp['id'],),
-            )
-            current_docs = cur.fetchall()
+            # Stamp onboarding_first_opened_at on first valid visit and set 14-day active completion window
+            if not token_expired and not emp_dict.get('onboarding_first_opened_at'):
+                try:
+                    cur.execute(
+                        '''
+                        UPDATE "Employees"
+                        SET onboarding_first_opened_at = CURRENT_TIMESTAMP,
+                            onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '14 days'
+                        WHERE id = %s;
+                        ''',
+                        (emp_id,),
+                    )
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+
+            current_docs = []
+            if not token_expired:
+                cur.execute(
+                    '''
+                    SELECT id, document_type, file_name, version_number, sha256_checksum, created_at
+                    FROM "EmployeeDocuments"
+                    WHERE employee_id = %s AND is_current = TRUE
+                    ORDER BY created_at DESC;
+                    ''',
+                    (emp_id,),
+                )
+                current_docs = cur.fetchall()
+
+            # SEC-005 Zero-Data Lock Screen on Expired Links:
+            # Never pass pre-filled PII, home address, phone, email, SSN, W-4, or bank details to Jinja2 when expired.
+            if token_expired:
+                raw_email = str(emp_dict.get('email') or '').strip()
+                has_email = bool('@' in raw_email)
+                emp_render = {
+                    'id': emp_id,
+                    'employee_number': emp_num,
+                    'first_name': emp_dict.get('first_name') or 'Team Member',
+                    'masked_email': _mask_partner_email_hint(raw_email) if has_email else '',
+                    'has_email': has_email,
+                    'onboarding_token': token.strip(),
+                    'onboarding_packet_signed': False,
+                    'w4_step2_multiple_jobs': False,
+                }
+            else:
+                raw_email = str(emp_dict.get('email') or '').strip()
+                emp_dict['has_email'] = bool('@' in raw_email)
+                emp_render = emp_dict
+
+            try:
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='EMPLOYEE_EXPIRED_PORTAL_LOCKED' if token_expired else 'EMPLOYEE_PORTAL_VIEWED',
+                    severity='WARNING' if token_expired else 'INFO',
+                    endpoint='/onboard/employee/[REDACTED_TOKEN]',
+                    details={
+                        'employee_id': emp_id,
+                        'employee_number': emp_num,
+                        'token_sha256_prefix': hashlib.sha256(token.strip().encode('utf-8')).hexdigest()[:16],
+                        'submitted': bool(emp_dict.get('onboarding_packet_signed')) and not token_expired,
+                        'token_expired': token_expired,
+                        'pii_scrubbed': bool(token_expired),
+                    },
+                )
+            except Exception:
+                pass
 
         return render_template(
             'employee_onboarding_portal.html',
-            employee=emp,
+            employee=emp_render,
             current_docs=current_docs,
             token=token.strip(),
             token_expired=token_expired,
@@ -3446,43 +3663,162 @@ def employee_onboarding_portal(token: str):
 @public_bp.route('/onboard/employee/<token>/renew', methods=['POST'], endpoint='employee_onboarding_renew')
 @public_bp.route('/onboard/employee/<token>/renew-link', methods=['POST'], endpoint='employee_onboarding_renew_link')
 def employee_onboarding_renew(token: str):
-    """Extends an expired W-2 employee onboarding magic link by 30 days and emails a fresh link."""
+    """
+    Renews a W-2 employee onboarding magic link (SEC-005):
+    - Protected by sliding-window rate limiting per token and client IP (5 per 10 minutes).
+    - Phone-only cleaners without an email on file cannot self-unlock an expired URL in-browser;
+      returns 403 PHONE_ONLY_CONTACT_HR so HR re-issues a verified SMS link from Backoffice.
+    - When expired (or rotation requested) and an email is on file, rotates onboarding_token to a
+      fresh cryptographic token, resets onboarding_first_opened_at = NULL with a 7-day unopened
+      invite window, and emails the new link exclusively to the registered inbox.
+    """
+    import hashlib
+    import secrets
+    from core.services.security_logger import extract_client_ip, log_security_event
+    from core.services.subcontractor_doc_extractor import check_extraction_rate_limit
     from database.schema_engine import ensure_employee_onboarding_schema
     from core.services.notification_service import build_canonical_portal_url, send_employee_onboarding_invite_email
+
+    clean_tok = token.strip()
+    client_ip = extract_client_ip()
+    allowed, _ = check_extraction_rate_limit(f"emp_renew:{clean_tok}:{client_ip}", limit=5, window_seconds=600)
+    if not allowed:
+        return jsonify({
+            'status': 'error',
+            'code': 'RATE_LIMIT_EXCEEDED',
+            'message': 'Too many link renewal attempts. Please wait 10 minutes and try again.',
+        }), 429
 
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         ensure_employee_onboarding_schema(conn)
         with conn.cursor() as cur:
-            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (token.strip(),))
+            cur.execute('SELECT * FROM "Employees" WHERE onboarding_token = %s LIMIT 1;', (clean_tok,))
             row = cur.fetchone()
             if not row:
                 return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
             emp = dict(row)
             emp_id = emp['id']
-            cur.execute(
-                '''
-                UPDATE "Employees"
-                SET onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '30 days',
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s;
-                ''',
-                (emp_id,),
-            )
-            conn.commit()
-            canonical_url = build_canonical_portal_url(f"/onboard/employee/{token.strip()}", "/work-with-us")
-            if emp.get('email'):
+            emp_status = str(emp.get('employment_status') or '').strip()
+            badge_st = str(emp.get('badge_status') or '').strip()
+            if emp_status in ('Terminated', 'Fired', 'Suspended') or badge_st == 'Revoked':
                 try:
-                    send_employee_onboarding_invite_email({
+                    log_security_event(
+                        event_category='DATA_LIFECYCLE',
+                        event_action='EMPLOYEE_RENEW_BLOCKED_INACTIVE',
+                        severity='WARNING',
+                        endpoint='/onboard/employee/[REDACTED_TOKEN]/renew',
+                        details={
+                            'employee_id': emp_id,
+                            'employee_number': emp.get('employee_number'),
+                            'employment_status': emp_status,
+                            'badge_status': badge_st,
+                        },
+                    )
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'error',
+                    'code': 'EMPLOYMENT_INACTIVE_LOCKED',
+                    'message': 'This onboarding link is no longer active. Please contact HWB Operations at (214) 586-0257 for assistance.',
+                }), 403
+
+            raw_email = str(emp.get('email') or '').strip()
+            has_email = bool('@' in raw_email)
+            was_expired = _is_onboarding_token_expired(emp)
+            force_rotate = str(request.args.get('rotate') or request.form.get('rotate') or '').lower() in ('1', 'true', 'yes')
+            should_rotate = bool(was_expired or force_rotate)
+
+            if should_rotate and not has_email:
+                try:
+                    log_security_event(
+                        event_category='DATA_LIFECYCLE',
+                        event_action='EMPLOYEE_RENEW_BLOCKED_NO_EMAIL',
+                        severity='WARNING',
+                        endpoint='/onboard/employee/[REDACTED_TOKEN]/renew',
+                        details={
+                            'employee_id': emp_id,
+                            'employee_number': emp.get('employee_number'),
+                            'was_expired': was_expired,
+                            'token_sha256_prefix': hashlib.sha256(clean_tok.encode('utf-8')).hexdigest()[:16],
+                        },
+                    )
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'error',
+                    'code': 'PHONE_ONLY_CONTACT_HR',
+                    'message': 'No email address is on file for this employee ID. For your protection, expired links stay locked. Please call or text HWB Operations at (214) 586-0257 so HR can text you a fresh onboarding link.',
+                }), 403
+
+            active_token = f"emp_{emp_id}_{secrets.token_urlsafe(24)}" if should_rotate else clean_tok
+            if should_rotate:
+                cur.execute(
+                    '''
+                    UPDATE "Employees"
+                    SET onboarding_token = %s,
+                        onboarding_first_opened_at = NULL,
+                        onboarding_invited_at = CURRENT_TIMESTAMP,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '7 days',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (active_token, emp_id),
+                )
+            else:
+                cur.execute(
+                    '''
+                    UPDATE "Employees"
+                    SET onboarding_token = %s,
+                        onboarding_token_expires_at = CURRENT_TIMESTAMP + INTERVAL '14 days',
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                    ''',
+                    (active_token, emp_id),
+                )
+            conn.commit()
+            canonical_url = build_canonical_portal_url(f"/onboard/employee/{active_token}", "/work-with-us")
+            email_sent = False
+            if has_email and not current_app.config.get('TESTING'):
+                try:
+                    email_sent, _ = send_employee_onboarding_invite_email({
                         **emp,
+                        'onboarding_token': active_token,
                         'onboarding_url': canonical_url,
                     })
                 except Exception:
                     pass
+            try:
+                log_security_event(
+                    event_category='DATA_LIFECYCLE',
+                    event_action='EMPLOYEE_LINK_RENEWED',
+                    severity='INFO',
+                    endpoint='/onboard/employee/[REDACTED_TOKEN]/renew',
+                    details={
+                        'employee_id': emp_id,
+                        'employee_number': emp.get('employee_number'),
+                        'was_expired': was_expired,
+                        'token_rotated': should_rotate,
+                        'email_sent': email_sent,
+                        'old_token_sha256_prefix': hashlib.sha256(clean_tok.encode('utf-8')).hexdigest()[:16],
+                    },
+                )
+            except Exception:
+                pass
+            masked_email = _mask_partner_email_hint(raw_email)
+            if should_rotate:
+                return jsonify({
+                    'status': 'success',
+                    'token_rotated': True,
+                    'email_sent': email_sent,
+                    'masked_email': masked_email,
+                    'message': f'For your security, a fresh W-2 onboarding link has been sent to {masked_email}.',
+                })
             return jsonify({
                 'status': 'success',
-                'onboarding_url': canonical_url,
-                'message': 'Your W-2 onboarding link has been renewed for 30 days.',
+                'token_rotated': False,
+                'email_sent': email_sent,
+                'message': 'Your W-2 onboarding link has been renewed for 14 days.',
             })
     finally:
         if conn:
@@ -3511,11 +3847,11 @@ def employee_onboarding_download_packet(token: str, doc_id: int = None):
             if not row:
                 return jsonify({'status': 'error', 'message': 'Invalid onboarding link.'}), 404
             emp = dict(row)
-            if _is_onboarding_token_expired(emp) and not emp.get('onboarding_packet_signed'):
+            if _is_onboarding_token_expired(emp):
                 return jsonify({
                     'status': 'error',
                     'code': 'TOKEN_EXPIRED',
-                    'message': 'This onboarding link has expired. Please renew your link first.',
+                    'message': 'This onboarding link has expired. Please request a fresh link to download recorded documents.',
                 }), 410
 
             emp_id = emp['id']
@@ -3620,12 +3956,29 @@ def api_employee_portal_upload_doc(token: str):
                 return jsonify({
                     'status': 'error',
                     'code': 'TOKEN_EXPIRED',
-                    'message': 'This onboarding link has expired after 30 days. Click Renew Link to continue.',
+                    'message': 'This onboarding link has expired. Please request a fresh onboarding link to continue.',
                 }), 410
 
             emp_id = emp['id']
             extracted = extract_employee_document_auto(doc_type, raw_bytes, clean_fn, mime_type)
-            updated_fields = apply_extracted_fields_to_employee(conn, emp_id, doc_type, extracted)
+            try:
+                updated_fields = (
+                    []
+                    if bool(emp.get('onboarding_packet_signed'))
+                    else apply_extracted_fields_to_employee(conn, emp_id, doc_type, extracted)
+                )
+            except ValueError as dup_err:
+                conn.rollback()
+                if 'DUPLICATE_SSN_DETECTED' in str(dup_err):
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_SSN_DETECTED',
+                        'message': (
+                            'This Social Security Number is already registered to another employee profile. '
+                            'Please contact HWB Human Resources at (214) 586-0257.'
+                        ),
+                    }), 409
+                raise
             vault_receipt = deposit_employee_document_vault(
                 conn=conn,
                 employee_id=emp_id,
@@ -3703,8 +4056,32 @@ def api_employee_portal_complete(token: str):
                     'status': 'error',
                     'code': 'TOKEN_EXPIRED',
                     'error_code': 'TOKEN_EXPIRED',
-                    'message': 'This onboarding link has expired after 30 days. Please renew your link to submit.',
+                    'message': 'This onboarding link has expired. Please request a fresh onboarding link to submit.',
                 }), 410
+
+            if bool(emp.get('onboarding_packet_signed')):
+                try:
+                    log_security_event(
+                        event_category='INTEGRITY_SHIELD',
+                        event_action='EMPLOYEE_POST_SIGN_TAMPER_BLOCKED',
+                        severity='WARNING',
+                        endpoint='/api/v1/employees/onboard/[REDACTED_TOKEN]/complete',
+                        details={
+                            'employee_id': emp['id'],
+                            'employee_number': emp.get('employee_number'),
+                        },
+                    )
+                except Exception:
+                    pass
+                return jsonify({
+                    'status': 'error',
+                    'code': 'PACKET_ALREADY_SIGNED_LOCKED',
+                    'error_code': 'PACKET_ALREADY_SIGNED_LOCKED',
+                    'message': (
+                        'Your signed W-2 & Direct Deposit packet is locked for payroll security. '
+                        'Please contact HWB Operations at (214) 586-0257 to update banking or tax details.'
+                    ),
+                }), 403
 
             emp_id = emp['id']
             first_name = (data.get('first_name') or emp.get('first_name') or '').strip()
@@ -3738,12 +4115,61 @@ def api_employee_portal_complete(token: str):
             dd_bank = (data.get('direct_deposit_bank') or emp.get('direct_deposit_bank') or '').strip()
             dd_routing = clean_routing_number(data.get('direct_deposit_routing') or emp.get('direct_deposit_routing') or '')
 
+            from core.security import compute_tax_id_hmac
+            emp_phone_digits = re.sub(r'\D', '', phone or '')[-10:]
+            emp_email_norm = (email or '').strip().lower()
+            if len(emp_phone_digits) == 10 or emp_email_norm:
+                cur.execute(
+                    '''
+                    SELECT id, employee_number FROM "Employees"
+                    WHERE id <> %s AND (
+                        (%s <> '' AND RIGHT(REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g'), 10) = %s)
+                        OR (%s <> '' AND LOWER(BTRIM(COALESCE(email, ''))) = %s)
+                    )
+                    LIMIT 1;
+                    ''',
+                    (emp_id, emp_phone_digits, emp_phone_digits, emp_email_norm, emp_email_norm),
+                )
+                dup_emp_contact = cur.fetchone()
+                if dup_emp_contact:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'DUPLICATE_CONTACT_DETECTED',
+                        'message': (
+                            'That phone number or email address is already linked to another employee profile. '
+                            'Please contact HWB Human Resources at (214) 586-0257.'
+                        ),
+                    }), 409
+
             ssn_encrypted = emp.get('ssn_encrypted')
             ssn_last_four = emp.get('ssn_last_four')
-            raw_ssn = (data.get('ssn') or '').strip()
-            if raw_ssn and not raw_ssn.startswith('*'):
+            ssn_hmac_val = emp.get('ssn_hmac')
+            raw_ssn = (
+                data.get('ssn')
+                or data.get('ssn_plain')
+                or data.get('social_security_number')
+                or ''
+            ).strip()
+            if raw_ssn and not raw_ssn.startswith('*') and not raw_ssn.startswith('•'):
                 digits = re.sub(r'\D', '', raw_ssn)
                 if len(digits) == 9:
+                    ssn_hmac_val = compute_tax_id_hmac(digits)
+                    if ssn_hmac_val:
+                        cur.execute(
+                            'SELECT id, employee_number FROM "Employees" '
+                            'WHERE ssn_hmac = %s AND id <> %s LIMIT 1;',
+                            (ssn_hmac_val, emp_id),
+                        )
+                        dup_ssn_emp = cur.fetchone()
+                        if dup_ssn_emp:
+                            return jsonify({
+                                'status': 'error',
+                                'code': 'DUPLICATE_SSN_DETECTED',
+                                'message': (
+                                    'This Social Security Number is already registered to an existing employee profile. '
+                                    'Please contact HWB Human Resources at (214) 586-0257.'
+                                ),
+                            }), 409
                     ssn_encrypted = encrypt_pii(f"{digits[:3]}-{digits[3:5]}-{digits[5:]}")
                     ssn_last_four = digits[-4:]
 
@@ -3845,6 +4271,7 @@ def api_employee_portal_complete(token: str):
                     direct_deposit_account_last_four = %s,
                     ssn_encrypted = %s,
                     ssn_last_four = %s,
+                    ssn_hmac = COALESCE(%s, ssn_hmac),
                     job_description_acknowledged_at = CURRENT_TIMESTAMP,
                     onboarding_packet_signed = TRUE,
                     onboarding_signer_name = %s,
@@ -3864,7 +4291,7 @@ def api_employee_portal_complete(token: str):
                     w4_filing_status, w4_step2, w4_step3, w4_step4c,
                     state_id_number, state_id_exp, i9_citizenship,
                     dd_bank, dd_routing, dd_acc_masked, dd_acc_encrypted, dd_acc_last_four,
-                    ssn_encrypted, ssn_last_four,
+                    ssn_encrypted, ssn_last_four, ssn_hmac_val,
                     signer_name, signer_ip, sig_hash, vault_receipt['file_key'],
                     emp_id,
                 ),

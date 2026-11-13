@@ -4,7 +4,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-7.2</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.5.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.2 (Competence) &amp; 7.5 (PII Vault)</span></div>
     </div>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">3.2.0</td>
+                    <td style="text-align: left;">3.5.0</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -44,7 +44,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Date</strong></td>
-                    <td style="text-align: left;">10/21/2026</td>
+                    <td style="text-align: left;">11/12/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standards</strong></td>
@@ -88,7 +88,8 @@
                 <ul>
                     <li><strong>1099 Subcontractor Self-Service Portal (<code>/onboard/subcontractor/&lt;token&gt;</code>):</strong> Issued automatically (in Auto-Approve mode) or upon Backoffice review (in Manual Review Gate mode via <code>SystemSettings.subcontractor_onboarding_mode</code>). Subcontractors upload IRS Form W-9 and ACORD 25 Certificate of Insurance (auto-extracted via <code>core/services/subcontractor_doc_extractor.py</code> into PostgreSQL <code>"SubcontractorDocuments"</code> as AES-256 <code>encrypted_payload BYTEA</code> + SHA-256 hash) and electronically sign the Master Subcontractor Agreement (MSA) and Texas DWC Form-83 waiver, generating locked ReportLab PDF certificates.</li>
                     <li><strong>W-2 Employee Self-Service HR Portal (<code>/onboard/employee/&lt;token&gt;</code>):</strong> Hired technicians upload IRS Form W-4, DHS Form I-9, Government Photo ID, and a Voided Check / Direct Deposit slip (auto-extracted via <code>core/services/employee_doc_extractor.py</code> into PostgreSQL <code>"EmployeeDocuments"</code> as AES-256 <code>encrypted_payload BYTEA</code> + SHA-256 hash) and electronically sign their ISO 9001 Clause 7.2 Job Description &amp; Handbook Acknowledgment, generating a locked ReportLab PDF certificate.</li>
-                    <li><strong>5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Cards:</strong> Global client-side masking engine (<code>/static/js/sigma_input_masks.js</code>) enforces live formatting across all EIN (<code>XX-XXXXXXX</code>, <code>maxlength="10"</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>, <code>maxlength="11"</code>), Phone (<code>(###)-###-####</code>, <code>maxlength="14"</code>), ZIP (<code>#####-####</code>, <code>maxlength="10"</code>), 9-digit ABA Routing (<code>maxlength="9"</code>), and 2-letter State (<code>maxlength="2"</code>) fields (with dynamic EIN/SSN switching on 1099 tax classification changes). Upon form submission or page revisit, the active form collapses and displays a Tamper-Evident Transaction Receipt Card (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) showing the Receipt ID (<code>HWB-1099-000XX-YYYYMMDD</code> / <code>HWB-W2-000XX-YYYYMMDD</code>), SHA-256 signature verification, downloadable PDF certificates, and a controlled <em>"Re-Open Form"</em> toggle.</li>
+                    <li><strong>Dual-Stage Link Expiration, Zero-Data Expired Lock Screen &amp; Phone-Only Safeguard (SEC-004 / SEC-005):</strong> Both W-2 and 1099 onboarding links enforce a <strong>7-day unopened invite window</strong> (<code>onboarding_invited_at</code>) and stamp <code>onboarding_first_opened_at</code> on first valid open with a <strong>14-day active completion window</strong>. When any link expires, the backend scrubs all pre-filled personal, address, tax, and banking fields before HTML rendering and displays only the locked security gate. Rate-limited renewal (<code>5 per 10 minutes</code>) rotates <code>onboarding_token</code> and dispatches the fresh link exclusively to the registered email inbox; for phone-only W-2 cleaners without an email on file, expired links stay locked and direct the worker to request a fresh SMS link from HR Backoffice.</li>
+                    <li><strong>5-Layer Universal Input Masking &amp; Tamper-Evident Transaction Receipt Cards:</strong> Global client-side masking engine (<code>/static/js/sigma_input_masks.js</code>) enforces live formatting across all EIN (<code>XX-XXXXXXX</code>, <code>maxlength="10"</code>), SSN/ITIN (<code>XXX-XX-XXXX</code>, <code>maxlength="11"</code>), Phone (<code>(###)-###-####</code>, <code>maxlength="14"</code>), ZIP (<code>#####-####</code>, <code>maxlength="10"</code>), 9-digit ABA Routing (<code>maxlength="9"</code>), and 2-letter State (<code>maxlength="2"</code>) fields. Upon form submission or page revisit while active, the form collapses and displays a Tamper-Evident Transaction Receipt Card (<code>#onboarding-receipt-card</code> / <code>#w2-receipt-card</code>) showing the Receipt ID, SHA-256 signature verification, downloadable PDF certificates, and a controlled <em>"Re-Open Form"</em> toggle.</li>
                 </ul>
             </li>
         </ol>
@@ -130,12 +131,25 @@
         <ol>
             <li><strong>Audit Logging:</strong> Every unmasking of an employee's Social Security Number is logged to the <code>"GlobalActivities"</code> table with accessor user ID, username, employee ID, timestamp, and client IP address.</li>
             <li><strong>Unauthorized Access Quarantine:</strong> If an unauthorized user (such as Field Sales) attempts to access sensitive identification endpoints (<code>POST /api/v1/hr/employees/&lt;id&gt;/reveal-ssn</code>), the gateway rejects the request with HTTP 403 Forbidden and automatically generates a <code>SECURITY_VIOLATION</code> event in the security ledger.</li>
-            <li><strong>Automated Security Lockout Protocol:</strong> When an employee's status changes to <code>Terminated</code> or <code>Fired</code>, the system automatically sets their badge status to <code>Revoked</code>, records the termination date, and marks linked candidate records as terminated.</li>
+            <li><strong>Automated Security Lockout, Post-Signing Direct-Deposit Lock &amp; 1099 Approval Gate (BUG-177 / LEG-001):</strong>
+                <ul>
+                    <li>When an employee's status changes to <code>Terminated</code>, <code>Fired</code>, or <code>Suspended</code>, the system automatically revokes or suspends their badge, immediately expires <code>onboarding_token_expires_at</code>, and blocks self-service link renewal (<code>HTTP 403 EMPLOYMENT_INACTIVE_LOCKED</code>).</li>
+                    <li>Once a W-2 employee signs their onboarding packet (<code>onboarding_packet_signed = TRUE</code>), direct deposit routing/account numbers, SSN, and W-4 fields are locked against unauthenticated portal overwrites (<code>HTTP 403 PACKET_ALREADY_SIGNED_LOCKED</code>); returning workers may only upload supplemental documents without altering signed banking or tax records.</li>
+                    <li>Public 1099 subcontractor registration never pre-marks <code>dwc83_signed = TRUE</code> prior to formal contract execution, requires a valid 9-digit business EIN rather than a personal SSN on 1099 onboarding (<code>SEC-003</code>), and strictly enforces a 4-way compliance gate (verified W-9 + executed MSA + executed Texas DWC Form-83 + unexpired Certificate of Insurance) across both <code>/approve-partner</code> and backoffice status edits (<code>BUG-179</code>).</li>
+                </ul>
+            </li>
+            <li><strong>8 Partial Unique Indexes, Salted Tax-ID Blind Hash, Cross-Track Gate &amp; 2-Stage Termination Sync (BUG-178 &amp; BUG-182 / Migration 054):</strong>
+                <ul>
+                    <li>PostgreSQL 16.15 enforces 8 partial <code>UNIQUE</code> indexes across <code>"JobApplicants"</code>, <code>"Employees"</code>, and <code>"SubcontractorPartners"</code> covering normalized 10-digit phone numbers, lowercase non-empty emails, and keyed HMAC-SHA256 blind Tax-ID hashes (<code>ssn_hmac</code> and <code>ein_hmac</code> via <code>compute_tax_id_hmac()</code> in <code>core/security.py</code>), returning <code>HTTP 409</code> (<code>DUPLICATE_CONTACT_DETECTED</code>, <code>DUPLICATE_SSN_DETECTED</code>, or <code>DUPLICATE_EIN_DETECTED</code>) while stripping blind hash columns from all JSON responses.</li>
+                    <li>Active W-2 employees are blocked from simultaneous 1099 registration or activation (<code>HTTP 409 ACTIVE_W2_DUAL_ENGAGEMENT_BLOCKED</code>), Active 1099 Partners are blocked from W-2 payroll onboarding (<code>HTTP 409 ACTIVE_1099_DUAL_ENGAGEMENT_BLOCKED</code>), and Candidate Pool or prior-terminated crossovers are flagged for manual HR review (<code>Initial Review</code>).</li>
+                    <li>Deleting an active employee executes Stage 1 soft-termination (hiding the row under <code>Active Only</code>, revoking badges and onboarding tokens, revoking <code>"AcademyEnrollments"</code> magic links, and suspending matching non-Executive <code>"Users"</code> accounts), while Stage 2 (<code>?purge=1</code>) permanently removes test/mistaken terminated rows with a 1-click <code>[↩ Undo]</code> snapshot restore.</li>
+                </ul>
+            </li>
         </ol>
 
         
         <h2>6.5 4-Stage Self-Service Onboarding &amp; Encrypted Document Vault Flowchart</h2>
-        <p>Both the W-2 Employee Onboarding Portal (<code>/onboarding/employee</code>) and 1099 Partner Onboarding Portal (<code>/onboarding/partner</code>) enforce a 4-Stage Self-Service Wizard with AI document autofill (<code>/api/v1/onboarding/extract-document</code>), Universal Input Masking (Phone, EIN, SSN, ZIP, State), atomic PostgreSQL <code>SAVEPOINT</code> binary storage (<code>BYTEA</code>), and printable Tamper-Evident Onboarding Receipt Cards with SHA-256 verification stamps.</p>
+        <p>Both the W-2 Employee Onboarding Portal (<code>/onboard/employee/&lt;token&gt;</code>) and 1099 Partner Onboarding Portal (<code>/onboard/subcontractor/&lt;token&gt;</code>) enforce a 4-Stage Self-Service Wizard with AI document autofill, Universal Input Masking (Phone, EIN, SSN, ZIP, State), Dual-Stage 7-Day Unopened / 14-Day Active Link Expiration with Zero-Data Expired Lock Screens, atomic PostgreSQL <code>SAVEPOINT</code> binary storage (<code>BYTEA</code>), and printable Tamper-Evident Onboarding Receipt Cards with SHA-256 verification stamps.</p>
         <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
             <div class="mermaid">
 flowchart LR
@@ -172,7 +186,25 @@ flowchart LR
             </thead>
             <tbody>
                 <tr>
-                    <td style="text-align: left;">3.0.0</td>
+                    <td style="text-align: left;">3.5.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Deployed BUG-178, BUG-179 &amp; BUG-182 (Migration 054): 8 PostgreSQL partial UNIQUE phone/email/Tax-ID HMAC indexes across JobApplicants, Employees, and SubcontractorPartners; keyed HMAC-SHA256 blind hashing (ssn_hmac / ein_hmac) blocking duplicate SSNs and EINs; active W-2 &lt;-&gt; 1099 dual-engagement blocks and Candidate Pool crossover flags; 2-stage employee termination/purge with 1-click Undo restore; and automatic AcademyEnrollments revocation + non-Executive Users suspension upon termination. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.4.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Enforced BUG-177 (LEG-001) Portal, Termination &amp; 1099 Approval Hardening: immediate onboarding_token revocation &amp; renewal block for Terminated/Fired/Suspended employees, post-signing W-2 direct-deposit &amp; tax packet lock (PACKET_ALREADY_SIGNED_LOCKED), elimination of initial-intake dwc83_signed false positives, and mandatory msa_signed + dwc83_signed + unexpired COI verification gate before 1099 partner activation. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.3.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Enforced SEC-005 (BUG-176) W-2 &amp; 1099 Onboarding Security Parity: Dual-Stage 7-day unopened / 14-day active link expiration (onboarding_first_opened_at), Zero-Data Expired Lock Screen scrubbing pre-filled employee PII, rate-limited token rotation to registered email inboxes, and HR SMS re-issue lock for phone-only cleaners. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">3.2.1</td>
                     <td style="text-align: left;">10/24/2026</td>
                     <td style="text-align: left;">George (Systems Architect)</td>
                     <td style="text-align: left;">Added Section 6.5 4-Stage Self-Service Onboarding, AI Document Extraction, SAVEPOINT BYTEA Vault, and Printable SHA-256 Receipt Card Mermaid Flowchart (BUG-148 Phase 2). Approved by Humberto Dominguez, CEO.</td>

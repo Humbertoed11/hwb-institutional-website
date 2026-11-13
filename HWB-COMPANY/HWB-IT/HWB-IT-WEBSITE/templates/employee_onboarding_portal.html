@@ -167,23 +167,41 @@
     <main class="portal-container">
         {% set w2_submitted = (employee.onboarding_packet_signed or false) %}
 
-        {% if token_expired and not w2_submitted %}
-        <div id="w2-expired-banner" class="card" style="background: #fffbeb; border: 1.5px solid #f59e0b; border-left: 5px solid #d97706;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.9rem;">
-                <div>
-                    <div style="font-size: 0.75rem; font-weight: 800; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
-                        <i class="fas fa-clock" style="margin-right: 0.35rem;"></i> 30-Day Onboarding Link Expired
+        {% if token_expired %}
+        <!-- Locked Expired Link Security Gate (Zero Pre-Filled Personal Data Rendered) -->
+        <div id="w2-expired-banner" class="card" style="background: #fffbeb; border: 1.5px solid #d97706; border-left: 5px solid #d97706;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div style="flex: 1; min-width: 240px;">
+                    <div style="font-size: 0.95rem; font-weight: 800; color: #92400e;">
+                        <i class="fas fa-lock" style="margin-right: 0.35rem;"></i> Onboarding Link Expired &amp; Locked for Your Protection
                     </div>
-                    <p style="font-size: 0.85rem; color: #78350f; margin: 0.25rem 0 0 0; line-height: 1.45;">
-                        For your security, W-2 onboarding links expire after 30 days. Click the button on the right to extend your active link for another 30 days.
+                    {% if employee.has_email %}
+                    <p style="font-size: 0.85rem; color: #78350f; margin: 0.35rem 0 0 0; line-height: 1.5;">
+                        For your security, unopened onboarding invitations expire after 7 days (and active links expire after 14 days), hiding all pre-filled personal, tax, and banking details. Click the button on the right to send a fresh, secure onboarding link to <strong>{{ employee.masked_email or 'your registered email inbox' }}</strong>.
                     </p>
+                    {% else %}
+                    <p style="font-size: 0.85rem; color: #78350f; margin: 0.35rem 0 0 0; line-height: 1.5;">
+                        For your protection, unopened onboarding invitations expire after 7 days (and active links expire after 14 days), hiding all pre-filled personal, tax, and banking details. Because no email address is on file for <strong>{{ employee.employee_number }}</strong>, this expired link stays locked. Please call or text HWB Operations at <strong>(214) 586-0257</strong> so our HR desk can text you a fresh onboarding link.
+                    </p>
+                    {% endif %}
                 </div>
-                <button type="button" onclick="renewExpiredW2Link(this)" style="height: 36px; padding: 0 1.1rem; border-radius: 6px; border: none; background: #d97706; color: #ffffff; font-size: 0.82rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
-                    <i class="fas fa-sync-alt"></i> Renew Link for 30 Days
+                {% if employee.has_email %}
+                <button type="button" id="btn-renew-expired-w2" onclick="renewExpiredW2Link(this)" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: none; background: #d97706; color: #ffffff; font-size: 0.84rem; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
+                    <i class="fas fa-paper-plane"></i> Send Fresh Link to Registered Email
                 </button>
+                {% else %}
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a href="sms:+12145860257?body=Hello%20HWB%20HR%2C%20please%20send%20a%20fresh%20W-2%20onboarding%20text%20link%20for%20{{ employee.employee_number|urlencode }}." style="height: 38px; padding: 0 1rem; border-radius: 6px; background: #d97706; color: #ffffff; font-size: 0.82rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-sms"></i> Text HR Desk
+                    </a>
+                    <a href="tel:+12145860257" style="height: 38px; padding: 0 1rem; border-radius: 6px; border: 1px solid #d97706; background: #ffffff; color: #92400e; font-size: 0.82rem; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="fas fa-phone"></i> Call (214) 586-0257
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
+        {% else %}
 
         <!-- Official Tamper-Evident W-2 Transaction Receipt Card (Shown after submission & on revisit) -->
         <div id="w2-receipt-card" class="card" style="display: {% if w2_submitted %}block{% else %}none{% endif %}; border: 1.5px solid #059669; border-top: 5px solid #059669; box-shadow: 0 10px 25px rgba(5, 150, 105, 0.08);">
@@ -301,12 +319,16 @@
                 </div>
             </div>
 
+            <div id="w2-post-sign-lock-notice" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 0.6rem 0.85rem; margin-bottom: 0.85rem; font-size: 0.77rem; color: #1e3a8a; line-height: 1.45;">
+                <strong><i class="fas fa-lock"></i> Payroll Security Lock:</strong> Your signed W-2 &amp; Direct Deposit packet is locked to protect your paycheck. You may still upload supplemental ID or tax files below; to change bank routing, account numbers, or tax withholding, please call or text HWB Operations at <strong>(214) 586-0257</strong>.
+            </div>
+
             <div class="no-print" style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
                 <button type="button" onclick="window.print()" class="btn-primary" style="height: 38px;">
                     <i class="fas fa-print"></i> Print / Save Receipt
                 </button>
                 <button type="button" id="btn-reopen-w2-form" onclick="toggleW2FormEdit()" style="height: 38px; padding: 0 1.15rem; border-radius: 6px; border: 1px solid var(--slate-300); background: #ffffff; color: var(--slate-700); font-size: 0.84rem; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;">
-                    <i class="fas fa-edit"></i> Update Information or Upload Additional Documents
+                    <i class="fas fa-upload"></i> Upload Supplemental Documents
                 </button>
             </div>
         </div>
@@ -520,6 +542,7 @@
                 <div id="complete-result" style="display:none; margin-top: 1rem; padding: 0.9rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #6ee7b7; color: #065f46; font-weight: 700; font-size: 0.85rem;"></div>
             </div>
         </form>
+        {% endif %}
     </main>
 
     <script>
@@ -535,7 +558,7 @@
         async function renewExpiredW2Link(btnEl) {
             if (btnEl) {
                 btnEl.disabled = true;
-                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renewing...';
+                btnEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending Fresh Link...';
             }
             try {
                 const res = await fetch(`/onboard/employee/${ONBOARD_TOKEN}/renew`, {
@@ -543,21 +566,28 @@
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
+                const expBanner = document.getElementById('w2-expired-banner');
                 if (data.status === 'success') {
-                    const expBanner = document.getElementById('w2-expired-banner');
                     if (expBanner) {
                         expBanner.style.background = '#ecfdf5';
                         expBanner.style.borderColor = '#10b981';
-                        expBanner.innerHTML = `<div style="font-size:0.84rem;font-weight:800;color:#065f46;"><i class="fas fa-check-circle"></i> ${data.message}</div>`;
+                        expBanner.innerHTML = `<div style="font-size:0.86rem;font-weight:800;color:#065f46;"><i class="fas fa-check-circle"></i> ${data.message}</div>`;
                     }
-                } else if (btnEl) {
-                    btnEl.disabled = false;
-                    btnEl.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Link for 30 Days';
+                } else {
+                    if (expBanner && data.message) {
+                        expBanner.style.background = '#fef2f2';
+                        expBanner.style.borderColor = '#dc2626';
+                        expBanner.innerHTML = `<div style="font-size:0.86rem;font-weight:800;color:#991b1b;"><i class="fas fa-exclamation-circle"></i> ${data.message}</div>`;
+                    }
+                    if (btnEl) {
+                        btnEl.disabled = false;
+                        btnEl.innerHTML = '<i class="fas fa-paper-plane"></i> Send Fresh Link to Registered Email';
+                    }
                 }
             } catch (e) {
                 if (btnEl) {
                     btnEl.disabled = false;
-                    btnEl.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Link for 30 Days';
+                    btnEl.innerHTML = '<i class="fas fa-paper-plane"></i> Send Fresh Link to Registered Email';
                 }
             }
         }
@@ -632,18 +662,15 @@
 
         function toggleW2FormEdit() {
             const step1 = document.getElementById('w2-step1-card');
-            const form = document.getElementById('w2-onboard-form');
             const reopenBtn = document.getElementById('btn-reopen-w2-form');
-            if (!form) return;
-            if (form.style.display === 'none') {
-                if (step1) step1.style.display = 'block';
-                form.style.display = 'block';
-                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Edit Form';
-                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (!step1) return;
+            if (step1.style.display === 'none') {
+                step1.style.display = 'block';
+                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Supplemental Upload';
+                step1.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
-                if (step1) step1.style.display = 'none';
-                form.style.display = 'none';
-                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-edit"></i> Update Information or Upload Additional Documents';
+                step1.style.display = 'none';
+                if (reopenBtn) reopenBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Supplemental Documents';
             }
         }
 

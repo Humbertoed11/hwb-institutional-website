@@ -4,7 +4,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-9.3</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.3.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">4.5.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.3 (Infrastructure) &amp; ISO 27001 A.12.1</span></div>
     </div>
@@ -28,7 +28,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Version</strong></td>
-                    <td style="text-align: left;">4.3.0</td>
+                    <td style="text-align: left;">4.5.0 (Architecture v3.1.0)</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Status</strong></td>
@@ -44,7 +44,7 @@
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>Effective Date</strong></td>
-                    <td style="text-align: left;">10/17/2026</td>
+                    <td style="text-align: left;">11/12/2026</td>
                 </tr>
                 <tr>
                     <td style="text-align: left;"><strong>ISO Standard</strong></td>
@@ -74,42 +74,42 @@
             <tbody>
                 <tr>
                     <td><strong>1. Binary DB Snapshot</strong></td>
-                    <td>Hourly</td>
-                    <td>Instant recovery for binary PostgreSQL database states via automated pg_dump and WAL shipping.</td>
+                    <td>Hourly (<code>:00</code> Cron)</td>
+                    <td>24-hour rolling native Linux <code>ext4</code> custom-format PostgreSQL 16.15 dumps (<code>pg_dump -Fc</code>) via <code>scripts/hwb_hourly_backup.sh</code> in <code>backups/hourly/</code> and <code>backups/latest/</code>, enforcing owner-only <code>chmod 600</code> permissions and SHA-256 checksum files (<code>hwb_dev_db.dump.sha256</code>), paired with Azure 35-day PITR.</td>
                 </tr>
                 <tr>
                     <td><strong>2. Environment Freeze</strong></td>
-                    <td>Daily</td>
-                    <td>Secure encrypted archive of <code>.env</code> configurations, secret salts, and Docker environment variables.</td>
+                    <td>Hourly &amp; Pre-Change</td>
+                    <td>Owner-only <code>chmod 600</code> archive of <code>.env</code> configurations, secret salts, and Docker environment variables on native <code>ext4</code> (<code>backups/checkpoints/</code>) and offline Drive <code>D:\</code> (cross-OS <code>/mnt/c/.../OneDrive</code> <code>9P</code> sync permanently retired per <code>BUG-173</code> / <code>SO-SCAR-023</code>).</td>
                 </tr>
                 <tr>
-                    <td><strong>3. Ghost Checkpoints</strong></td>
-                    <td>Pre-Restart</td>
-                    <td>Automatic local Git branch checkpoint created before every system restart or container teardown.</td>
+                    <td><strong>3. Ghost Checkpoints (Peter Sentinel <code>v2.0.0</code>)</strong></td>
+                    <td>Pre-Change / On-Demand</td>
+                    <td>Unified 3-command local recovery tool (<code>scripts/peter_sentinel.py</code>: <code>checkpoint</code>, <code>rollback</code>, <code>verify</code>) pinning <code>chmod 600</code> PG16 dumps, <code>.env</code>, and code/QMS bundles in <code>backups/checkpoints/&lt;name&gt;/</code> with <code>SHA256SUMS.txt</code> and live temporary-database restore verification (<code>hwb_peter_verify_tmp</code>).</td>
                 </tr>
                 <tr>
                     <td><strong>4. Institutional Mirror</strong></td>
-                    <td>Weekly</td>
-                    <td>Off-site synchronization of the complete SigmaFidelity™ Brain to sovereign physical storage.</td>
+                    <td>Pre-Storm &amp; Scheduled</td>
+                    <td>Full WSL2 Ubuntu image synchronization (<code>D:\2026-data-backup-ubuntu\ubuntu-full.tar</code>) plus offline installers (<code>D:\Installers\</code>) on Grab-and-Go USB Drive <code>D:\</code>.</td>
                 </tr>
                 <tr>
                     <td><strong>5. Surge Protector</strong></td>
-                    <td>Every 15 Minutes</td>
-                    <td>Disk-usage watchdog check enforcing a 500MB runaway log threshold to prevent disk exhaustion.</td>
+                    <td>Hourly Cron Gate</td>
+                    <td>Disk-usage check inside <code>scripts/hwb_hourly_backup.sh</code> enforcing a 500MB runaway log ceiling without spawning a 15-minute host <code>systemd</code> loop (<code>sigma-peter.service</code> retired).</td>
                 </tr>
                 <tr>
-                    <td><strong>6. Vault Guardian</strong></td>
-                    <td>Daily</td>
-                    <td>Incremental backup of all active operational folders and QMS documentation vaults.</td>
+                    <td><strong>6. Out-of-Band Rescue Cockpit</strong></td>
+                    <td>Always Staged</td>
+                    <td>Standalone Windows Antigravity rescue workspace at <code>C:\wsl-backup\SuperGeorge-Rescue</code> and <code>D:\SuperGeorge-Rescue</code> (<code>Request Review</code> / <code>ASK</code> mode, zero <code>L:\</code> Linux drive freeze).</td>
                 </tr>
             </tbody>
         </table>
 
         <h2>4.0 System Dependencies &amp; Cryptographic Vault Configuration</h2>
-        <p>The system infrastructure relies on the following core dependencies (updated October 17, 2026):</p>
+        <p>The system infrastructure relies on the following core dependencies (updated November 12, 2026):</p>
         <ul>
-            <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu 22.04 LTS.</li>
-            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, Port 5000, 24 concurrency slots via 3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), <code>hwb_postgres_dev</code> (PostgreSQL 16.15, <code>pgvector/pgvector:pg16</code> locally with volume <code>postgres_data_pg16</code> and Azure Database for PostgreSQL Flexible Server 16.15 on <code>sigmajan-server</code> in production; Port 5432; 84 public tables, 404,470 rows, <code>vector 0.8.2</code>, <code>pg_trgm</code>, and <code>fuzzystrmatch</code>), <code>hwb_compliance_engine</code> (Nginx static QMS, Port 80), <code>hwb_traffic_director</code> (Port 8000), and <code>hwb_agent_worker</code> (Autonomous Worker Container).</li>
+            <li><strong>Operating System:</strong> Linux / WSL2 Ubuntu LTS (<code>.wslconfig</code> pinned to <code>12GB</code> RAM / <code>6</code> CPUs; Windows 11 Docker Desktop configured with <code>"UseResourceSaver": false</code> and <code>"AutoPauseTimeoutSeconds": 0</code>).</li>
+            <li><strong>Container Fleet:</strong> Docker 26+ running containers: <code>hwb_web_app</code> (Gunicorn Flask, <code>127.0.0.1:5000</code>, 24 concurrency slots via 3 workers &times; 8 threads, 45s timeout, 1,000 max requests auto-recycle with 100 jitter), <code>hwb_postgres_dev</code> (PostgreSQL 16.15, <code>pgvector/pgvector:pg16</code> locally with volume <code>postgres_data_pg16</code> and Azure Database for PostgreSQL Flexible Server 16.15 on <code>sigmajan-server</code> in production; Port 5432; <code>84+</code> public tables, <code>vector 0.8.2</code>, <code>pg_trgm</code>, and <code>fuzzystrmatch</code>), and <code>hwb_agent_worker</code> (Autonomous Worker Container with 60-second coalesced worker heartbeats and direct Docker bridge container IP health checks in <code>watchdog.py</code> per <code>BUG-174</code>).</li>
             <li><strong>Database Connection Pool:</strong> PostgreSQL <code>ThreadedConnectionPool</code> expanded to min=2, max=28 connections in <code>core/services/database.py</code> to ensure 100% thread coverage across all 24 web request channels.</li>
             <li><strong>Autonomous Worker Browser Engine:</strong> <code>playwright 1.63.0</code> and <strong>Chrome Headless Shell (v1243)</strong> installed natively in <code>hwb_agent_worker</code> for portal crawling.</li>
             <li><strong>Statewide Hunter Crawler Fleet:</strong> <code>scripts/hunter_portal_crawler.py</code> continuously scouts 35 Texas municipal and ISD procurement portals on an autonomous 6-hour cycle.</li>
@@ -153,37 +153,47 @@
             <li>Verify Docker containers are healthy: <code>docker ps</code></li>
         </ol>
 
-        <h3 id="52-database-recovery">5.2 Database Restoration &amp; Migration Alignment</h3>
+        <h3 id="52-database-recovery">5.2 Database Restoration &amp; Peter Unified 3-Command Recovery Standard (<code>v2.0.0</code>)</h3>
+        <p>Strictly scoped to <code>/home/humbertoed/gemini_projects</code>, <code>scripts/peter_sentinel.py</code> (<code>v2.0.0</code>) provides the unified 3-command local recovery workflow:</p>
         <ol>
-            <li>Restore the latest binary PostgreSQL backup: <code>docker exec -i hwb_postgres_dev psql -U postgres -d hwb_crm &lt; backup_latest.sql</code></li>
-            <li>Run migration checks inside web container: <code>docker exec hwb_web_app python3 scripts/migrate_036_client_breadcrumbs.py</code></li>
-            <li>Verify lead count via audit endpoint: <code>curl -s http://localhost:5000/api/v1/db-audit</code></li>
-            <li>Run automated regression gate: <code>python3 scripts/tessa_regression_suite.py</code> and <code>python3 scripts/yamamoto_bid_test_suite.py</code></li>
+            <li><strong>Create Pinned Pre-Change Checkpoint:</strong> <code>python3 scripts/peter_sentinel.py checkpoint --label &lt;name&gt;</code> — Captures an owner-only (<code>chmod 600</code>) PostgreSQL 16.15 custom-format dump (<code>pg_dump -Fc</code>), <code>chmod 600</code> <code>.env</code> secret file, and complete active HWB code/QMS bundle (<code>hwb_code_bundle.tar.gz</code>) inside <code>backups/checkpoints/&lt;name&gt;/</code> with <code>SHA256SUMS.txt</code> (exempt from 24-hour auto-purge). Automatically test-restores the dump into temporary database <code>hwb_peter_verify_tmp</code>, confirms <code>80+</code> public tables, and drops the temporary database immediately.</li>
+            <li><strong>Execute Code-Only or Full Staging-Swap Rollback:</strong> <code>python3 scripts/peter_sentinel.py rollback --label &lt;name&gt; [--code-only | --full]</code> — <code>--code-only</code> restores the pinned code and QMS bundle and restarts <code>hwb_web_app</code>; <code>--full</code> restores the pinned PG16 dump into a clean staging database (<code>hwb_restore_stage</code>) first, briefly stops <code>hwb_web_app</code> and <code>hwb_agent_worker</code>, swaps <code>hwb_dev_db</code> cleanly so open database sockets and <code>"SecurityAuditLogs"</code> WORM triggers never block recovery, restarts both containers, and confirms all 4 supervised worker processes via <code>docker top hwb_agent_worker</code>.</li>
+            <li><strong>Verify Hourly Backup Health &amp; Checksum Integrity:</strong> <code>python3 scripts/peter_sentinel.py verify</code> — Confirms <code>backups/latest/hwb_dev_db.dump</code> is under 90 minutes old, non-empty, locked to <code>chmod 600</code>, and matches <code>hwb_dev_db.dump.sha256</code>, recording Peter's verification status in PostgreSQL <code>"AIEmployeeHeartbeat"</code> and <code>"SecurityAuditLogs"</code>.</li>
+            <li><strong>Run Post-Restore Quality Gates:</strong> Verify <code>curl -s http://127.0.0.1:5000/api/v1/db-audit</code>, <code>python3 scripts/tessa_regression_suite.py</code>, and <code>python3 scripts/yamamoto_bid_test_suite.py</code>.</li>
         </ol>
 
         <h3 id="53-panic-button-reset">5.3 The Panic Button (Working Tree Clean Reset)</h3>
-        <p>If local uncommitted code disrupts container execution: <code>git reset --hard HEAD &amp;&amp; git clean -fd</code> followed by <code>docker restart hwb_web_app</code>.</p>
+        <p>If local uncommitted code disrupts container execution, run <code>python3 scripts/peter_sentinel.py rollback --label &lt;name&gt; --code-only</code> (preferred) or <code>git reset --hard HEAD &amp;&amp; git clean -fd</code> followed by <code>docker restart hwb_web_app</code>.</p>
 
-        <h3 id="54-sovereign-grab-and-go">5.4 Sovereign Weather Catastrophe Recovery Appliance (Drive D:\ Grab-and-Go)</h3>
-        <p>In accordance with CEO Humberto Dominguez's executive directive for catastrophic weather events (tornadoes, hurricanes, freezes, floods, or hardware destruction), physical Drive <code>D:\</code> operates as an air-gapped, sovereign <strong>Grab-and-Go Recovery Appliance</strong>:</p>
+        <h3 id="54-sovereign-grab-and-go">5.4 Three-Layer Sovereign Backup &amp; Two-Tier Disaster Recovery Architecture (<code>v3.1.0</code> — <code>11/12/2026</code>)</h3>
+        <p>Legacy <code>sigma-peter.service</code> (15-minute daemon) and <code>/mnt/c/.../OneDrive</code> cross-OS <code>9P</code> backups are permanently retired (<code>BUG-173</code> / <code>SO-SCAR-023</code>) because <code>9P</code> file locking hangs WSL2. Production continuity operates across three sovereign layers:</p>
         <ul>
-            <li><strong>Drive Inventory:</strong> Contains <code>ubuntu-ext4.vhdx</code> (82 GiB raw virtual disk with full OS, <code>/gemini_projects</code>, and <code>.env</code> keys), <code>database_snapshots/hwb_dev_db.dump</code> (47.1 MB), 1-click launcher <code>restore-system.bat</code>, and emergency documentation (<code>README.html</code> and <code>EMERGENCY_RESTORE_INSTRUCTIONS.txt</code>).</li>
-            <li><strong>Foreign Machine Recovery:</strong> Plug into ANY Windows 10/11 computer, right-click <code>restore-system.bat</code>, select "Run as administrator", and type <code>RESTORE</code>. In under 5 minutes, HWB Cleaning Services LLC (<code>:5000</code>) is 100% operational with all 27,984 leads and PostgreSQL 16.15 relational tables intact.</li>
-            <li><strong>Pre-Storm Refresh Routine:</strong> Run <code>D:\run-backup.ps1</code> on primary workstation before major weather events to capture the latest relational database freeze and sync the virtual disk.</li>
+            <li><strong>Layer 1 — Hardened Hourly Native <code>ext4</code> Snapshots &amp; Peter Checkpoints:</strong> <code>scripts/hwb_hourly_backup.sh</code> runs via Linux <code>cron</code> at <code>:00</code> every hour, writing 24-hour rolling <code>pg_dump -Fc</code> PostgreSQL 16.15 binary snapshots with <code>chmod 600</code> owner-only permissions and <code>.sha256</code> checksums into <code>backups/hourly/</code> and <code>backups/latest/</code> (<code>hwb_dev_db.dump</code> + <code>hwb_dev_db.dump.sha256</code>), paired with <code>scripts/peter_sentinel.py</code> (<code>v2.0.0</code>) pinned vaults in <code>backups/checkpoints/</code>.</li>
+            <li><strong>Tier 1 Rescue (PC Intact, WSL2 / Ubuntu Hung or Broken):</strong> Open the Out-of-Band Windows Antigravity Rescue Cockpit at <code>C:\wsl-backup\SuperGeorge-Rescue</code> (configured in <code>Request Review</code> / <code>ASK</code> mode with zero <code>L:\</code> Linux drive dependency so Windows never freezes) or run PowerShell <code>C:\wsl-backup\restore-system.ps1</code>.</li>
+            <li><strong>Tier 2 Bare-Metal / Lost PC Nuclear Restore (Grab-and-Go USB Drive <code>D:\</code>):</strong>
+                <ol>
+                    <li>Run <code>wsl --install -d Ubuntu</code> in Administrator PowerShell and reboot.</li>
+                    <li>Install offline installers from <code>D:\Installers\</code>: <code>Docker Desktop Installer.exe</code> (Docker Hub User: <code>hdominguez11</code>, Email: <code>hdominguez@hwbcleaning.com</code>; enable <code>Settings -&gt; Resources -&gt; WSL Integration -&gt; Ubuntu</code> after Step 3) and <code>Antigravity-x64.exe</code> (Google login: <code>humbertoed@gmail.com</code>).</li>
+                    <li>Double-click <code>D:\restore-system.bat</code> (restores the <code>Ubuntu</code> WSL2 image from <code>D:\2026-data-backup-ubuntu\ubuntu-full.tar</code>, applies <code>.wslconfig</code> [<code>12GB</code> RAM / <code>6</code> CPUs], and verifies <code>/home/humbertoed/gemini_projects</code> and external sibling workspaces).</li>
+                    <li>Open Windows Antigravity -&gt; <code>File -&gt; Open Folder -&gt; D:\SuperGeorge-Rescue</code> (or connect to WSL <code>Ubuntu</code> once restored) and boot the local HWB container stack (<code>127.0.0.1:5000</code>).</li>
+                </ol>
+            </li>
         </ul>
 
         
-        <h2>5.5 Peter's 6-Directive Disaster Recovery &amp; Failover Flowchart</h2>
-        <p>The diagram below maps Peter's 6 Recovery Directives, hourly PostgreSQL 16.15 binary snapshots, daily environment freezes, and automated container restoration workflow (RTO &lt; 4 Hours, RPO &lt; 1 Hour).</p>
+        <h2>5.5 Three-Layer Sovereign Backup &amp; Two-Tier Failover Flowchart</h2>
+        <p>The diagram below maps Layer 1 hourly native <code>ext4</code> PostgreSQL 16.15 binary snapshots, Tier 1 Windows Out-of-Band Rescue, and Tier 2 Drive <code>D:\</code> Bare-Metal Nuclear Recovery (RTO &lt; 15 Minutes local / &lt; 4 Hours cloud, RPO &lt; 1 Hour).</p>
         <div class="mermaid-wrapper" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;">
             <div class="mermaid">
 flowchart TD
-    MON["Continuous 14-Rack Health Sentinel<br/>+ 15-Min Surge Protector (<500MB Logs)"] --> SNAP["Hourly pg_dump Binary Snapshot<br/>+ Azure 35-Day Geo-Redundant PITR"]
-    SNAP --> INC{"Outage or Data<br/>Drift Detected?"}
-    INC -- "Container / App Fault" --> ACR["Pull Immutable Image from sigmajanacr<br/>&amp; Restart 24-Slot Gunicorn Cluster (<5 Min)"]
-    INC -- "Database Corruption" --> PITR["Execute Point-in-Time Restore (PITR)<br/>to PostgreSQL 16.15 (84 Tables / 404,470 Rows)"]
-    ACR --> AUDIT["Run 27/27 Rack 14 + 77/77 SOC 2 Suite<br/>&amp; Log WORM Recovery Event"]
-    PITR --> AUDIT
+    MON["14-Rack Health Sentinel + 60s Watchdog<br/>+ Peter Verify (<90m, chmod 600, SHA-256)"] --> SNAP["Layer 1: hwb_hourly_backup.sh (:00 Cron) + peter_sentinel.py v2.0.0<br/>chmod 600 pg_dump -Fc + .sha256 + Pinned Checkpoints"]
+    SNAP --> INC{"Failure Mode<br/>Detected?"}
+    INC -- "Code or DB Drift" --> PETER["Peter Rollback: peter_sentinel.py rollback<br/>--code-only OR --full (hwb_restore_stage Swap)"]
+    INC -- "WSL2 Hung (PC Intact)" --> TIER1["Tier 1 Rescue Cockpit:<br/>C:\\wsl-backup\\SuperGeorge-Rescue or restore-system.ps1"]
+    INC -- "Bare-Metal / Lost PC" --> TIER2["Tier 2 Drive D:\\ Installers<br/>+ D:\\restore-system.bat"]
+    PETER --> AUDIT["Run peter_sentinel.py verify + Rack 14 Suite<br/>&amp; Log WORM Recovery Event"]
+    TIER1 --> AUDIT
+    TIER2 --> AUDIT
 
     style MON fill:#eff6ff,stroke:#2563eb,stroke-width:2px
     style SNAP fill:#fefce8,stroke:#ca8a04,stroke-width:2px
@@ -193,7 +203,7 @@ flowchart TD
 
         <h2>6.0 Verification &amp; Continuity Sign-Off</h2>
         <ul>
-            <li>Web application responds with HTTP 200 at <code>http://mop.test:5000</code>.</li>
+            <li>Web application responds with HTTP 200 at <code>http://127.0.0.1:5000/heartbeat</code>.</li>
             <li>PostgreSQL connection pool establishes within 1.0 ms latency.</li>
             <li>WORM immutability trigger actively prevents modification of <code>SecurityAuditLogs</code>.</li>
             <li>Telemetry breadcrumb ingestion (<code>POST /api/v1/telemetry/breadcrumbs</code>) records client interactions with 0 errors.</li>
@@ -212,6 +222,18 @@ flowchart TD
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">4.5.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter (Recovery Specialist) &amp; George</td>
+                    <td style="text-align: left;">Codified the Unified Peter 3-Command Local Recovery Standard (<code>scripts/peter_sentinel.py v2.0.0</code>: <code>checkpoint --label &lt;name&gt;</code> with <code>hwb_peter_verify_tmp</code> test-restore and <code>SHA256SUMS.txt</code>, <code>rollback --label &lt;name&gt; [--code-only | --full]</code> using clean staging database <code>hwb_restore_stage</code> to prevent open-socket and <code>"SecurityAuditLogs"</code> WORM trigger conflicts, and <code>verify</code> checking <code>&lt;90m</code> freshness, <code>chmod 600</code>, and SHA-256 with PostgreSQL <code>"AIEmployeeHeartbeat"</code> / <code>"SecurityAuditLogs"</code> reporting) alongside hardened <code>chmod 600</code> and <code>.sha256</code> checksum verification in <code>scripts/hwb_hourly_backup.sh</code>. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
+                <tr>
+                    <td style="text-align: left;">4.4.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">Peter (Recovery Specialist) &amp; George</td>
+                    <td style="text-align: left;">Codified the 3-Layer Sovereign Backup &amp; Two-Tier Disaster Recovery Architecture (<code>v3.0.0</code>): retired obsolete <code>sigma-peter.service</code> (15m daemon) and <code>/mnt/c/.../OneDrive</code> <code>9P</code> sync (BUG-173 / SO-SCAR-023), documented <code>scripts/hwb_hourly_backup.sh</code> (:00 cron native <code>ext4</code> <code>backups/hourly/</code>), Tier 1 Out-of-Band Windows Antigravity Rescue Cockpit (<code>C:\wsl-backup\SuperGeorge-Rescue</code> + <code>restore-system.ps1</code>), Tier 2 Bare-Metal Nuclear Restore on Drive <code>D:\</code> (<code>D:\Installers\Docker Desktop Installer.exe</code> + <code>Antigravity-x64.exe</code> + <code>D:\restore-system.bat</code> + <code>ubuntu-full.tar</code>), and BUG-174 60s <code>watchdog.py</code> bridge IP polling. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.1.0</td>
                     <td style="text-align: left;">10/24/2026</td>

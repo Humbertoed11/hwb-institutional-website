@@ -3467,7 +3467,7 @@
                 <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid var(--slate-200); margin-bottom: 1.5rem; flex-wrap: wrap;">
                     <button type="button" id="tab-btn-active-employees" onclick="switchWorkforceSubtab('active-employees')" class="isc-tab-trigger active" style="padding: 0.75rem 1.25rem; font-size: 0.85rem; border-bottom: 3px solid var(--brand); color: var(--brand); font-weight: 800; background: none; cursor: pointer;">
                         <i class="fas fa-id-badge" style="margin-right: 0.5rem;"></i> Active Personnel (W-2)
-                        <span style="margin-left: 0.5rem; background: #ecfdf5; color: #059669; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.72rem;">{{ active_employees_count or employees|length }}</span>
+                        <span id="tab-badge-active-employees" style="margin-left: 0.5rem; background: #ecfdf5; color: #059669; padding: 0.15rem 0.5rem; border-radius: 9999px; font-size: 0.72rem;">{{ active_employees_count if active_employees_count is not none else 0 }}</span>
                     </button>
                     <button type="button" id="tab-btn-technicians" onclick="switchWorkforceSubtab('technicians')" class="isc-tab-trigger" style="padding: 0.75rem 1.25rem; font-size: 0.85rem; border-bottom: 3px solid transparent; color: var(--slate-500); font-weight: 800; background: none; cursor: pointer;">
                         <i class="fas fa-user-check" style="margin-right: 0.5rem;"></i> Candidate Pool (ATS)
@@ -3491,17 +3491,19 @@
                 <div id="subtab-panel-active-employees">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="filter-employees-search" onkeyup="filterEmployeesTable()" placeholder="Search staff by name, #EMP, role, facility..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
-                            <select id="filter-employees-status" onchange="filterEmployeesTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                            <input type="text" id="filter-employees-search" aria-label="Search staff" onkeyup="filterEmployeesTable()" placeholder="Search staff by name, #EMP, role, facility..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 280px; font-weight: 600;">
+                            <select id="filter-employees-status" aria-label="Filter staff by status" onchange="filterEmployeesTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All Statuses</option>
                                 <option value="Active" selected>Active Only</option>
+                                <option value="Bench Ready">Bench Ready</option>
                                 <option value="On Leave">On Leave</option>
+                                <option value="Suspended">Suspended</option>
                                 <option value="Terminated">Terminated</option>
                             </select>
                         </div>
                         <div style="display: flex; gap: 0.75rem; align-items: center;">
                             <div style="font-size: 0.78rem; font-weight: 700; color: var(--slate-500);">
-                                Showing <span id="employees-visible-count">{{ employees|length }}</span> personnel
+                                Showing <span id="employees-visible-count">{{ active_employees_count if active_employees_count is not none else 0 }}</span> personnel
                             </div>
                             <button type="button" onclick="openDirectAddEmployeeModal()" class="isc-btn isc-btn-primary" style="height: 34px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.4rem; background: #059669; border-color: #059669;">
                                 <i class="fas fa-user-plus"></i> Add Employee
@@ -3526,7 +3528,7 @@
                             <tbody>
                                 {% if employees %}
                                     {% for emp in employees %}
-                                    <tr id="employee-row-{{ emp.id }}" class="employee-data-row" data-status="{{ emp.employment_status }}" data-search="{{ (emp.first_name ~ ' ' ~ emp.last_name ~ ' ' ~ emp.employee_number ~ ' ' ~ (emp.assigned_facility_name or '') ~ ' ' ~ emp.primary_role ~ ' ' ~ emp.phone)|lower }}" style="border-bottom: 1px solid var(--slate-100);">
+                                    <tr id="employee-row-{{ emp.id }}" class="employee-data-row" data-status="{{ emp.employment_status }}" data-search="{{ (emp.first_name ~ ' ' ~ emp.last_name ~ ' ' ~ emp.employee_number ~ ' ' ~ (emp.assigned_facility_name or '') ~ ' ' ~ emp.primary_role ~ ' ' ~ emp.phone)|lower }}" style="border-bottom: 1px solid var(--slate-100);{% if emp.employment_status != 'Active' %} display: none;{% endif %}">
                                         <td style="padding: 0.65rem 0.85rem;">
                                             <div style="font-weight: 800; font-size: 0.85rem;">
                                                 <a href="javascript:void(0)" onclick="openEmployeeEditModal({{ emp.id }})" style="color: var(--slate-900); text-decoration: none;" onmouseover="this.style.color='var(--brand)'" onmouseout="this.style.color='var(--slate-900)'">
@@ -3577,31 +3579,31 @@
                                             <div style="font-size: 0.72rem; color: var(--slate-500); font-weight: 600;">{{ emp.weekly_hours_allocated or 0 }} hrs/wk</div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <button type="button" onclick="openDocUploadModal({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.employee_number }}')" class="sigma-mini-btn" style="color: #2563eb; border-color: #bfdbfe; background: #eff6ff; font-weight: 700;">
+                                            <button type="button" data-name="{{ emp.first_name }} {{ emp.last_name }}" data-emp-num="{{ emp.employee_number }}" onclick="openDocUploadModal({{ emp.id }}, this)" class="sigma-mini-btn" style="color: #2563eb; border-color: #bfdbfe; background: #eff6ff; font-weight: 700;">
                                                 <i class="fas fa-folder-open"></i> Vault ({{ emp.document_count or 0 }})
                                             </button>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <span style="font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px; background: {% if emp.employment_status == 'Active' %}#ecfdf5{% elif emp.employment_status == 'On Leave' %}#fffbeb{% else %}#fee2e2{% endif %}; color: {% if emp.employment_status == 'Active' %}#065f46{% elif emp.employment_status == 'On Leave' %}#92400e{% else %}#991b1b{% endif %};">
+                                            <span id="employee-status-pill-{{ emp.id }}" style="font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px; background: {% if emp.employment_status == 'Active' %}#ecfdf5{% elif emp.employment_status == 'On Leave' %}#fffbeb{% else %}#fee2e2{% endif %}; color: {% if emp.employment_status == 'Active' %}#065f46{% elif emp.employment_status == 'On Leave' %}#92400e{% else %}#991b1b{% endif %};">
                                                 {{ emp.employment_status }}
                                             </span>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem; text-align: right;">
                                             <div style="display: inline-flex; gap: 0.35rem;">
-                                                <button type="button" onclick="sendEmployeeOnboardingLink({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}')" title="Copy Pre-Filled W-2 Self-Service Onboarding Link" class="sigma-mini-btn" style="color: #0284c7; background: #e0f2fe; border-color: #bae6fd;">
+                                                <button type="button" data-name="{{ emp.first_name }} {{ emp.last_name }}" onclick="sendEmployeeOnboardingLink({{ emp.id }}, this)" title="Copy Pre-Filled W-2 Self-Service Onboarding Link" class="sigma-mini-btn" style="color: #0284c7; background: #e0f2fe; border-color: #bae6fd;">
                                                     <i class="fas fa-link"></i>
                                                 </button>
-                                                <button type="button" onclick="openAssignTrainingModal('W2_EMPLOYEE', {{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.email or '' }}')" title="Assign Certification Package" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
+                                                <button type="button" data-name="{{ emp.first_name }} {{ emp.last_name }}" data-email="{{ emp.email or '' }}" onclick="openAssignTrainingModal('W2_EMPLOYEE', {{ emp.id }}, this)" title="Assign Certification Package" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </button>
                                                 <button type="button" onclick="openEmployeeEditModal({{ emp.id }})" title="Edit Employee Profile" class="sigma-mini-btn" style="color: var(--brand);">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button type="button" onclick="openDocUploadModal({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}', '{{ emp.employee_number }}')" title="Upload Documents (Auto-Extracts W-4, I-9, ID & Direct Deposit)" class="sigma-mini-btn" style="color: #059669;">
+                                                <button type="button" data-name="{{ emp.first_name }} {{ emp.last_name }}" data-emp-num="{{ emp.employee_number }}" onclick="openDocUploadModal({{ emp.id }}, this)" title="Upload Documents (Auto-Extracts W-4, I-9, ID & Direct Deposit)" class="sigma-mini-btn" style="color: #059669;">
                                                     <i class="fas fa-file-upload"></i>
                                                 </button>
-                                                <button type="button" onclick="deleteEmployeeRecord({{ emp.id }}, '{{ emp.first_name }} {{ emp.last_name }}')" title="Terminate / Remove Staff" class="sigma-mini-btn" style="color: #ef4444;">
-                                                    <i class="fas fa-user-slash"></i>
+                                                <button type="button" data-name="{{ emp.first_name }} {{ emp.last_name }}" data-status="{{ emp.employment_status }}" onclick="deleteEmployeeRecord({{ emp.id }}, this)" title="{{ 'Permanently Delete Terminated Record' if emp.employment_status == 'Terminated' else 'Terminate / Remove Staff' }}" class="sigma-mini-btn" style="color: #ef4444;">
+                                                    <i class="fas {{ 'fa-trash-alt' if emp.employment_status == 'Terminated' else 'fa-user-slash' }}"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -3624,18 +3626,19 @@
                 <div id="subtab-panel-technicians" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                            <input type="text" id="filter-applicants-search" onkeyup="filterApplicantsTable()" placeholder="Search applicants by name, city, phone..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 260px; font-weight: 600;">
-                            <select id="filter-applicants-department" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                            <input type="text" id="filter-applicants-search" aria-label="Search applicants" onkeyup="filterApplicantsTable()" placeholder="Search applicants by name, city, phone..." style="height: 34px; padding: 0 0.85rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; width: 260px; font-weight: 600;">
+                            <select id="filter-applicants-department" aria-label="Filter applicants by department" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All Departments</option>
                                 <option value="operations">🧹 Operations & Cleaning</option>
                                 <option value="sales">💼 Sales & Growth</option>
                             </select>
-                            <select id="filter-applicants-status" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
+                            <select id="filter-applicants-status" aria-label="Filter applicants by status" onchange="filterApplicantsTable()" style="height: 34px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.8rem; font-weight: 700; background: white; color: var(--slate-700);">
                                 <option value="">All Statuses</option>
                                 <option value="New">New</option>
                                 <option value="Phone Screened">Phone Screened</option>
                                 <option value="Bench Ready">Bench Ready</option>
                                 <option value="Hired">Hired</option>
+                                <option value="Terminated">Terminated</option>
                                 <option value="Archived">Archived</option>
                             </select>
                         </div>
@@ -3713,11 +3716,12 @@
                                             </div>
                                         </td>
                                         <td style="padding: 0.65rem 0.85rem;">
-                                            <select onchange="updateApplicantStatus({{ app.id }}, this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if app.status == 'Bench Ready' %}#ecfdf5{% elif app.status == 'Hired' %}#eff6ff{% elif app.status == 'Archived' %}#f8fafc{% else %}#fffbeb{% endif %}; color: {% if app.status == 'Bench Ready' %}#065f46{% elif app.status == 'Hired' %}#1e40af{% elif app.status == 'Archived' %}#64748b{% else %}#92400e{% endif %}; cursor: pointer;">
+                                            <select aria-label="Applicant status for {{ app.full_name }}" onchange="updateApplicantStatus({{ app.id }}, this.value, this)" style="height: 28px; padding: 0 0.5rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; border: 1px solid var(--slate-300); background: {% if app.status == 'Bench Ready' %}#ecfdf5{% elif app.status == 'Hired' %}#eff6ff{% elif app.status == 'Terminated' %}#fee2e2{% elif app.status == 'Archived' %}#f8fafc{% else %}#fffbeb{% endif %}; color: {% if app.status == 'Bench Ready' %}#065f46{% elif app.status == 'Hired' %}#1e40af{% elif app.status == 'Terminated' %}#991b1b{% elif app.status == 'Archived' %}#64748b{% else %}#92400e{% endif %}; cursor: pointer;">
                                                 <option value="New" {% if app.status == 'New' %}selected{% endif %}>New</option>
                                                 <option value="Phone Screened" {% if app.status == 'Phone Screened' %}selected{% endif %}>Phone Screened</option>
                                                 <option value="Bench Ready" {% if app.status == 'Bench Ready' %}selected{% endif %}>Bench Ready</option>
                                                 <option value="Hired" {% if app.status == 'Hired' %}selected{% endif %}>Hired</option>
+                                                <option value="Terminated" {% if app.status == 'Terminated' %}selected{% endif %}>Terminated</option>
                                                 <option value="Archived" {% if app.status == 'Archived' %}selected{% endif %}>Archived</option>
                                             </select>
                                         </td>
@@ -3976,7 +3980,7 @@
                                                 <button type="button" onclick="sendSubcontractorOnboardingLink({{ sub.id }}, this)" title="Review Initial Registration & Send Pre-Filled 1099 Onboarding Link" class="sigma-mini-btn" style="color: #7c3aed; background: #f3e8ff; border-color: #d8b4fe;">
                                                     <i class="fas fa-paper-plane"></i>
                                                 </button>
-                                                <button type="button" onclick="openAssignTrainingModal('1099_SUBCONTRACTOR', {{ sub.id }}, '{{ sub.contact_name or sub.company_name }}', '{{ sub.email or '' }}')" title="Assign Training / FastPass" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
+                                                <button type="button" data-name="{{ sub.contact_name or sub.company_name }}" data-email="{{ sub.email or '' }}" onclick="openAssignTrainingModal('1099_SUBCONTRACTOR', {{ sub.id }}, this)" title="Assign Training / FastPass" class="sigma-mini-btn" style="color: #6366f1; background: #ede9fe; border-color: #c7d2fe;">
                                                     <i class="fas fa-graduation-cap"></i>
                                                 </button>
                                                 <button type="button" onclick="openSubcontractorEditModal({{ sub.id }})" title="Edit Partner Profile" class="sigma-mini-btn" style="color: #7c3aed;">
@@ -4016,7 +4020,7 @@
                             <div style="display: flex; align-items: baseline; gap: 1rem; margin-top: 0.25rem;">
                                 <div style="font-size: 2rem; font-weight: 900; color: #38bdf8;">${{ "{:,.2f}".format(total_biweekly_payroll or 0) }}</div>
                                 <div style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600;">
-                                    Across <strong>{{ active_employees_count or employees|length }}</strong> Active W-2 Cleaners • <strong>{{ "{:,.1f}".format(total_weekly_labor_hours or 0) }}</strong> Allocated Hrs/Wk
+                                    Across <strong>{{ active_employees_count if active_employees_count is not none else 0 }}</strong> Active W-2 Cleaners • <strong>{{ "{:,.1f}".format(total_weekly_labor_hours or 0) }}</strong> Allocated Hrs/Wk
                                 </div>
                             </div>
                         </div>
@@ -4043,9 +4047,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if employees %}
-                                    {% for emp in employees %}
-                                    {% if emp.employment_status == 'Active' %}
+                                {% if active_technicians %}
+                                    {% for emp in active_technicians %}
                                     {% set biweekly_hours = (emp.weekly_hours_allocated or 0) * 2 %}
                                     {% set biweekly_gross = biweekly_hours * (emp.pay_rate_hourly or 0) %}
                                     <tr style="border-bottom: 1px solid var(--slate-100);">
@@ -4080,7 +4083,6 @@
                                             </span>
                                         </td>
                                     </tr>
-                                    {% endif %}
                                     {% endfor %}
                                 {% else %}
                                     <tr>
@@ -5581,29 +5583,29 @@
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">First Name *</label>
+                    <label for="onboard-first-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">First Name *</label>
                     <input type="text" id="onboard-first-name" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Last Name *</label>
+                    <label for="onboard-last-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Last Name *</label>
                     <input type="text" id="onboard-last-name" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
+                    <label for="onboard-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
                     <input type="tel" id="onboard-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                    <label for="onboard-email" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
                     <input type="email" id="onboard-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="cleaner@example.com">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Role & Position Profile *</label>
+                    <label for="onboard-role" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Role & Position Profile *</label>
                     <select id="onboard-role" onchange="onOnboardRoleChange()" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         {% if job_positions %}
                             {% for pos in job_positions %}
@@ -5622,7 +5624,7 @@
                     </div>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Type</label>
+                    <label for="onboard-type" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Type</label>
                     <select id="onboard-type" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         <option value="W-2 Full-Time" selected>W-2 Full-Time</option>
                         <option value="W-2 Part-Time">W-2 Part-Time</option>
@@ -5633,22 +5635,22 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Hourly Rate ($/hr) *</label>
+                    <label for="onboard-pay-rate" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Hourly Rate ($/hr) *</label>
                     <input type="number" step="0.25" min="10" id="onboard-pay-rate" required value="16.00" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Overtime Rate ($/hr)</label>
+                    <label for="onboard-overtime-rate" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Overtime Rate ($/hr)</label>
                     <input type="number" step="0.25" min="15" id="onboard-overtime-rate" value="24.00" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Weekly Hours</label>
+                    <label for="onboard-weekly-hours" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Weekly Hours</label>
                     <input type="number" step="1" min="1" max="80" id="onboard-weekly-hours" value="40" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Assigned Commercial Facility</label>
+                    <label for="onboard-facility" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Assigned Commercial Facility</label>
                     <select id="onboard-facility" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         <option value="">Floater / Unassigned</option>
                         {% for client in clients %}
@@ -5657,18 +5659,18 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Hire Date</label>
+                    <label for="onboard-hire-date" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Hire Date</label>
                     <input type="date" id="onboard-hire-date" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Texas Region</label>
+                    <label for="onboard-city" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Texas Region</label>
                     <input type="text" id="onboard-city" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Dallas">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Language</label>
+                    <label for="onboard-language" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Language</label>
                     <select id="onboard-language" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         <option value="Spanish" selected>Spanish</option>
                         <option value="English">English</option>
@@ -5679,17 +5681,17 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Name</label>
+                    <label for="onboard-emergency-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Name</label>
                     <input type="text" id="onboard-emergency-name" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Contact Person">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
+                    <label for="onboard-emergency-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
                     <input type="tel" id="onboard-emergency-phone" maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Onboarding Notes / Shift Schedule</label>
+                <label for="onboard-notes" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Onboarding Notes / Shift Schedule</label>
                 <textarea id="onboard-notes" class="sigma-input" style="width: 100%; height: 75px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;" placeholder="e.g. Assigned to evening shift 6pm-10pm Mon-Fri at Trinity Christian..."></textarea>
             </div>
 
@@ -5749,37 +5751,37 @@
             <div id="emp-tab-panel-profile" class="isc-emp-panel">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">First Name *</label>
+                        <label for="edit-emp-first-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">First Name *</label>
                         <input type="text" id="edit-emp-first-name" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Last Name *</label>
+                        <label for="edit-emp-last-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Last Name *</label>
                         <input type="text" id="edit-emp-last-name" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
+                        <label for="edit-emp-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
                         <input type="tel" id="edit-emp-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                        <label for="edit-emp-email" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
                         <input type="email" id="edit-emp-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Street Address</label>
+                        <label for="edit-emp-street" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Street Address</label>
                         <input type="text" id="edit-emp-street" class="sigma-input" placeholder="e.g. 1200 Preston Rd" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City</label>
+                        <label for="edit-emp-city" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City</label>
                         <input type="text" id="edit-emp-city" class="sigma-input" placeholder="Frisco" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Zip Code</label>
+                        <label for="edit-emp-zip" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Zip Code</label>
                         <input type="text" id="edit-emp-zip" maxlength="10" inputmode="numeric" oninput="maskZipInput(this)" class="sigma-input" placeholder="75034" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
@@ -5790,7 +5792,7 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Status *</label>
+                            <label for="edit-emp-status" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Status *</label>
                             <select id="edit-emp-status" onchange="onEmpStatusChange()" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                                 <option value="Active">Active</option>
                                 <option value="Bench Ready">Bench Ready</option>
@@ -5800,7 +5802,7 @@
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Rehire Eligibility</label>
+                            <label for="edit-emp-eligible-rehire" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Rehire Eligibility</label>
                             <select id="edit-emp-eligible-rehire" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                                 <option value="true">Yes — Eligible for Rehire</option>
                                 <option value="false">No — Ineligible (Do Not Rehire)</option>
@@ -5818,7 +5820,7 @@
 
                     <!-- Termination Reason Row (shown when Terminated/Suspended) -->
                     <div id="edit-emp-term-row" style="display: none; margin-bottom: 0.75rem;">
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #991b1b; margin-bottom: 0.35rem;">Termination / Separation Reason</label>
+                        <label for="edit-emp-termination-reason" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #991b1b; margin-bottom: 0.35rem;">Termination / Separation Reason</label>
                         <select id="edit-emp-termination-reason" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid #fca5a5; font-size: 0.85rem; font-weight: 600; background: white; box-sizing: border-box;">
                             <option value="">Select Reason...</option>
                             <option value="Voluntary Resignation">Voluntary Resignation</option>
@@ -5834,11 +5836,11 @@
                     <!-- PTO / Leave Window -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">PTO / Leave Start Date</label>
+                            <label for="edit-emp-pto-start" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">PTO / Leave Start Date</label>
                             <input type="date" id="edit-emp-pto-start" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">PTO / Leave End Date</label>
+                            <label for="edit-emp-pto-end" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">PTO / Leave End Date</label>
                             <input type="date" id="edit-emp-pto-end" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                     </div>
@@ -5853,19 +5855,19 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Pay Rate ($/hr) *</label>
+                            <label for="edit-emp-pay-rate" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Pay Rate ($/hr) *</label>
                             <input type="number" step="0.25" min="10" id="edit-emp-pay-rate" oninput="autoCalcOvertime()" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Overtime Rate ($/hr)</label>
+                            <label for="edit-emp-overtime-rate" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Overtime Rate ($/hr)</label>
                             <input type="number" step="0.25" min="15" id="edit-emp-overtime-rate" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Weekly Hours</label>
+                            <label for="edit-emp-weekly-hours" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Weekly Hours</label>
                             <input type="number" step="1" min="0" max="80" id="edit-emp-weekly-hours" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Pay Frequency</label>
+                            <label for="edit-emp-pay-frequency" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Pay Frequency</label>
                             <select id="edit-emp-pay-frequency" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                                 <option value="Bi-Weekly">Bi-Weekly</option>
                                 <option value="Semi-Monthly">Semi-Monthly</option>
@@ -5892,7 +5894,7 @@
                     <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
                         <div>
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
-                                <label style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">
+                                <label for="edit-emp-ssn" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin: 0;">
                                     Social Security Number / ITIN
                                 </label>
                                 <span id="ssn-reveal-countdown" style="display: none; font-size: 0.7rem; font-weight: 800; color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 1px 6px; border-radius: 4px;">
@@ -5910,7 +5912,7 @@
                             </div>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 1(c) Filing Status</label>
+                            <label for="edit-emp-w4-status" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 1(c) Filing Status</label>
                             <select id="edit-emp-w4-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                                 <option value="Single">Single or Separate</option>
                                 <option value="Married">Married Filing Jointly</option>
@@ -5921,15 +5923,15 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.75rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 3: Dependents Credit ($)</label>
+                            <label for="edit-emp-w4-step3" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 3: Dependents Credit ($)</label>
                             <input type="number" step="50" min="0" id="edit-emp-w4-step3" placeholder="0.00" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 4(c): Extra Withholding ($)</label>
+                            <label for="edit-emp-w4-step4c" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Step 4(c): Extra Withholding ($)</label>
                             <input type="number" step="5" min="0" id="edit-emp-w4-step4c" placeholder="0.00" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                         </div>
                     </div>
-                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--slate-700); cursor: pointer; user-select: none;">
+                    <label for="edit-emp-w4-step2" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 700; color: var(--slate-700); cursor: pointer; user-select: none;">
                         <input type="checkbox" id="edit-emp-w4-step2" style="width: 16px; height: 16px;">
                         <span>Step 2(c): Employee holds multiple jobs or spouse also works</span>
                     </label>
@@ -5941,15 +5943,15 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Bank Name</label>
+                            <label for="edit-emp-bank-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Bank Name</label>
                             <input type="text" id="edit-emp-bank-name" placeholder="e.g. Chase / Wells Fargo" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Routing Number (9 Digits)</label>
+                            <label for="edit-emp-bank-routing" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Routing Number (9 Digits)</label>
                             <input type="text" id="edit-emp-bank-routing" maxlength="9" inputmode="numeric" oninput="maskRoutingInput(this)" placeholder="111000025" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Account Number</label>
+                            <label for="edit-emp-bank-account" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Account Number</label>
                             <input type="text" id="edit-emp-bank-account" placeholder="Checking/Savings #" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                     </div>
@@ -5964,11 +5966,11 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Texas ID / Driver License #</label>
+                            <label for="edit-emp-state-id" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Texas ID / Driver License #</label>
                             <input type="text" id="edit-emp-state-id" placeholder="e.g. 29384711" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">State ID Expiration Date</label>
+                            <label for="edit-emp-state-id-exp" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">State ID Expiration Date</label>
                             <input type="date" id="edit-emp-state-id-exp" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                     </div>
@@ -5980,11 +5982,11 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Form I-9 Verification Date</label>
+                            <label for="edit-emp-i9-date" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Form I-9 Verification Date</label>
                             <input type="date" id="edit-emp-i9-date" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Texas DPS FACT Fingerprint Clearance</label>
+                            <label for="edit-emp-dps-date" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Texas DPS FACT Fingerprint Clearance</label>
                             <input type="date" id="edit-emp-dps-date" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                         </div>
                     </div>
@@ -5996,7 +5998,7 @@
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: center;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Badge Security Status *</label>
+                            <label for="edit-emp-badge-status" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Badge Security Status *</label>
                             <select id="edit-emp-badge-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                                 <option value="Active">Active — Campus Authorized</option>
                                 <option value="Suspended">Suspended — Temporary Hold</option>
@@ -6014,17 +6016,22 @@
             <div id="emp-tab-panel-facility" class="isc-emp-panel" style="display: none;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Role</label>
+                        <label for="edit-emp-role" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Role</label>
                         <select id="edit-emp-role" onchange="onEditEmpRoleChange()" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
-                            <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
-                            <option value="Post-Construction Cleaner">Post-Construction Cleaner</option>
-                            <option value="Floor Care Specialist">Floor Care Specialist</option>
-                            <option value="Lead Cleaning Supervisor">Lead Cleaning Supervisor</option>
-                            <option value="Operations Assistant">Operations Assistant</option>
+                            {% if job_positions %}
+                                {% for pos in job_positions %}
+                                <option value="{{ pos.title }}">{{ pos.title }}</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="Commercial Cleaning Technician">Commercial Cleaning Technician</option>
+                                <option value="Floor Care & Heavy Equipment Specialist">Floor Care & Heavy Equipment Specialist</option>
+                                <option value="Lead Cleaning Site Supervisor">Lead Cleaning Site Supervisor</option>
+                                <option value="Cleanroom & Sanitization Technician">Cleanroom & Sanitization Technician</option>
+                            {% endif %}
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Type</label>
+                        <label for="edit-emp-type" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Employment Type</label>
                         <select id="edit-emp-type" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                             <option value="W-2 Full-Time">W-2 Full-Time</option>
                             <option value="W-2 Part-Time">W-2 Part-Time</option>
@@ -6035,7 +6042,7 @@
 
                 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Assigned Commercial Facility</label>
+                        <label for="edit-emp-facility" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Assigned Commercial Facility</label>
                         <select id="edit-emp-facility" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                             <option value="">Floater / Unassigned</option>
                             {% for client in clients %}
@@ -6044,7 +6051,7 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Language</label>
+                        <label for="edit-emp-language" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Language</label>
                         <select id="edit-emp-language" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                             <option value="Spanish">Spanish</option>
                             <option value="English">English</option>
@@ -6068,7 +6075,7 @@
 
                     <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 0.85rem;">
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">
+                            <label for="edit-emp-job-position" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">
                                 Standardized Position Profile (HWB-FORM-7.2-001)
                             </label>
                             <select id="edit-emp-job-position" onchange="onEditEmpPositionChange()" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
@@ -6079,7 +6086,7 @@
                             </select>
                         </div>
                         <div>
-                            <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">
+                            <label for="edit-emp-wage-bracket" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">
                                 Approved Wage Bracket
                             </label>
                             <input type="text" id="edit-emp-wage-bracket" readonly class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: #f1f5f9; font-size: 0.85rem; font-weight: 700; color: #059669; box-sizing: border-box;" value="Select position...">
@@ -6098,11 +6105,11 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Name</label>
+                        <label for="edit-emp-emergency-name" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Name</label>
                         <input type="text" id="edit-emp-emergency-name" class="sigma-input" placeholder="Full contact name" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
+                        <label for="edit-emp-emergency-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Emergency Contact Phone</label>
                         <input type="tel" id="edit-emp-emergency-phone" maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" placeholder="(972)-555-0199" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                     </div>
                 </div>
@@ -6111,7 +6118,7 @@
             <!-- TAB 5: Disciplinary & Notes -->
             <div id="emp-tab-panel-notes" class="isc-emp-panel" style="display: none;">
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Internal Personnel Notes & Administrative History</label>
+                    <label for="edit-emp-notes" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Internal Personnel Notes & Administrative History</label>
                     <textarea id="edit-emp-notes" class="sigma-input" placeholder="Record uniform issuances, disciplinary warnings, supervisor commendations, or administrative logs..." style="width: 100%; height: 160px; padding: 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box; line-height: 1.5;"></textarea>
                 </div>
                 <div style="background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.75rem; color: var(--slate-500); display: flex; align-items: center; gap: 0.5rem;">
@@ -6249,7 +6256,7 @@
 
             <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Document Classification *</label>
+                    <label for="upload-doc-type" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Document Classification *</label>
                     <select id="upload-doc-type" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         <option value="Form I-9" selected>Form I-9 (Employment Eligibility)</option>
                         <option value="Form W-4">Form W-4 (Employee Withholding)</option>
@@ -6261,18 +6268,18 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Doc Expiration Date</label>
+                    <label for="upload-doc-expiration" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Doc Expiration Date</label>
                     <input type="date" id="upload-doc-expiration" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">File Attachment (PDF, PNG, JPG) *</label>
+                <label for="upload-doc-file" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">File Attachment (PDF, PNG, JPG) *</label>
                 <input type="file" id="upload-doc-file" required accept=".pdf,.png,.jpg,.jpeg" class="sigma-input" style="width: 100%; height: 38px; padding: 4px; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; box-sizing: border-box;">
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Compliance Notes / Verification Comment</label>
+                <label for="upload-doc-notes" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Compliance Notes / Verification Comment</label>
                 <input type="text" id="upload-doc-notes" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;" placeholder="e.g. Verified against Texas DL #, expires 2028">
             </div>
 
@@ -6307,7 +6314,7 @@
         <form id="form-subcontractor-onboard" onsubmit="saveSubcontractorOnboard(event)">
             <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name / DBA *</label>
+                    <label for="sub-onboard-company" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name / DBA *</label>
                     <input type="text" id="sub-onboard-company" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="e.g. Apex Commercial Floor Care LLC">
                 </div>
                 <div>
@@ -6323,32 +6330,32 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Trade Contact *</label>
+                    <label for="sub-onboard-contact" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Primary Trade Contact *</label>
                     <input type="text" id="sub-onboard-contact" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Owner or Lead Dispatcher">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
+                    <label for="sub-onboard-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Mobile Phone *</label>
                     <input type="tel" id="sub-onboard-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="(972)-000-0000">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                    <label for="sub-onboard-email" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
                     <input type="email" id="sub-onboard-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="partner@cleaningcompany.com">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Operating City / State</label>
+                    <label for="sub-onboard-city" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Operating City / State</label>
                     <div style="display: flex; gap: 0.5rem;">
                         <input type="text" id="sub-onboard-city" class="sigma-input" style="flex: 2; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="Dallas">
-                        <input type="text" id="sub-onboard-state" value="TX" class="sigma-input" style="flex: 1; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; text-align: center; box-sizing: border-box;">
+                        <input type="text" id="sub-onboard-state" value="TX" aria-label="Operating State" class="sigma-input" style="flex: 1; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; text-align: center; box-sizing: border-box;">
                     </div>
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size (Laborers) *</label>
+                    <label for="sub-onboard-crew" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size (Laborers) *</label>
                     <input type="number" min="1" max="50" id="sub-onboard-crew" required value="2" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
@@ -6356,17 +6363,18 @@
                     <input type="text" id="sub-onboard-rate" value="$25 - $35/hr" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
+                    <label for="sub-onboard-status" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
                     <select id="sub-onboard-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
-                        <option value="Active Partner" selected>Active Partner</option>
-                        <option value="Vetting">Vetting</option>
+                        <option value="Vetting" selected>Vetting</option>
+                        <option value="Pending COI">Pending COI</option>
                         <option value="On Standby">On Standby</option>
+                        <option value="Active Partner">Active Partner (Requires Verified COI/W-9/MSA)</option>
                     </select>
                 </div>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties & Capabilities</label>
+                <label for="sub-onboard-specialties" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties & Capabilities</label>
                 <input type="text" id="sub-onboard-specialties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;" placeholder="e.g. Commercial Cleaning, Post-Construction Final, Strip & Wax, Window Washing">
             </div>
 
@@ -6376,19 +6384,19 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
+                        <label for="sub-onboard-coi-status" style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
                         <select id="sub-onboard-coi-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
                             <option value="Pending" selected>Pending COI</option>
                             <option value="Verified">Verified ✓</option>
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration Date</label>
+                        <label for="sub-onboard-coi-date" style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration Date</label>
                         <input type="date" id="sub-onboard-coi-date" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; border-radius: 4px; border: 1px solid var(--slate-300);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83 Form</label>
-                        <label style="display: flex; align-items: center; gap: 0.4rem; height: 32px; font-size: 0.78rem; font-weight: 700; color: #065f46; cursor: pointer;">
+                        <div style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83 Form</div>
+                        <label for="sub-onboard-dwc83" style="display: flex; align-items: center; gap: 0.4rem; height: 32px; font-size: 0.78rem; font-weight: 700; color: #065f46; cursor: pointer;">
                             <input type="checkbox" id="sub-onboard-dwc83" style="width: 16px; height: 16px; accent-color: var(--brand);">
                             DWC-83 Executed
                         </label>
@@ -6397,7 +6405,7 @@
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Vetting Notes & Capacity Details</label>
+                <label for="sub-onboard-notes" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Vetting Notes & Capacity Details</label>
                 <textarea id="sub-onboard-notes" class="sigma-input" style="width: 100%; height: 75px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;" placeholder="e.g. Vetted crew of 4 with commercial ride-on scrubbers; available for Frisco / Plano night shifts..."></textarea>
             </div>
 
@@ -6436,14 +6444,16 @@
             
             <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name *</label>
+                    <label for="edit-sub-company" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Company Legal Name *</label>
                     <input type="text" id="edit-sub-company" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
+                    <label for="edit-sub-status" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Status</label>
                     <select id="edit-sub-status" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
-                        <option value="Active Partner">Active Partner</option>
                         <option value="Vetting">Vetting</option>
+                        <option value="Pending COI">Pending COI</option>
+                        <option value="Docs Submitted">Docs Submitted</option>
+                        <option value="Active Partner">Active Partner</option>
                         <option value="On Standby">On Standby</option>
                         <option value="Do Not Use">Do Not Use</option>
                     </select>
@@ -6452,15 +6462,15 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Contact Name *</label>
+                    <label for="edit-sub-contact" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Contact Name *</label>
                     <input type="text" id="edit-sub-contact" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Phone Number *</label>
+                    <label for="edit-sub-phone" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Phone Number *</label>
                     <input type="tel" id="edit-sub-phone" required maxlength="14" inputmode="numeric" oninput="maskPhoneInput(this)" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
+                    <label for="edit-sub-email" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Email Address</label>
                     <input type="email" id="edit-sub-email" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
             </div>
@@ -6479,18 +6489,18 @@
                     <input type="text" id="edit-sub-ein" maxlength="10" inputmode="numeric" data-tax-mode="ein" data-ein-only="true" oninput="maskTaxIdInput(this)" placeholder="XX-XXXXXXX" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; font-family: monospace; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Hub</label>
+                    <label for="edit-sub-city" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">City / Hub</label>
                     <input type="text" id="edit-sub-city" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Coverage Counties</label>
+                    <label for="edit-sub-counties" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Coverage Counties</label>
                     <input type="text" id="edit-sub-counties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size</label>
+                    <label for="edit-sub-crew" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Crew Size</label>
                     <input type="number" min="1" max="50" id="edit-sub-crew" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
@@ -6498,13 +6508,13 @@
                     <input type="text" id="edit-sub-rate" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Rating (1-5★)</label>
+                    <label for="edit-sub-rating" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Partner Rating (1-5★)</label>
                     <input type="number" step="0.1" min="1.0" max="5.0" id="edit-sub-rating" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties</label>
+                <label for="edit-sub-specialties" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Trade Specialties</label>
                 <input type="text" id="edit-sub-specialties" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 600; box-sizing: border-box;">
             </div>
 
@@ -6514,7 +6524,7 @@
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem;">
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
+                        <label for="edit-sub-coi-status" style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Status</label>
                         <select id="edit-sub-coi-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
                             <option value="Pending">Pending</option>
                             <option value="Verified">Verified ✓</option>
@@ -6522,19 +6532,19 @@
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration</label>
+                        <label for="edit-sub-coi-date" style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">COI Expiration</label>
                         <input type="date" id="edit-sub-coi-date" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; border-radius: 4px; border: 1px solid var(--slate-300);">
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Form W-9</label>
+                        <label for="edit-sub-w9-status" style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Form W-9</label>
                         <select id="edit-sub-w9-status" class="sigma-input" style="width: 100%; height: 32px; padding: 0 0.5rem; font-size: 0.78rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--slate-300); background: white;">
                             <option value="Pending">Pending</option>
                             <option value="Verified">Verified ✓</option>
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83</label>
-                        <label style="display: flex; align-items: center; gap: 0.35rem; height: 32px; font-size: 0.75rem; font-weight: 700; color: #065f46; cursor: pointer;">
+                        <div style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--slate-600); margin-bottom: 0.25rem;">Texas DWC-83</div>
+                        <label for="edit-sub-dwc83" style="display: flex; align-items: center; gap: 0.35rem; height: 32px; font-size: 0.75rem; font-weight: 700; color: #065f46; cursor: pointer;">
                             <input type="checkbox" id="edit-sub-dwc83" style="width: 16px; height: 16px; accent-color: var(--brand);">
                             Signed ✓
                         </label>
@@ -6543,7 +6553,7 @@
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Internal Trade Partner Notes</label>
+                <label for="edit-sub-notes" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Internal Trade Partner Notes</label>
                 <textarea id="edit-sub-notes" class="sigma-input" style="width: 100%; height: 75px; padding: 0.5rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; box-sizing: border-box;"></textarea>
             </div>
 
@@ -6660,7 +6670,7 @@
 
             <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Document Classification *</label>
+                    <label for="upload-sub-doc-type" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Document Classification *</label>
                     <select id="upload-sub-doc-type" required class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; background: white; box-sizing: border-box;">
                         <option value="Certificate of Insurance (COI)" selected>Certificate of Insurance (COI)</option>
                         <option value="Form W-9">Form W-9 (Taxpayer ID)</option>
@@ -6669,13 +6679,13 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Policy Expiration Date</label>
+                    <label for="upload-sub-doc-expiration" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">Policy Expiration Date</label>
                     <input type="date" id="upload-sub-doc-expiration" class="sigma-input" style="width: 100%; height: 36px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.85rem; font-weight: 700; box-sizing: border-box;">
                 </div>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">File Attachment (PDF, PNG, JPG) *</label>
+                <label for="upload-sub-doc-file" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.35rem;">File Attachment (PDF, PNG, JPG) *</label>
                 <input type="file" id="upload-sub-doc-file" required accept=".pdf,.png,.jpg,.jpeg" class="sigma-input" style="width: 100%; height: 38px; padding: 4px; border-radius: 6px; border: 1px solid var(--slate-300); font-size: 0.82rem; box-sizing: border-box;">
             </div>
 
@@ -6718,7 +6728,7 @@
                 </label>
                 <textarea id="wf-notes-textarea" class="sigma-input" style="width: 100%; height: 160px; resize: vertical; font-size: 0.85rem; line-height: 1.5; padding: 0.75rem; font-family: inherit; box-sizing: border-box; border-radius: 6px; border: 1px solid var(--slate-300);" placeholder="Enter notes from phone screen, clean testing assessment, vehicle verification, or special rate agreements..."></textarea>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.4rem; font-size: 0.72rem; color: var(--slate-400); font-weight: 600;">
-                    <span><i class="fas fa-database" style="color: #10b981; margin-right: 4px;"></i> Persists to PostgreSQL SigmaSystemCore</span>
+                    <span><i class="fas fa-check-circle" style="color: #10b981; margin-right: 4px;"></i> Saved to Workforce Record History</span>
                     <span id="wf-notes-char-count">0 characters</span>
                 </div>
             </div>
@@ -6758,17 +6768,17 @@
             <input type="hidden" id="assign-target-name" value="">
             <input type="hidden" id="assign-target-email" value="">
 
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+            <div role="group" aria-label="Assignment Type" style="margin-bottom: 1.25rem;">
+                <div style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
                     Assignment Type
-                </label>
+                </div>
                 <div style="display: flex; gap: 1rem;">
-                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
-                        <input type="radio" name="assignment_mode" value="PACKAGE" checked onchange="toggleAssignmentMode(this.value)">
+                    <label for="assign-mode-package" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                        <input type="radio" id="assign-mode-package" name="assignment_mode" value="PACKAGE" checked onchange="toggleAssignmentMode(this.value)">
                         Role Package (Curriculum Bundle)
                     </label>
-                    <label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
-                        <input type="radio" name="assignment_mode" value="COURSE" onchange="toggleAssignmentMode(this.value)">
+                    <label for="assign-mode-course" style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+                        <input type="radio" id="assign-mode-course" name="assignment_mode" value="COURSE" onchange="toggleAssignmentMode(this.value)">
                         Individual Course
                     </label>
                 </div>
@@ -6801,7 +6811,7 @@
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    <label for="assign-due-days" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
                         Completion Grace Period
                     </label>
                     <select id="assign-due-days" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);">
@@ -6811,7 +6821,7 @@
                     </select>
                 </div>
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
+                    <label for="assign-authority" style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--slate-600); margin-bottom: 0.5rem;">
                         Assigned By Authority
                     </label>
                     <input type="text" id="assign-authority" value="CEO Humberto Dominguez" class="sigma-input" style="width: 100%; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; font-weight: 600; border-radius: 6px; border: 1px solid var(--slate-300);" readonly>
@@ -6827,7 +6837,7 @@
                     Send this personalized magic link to the candidate via SMS or email:
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="assign-magic-url-input" class="sigma-input" style="flex: 1; height: 34px; padding: 0 0.75rem; font-size: 0.8rem; font-family: monospace; border: 1px solid #6ee7b7; border-radius: 4px; background: #ffffff;" readonly>
+                    <input type="text" id="assign-magic-url-input" aria-label="Training Access Link" class="sigma-input" style="flex: 1; height: 34px; padding: 0 0.75rem; font-size: 0.8rem; font-family: monospace; border: 1px solid #6ee7b7; border-radius: 4px; background: #ffffff;" readonly>
                     <button type="button" onclick="copyAssignMagicLink()" class="isc-btn" style="background: #059669; color: white; border: none; height: 34px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; border-radius: 4px; cursor: pointer;">
                         <i class="fas fa-copy"></i> Copy
                     </button>

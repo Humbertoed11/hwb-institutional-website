@@ -1,0 +1,41 @@
+{
+  "super-memory-auto-governor": {
+    "enabled": true,
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "/usr/bin/python3 /home/humbertoed/babysop/special-ops/scripts/agy_auto_compact_hook.py",
+        "timeout": 5
+      }
+    ]
+  },
+  "fortune500-closed-loop-governor": {
+    "enabled": false,
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "/usr/bin/python3 /home/humbertoed/babysop/special-ops/scripts/agy_fortune500_gate_hook.py --mode pre_invocation",
+        "timeout": 5
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "write_file|edit_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 /home/humbertoed/babysop/special-ops/scripts/agy_fortune500_gate_hook.py --mode pre_tool_use",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "/usr/bin/python3 /home/humbertoed/babysop/special-ops/scripts/agy_fortune500_gate_hook.py --mode stop",
+        "timeout": 5
+      }
+    ]
+  }
+}

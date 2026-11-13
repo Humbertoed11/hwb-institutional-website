@@ -1544,6 +1544,11 @@ def admin_operations():
         try:
             def serialize_row(row):
                 d = dict(row)
+                for secret_col in (
+                    'ssn_encrypted', 'w9_tin_encrypted',
+                    'direct_deposit_account_encrypted', 'ssn_hmac', 'ein_hmac'
+                ):
+                    d.pop(secret_col, None)
                 for k, v in d.items():
                     if isinstance(v, (datetime.date, datetime.datetime)):
                         d[k] = v.isoformat()
@@ -2934,7 +2939,16 @@ def sigma_executive():
                 recent_leads = []
 
             uptime = {'status': 'ACTIVE'}
-            analytics = {'cpk': '6.67', 'dpmo': '1,785', 'rty': '97.0%'}
+            analytics = {}
+            try:
+                cur.execute('SELECT tool_name, result FROM "Analytics";')
+                for a_row in cur.fetchall():
+                    if isinstance(a_row, dict):
+                        analytics[str(a_row.get('tool_name') or '')] = a_row.get('result')
+                    elif a_row and len(a_row) >= 2:
+                        analytics[str(a_row[0] or '')] = a_row[1]
+            except Exception:
+                conn.rollback()
 
             try:
                 cur.execute('SELECT * FROM "KPIVs"')

@@ -60,9 +60,12 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
     Internal synchronous worker that audits all system credentials, API tokens,
     SSL certificates, and client secrets.
     """
+    prior_db_url = os.environ.get("DATABASE_URL")
     resolved_env = find_env_file(env_path)
     if resolved_env:
         load_dotenv(resolved_env, override=True)
+    if prior_db_url and "@db:" in prior_db_url and os.path.exists("/.dockerenv"):
+        os.environ["DATABASE_URL"] = prior_db_url
 
 
     now = datetime.datetime.now(timezone.utc)
@@ -290,6 +293,25 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
     health_score = round((healthy_count / total_count) * 100.0, 1) if total_count > 0 else 100.0
     letter_grade = "A+" if health_score >= 95.0 else ("A" if health_score >= 90.0 else ("B+" if health_score >= 80.0 else "C"))
 
+    # Read-Only Google Analytics 4 Data API & Search Console Connector Visibility (Lauri Tells #11)
+    google_sa_raw = (os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON") or "").strip()
+    ga4_prop_raw = (os.environ.get("GA4_PROPERTY_ID") or "").strip()
+    gsc_site_url = (os.environ.get("GSC_SITE_URL") or "https://www.hwbcleaning.com/").strip()
+    gcloud_configured = bool(google_sa_raw and ga4_prop_raw)
+    google_cloud_seo_connector: Dict[str, Any] = {
+        "name": "Google Cloud GA4 & Search Console Read-Only Service Account",
+        "owner_employee": "Lauri Tells (#11)",
+        "service_account_configured": bool(google_sa_raw),
+        "ga4_property_id_configured": bool(ga4_prop_raw),
+        "gsc_site_url": gsc_site_url,
+        "configured": gcloud_configured,
+        "status": (
+            "CONFIGURED_READONLY"
+            if gcloud_configured
+            else "DATA REQUIRED: PENDING GOOGLE SERVICE ACCOUNT VIEWER GRANT"
+        ),
+    }
+
     return {
         "status": "success",
         "timestamp": now.strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -298,7 +320,8 @@ def _compute_audit_all_credentials(env_path: Optional[str] = None) -> Dict[str, 
         "credentials_monitored_count": total_count,
         "credentials_healthy_count": healthy_count,
         "credentials_action_required": action_required_count,
-        "credentials": credentials
+        "credentials": credentials,
+        "google_cloud_seo_connector": google_cloud_seo_connector,
     }
 
 

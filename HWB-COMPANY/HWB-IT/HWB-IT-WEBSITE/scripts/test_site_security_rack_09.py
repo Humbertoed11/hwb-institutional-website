@@ -411,37 +411,63 @@ class SiteSecurityRack09TestSuite(unittest.TestCase):
         test_client = app.test_client()
         test_client.post('/login', data={'username': 'admin', 'password': 'password11'}, follow_redirects=False)
 
-        # Commit an estimate on Bid #1 (or first available bid)
+        # Create a disposable temporary bid row so live GC bids are never mutated (BUG-181)
         conn = get_db(self.db_url)
-        with conn.cursor() as cur:
-            cur.execute('SELECT id FROM "ConstructionBids" LIMIT 1;')
-            bid_row = cur.fetchone()
-            target_bid_id = bid_row['id'] if isinstance(bid_row, dict) else (bid_row[0] if bid_row else 1)
-        conn.close()
+        target_bid_id = None
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    INSERT INTO "ConstructionBids" (gc_name, project_name, status, cleanable_sqft, estimated_value)
+                    VALUES ('TEMP_RACK09_GC', 'TEMP_RACK09_AUDIT_TEST', 'Invited', 0, 0)
+                    RETURNING id;
+                    '''
+                )
+                bid_row = cur.fetchone()
+                target_bid_id = bid_row['id'] if isinstance(bid_row, dict) else bid_row[0]
+            conn.commit()
+        finally:
+            conn.close()
 
-        commit_res = test_client.post(f'/api/v1/bids/{target_bid_id}/commit-estimate', json={
-            'cleanable_sqft': 45000,
-            'estimated_value': 125000.00,
-            'scope_phase': 'Phase 1 - Final Clean',
-            'status': 'Takeoff Completed',
-            'notes': 'Enterprise SOC 2 Takeoff Audit Verification'
-        })
-        self.assertEqual(commit_res.status_code, 200)
+        try:
+            commit_res = test_client.post(f'/api/v1/bids/{target_bid_id}/commit-estimate', json={
+                'cleanable_sqft': 45000,
+                'estimated_value': 125000.00,
+                'scope_phase': 'Phase 1 - Final Clean',
+                'status': 'Takeoff Completed',
+                'notes': 'Temporary Rack 9 Takeoff Audit Verification'
+            })
+            self.assertEqual(commit_res.status_code, 200)
 
-        conn = get_db(self.db_url)
-        with conn.cursor() as cur:
-            cur.execute('''
-                SELECT event_category, event_action, severity, details
-                FROM "SecurityAuditLogs"
-                WHERE event_action = 'TAKEOFF_COMMITTED'
-                ORDER BY timestamp DESC LIMIT 1;
-            ''')
-            row = cur.fetchone()
-            self.assertIsNotNone(row, "TAKEOFF_COMMITTED was not recorded in SecurityAuditLogs")
-            self.assertEqual(row['event_category'], 'FINANCIAL_INTEGRITY')
-            details = row['details'] if isinstance(row['details'], dict) else json.loads(row['details'])
-            self.assertEqual(details.get('cleanable_sqft'), 45000)
-        conn.close()
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('''
+                        SELECT event_category, event_action, severity, details
+                        FROM "SecurityAuditLogs"
+                        WHERE event_action = 'TAKEOFF_COMMITTED'
+                        ORDER BY timestamp DESC LIMIT 1;
+                    ''')
+                    row = cur.fetchone()
+                    self.assertIsNotNone(row, "TAKEOFF_COMMITTED was not recorded in SecurityAuditLogs")
+                    self.assertEqual(row['event_category'], 'FINANCIAL_INTEGRITY')
+                    details = row['details'] if isinstance(row['details'], dict) else json.loads(row['details'])
+                    self.assertEqual(details.get('cleanable_sqft'), 45000)
+            finally:
+                conn.close()
+        finally:
+            if target_bid_id is not None:
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'ConstructionBid\' AND parent_id = %s;',
+                            (target_bid_id,),
+                        )
+                        cur.execute('DELETE FROM "ConstructionBids" WHERE id = %s;', (target_bid_id,))
+                    conn.commit()
+                finally:
+                    conn.close()
 
     def test_11_auditing_the_auditor_logging(self):
         """Verifies accessing IT Command Hub / Rack 9 triggers AUDIT_LOG_INSPECTED forensic log."""

@@ -204,7 +204,10 @@ def seo_employee_telemetry_endpoint():
     """Live 24/7 status, GA4 funnel metrics, and keyword radar for Lauri Tells (#11)."""
     from core.ai_employee.seo_growth_engine import get_lauri_seo_employee
     lauri = get_lauri_seo_employee()
-    patrol = lauri.run_seo_and_analytics_patrol(force_refresh=True)
+    force_google = request.args.get('refresh_google') == '1'
+    patrol = lauri.run_seo_and_analytics_patrol(
+        force_refresh=True, force_google_refresh=force_google
+    )
     return jsonify({
         "status": "ok",
         **patrol

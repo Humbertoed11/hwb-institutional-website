@@ -24,8 +24,10 @@ def launch_agents():
         processes.append(p)
 
     MAX_RESTARTS = 5
+    HEARTBEAT_INTERVAL_SEC = 60.0
     restart_counts = [0] * len(AGENTS)
     last_start_times = [time.time()] * len(AGENTS)
+    last_heartbeat_ts = 0.0
 
     try:
         while True:
@@ -47,15 +49,18 @@ def launch_agents():
                     print(f"[WORKER] CRITICAL: Agent {AGENTS[i][1]} died (attempt {restart_counts[i]}/{MAX_RESTARTS}). Restarting...", flush=True)
                     processes[i] = subprocess.Popen(AGENTS[i])
                     last_start_times[i] = time.time()
-            # 24/7 Dead-Man's Switch: Verify AIEmployeeHeartbeat liveness for telegram_listener.py & Lauri Tells
-            try:
-                from core.ai_employee import get_ai_employee, get_lauri_seo_employee
-                emp = get_ai_employee()
-                emp.record_heartbeat("hwb_worker_supervisor", {"supervised_agents": len(processes)})
-                lauri = get_lauri_seo_employee()
-                lauri.record_heartbeat_pulse({"supervised_by": "worker_launcher"})
-            except Exception:
-                pass
+            # 24/7 Dead-Man's Switch: Coalesce AIEmployeeHeartbeat SQL writes to every 60.0s (85% write reduction)
+            if now_ts - last_heartbeat_ts >= HEARTBEAT_INTERVAL_SEC:
+                try:
+                    from core.ai_employee import get_ai_employee, get_lauri_seo_employee
+                    active_procs = sum(1 for proc in processes if proc is not None)
+                    emp = get_ai_employee()
+                    emp.record_heartbeat("hwb_worker_supervisor", {"supervised_agents": active_procs})
+                    lauri = get_lauri_seo_employee()
+                    lauri.record_heartbeat_pulse({"supervised_by": "worker_launcher"})
+                    last_heartbeat_ts = now_ts
+                except Exception:
+                    pass
             time.sleep(10)
     except KeyboardInterrupt:
         print("[WORKER] Terminating Agent Suite...", flush=True)

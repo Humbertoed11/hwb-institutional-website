@@ -9,7 +9,7 @@
     <!-- 0.0 DOCUMENT CONTROL -->
     <div class="sop-meta">
         <div class="meta-unit"><span class="meta-label">Document ID</span><span class="meta-val">HWB-QMS-11.1-MEM</span></div>
-        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.2.0</span></div>
+        <div class="meta-unit"><span class="meta-label">Version</span><span class="meta-val">3.3.0</span></div>
         <div class="meta-unit"><span class="meta-label">Status</span><span class="meta-val" style="color: #16a34a;">● APPROVED</span></div>
         <div class="meta-unit"><span class="meta-label">Clause</span><span class="meta-val">7.1.6 (Organizational Knowledge)</span></div>
     </div>
@@ -25,11 +25,11 @@
             <tbody>
                 <tr><td><strong>Document Title</strong></td><td><strong>Institutional Memory &amp; Neural Integration SOP</strong></td></tr>
                 <tr><td><strong>Document ID</strong></td><td>HWB-QMS-11.1-MEM</td></tr>
-                <tr><td><strong>Version</strong></td><td>3.2.0</td></tr>
+                <tr><td><strong>Version</strong></td><td>3.3.0</td></tr>
                 <tr><td><strong>Status</strong></td><td>APPROVED</td></tr>
                 <tr><td><strong>Author</strong></td><td>George (Systems Architect)</td></tr>
                 <tr><td><strong>Approved By</strong></td><td>Humberto Dominguez, CEO</td></tr>
-                <tr><td><strong>Date</strong></td><td>10/24/2026</td></tr>
+                <tr><td><strong>Date</strong></td><td>11/12/2026</td></tr>
                 <tr><td><strong>ISO 9001 Clause</strong></td><td>7.1.6</td></tr>
             </tbody>
         </table>
@@ -112,6 +112,14 @@ flowchart LR
             </div>
         </div>
 
+        <h2>4.6 Workspace-Scoped "start all ai" Ecosystem Isolation Rule (11/12/2026)</h2>
+        <p>Whenever a new session opens or the <code>"start all ai"</code> command is issued inside <code>/home/humbertoed/gemini_projects/</code>, George Bytes executes <code>bash scripts/startup_master.sh</code> on Turn 1 and operates strictly within the HWB Cleaning repository boundary:</p>
+        <ul>
+            <li><strong>Authorized HWB Cleaning Stack Only:</strong> George Bytes starts and verifies only HWB Cleaning's own infrastructure: <code>hwb_postgres_dev</code> (<code>127.0.0.1:5432</code>), <code>hwb_web_app</code> on <code>127.0.0.1:5000</code>, <code>hwb_agent_worker</code> and its 4 supervised child worker scripts (<code>sigma_orchestrator.py</code>, <code>watchdog.py</code>, <code>telegram_listener.py</code>, and <code>tessa_regression_suite.py</code>), <code>hwb_traffic_director</code> on <code>127.0.0.1:8000</code>, <code>hwb_compliance_engine</code>, the PostgreSQL 16.15 <code>SigmaSystemCore</code> state table, and <code>HWB-SESSION-RECOVERY.md</code>.</li>
+            <li><strong>Strict Single-Workspace Boundary:</strong> George Bytes never reads, boots, restarts, or modifies external sibling workspaces, parent directories, or outside containers when operating inside <code>/home/humbertoed/gemini_projects/</code>.</li>
+            <li><strong>Zero Unapproved Host PC Changes:</strong> Session startup and routine operations never alter host PC settings (<code>GOV-04 Revised</code>).</li>
+        </ul>
+
         <h2>5.0 Revision History</h2>
         <table>
             <thead>
@@ -123,6 +131,12 @@ flowchart LR
                 </tr>
             </thead>
             <tbody>
+                <tr>
+                    <td style="text-align: left;">3.3.0</td>
+                    <td style="text-align: left;">11/12/2026</td>
+                    <td style="text-align: left;">George (Systems Architect)</td>
+                    <td style="text-align: left;">Added Section 4.6 Workspace-Scoped "start all ai" Ecosystem Isolation Rule, scoping session startup and "start all ai" execution strictly to HWB Cleaning infrastructure inside <code>/home/humbertoed/gemini_projects/</code> with zero actions on external sibling workspaces or parent directories. Approved by Humberto Dominguez, CEO.</td>
+                </tr>
                 <tr>
                     <td style="text-align: left;">3.0.0</td>
                     <td style="text-align: left;">10/24/2026</td>

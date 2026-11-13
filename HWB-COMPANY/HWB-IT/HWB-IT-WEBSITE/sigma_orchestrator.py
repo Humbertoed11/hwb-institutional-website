@@ -31,23 +31,25 @@ class SigmaOrchestrator:
             conn.row_factory = sqlite3.Row
             return conn
 
-    def calculate_sigma_analytics(self):
-        # [Capability, DPMO, RTY logic]
-        mean_fidelity = 100
-        std_dev = 0.5
-        cpk = (mean_fidelity - 90) / (3 * std_dev) if std_dev > 0 else 2.0
-        leads_processed = 112
-        opportunities = leads_processed * 5
-        defects_found = 1 
-        dpmo = (defects_found / opportunities) * 1_000_000
-        rty = 0.99 * 1.00 * 0.98 * 100
-        
+    def calculate_sigma_analytics(self, cur, is_postgres: bool) -> dict:
+        leads_count = 0
+        inst_bids_count = 0
+        gc_bids_count = 0
+        try:
+            if is_postgres:
+                cur.execute('SELECT COUNT(*) FROM "Leads";')
+                leads_count = int(cur.fetchone()[0] or 0)
+                cur.execute('SELECT COUNT(*) FROM "InstitutionalBids";')
+                inst_bids_count = int(cur.fetchone()[0] or 0)
+                cur.execute('SELECT COUNT(*) FROM "ConstructionBids";')
+                gc_bids_count = int(cur.fetchone()[0] or 0)
+        except Exception:
+            pass
         return {
-            "cpk": str(round(cpk, 2)),
-            "dpmo": f"{int(dpmo):,}",
-            "rty": f"{round(rty, 1)}%",
-            "alt_prediction": "92% Contract Retention (12-mo)",
-            "control_status": "STABLE"
+            "verified_leads_count": str(leads_count),
+            "verified_institutional_bids_count": str(inst_bids_count),
+            "verified_construction_bids_count": str(gc_bids_count),
+            "control_status": "STABLE",
         }
 
     def sync_all(self):
@@ -55,10 +57,9 @@ class SigmaOrchestrator:
         conn = self.get_conn()
         cur = conn.cursor()
 
-        analytics = self.calculate_sigma_analytics()
-        
         # Determine table check logic based on DB type
         is_postgres = hasattr(cur, 'execute') and 'psycopg2' in str(type(conn))
+        analytics = self.calculate_sigma_analytics(cur, is_postgres)
         
         if is_postgres:
             # Postgres creation
@@ -122,14 +123,7 @@ class SigmaOrchestrator:
         except Exception as e:
             print(f"[ORCHESTRATOR] Solicitation scope parser failed: {e}")
 
-        # Trigger Autonomous Commercial & Multi-Family CAD Hunter Engine (ARCH-006 Frontier 2)
-        try:
-            import subprocess
-            import sys
-            print("[ORCHESTRATOR] Triggering Commercial & Multi-Family CAD Hunter Engine...")
-            subprocess.run([sys.executable, "scripts/commercial_cad_hunter.py", "--sync"], check=False)
-        except Exception as e:
-            print(f"[ORCHESTRATOR] Commercial CAD hunter failed: {e}")
+        # BUG-180 Empirical Data Integrity Gate: commercial_cad_hunter.py hardcoded seeding disabled.
 
 
 if __name__ == "__main__":

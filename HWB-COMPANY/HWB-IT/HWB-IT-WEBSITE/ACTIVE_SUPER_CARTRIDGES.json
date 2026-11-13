@@ -1,7 +1,7 @@
 {
   "standard": "Super_Architecture Master Library (BABYSOP-SOP-0.34 & 0.35)",
   "authority": "Humberto Dominguez (CEO) & Super George (Systems Architect)",
-  "synced_at_utc": "2026-11-11T00:40:18.746444+00:00",
+  "synced_at_utc": "2026-11-13T03:15:02.701916+00:00",
   "total_books": 9,
   "active_cartridges_count": 72,
   "total_cartridges_count": 72,
@@ -431,14 +431,14 @@
     {
       "cartridge_id": "ISO-09",
       "book_name": "Super_ISO_business_strategy_Tactics",
-      "title": "Closed-Loop Fortune 500 First-Pass Enforcement Engine & 3-Plane Lifecycle Hook Gate (GOV-04 / Mandate 13)",
-      "specification": "Eliminates executive prompting by enforcing the 5-Pillar Fortune 500 First-Pass Rubric across PreInvocation (Input Gate), PreToolUse (PendingOutbox Gate), and Stop (Self-Correction Output Gate) hooks with WORM SHA-256 receipts in Fortune500GateReceipts.",
+      "title": "Proportional First-Pass Engineering & Anti-Over-Engineering Standard (GOV-04 Revised / Mandate 13 / SO-SCAR-025)",
+      "specification": "fortune500-closed-loop-governor set to enabled:false across Global, Special Ops, HWB Cleaning, HexGrowth, and Foundry scaffolds (11/12/2026); enforces Smallest Proven Fix First, Meta-Infrastructure Freeze, and Mandatory Host PC Approval Gate while preserving WORM Fortune500GateReceipts.",
       "status": "ACTIVE",
       "in_babysop": 1,
       "in_hwb": 1,
       "in_hexgrowth": 1,
       "in_foundry": 1,
-      "updated_at": "2026-10-30T00:22:05.447673+00:00"
+      "updated_at": "2026-11-12T18:34:48.271125+00:00"
     },
     {
       "cartridge_id": "MEM-01",
@@ -467,14 +467,14 @@
     {
       "cartridge_id": "MEM-03",
       "book_name": "Super_memory_architecture",
-      "title": "60-Second Real-Time Self-Healing SRE Watchdog",
-      "specification": "Terminates orphaned conhost.exe --headless loops, checkpoints >=5MB SQLite WALs, and kills >5m idle-in-tx PG16 queries.",
+      "title": "60-Second Pure-Linux Self-Healing SRE Watchdog (SO-SCAR-023)",
+      "specification": "Checkpoints >=5MB SQLite WALs, kills >5m idle-in-tx PG16 queries, retains 14-day/25-recent CLI sessions, and prohibits $parentDead Win32 console kills in background loops.",
       "status": "ACTIVE",
       "in_babysop": 1,
       "in_hwb": 1,
       "in_hexgrowth": 1,
       "in_foundry": 1,
-      "updated_at": "2026-10-20T15:30:02.688024+00:00"
+      "updated_at": "2026-11-11T21:24:35.293013+00:00"
     },
     {
       "cartridge_id": "MEM-04",
@@ -515,26 +515,26 @@
     {
       "cartridge_id": "OPS-01",
       "book_name": "Super_recovery_and_devops_architecture",
-      "title": "Peter's Hourly chmod 600 Binary Database Snapshots & 1-Click Restore",
-      "specification": "Automated hourly SQLite/PostgreSQL binary backups with 24-hour rolling rotation and verified integrity check.",
+      "title": "Peter's Hourly chmod 600 Binary Database Snapshots & Two-Tier Sovereign Disaster Recovery (BABYSOP-SOP-0.15 v2.4.0)",
+      "specification": "Automated hourly native ext4 SQLite/PostgreSQL binary backups (:00 HWB, :15 Special Ops, :30 HexGrowth) paired with Tier 1 Windows Antigravity Rescue Cockpit (C:\\wsl-backup\\SuperGeorge-Rescue) and Tier 2 Grab-and-Go USB Drive D:\\ bare-metal restore (D:\\Installers\\Docker Desktop Installer.exe + Antigravity-x64.exe + supergeorge_brain.db snapshot).",
       "status": "ACTIVE",
       "in_babysop": 1,
       "in_hwb": 1,
       "in_hexgrowth": 1,
       "in_foundry": 1,
-      "updated_at": "2026-10-20T15:30:02.688024+00:00"
+      "updated_at": "2026-11-12T18:34:48.271125+00:00"
     },
     {
       "cartridge_id": "OPS-02",
       "book_name": "Super_recovery_and_devops_architecture",
-      "title": "Container Child-Process Inspection Gate (docker top / SO-SCAR-009)",
-      "specification": "Mandatory docker top check before stopping any container and RestartPolicy=always on all 24/7 daemon hosts.",
+      "title": "Container Child-Process Gate, 60s Non-Destructive Docker Probe & Zero-9P Isolation (SO-SCAR-009 / SO-SCAR-023)",
+      "specification": "Mandatory docker top check before container stops, 60s passive Docker readiness (requiring --force-restart-deadlocked-docker before force-kill), zero duplicate docker exec Telegram pollers, and permanent disablement of legacy OneDrive 9P systemd loops.",
       "status": "ACTIVE",
       "in_babysop": 1,
       "in_hwb": 1,
       "in_hexgrowth": 1,
       "in_foundry": 1,
-      "updated_at": "2026-10-20T15:30:02.688024+00:00"
+      "updated_at": "2026-11-11T21:24:35.302948+00:00"
     },
     {
       "cartridge_id": "OPS-03",

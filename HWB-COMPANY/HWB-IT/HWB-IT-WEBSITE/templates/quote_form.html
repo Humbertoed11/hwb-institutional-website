@@ -25,13 +25,13 @@
         <!-- Plain English Header -->
         <div class="section-header" style="text-align: center; margin-bottom: 2.75rem;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem;">
-                <i class="fas fa-bolt"></i> Fast 60-Second Quote Request
+                <i class="fas fa-bolt"></i> Fast 30-Second Quote Request
             </div>
             <div class="mobile-express-badge" style="align-items: center; gap: 0.5rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #047857; padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.85rem; margin-left: 0.5rem;">
-                <i class="fas fa-mobile-alt"></i> Mobile Express (10s)
+                <i class="fas fa-mobile-alt"></i> Mobile Express (15s)
             </div>
             <h1 style="font-size: 2.35rem; font-weight: 900; margin: 0 0 0.5rem 0; color: #0f172a; letter-spacing: -0.025em; line-height: 1.2;">Request a Free Commercial Cleaning Quote</h1>
-            <p style="font-size: 1.05rem; color: #475569; max-width: 720px; margin: 0 auto; font-weight: 500; line-height: 1.5;">Share the building details below. Custom pricing and service options will be prepared for the facility.</p>
+            <p style="font-size: 1.05rem; color: #475569; max-width: 720px; margin: 0 auto; font-weight: 500; line-height: 1.5;">Select your facility type and share your name and work email to get started in seconds. Building city, size, and schedule can be added below or on the next screen.</p>
         </div>
 
         <!-- 65/35 Enterprise Split Container -->
@@ -39,8 +39,9 @@
             
             <!-- Left (65%): Contact-First Fast Quote Form -->
             <div class="sigma-quote-main-card">
+                {% set sel_fac = prefill_facility | default('office') %}
                 <form action="{{ url_for('get_quote') }}" method="POST" id="quote-form-page" class="sigma-form-container">
-                    <!-- Enterprise Anti-Bot Honeypot Gate (HWB-QMS-11.10) -->
+                    <!-- Anti-Bot Gate -->
                     <input type="hidden" name="form_security_token" value="{{ get_form_security_token() }}">
                     <input type="hidden" name="form_version" id="form_version" value="v1">
                     <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
@@ -50,69 +51,43 @@
                         <input type="text" name="hp_tax_id" id="hp_tax_id" tabindex="-1" autocomplete="off">
                     </div>
 
-                    <!-- Step 1: Building & Schedule -->
+                    <!-- Step 1: 30-Second Quote Request (Facility Type + Contact Info) -->
                     <div class="sigma-form-section">
                         <div class="sigma-section-badge">
                             <span class="badge-num">01</span>
-                            <span class="badge-title">Building &amp; Schedule</span>
+                            <span class="badge-title">30-Second Quote Request</span>
                         </div>
 
-                        <!-- Facility Type Selection Chips -->
-                        <div class="sigma-field" style="margin-bottom: 1.25rem;">
+                        <!-- 8 Core Facility Type Selection Chips -->
+                        <div class="sigma-field" style="margin-bottom: 1.35rem;">
                             <div class="sigma-label" id="facility-type-group-label">Facility Type</div>
-                            <input type="hidden" name="facility_type" id="facility_type" value="office">
+                            <input type="hidden" name="facility_type" id="facility_type" value="{{ sel_fac }}">
                             <div class="facility-chips-container" role="group" aria-labelledby="facility-type-group-label">
-                                <button type="button" class="facility-chip active" data-val="office" onclick="setFacilityType('office', this)" aria-label="Select office facility" title="Office" aria-pressed="true">
+                                <button type="button" class="facility-chip{% if sel_fac == 'office' %} active{% endif %}" data-val="office" onclick="setFacilityType('office', this)" aria-label="Select office facility" title="Office" aria-pressed="{{ 'true' if sel_fac == 'office' else 'false' }}">
                                     <i class="fas fa-building"></i> Office
                                 </button>
-                                <button type="button" class="facility-chip" data-val="medical" onclick="setFacilityType('medical', this)" aria-label="Select medical clinic facility" title="Medical Clinic" aria-pressed="false">
-                                    <i class="fas fa-clinic-medical"></i> Medical Clinic
-                                </button>
-                                <button type="button" class="facility-chip" data-val="daycare" onclick="setFacilityType('daycare', this)" aria-label="Select school or daycare facility" title="School / Daycare" aria-pressed="false">
+                                <button type="button" class="facility-chip{% if sel_fac == 'daycare' %} active{% endif %}" data-val="daycare" onclick="setFacilityType('daycare', this)" aria-label="Select school or daycare facility" title="School / Daycare" aria-pressed="{{ 'true' if sel_fac == 'daycare' else 'false' }}">
                                     <i class="fas fa-school"></i> School / Daycare
                                 </button>
-                                <button type="button" class="facility-chip" data-val="industrial" onclick="setFacilityType('industrial', this)" aria-label="Select warehouse facility" title="Warehouse" aria-pressed="false">
+                                <button type="button" class="facility-chip{% if sel_fac == 'medical' %} active{% endif %}" data-val="medical" onclick="setFacilityType('medical', this)" aria-label="Select medical clinic facility" title="Medical Clinic" aria-pressed="{{ 'true' if sel_fac == 'medical' else 'false' }}">
+                                    <i class="fas fa-clinic-medical"></i> Medical Clinic
+                                </button>
+                                <button type="button" class="facility-chip{% if sel_fac == 'industrial' %} active{% endif %}" data-val="industrial" onclick="setFacilityType('industrial', this)" aria-label="Select warehouse facility" title="Warehouse" aria-pressed="{{ 'true' if sel_fac == 'industrial' else 'false' }}">
                                     <i class="fas fa-warehouse"></i> Warehouse
                                 </button>
-                                <button type="button" class="facility-chip" data-val="worship" onclick="setFacilityType('worship', this)" aria-label="Select church or worship facility" title="Church / Worship" aria-pressed="false">
+                                <button type="button" class="facility-chip{% if sel_fac == 'worship' %} active{% endif %}" data-val="worship" onclick="setFacilityType('worship', this)" aria-label="Select church or worship facility" title="Church / Worship" aria-pressed="{{ 'true' if sel_fac == 'worship' else 'false' }}">
                                     <i class="fas fa-church"></i> Church / Worship
                                 </button>
-                                <button type="button" class="facility-chip" data-val="other" onclick="setFacilityType('other', this)" aria-label="Select other commercial facility" title="Other Commercial" aria-pressed="false">
+                                <button type="button" class="facility-chip{% if sel_fac == 'construction' %} active{% endif %}" data-val="construction" onclick="setFacilityType('construction', this)" aria-label="Select post-construction cleanup" title="Post-Construction" aria-pressed="{{ 'true' if sel_fac == 'construction' else 'false' }}">
+                                    <i class="fas fa-hard-hat"></i> Post-Construction
+                                </button>
+                                <button type="button" class="facility-chip{% if sel_fac == 'automotive' %} active{% endif %}" data-val="automotive" onclick="setFacilityType('automotive', this)" aria-label="Select auto dealership facility" title="Auto Dealership" aria-pressed="{{ 'true' if sel_fac == 'automotive' else 'false' }}">
+                                    <i class="fas fa-car"></i> Auto Dealership
+                                </button>
+                                <button type="button" class="facility-chip{% if sel_fac == 'other' %} active{% endif %}" data-val="other" onclick="setFacilityType('other', this)" aria-label="Select other commercial facility" title="Other Commercial" aria-pressed="{{ 'true' if sel_fac == 'other' else 'false' }}">
                                     <i class="fas fa-city"></i> Other Commercial
                                 </button>
                             </div>
-                        </div>
-
-                        <!-- Cleaning Frequency (Full Width Dedicated Selector) -->
-                        <div class="sigma-field desktop-only-field" style="margin-top: 1.25rem;">
-                            <label for="frequency" class="sigma-label">Cleaning Schedule Frequency</label>
-                            <select name="frequency" id="frequency" required class="sigma-input">
-                                <option value="Daily (5 Days/Week) - Standard Corporate" selected>Daily (5 Days / Week) — Standard Business</option>
-                                <option value="Periodic (3 Days/Week) - Mon/Wed/Fri">2 to 3 Days / Week — Regular Care</option>
-                                <option value="Weekly (1 Day/Week) - Light Occupancy">Weekly (1 Day / Week) — Light Care</option>
-                                <option value="Intensive (7 Days/Week) - High Traffic">Every Day (7 Days / Week) — High Traffic</option>
-                                <option value="Post-Construction / One-Time Deep Clean">One-Time Deep Cleaning</option>
-                            </select>
-                        </div>
-
-                        <!-- Location Row: City (70%) and Zip Code (30%) Asymmetric Grid -->
-                        <div class="sigma-form-row-asym desktop-only-field" style="margin-top: 1.25rem;">
-                            <div class="sigma-field">
-                                <label for="quote-city" class="sigma-label">City in North Texas</label>
-                                <input type="text" name="city" id="quote-city" placeholder="e.g. Plano, Dallas, Frisco" class="sigma-input" required autocomplete="address-level2">
-                            </div>
-                            <div class="sigma-field">
-                                <label for="quote-zipcode" class="sigma-label">Zip Code</label>
-                                <input type="text" name="zipcode" id="quote-zipcode" placeholder="75024" maxlength="10" oninput="maskZipInput(this)" class="sigma-input" required autocomplete="postal-code" inputmode="numeric">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Contact Details -->
-                    <div class="sigma-form-section" style="margin-top: 2rem;">
-                        <div class="sigma-section-badge">
-                            <span class="badge-num">02</span>
-                            <span class="badge-title">Contact Information for Quote Delivery</span>
                         </div>
 
                         <div class="sigma-form-row-2">
@@ -120,22 +95,61 @@
                                 <label for="quote-name" class="sigma-label">Contact Name <span style="color: #dc2626;">*</span></label>
                                 <input type="text" name="name" id="quote-name" required autocomplete="name" placeholder="Full Name" class="sigma-input">
                             </div>
-                            <div class="sigma-field desktop-only-field">
-                                <label for="quote-company" class="sigma-label">Company <span style="color: #dc2626;">*</span></label>
-                                <input type="text" name="company" id="quote-company" required autocomplete="organization" placeholder="Company or Facility Name" class="sigma-input">
+                            <div class="sigma-field">
+                                <label for="quote-email" class="sigma-label">Work Email <span style="color: #dc2626;">*</span></label>
+                                <input type="email" name="email" id="quote-email" required autocomplete="email" inputmode="email" placeholder="name@company.com" class="sigma-input">
                             </div>
                         </div>
 
                         <div class="sigma-form-row-2" style="margin-top: 1.25rem;">
                             <div class="sigma-field">
-                                <label for="quote-email" class="sigma-label">Work Email <span style="color: #dc2626;">*</span></label>
-                                <input type="email" name="email" id="quote-email" required autocomplete="email" inputmode="email" placeholder="name@company.com" class="sigma-input">
-                            </div>
-                            <div class="sigma-field">
                                 <label for="phone_page" class="sigma-label">Phone <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
                                 <input type="tel" name="phone" id="phone_page" maxlength="14" oninput="maskPhoneInput(this)" autocomplete="tel" inputmode="tel" placeholder="(214)-000-0000" class="sigma-input">
                             </div>
+                            <div class="sigma-field">
+                                <label for="quote-company" class="sigma-label">Company or Building Name <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                <input type="text" name="company" id="quote-company" autocomplete="organization" placeholder="Company or Facility Name" class="sigma-input">
+                            </div>
                         </div>
+
+                        <!-- Optional Building Details Drawer (Zero Mandatory Hurdles on Step 1) -->
+                        <details id="optional-building-details" {% if prefill_city or prefill_zip %}open{% endif %} style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1rem 1.25rem;">
+                            <summary style="cursor: pointer; font-weight: 800; font-size: 0.92rem; color: #1e3a8a; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                <span><i class="fas fa-sliders-h" style="margin-right: 0.45rem; color: #2563eb;"></i> Add Building City, Size &amp; Schedule Now — Optional</span>
+                                <span style="font-size: 0.75rem; font-weight: 700; color: #64748b;">Or skip &amp; choose after submitting</span>
+                            </summary>
+
+                            <div style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                                <div class="sigma-form-row-asym">
+                                    <div class="sigma-field">
+                                        <label for="quote-city" class="sigma-label">City in North Texas <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                        <input type="text" name="city" id="quote-city" value="{{ prefill_city | default('') }}" placeholder="e.g. McKinney, Plano, Dallas, Frisco" class="sigma-input" autocomplete="address-level2">
+                                    </div>
+                                    <div class="sigma-field">
+                                        <label for="quote-zipcode" class="sigma-label">Zip Code <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                        <input type="text" name="zipcode" id="quote-zipcode" value="{{ prefill_zip | default('') }}" placeholder="75071" maxlength="10" oninput="maskZipInput(this)" class="sigma-input" autocomplete="postal-code" inputmode="numeric">
+                                    </div>
+                                </div>
+
+                                <div class="sigma-form-row-2" style="margin-top: 1.15rem;">
+                                    <div class="sigma-field">
+                                        <label for="quote-sqft" class="sigma-label">Approximate Square Footage <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                        <input type="text" name="sqft" id="quote-sqft" placeholder="e.g. 12,000" inputmode="numeric" class="sigma-input">
+                                    </div>
+                                    <div class="sigma-field">
+                                        <label for="frequency" class="sigma-label">Cleaning Schedule Frequency <span style="font-weight: 500; color: #64748b; font-size: 0.78rem;">(Optional)</span></label>
+                                        <select name="frequency" id="frequency" class="sigma-input">
+                                            <option value="" selected>Choose on Walkthrough or Next Step</option>
+                                            <option value="Daily (5 Days/Week) - Standard Corporate">Daily (5 Days / Week) — Standard Business</option>
+                                            <option value="Periodic (3 Days/Week) - Mon/Wed/Fri">2 to 3 Days / Week — Regular Care</option>
+                                            <option value="Weekly (1 Day/Week) - Light Occupancy">Weekly (1 Day / Week) — Light Care</option>
+                                            <option value="Intensive (7 Days/Week) - High Traffic">Every Day (7 Days / Week) — High Traffic</option>
+                                            <option value="Post-Construction / One-Time Deep Clean">One-Time / Post-Construction Clean</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
 
                         <!-- TCPA Prior Express Consent Safeguard -->
                         <div class="tcpa-compliance-box">
@@ -255,28 +269,17 @@ if (phoneInput) {
     });
 }
 
-// Mobile Express Dynamic Mode Handler
+// Contact-First Mode Handler (Zero Mandatory Zip/City/Company/Frequency Hurdles on Desktop or Mobile)
 function applyMobileExpressMode() {
     const isMobile = window.innerWidth <= 768;
     const formVerInput = document.getElementById('form_version');
-    const freqInput = document.getElementById('frequency');
-    const cityInput = document.getElementById('quote-city');
-    const zipInput = document.getElementById('quote-zipcode');
-    const compInput = document.getElementById('quote-company');
-
-    if (isMobile) {
-        if (formVerInput) formVerInput.value = 'mobile_express';
-        if (freqInput) freqInput.removeAttribute('required');
-        if (cityInput) cityInput.removeAttribute('required');
-        if (zipInput) zipInput.removeAttribute('required');
-        if (compInput) compInput.removeAttribute('required');
-    } else {
-        if (formVerInput) formVerInput.value = 'v1';
-        if (freqInput) freqInput.setAttribute('required', 'required');
-        if (cityInput) cityInput.setAttribute('required', 'required');
-        if (zipInput) zipInput.setAttribute('required', 'required');
-        if (compInput) compInput.setAttribute('required', 'required');
+    if (formVerInput) {
+        formVerInput.value = isMobile ? 'mobile_express' : 'v1';
     }
+    ['frequency', 'quote-city', 'quote-zipcode', 'quote-sqft', 'quote-company'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.removeAttribute('required');
+    });
 }
 window.addEventListener('resize', applyMobileExpressMode);
 
@@ -304,20 +307,46 @@ if (quoteForm && submitBtn) {
     };
 }
 
-// Auto-populate from URL Parameters
+// Auto-populate Facility Chip & City from Hub URL Parameters (?facility=...&city=...)
+const FACILITY_PARAM_ALIASES = {
+    'office': 'office',
+    'corporate-offices': 'office',
+    'daycare': 'daycare',
+    'daycare-childcare': 'daycare',
+    'schools-education': 'daycare',
+    'school': 'daycare',
+    'medical': 'medical',
+    'medical-dental': 'medical',
+    'industrial': 'industrial',
+    'warehouses-industrial': 'industrial',
+    'warehouse': 'industrial',
+    'worship': 'worship',
+    'churches-nonprofits': 'worship',
+    'construction': 'construction',
+    'construction-subdivisions': 'construction',
+    'post-construction': 'construction',
+    'automotive': 'automotive',
+    'auto-dealerships': 'automotive',
+    'other': 'other'
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     applyMobileExpressMode();
     const params = new URLSearchParams(window.location.search);
-    if (params.has('type')) {
-        const t = params.get('type');
-        const targetBtn = document.querySelector(`.facility-chip[data-val="${t}"]`);
-        if (targetBtn) setFacilityType(t, targetBtn);
+    const rawFac = (params.get('facility') || params.get('type') || '').trim().toLowerCase();
+    if (rawFac && FACILITY_PARAM_ALIASES[rawFac]) {
+        const mappedVal = FACILITY_PARAM_ALIASES[rawFac];
+        const targetBtn = document.querySelector(`.facility-chip[data-val="${mappedVal}"]`);
+        if (targetBtn) setFacilityType(mappedVal, targetBtn);
     }
+    const optDrawer = document.getElementById('optional-building-details');
     if (params.has('city') && document.getElementById('quote-city')) {
         document.getElementById('quote-city').value = params.get('city');
+        if (optDrawer) optDrawer.open = true;
     }
     if (params.has('zip') && document.getElementById('quote-zipcode')) {
         document.getElementById('quote-zipcode').value = params.get('zip');
+        if (optDrawer) optDrawer.open = true;
     }
 });
 </script>

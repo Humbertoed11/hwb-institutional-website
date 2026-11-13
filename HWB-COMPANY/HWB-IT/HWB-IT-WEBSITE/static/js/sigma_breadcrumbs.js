@@ -171,8 +171,11 @@
         } catch (err) {}
     });
 
-    // 5. Lifecycle Flush Triggers
-    setInterval(flushQueue, FLUSH_INTERVAL_MS);
+    // 5. Lifecycle Flush Triggers (periodic flush paused while tab is hidden)
+    setInterval(function() {
+        if (document.hidden) return;
+        flushQueue();
+    }, FLUSH_INTERVAL_MS);
 
     document.addEventListener('visibilitychange', function() {
         if (document.visibilityState === 'hidden') {

@@ -110,6 +110,7 @@
                                 Facility City
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                <button type="button" class="calib-city-btn" onclick="selectCalibCity('McKinney', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">McKinney</button>
                                 <button type="button" class="calib-city-btn" onclick="selectCalibCity('Plano', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Plano</button>
                                 <button type="button" class="calib-city-btn" onclick="selectCalibCity('Dallas', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Dallas</button>
                                 <button type="button" class="calib-city-btn" onclick="selectCalibCity('Frisco', this)" style="padding: 0.4rem 0.85rem; border-radius: 6px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.82rem; font-weight: 700; color: #1e293b; cursor: pointer;">Frisco</button>
@@ -183,7 +184,7 @@
                 <a href="https://g.page/r/CYTq8OcJfsRDEBM/review" target="_blank" rel="noopener noreferrer" aria-label="Leave a Google Review for HWB Cleaning Services LLC" style="color: #0f172a; background: #ffffff; border: 1px solid #cbd5e1; padding: 0.35rem 0.75rem; border-radius: 999px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;">
                     <i class="fas fa-star" style="color: #f59e0b;"></i> Verified on Google Maps &bull; Leave a Review
                 </a>
-                <span>ID: {{ range(1000, 9999) | random }}</span>
+                <span>REF: {{ data.get('reference_code') or 'QUOTE-RECEIVED' }}</span>
             </div>
         </div>
 

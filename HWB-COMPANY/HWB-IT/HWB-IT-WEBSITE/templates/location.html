@@ -135,7 +135,7 @@
         <h1>{{ data.h1 }}</h1>
         <p style="font-size: 1.15rem; color: var(--slate-600); max-width: 750px; margin: 0 auto 2.5rem; line-height: 1.6; font-weight: 500;">{{ data.desc }}</p>
         <div class="hero-ctas">
-            <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
+            <a href="{{ url_for('get_quote', city=data.name) }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Start a quote in {{ data.name }} <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.8rem;"></i></a>
         </div>
     </div>
 </section>
@@ -198,42 +198,42 @@
                 <p style="font-size: 1.02rem; color: var(--slate-500); margin-top: 0.5rem;">Select a facility type to view cleaning standards, checklists, and the custom walkthrough process.</p>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.15rem;">
-                <a href="{{ url_for('public.facility_page', facility_slug='daycare-childcare') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='daycare-childcare', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Child-Safe &bull; No Sticky Floors</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Daycares &amp; Early Learning</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Custom nightly daycare cleaning in {{ data.name }}—proper chemical usage, residue-free floors, and strict lock-up security.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='schools-education') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='schools-education', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Background-Checked Campus Crews</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Private Schools &amp; K-12</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Custom nightly classroom, cafeteria, and gym cleaning plus summer floor care for schools in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='medical-dental') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='medical-dental', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Patient-First &bull; 4-Color Microfiber</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Medical &amp; Dental Clinics</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Detailed exam-room and waiting-room cleaning with 4-color microfiber separation in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='corporate-offices') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='corporate-offices', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Local Crews &bull; Strict Security</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Corporate Offices</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Dependable nightly office cleaning, spotless breakrooms, and day porters in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='auto-dealerships') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='auto-dealerships', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Showroom Tile &bull; Service Bays</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Auto Dealerships</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Streak-free showroom glass, residue-free glossy tile, customer lounges, and service bay scrubbing in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='churches-nonprofits') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='churches-nonprofits', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">Sanctuaries &bull; Child-Safe Nurseries</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Churches &amp; Nonprofits</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Flexible pre-Sunday and weekday cleaning for sanctuaries, child-safe nurseries, and fellowship halls in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='warehouses-industrial') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='warehouses-industrial', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">In-House Safety Dept &bull; PIT &amp; PPE</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Warehouses &amp; Logistics</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">Debris-free concrete floors that protect forklift tires, clean shift restrooms, and PIT &amp; PPE trained crews in {{ data.name }}.</p>
                 </a>
-                <a href="{{ url_for('public.facility_page', facility_slug='construction-subdivisions') }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
+                <a href="{{ url_for('public.facility_page', facility_slug='construction-subdivisions', city=data.name) }}" style="display: block; text-decoration: none; background: #f8fafc; border: 1px solid var(--slate-200); border-radius: 10px; padding: 1.25rem;">
                     <div style="font-size: 0.72rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.06em;">In-House Safety Dept &bull; 3-Step &amp; 3-Phase</div>
                     <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--slate-900); margin: 0.35rem 0;">Construction &amp; Subdivisions</h3>
                     <p style="font-size: 0.88rem; color: var(--slate-600); line-height: 1.5; margin: 0;">3-Step subdivision cleanup keeping transit lines clear for city inspections and 3-Phase interior final cleans in {{ data.name }}.</p>
@@ -284,7 +284,7 @@
     <div class="content-wrapper">
         <h2 style="font-size: 2rem; font-weight: 800; color: white;">Ready for a clean facility in {{ data.name }}?</h2>
         <p style="color: var(--slate-400); max-width: 600px; margin: 1.5rem auto 3rem; font-size: 1.1rem;">Submit contact information to start a plan and receive a custom commercial proposal.</p>
-        <a href="{{ url_for('get_quote') }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Request Quote</a>
+        <a href="{{ url_for('get_quote', city=data.name) }}" class="isc-btn isc-btn-primary" style="height: 48px; padding: 0 3rem; font-size: 1rem; border-radius: 6px;">Request Quote in {{ data.name }}</a>
     </div>
 </section>
 {% endblock %}
