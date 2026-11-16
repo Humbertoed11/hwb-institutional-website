@@ -227,7 +227,7 @@
                     </div>
                     <div style="font-weight: 800; margin-bottom: 0.75rem; color: var(--slate-800);">Subject: {{ email.subject }}</div>
                     <div style="max-height: 200px; overflow-y: auto; background: white; padding: 1rem; border: 1px solid var(--slate-200); border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.875rem;">
-                        {{ email.body | safe }}
+                        {{ (email.preview_body if email.preview_body is defined else email.body) | safe }}
                     </div>
                     
                     <div style="display: flex; gap: 0.75rem;">

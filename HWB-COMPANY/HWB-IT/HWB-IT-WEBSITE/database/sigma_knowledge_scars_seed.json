@@ -2909,7 +2909,7 @@
       "Implemented HWB-QMS-11.14 v1.0.0 (Release v5.4.3): (1) Single-execution POSIX flock boot lock (/tmp/hwb_boot_init.lock) + Gunicorn --preload --max-requests 10000 --keep-alive 65; (2) 60s last-used socket trust in get_db() + public route RBAC bypass; (3) Lossless WebP conversion of all 35 images (16.4 MB -> 1.98 MB, -87.9%) + lazy loading + fetchpriority=high; (4) Immutable 1-year Cache-Control on /static/* and 60s s-maxage on public HTML; (5) Rack 14 Web Performance & Core Web Vitals Verification Suite.",
       "Mandate HWB-QMS-11.14 Part I: All Gunicorn deployments must use --preload with flock-guarded single-execution boot tasks, 60s pooled connection trust, WebP image assets, and immutable /static/* edge caching.",
       "2026-10-19T12:26:42.862975",
-      "2026-11-16T10:32:35.743263",
+      "2026-11-16T11:28:57.529018",
       "Verified 2026-10-19 (v5.4.3): Public route TTFB reduced by 98.7% (from 1,840ms-18,400ms to 1.88ms-3.27ms locally and 42ms-74ms over live TLS)."
     ],
     [
@@ -2922,7 +2922,7 @@
       "Implemented HWB-QMS-11.14 v1.1.0 (Release v5.4.4): (1) 300s TTL thread-safe cache with non-blocking background daemon refresh on all 10 self_healing_engine.py Racks and credential_sentinel.py; (2) Migration 043 creating 4 covering composite indexes (idx_global_activities_parent_lookup, idx_campaign_recipients_lead_lookup, idx_leads_assigned_rep_status, idx_employee_documents_employee_id) and replacing correlated subqueries with set-based LEFT JOIN LATERAL / CTE aggregations; (3) Active-View CQRS SQL isolation in blueprints/operations.py with 30s cached sidebar counts (_get_operations_sidebar_counts); (4) Server-side Jinja active_view DOM pruning in templates/backoffice_operations.html + static JS extraction to /static/js/backoffice_operations_core.js.",
       "Mandate HWB-QMS-11.14 Part II: Multi-tab backoffice controllers must enforce Active-View CQRS SQL isolation, 300s background-refreshed telemetry caches, covering composite indexes (zero correlated subqueries in loops), and server-side Jinja DOM pruning.",
       "2026-10-19T12:26:42.862975",
-      "2026-11-16T10:32:35.743263",
+      "2026-11-16T11:28:57.529018",
       "Verified 2026-10-19 (v5.4.4): Warm backoffice view switching reduced from 2,440ms-9,050ms to 4.38ms-28.01ms (98.9%-99.8% reduction); gzipped payload reduced to 40.8 KB-72.3 KB."
     ],
     [
@@ -2935,7 +2935,7 @@
       "Closed {% if active_view in [\"monitor\", \"dispatch\"] %} inside #view-monitor before its closing </div>, wrapped #modal-dispatch-create and #modal-dispatch-detail in a balanced conditional block outside #view-monitor, and added test_11_backoffice_modal_dom_isolation_and_lead_click in scripts/test_web_performance_rack_14.py.",
       "Every {% if active_view == ... %} pruning block inside a <div id=\"view-...\"> container must close before the container closing </div>, verified by automated HTMLParser DOM nesting checks across all views.",
       "2026-10-19T13:06:17.473383",
-      "2026-11-16T10:32:35.743263",
+      "2026-11-16T11:28:57.529018",
       "Verified 2026-10-19 (v5.4.4): Zero views or modals trapped inside hidden view-* containers across all 12 backoffice views; lead row click opens #modal-lead-command immediately."
     ],
     [
@@ -2948,7 +2948,7 @@
       "Anchored #col-mgr-menu, #col-mgr-menu-acc, and #col-mgr-menu-bids to left: 0 with .sigma-col-mgr-menu responsive fixed tablet viewport bounds (@media max-width: 1024px) and dynamic viewport clamping in SigmaGridEngine.toggleMenu; enabled vertical touch scrolling on .isc-modal (overflow-y: auto; -webkit-overflow-scrolling: touch;); switched toggleRowMenu to fixed viewport-clamped coordinates; unpinned sticky-2/sticky-3 on tablets <= 1024px; and added delay: 200, delayOnTouchOnly: true to SortableJS headers plus touch-tap support on Calls & Notes badges.",
       "All dropdowns and column popovers must anchor inside viewport bounds with responsive max-width: calc(100vw - 24px) and fixed viewport clamping on tablets (<= 1024px); modals must never use overflow: hidden without an internally scrollable flex child.",
       "2026-10-19T15:52:27.829748",
-      "2026-11-16T10:32:35.743263",
+      "2026-11-16T11:28:57.529018",
       "Verified 2026-10-19 (v5.4.4): Customize Lead/Client/Bid Columns forms, row menus, and modals render 100% inside tablet and desktop viewports."
     ],
     [
@@ -3026,7 +3026,7 @@
       "1. Added SystemSettings DDL to baseline schema_engine.py, ensure_subcontractor_onboarding_schema(conn), and Migration 049. 2. Hardened _get_subcontractor_onboarding_mode(cur) with CREATE TABLE IF NOT EXISTS \"SystemSettings\" and PostgreSQL SAVEPOINT sp_sys_settings so any query exception rolls back only the savepoint without aborting the outer onboarding transaction.",
       "All helper functions executing optional configuration queries inside an active PostgreSQL transaction must use a SAVEPOINT and idempotent table verification.",
       "2026-10-19T17:28:52.263718",
-      "2026-11-16T10:32:38.762389",
+      "2026-11-16T11:29:00.569305",
       "Verified 2026-10-20 (v5.4.9 / v5.5.0): Live /work-with-us?track=subcontractor and W-2 application submissions verified HTTP 200 on Azure Production."
     ],
     [
@@ -3039,7 +3039,7 @@
       "Engineered 5-Layer Enterprise Input Masking & Tamper-Evident Transaction Receipt Architecture (v5.5.0 / Migration 050): (1) Created universal /static/js/sigma_input_masks.js auto-injected via @app.after_request with adaptive Tax Classification mask switching (EIN XX-XXXXXXX vs SSN XXX-XX-XXXX), Phone ((###)-###-####), ZIP, 9-digit Routing, and State masks; (2) Added server-side clean_ein_or_ssn, clean_ssn, and clean_routing_number in core/services/sanitizer.py; (3) Built Tamper-Evident Transaction Receipt Cards (#onboarding-receipt-card and #w2-receipt-card) displaying Reference ID, Signer, Timestamp, Document Checklist, SHA-256 Signature Certificate, Print Receipt, and Update/Reopen toggle while hiding the form upon submission and revisit.",
       "All tax, phone, postal, and banking inputs must bind to SigmaInputMaskEngine and server-side sanitizers, and all self-service onboarding portals must transition from active form state to a locked Tamper-Evident Transaction Receipt Card upon submission.",
       "2026-10-20T20:25:41.831601",
-      "2026-11-16T10:32:38.762389",
+      "2026-11-16T11:29:00.569305",
       "Verified 2026-10-20 (v5.5.0): 20/20 automated checks in test_web_performance_rack_14.py passing across local and live production."
     ],
     [
@@ -3690,6 +3690,19 @@
       "",
       "2026-11-16T00:00:00",
       "2026-11-16T10:35:47.128818",
+      null
+    ],
+    [
+      285,
+      "BUG-188: Unsent Outbox Self-Pixel False Opens (`48 Opens / 1200.0% Open Rate` on `CMP-20261110-A25E` When `/admin/executive` Rendered Raw Draft HTML), Missing `campaign_mode=True` on Outbox Release & Parameterized `%` Crash in `preview-count` — Locked `track_email_open()` and `track_email_click()` (`telemetry.py`) to strictly require `sent_at IS NOT NULL` (and `PendingOutbox.status IN ('SENT','DISPATCHED')`) plus ignore `/admin/` Referers; stripped tracking `<img>` tags in `/admin/executive` (`preview_body`) and `#modal-review-email`; passed `campaign_mode=True` on Outbox approve (`Humberto Dominguez` sender + RFC 8058 `List-Unsubscribe`); escaped `%%` in `get_email_compliance_where_clauses(parameterized=True)`; fixed `Enrolled Businesses` & `Open Rate` math; and executed Migration `056` Option A restoring all `50` unsent daycare drafts on Live Azure cleanly to `PendingOutbox` (`0` Sent, `0` Opens, `50` Queued). Certified by `test_60` (`59/59` Rack 14 + `85/85` SOC 2 PASS). (Campaign Outbox Self-Pixel False Opens (`48 Opens / 1200.0%`), `campaign_mode` Sender/RFC-8058 Wiring & Option A Outbox Restoration)",
+      "System Integrity",
+      "RESOLVED",
+      3,
+      "",
+      "1. **Strict `sent_at IS NOT NULL` & Admin-Preview Guard (`blueprints/telemetry.py`, `blueprints/operations.py`, `templates/HWB-WEB Sigma Executive.html`, `static/js/backoffice_operations_core.js`):** Blocked open/click recording whenever `sent_at IS NULL`, `PendingOutbox.status = 'PENDING'`, or `Referer` is `/admin/` or `/sales-desk`, and stripped tracking `<img>` tags from admin preview panes while keeping stored HTML intact.\n2. **100% First-Campaign Launch Readiness (`blueprints/crm_api.py`, `blueprints/operations.py`, `templates/backoffice_operations.html`, `database/schema_engine.py` Migration `056`):** Passed `campaign_mode=True` on Outbox release (`Humberto Dominguez — HWB Cleaning Services` sender + RFC 8058 `List-Unsubscribe`), escaped `%%` in parameterized compliance queries, fixed `Enrolled Businesses` / `Open Rate` UI math, and ran Migration `056` (Option A) restoring all `50` unsent daycare drafts cleanly to `PendingOutbox` (`0 Sent`, `0 Opens`, `50 Queued`).",
+      "",
+      "2026-11-16T00:00:00",
+      "2026-11-16T11:31:48.696558",
       null
     ]
   ],

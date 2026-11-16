@@ -10494,6 +10494,10 @@
     // SIGMAFIDELITY™ MARKETING CAMPAIGNS & OUTBOX ENGINE JAVASCRIPT CONTROLLERS
     // ==============================================================================
 
+    function stripTrackingPixelsForPreview(htmlStr) {
+        return String(htmlStr || '').replace(/<img[^>]+(?:\/track\/open\/|\/telemetry\/pixel\/)[^>]*>/gi, '');
+    }
+
     function openEmailReviewModal(emailId) {
         fetch('/api/v1/marketing/outbox/' + emailId)
             .then(res => res.json())
@@ -10505,7 +10509,7 @@
                     document.getElementById('edit-outbox-facility').innerText = em.facility_name ? (em.facility_name + ' (' + (em.city || 'TX') + ')') : 'Commercial Facility';
                     document.getElementById('edit-outbox-subject').value = em.subject || '';
                     document.getElementById('edit-outbox-body').value = em.body || '';
-                    document.getElementById('live-letterhead-frame').innerHTML = em.body || '';
+                    document.getElementById('live-letterhead-frame').innerHTML = stripTrackingPixelsForPreview(em.body || '');
                     openModal('modal-review-email');
                 } else {
                     showToast(data.message || 'Failed to retrieve email details.', 'error');
@@ -10519,7 +10523,7 @@
 
     function updateLiveEmailPreview() {
         const bodyVal = document.getElementById('edit-outbox-body').value;
-        document.getElementById('live-letterhead-frame').innerHTML = bodyVal;
+        document.getElementById('live-letterhead-frame').innerHTML = stripTrackingPixelsForPreview(bodyVal);
     }
 
     function saveEmailReviewEdits() {

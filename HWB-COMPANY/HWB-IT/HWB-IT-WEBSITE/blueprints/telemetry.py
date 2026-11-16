@@ -227,9 +227,11 @@ TRANSPARENT_GIF_BYTES = (
 def track_email_open(tracking_token):
     """
     Transparent 1x1 GIF tracking pixel for marketing email open detection.
-    Updates CampaignRecipients and MarketingCampaigns telemetry in real time.
+    Strictly ignores unsent drafts (sent_at IS NULL / PENDING) and admin preview Referers (BUG-188).
     """
-    if tracking_token:
+    ref_lower = (request.referrer or '').lower()
+    is_admin_preview = '/admin/' in ref_lower or '/sales-desk' in ref_lower
+    if tracking_token and not is_admin_preview:
         conn = None
         try:
             db_url = current_app.config.get('DATABASE_URL')
@@ -239,9 +241,10 @@ def track_email_open(tracking_token):
                     UPDATE "CampaignRecipients"
                     SET opened_at = COALESCE(opened_at, CURRENT_TIMESTAMP),
                         open_count = COALESCE(open_count, 0) + 1,
-                        status = CASE WHEN status IN ('STAGED', 'AWAITING_APPROVAL', 'SENT') THEN 'OPENED' ELSE status END,
+                        status = CASE WHEN status = 'SENT' THEN 'OPENED' ELSE status END,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE tracking_token = %s
+                      AND sent_at IS NOT NULL
                     RETURNING campaign_id, lead_id, open_count, facility_name;
                 ''', (tracking_token,))
                 row = cur.fetchone()
@@ -254,7 +257,13 @@ def track_email_open(tracking_token):
                     if camp_id:
                         cur.execute('''
                             UPDATE "MarketingCampaigns"
-                            SET opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(open_count, 0) > 0),
+                            SET opened_count = (
+                                    SELECT COUNT(DISTINCT id)
+                                    FROM "CampaignRecipients"
+                                    WHERE campaign_id = %s
+                                      AND sent_at IS NOT NULL
+                                      AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))
+                                ),
                                 updated_at = CURRENT_TIMESTAMP
                             WHERE id = %s;
                         ''', (camp_id, camp_id))
@@ -280,15 +289,16 @@ def track_email_open(tracking_token):
                                 VALUES (%s, 'Lead', 'Status Change', %s);
                             ''', (lead_id, f"Lead status promoted to 'Engaged 🔥' (Customer viewed email {open_count}x). Prioritized for sales follow-up."))
 
-                # Also track standalone Executive PendingOutbox emails by tracking_token (BUG-163)
+                # Also track standalone Executive PendingOutbox emails ONLY AFTER SENT (never on PENDING drafts - BUG-188)
                 cur.execute('''
                     UPDATE "PendingOutbox"
-                    SET status = CASE WHEN status IN ('SENT', 'DISPATCHED', 'PENDING') THEN 'OPENED' ELSE status END
+                    SET status = 'OPENED'
                     WHERE tracking_token = %s
-                    RETURNING id, recipient, subject, recipient_id;
+                      AND status IN ('SENT', 'DISPATCHED')
+                    RETURNING id, recipient, subject, recipient_id, campaign_id;
                 ''', (tracking_token,))
                 po_row = cur.fetchone()
-                if po_row:
+                if po_row and not row:
                     po_id = po_row['id'] if isinstance(po_row, dict) else po_row[0]
                     po_recip = po_row['recipient'] if isinstance(po_row, dict) else po_row[1]
                     po_subj = po_row['subject'] if isinstance(po_row, dict) else po_row[2]
@@ -358,7 +368,9 @@ def track_email_click(tracking_token):
     dest = request.args.get('dest') or default_dest
     if 'hdominguez@hwbcleaning.com' in dest and 'bookwithme' in dest:
         dest = default_dest
-    if tracking_token:
+    ref_lower = (request.referrer or '').lower()
+    is_admin_preview = '/admin/' in ref_lower or '/sales-desk' in ref_lower
+    if tracking_token and not is_admin_preview:
         conn = None
         try:
             db_url = current_app.config.get('DATABASE_URL')
@@ -371,6 +383,7 @@ def track_email_click(tracking_token):
                         status = 'ENGAGED',
                         updated_at = CURRENT_TIMESTAMP
                     WHERE tracking_token = %s
+                      AND sent_at IS NOT NULL
                     RETURNING campaign_id, lead_id, facility_name;
                 ''', (tracking_token,))
                 click_row = cur.fetchone()
@@ -381,8 +394,8 @@ def track_email_click(tracking_token):
                     if c_camp_id:
                         cur.execute('''
                             UPDATE "MarketingCampaigns"
-                            SET walkthroughs_booked = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
-                                opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+                            SET walkthroughs_booked = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+                                opened_count = (SELECT COUNT(DISTINCT id) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
                                 updated_at = CURRENT_TIMESTAMP
                             WHERE id = %s;
                         ''', (c_camp_id, c_camp_id, c_camp_id))

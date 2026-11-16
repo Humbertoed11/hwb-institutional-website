@@ -321,7 +321,7 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
                     cur.execute('''
                         SELECT
                             COUNT(DISTINCT l.id) FILTER (WHERE cr.id IS NOT NULL OR l.status = 'In Campaign'),
-                            COUNT(DISTINCT l.id) FILTER (WHERE COALESCE(cr.open_count, 0) > 0)
+                            COUNT(DISTINCT l.id) FILTER (WHERE cr.sent_at IS NOT NULL AND COALESCE(cr.open_count, 0) > 0)
                         FROM "Leads" l
                         LEFT JOIN "CampaignRecipients" cr ON cr.lead_id = l.id
                         WHERE l.owner_id = %s;
@@ -330,7 +330,7 @@ def _get_operations_sidebar_counts(conn, user_id, role: str) -> dict:
                     cur.execute('''
                         SELECT
                             COUNT(DISTINCT lead_id),
-                            COUNT(DISTINCT lead_id) FILTER (WHERE COALESCE(open_count, 0) > 0)
+                            COUNT(DISTINCT lead_id) FILTER (WHERE sent_at IS NOT NULL AND COALESCE(open_count, 0) > 0)
                         FROM "CampaignRecipients";
                     ''')
                 c_row = cur.fetchone()
@@ -915,7 +915,7 @@ def admin_operations():
                     elif campaign_filter == 'in_campaign' and active_view == 'leads':
                         lead_where_clauses.append("(EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) OR l.status = 'In Campaign')")
                     elif campaign_filter == 'opened' and active_view == 'leads':
-                        lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND COALESCE(cr.open_count, 0) > 0)")
+                        lead_where_clauses.append("EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id AND cr.sent_at IS NOT NULL AND COALESCE(cr.open_count, 0) > 0)")
                     elif campaign_filter == 'no_campaign' and active_view == 'leads':
                         lead_where_clauses.append("(NOT EXISTS (SELECT 1 FROM \"CampaignRecipients\" cr WHERE cr.lead_id = l.id) AND (l.status IS NULL OR l.status != 'In Campaign'))")
 
@@ -2863,7 +2863,12 @@ def sigma_executive():
                         cur.execute('SELECT * FROM "PendingOutbox" WHERE id = %s', (email_id,))
                         msg = cur.fetchone()
                         if msg:
-                            success, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
+                            success, reason = transmit_email(
+                                msg['recipient'],
+                                msg['subject'],
+                                msg['body'],
+                                campaign_mode=bool(msg.get('campaign_id')),
+                            )
                             if success:
                                 cur.execute('UPDATE "PendingOutbox" SET status = \'SENT\' WHERE id = %s', (email_id,))
                                 cur.execute('''
@@ -2877,11 +2882,11 @@ def sigma_executive():
                                 if cid_to_sync:
                                     cur.execute('''
                                         UPDATE "MarketingCampaigns"
-                                        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
-                                            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
-                                            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
-                                            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
-                                            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+                                        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(status, '') NOT IN ('CANCELLED', 'REJECTED')),
+                                            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NULL AND status IN ('STAGED', 'AWAITING_APPROVAL')),
+                                            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL),
+                                            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+                                            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
                                             updated_at = CURRENT_TIMESTAMP
                                         WHERE id = %s;
                                     ''', (cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync))
@@ -2914,12 +2919,13 @@ def sigma_executive():
                         if cid_to_sync:
                             cur.execute('''
                                 UPDATE "MarketingCampaigns"
-                                SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
-                                    staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
-                                    sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
+                                SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(status, '') NOT IN ('CANCELLED', 'REJECTED')),
+                                    staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NULL AND status IN ('STAGED', 'AWAITING_APPROVAL')),
+                                    sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL),
+                                    opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
                                     updated_at = CURRENT_TIMESTAMP
                                 WHERE id = %s;
-                            ''', (cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync))
+                            ''', (cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync, cid_to_sync))
                         flash("Queued email rejected.", "warning")
                     
                     conn.commit()
@@ -3027,7 +3033,17 @@ def sigma_executive():
                 cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'PendingOutbox'")
                 if cur.fetchone():
                     cur.execute('SELECT * FROM "PendingOutbox" WHERE UPPER(status) = \'PENDING\' ORDER BY created_at DESC LIMIT 5')
-                    pending_emails = cur.fetchall()
+                    raw_pending = cur.fetchall()
+                    pending_emails = []
+                    for pe in raw_pending:
+                        ped = dict(pe)
+                        ped['preview_body'] = re.sub(
+                            r'<img[^>]+(?:/track/open/|/telemetry/pixel/)[^>]*>',
+                            '',
+                            str(ped.get('body') or ''),
+                            flags=re.IGNORECASE,
+                        )
+                        pending_emails.append(ped)
 
                 cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name = 'SocialOutbox'")
                 if cur.fetchone():

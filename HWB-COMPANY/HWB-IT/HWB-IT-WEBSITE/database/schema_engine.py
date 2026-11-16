@@ -1432,6 +1432,22 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 055 sync skipped: {adb_err}", flush=True)
 
+            # Migration 056: BUG-188 Repair Unsent Campaign Self-Opens & Restore PendingOutbox Drafts (Option A)
+            if "056_repair_unsent_campaign_self_opens_bug_188" not in applied:
+                print("[MIGRATION] Applying 056_repair_unsent_campaign_self_opens_bug_188...", flush=True)
+                apply_migration_056_fix_unsent_campaign_self_opens(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '056_repair_unsent_campaign_self_opens_bug_188',
+                        'Restore unsent CampaignRecipients and PendingOutbox drafts falsely marked OPENED by admin preview pixel and recompute MarketingCampaigns counters (BUG-188 Option A)'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("056_repair_unsent_campaign_self_opens_bug_188")
+                print("[MIGRATION] 056_repair_unsent_campaign_self_opens_bug_188 successfully applied and recorded.", flush=True)
+
             # Continuous Neural Scar & Vector Parity Gate (Local + Azure sigmajan-db / sigmajan-adb)
             ensure_sigma_knowledge_scars_parity(conn)
             if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
@@ -3918,6 +3934,144 @@ def apply_migration_055_walkthrough_calendar_lifecycle(conn: Any) -> None:
             'ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_conductor_email VARCHAR(160);'
         )
     conn.commit()
+
+
+def apply_migration_056_fix_unsent_campaign_self_opens(conn: Any) -> dict[str, int]:
+    """
+    Repairs unsent CampaignRecipients and PendingOutbox drafts that were falsely
+    flipped to OPENED/ENGAGED by Backoffice preview pixel loads before sent_at
+    was populated, and recomputes MarketingCampaigns counters (BUG-188 Option A).
+    """
+    summary = {"recipients_restored": 0, "outbox_restored": 0, "leads_reverted": 0}
+    with conn.cursor() as cur:
+        cur.execute('''
+            SELECT id, lead_id, outbox_id, tracking_token
+            FROM "CampaignRecipients"
+            WHERE sent_at IS NULL
+              AND COALESCE(status, '') NOT IN ('REJECTED', 'CANCELLED', 'CANCELLED_CLOSED', 'UNSUBSCRIBED')
+              AND (
+                  COALESCE(open_count, 0) > 0
+                  OR COALESCE(click_count, 0) > 0
+                  OR status IN ('OPENED', 'ENGAGED')
+              );
+        ''')
+        affected = cur.fetchall()
+        recip_ids: list[int] = []
+        lead_ids: list[int] = []
+        outbox_ids: list[int] = []
+        tokens: list[str] = []
+        for r in affected:
+            rid = r['id'] if isinstance(r, dict) else r[0]
+            lid = r['lead_id'] if isinstance(r, dict) else r[1]
+            oid = r['outbox_id'] if isinstance(r, dict) else r[2]
+            tok = r['tracking_token'] if isinstance(r, dict) else r[3]
+            if rid:
+                recip_ids.append(int(rid))
+            if lid:
+                lead_ids.append(int(lid))
+            if oid:
+                outbox_ids.append(int(oid))
+            if tok:
+                tokens.append(str(tok))
+
+        if recip_ids:
+            cur.execute('''
+                UPDATE "CampaignRecipients"
+                SET status = 'AWAITING_APPROVAL',
+                    open_count = 0,
+                    opened_at = NULL,
+                    click_count = 0,
+                    clicked_at = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ANY(%s);
+            ''', (recip_ids,))
+            summary["recipients_restored"] = cur.rowcount
+
+            cur.execute('''
+                UPDATE "PendingOutbox"
+                SET status = 'PENDING'
+                WHERE UPPER(COALESCE(status, '')) = 'OPENED'
+                  AND (
+                      id = ANY(%s)
+                      OR recipient_id = ANY(%s)
+                      OR tracking_token = ANY(%s)
+                  );
+            ''', (outbox_ids or [-1], recip_ids, tokens or ['__none__']))
+            summary["outbox_restored"] = cur.rowcount
+
+        # Also catch any standalone campaign PendingOutbox row whose recipient has sent_at IS NULL
+        cur.execute('''
+            UPDATE "PendingOutbox" po
+            SET status = 'PENDING'
+            FROM "CampaignRecipients" cr
+            WHERE (po.id = cr.outbox_id OR po.recipient_id = cr.id OR po.tracking_token = cr.tracking_token)
+              AND cr.sent_at IS NULL
+              AND COALESCE(cr.status, '') NOT IN ('REJECTED', 'CANCELLED', 'CANCELLED_CLOSED', 'UNSUBSCRIBED')
+              AND UPPER(COALESCE(po.status, '')) = 'OPENED';
+        ''')
+        summary["outbox_restored"] += cur.rowcount
+
+        if lead_ids:
+            cur.execute('''
+                DELETE FROM "GlobalActivities"
+                WHERE parent_type = 'Lead'
+                  AND parent_id = ANY(%s)
+                  AND (
+                      activity_type IN ('Email Opened', 'Link Clicked')
+                      OR (
+                          activity_type = 'Status Change'
+                          AND (
+                              description ILIKE '%%viewed email%%'
+                              OR description ILIKE '%%clicked walkthrough calendar link%%'
+                          )
+                      )
+                  );
+            ''', (lead_ids,))
+            cur.execute('''
+                UPDATE "Leads"
+                SET status = 'In Campaign',
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ANY(%s)
+                  AND status IN ('Engaged', 'Qualified')
+                  AND COALESCE(BTRIM(preferred_date), '') = '';
+            ''', (lead_ids,))
+            summary["leads_reverted"] = cur.rowcount
+
+        cur.execute('''
+            UPDATE "MarketingCampaigns" mc
+            SET total_targets = (
+                    SELECT COUNT(*) FROM "CampaignRecipients" cr
+                    WHERE cr.campaign_id = mc.id
+                      AND COALESCE(cr.status, '') NOT IN ('CANCELLED', 'REJECTED')
+                ),
+                staged_count = (
+                    SELECT COUNT(*) FROM "CampaignRecipients" cr
+                    WHERE cr.campaign_id = mc.id
+                      AND cr.sent_at IS NULL
+                      AND cr.status IN ('STAGED', 'AWAITING_APPROVAL')
+                ),
+                sent_count = (
+                    SELECT COUNT(*) FROM "CampaignRecipients" cr
+                    WHERE cr.campaign_id = mc.id
+                      AND cr.sent_at IS NOT NULL
+                ),
+                opened_count = (
+                    SELECT COUNT(*) FROM "CampaignRecipients" cr
+                    WHERE cr.campaign_id = mc.id
+                      AND cr.sent_at IS NOT NULL
+                      AND (COALESCE(cr.open_count, 0) > 0 OR cr.status IN ('OPENED', 'ENGAGED'))
+                ),
+                walkthroughs_booked = (
+                    SELECT COUNT(*) FROM "CampaignRecipients" cr
+                    WHERE cr.campaign_id = mc.id
+                      AND cr.sent_at IS NOT NULL
+                      AND (COALESCE(cr.click_count, 0) > 0 OR cr.status = 'ENGAGED')
+                ),
+                updated_at = CURRENT_TIMESTAMP;
+        ''')
+    conn.commit()
+    print(f"[MIGRATION 056] Summary: {summary}", flush=True)
+    return summary
 
 
 def _deterministic_scar_embedding(text: str) -> list:

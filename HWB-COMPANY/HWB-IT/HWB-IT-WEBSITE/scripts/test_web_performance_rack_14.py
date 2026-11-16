@@ -8073,6 +8073,156 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 finally:
                     conn.close()
 
+    def test_60_campaign_outbox_self_pixel_lock_and_option_a_repair_bug_188(self) -> None:
+        """
+        BUG-188 Certification:
+        1. Unsent drafts (sent_at IS NULL / PendingOutbox PENDING) NEVER record opens/clicks or disappear from Outbox.
+        2. /admin/executive strips tracking pixel <img> tags from preview_body HTML.
+        3. Outbox approve passes campaign_mode=True (Humberto Dominguez sender + RFC 8058 List-Unsubscribe).
+        4. Admin preview Referer is ignored even after send, while real external open increments opened_count cleanly.
+        5. apply_migration_056_fix_unsent_campaign_self_opens restores falsely opened unsent drafts back to PENDING / AWAITING_APPROVAL.
+        """
+        import uuid
+        from unittest.mock import patch
+        from database.schema_engine import apply_migration_056_fix_unsent_campaign_self_opens
+
+        uid = uuid.uuid4().hex[:8]
+        auth_client = self.get_auth_client()
+        self.assertIsNotNone(auth_client)
+        conn = get_db(app.config["DATABASE_URL"])
+        lead_id = None
+        camp_id = None
+        lead_email = f"daycare.ready.{uid}@example.com"
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO "Leads" (center_name, decision_maker, email, phone, city, state, status, is_commercial, campaign_ready)
+                    VALUES (%s, %s, %s, %s, 'Frisco', 'TX', 'New', TRUE, TRUE)
+                    RETURNING id;
+                    """,
+                    (f"Readiness Daycare {uid}", "Victoria Director", lead_email, "(469)-555-8812"),
+                )
+                r_l = cur.fetchone()
+                lead_id = int(r_l["id"] if isinstance(r_l, dict) else r_l[0])
+            conn.commit()
+
+            # 1. Verify preview-count parameterized SQL + Create campaign & enroll lead with staged draft
+            r_prev = auth_client.get("/api/v1/marketing/leads/preview-count?sector=daycare&geo=north_texas")
+            self.assertEqual(r_prev.status_code, 200, r_prev.get_data(as_text=True))
+
+            r_c = auth_client.post(
+                "/api/v1/marketing/campaign/create",
+                json={
+                    "name": f"Readiness Campaign {uid}",
+                    "target_sector": "Licensed Childcare",
+                    "target_geo": "DFW",
+                    "playbook_key": "daycare_childcare",
+                    "stage_leads": False,
+                },
+            )
+            self.assertIn(r_c.status_code, (200, 201), r_c.get_data(as_text=True))
+            camp_id = int(r_c.get_json()["campaign_id"])
+
+            r_enr = auth_client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={"campaign_id": camp_id, "lead_ids": [lead_id], "stage_drafts": True},
+            )
+            self.assertEqual(r_enr.status_code, 200, r_enr.get_data(as_text=True))
+
+            with conn.cursor() as cur:
+                cur.execute(
+                    'SELECT id, outbox_id, tracking_token, status, sent_at, open_count FROM "CampaignRecipients" WHERE campaign_id = %s AND lead_id = %s;',
+                    (camp_id, lead_id),
+                )
+                cr = cur.fetchone()
+                self.assertIsNotNone(cr)
+                cr_id = int(cr["id"])
+                outbox_id = int(cr["outbox_id"])
+                tok = str(cr["tracking_token"])
+                self.assertIsNone(cr["sent_at"])
+
+                cur.execute('SELECT staged_count, sent_count, opened_count FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                mc0 = cur.fetchone()
+                self.assertEqual(int(mc0["staged_count"]), 1)
+                self.assertEqual(int(mc0["sent_count"]), 0)
+
+            # 2. Fire pixel & click BEFORE email is sent -> MUST be ignored (0 opens, stays PENDING / AWAITING_APPROVAL)
+            auth_client.get(f"/api/v1/marketing/track/open/{tok}.gif").close()
+            auth_client.get(f"/api/v1/marketing/track/click/{tok}")
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status, open_count, click_count FROM "CampaignRecipients" WHERE id = %s;', (cr_id,))
+                cr_after_unsent = cur.fetchone()
+                self.assertEqual(cr_after_unsent["status"], "AWAITING_APPROVAL")
+                self.assertEqual(int(cr_after_unsent["open_count"] or 0), 0)
+                self.assertEqual(int(cr_after_unsent["click_count"] or 0), 0)
+
+                cur.execute('SELECT status FROM "PendingOutbox" WHERE id = %s;', (outbox_id,))
+                self.assertEqual(cur.fetchone()["status"], "PENDING")
+
+            # 3. Verify Migration 056 repairs legacy corrupted unsent self-open rows
+            with conn.cursor() as cur:
+                cur.execute("UPDATE \"CampaignRecipients\" SET status = 'OPENED', open_count = 1, opened_at = NOW() WHERE id = %s;", (cr_id,))
+                cur.execute("UPDATE \"PendingOutbox\" SET status = 'OPENED' WHERE id = %s;", (outbox_id,))
+                cur.execute("UPDATE \"Leads\" SET status = 'Engaged' WHERE id = %s;", (lead_id,))
+            conn.commit()
+
+            apply_migration_056_fix_unsent_campaign_self_opens(conn)
+
+            with conn.cursor() as cur:
+                cur.execute('SELECT status, open_count, opened_at FROM "CampaignRecipients" WHERE id = %s;', (cr_id,))
+                cr_fixed = cur.fetchone()
+                self.assertEqual(cr_fixed["status"], "AWAITING_APPROVAL")
+                self.assertEqual(int(cr_fixed["open_count"] or 0), 0)
+                self.assertIsNone(cr_fixed["opened_at"])
+                cur.execute('SELECT status FROM "PendingOutbox" WHERE id = %s;', (outbox_id,))
+                self.assertEqual(cur.fetchone()["status"], "PENDING")
+                cur.execute('SELECT status FROM "Leads" WHERE id = %s;', (lead_id,))
+                self.assertEqual(cur.fetchone()["status"], "In Campaign")
+
+            # 4. Verify /admin/executive strips pixel from preview HTML
+            exec_html = auth_client.get("/admin/executive").get_data(as_text=True)
+            self.assertNotIn(f"/track/open/{tok}.gif", exec_html)
+
+            # 5. Approve & send -> verifies campaign_mode=True, then admin Referer ignored while external open counts
+            with patch("blueprints.crm_api.transmit_email", return_value=(True, "mocked")) as mock_tx:
+                r_rel = auth_client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "email_ids": [outbox_id]},
+                )
+                self.assertEqual(r_rel.status_code, 200)
+                self.assertTrue(mock_tx.call_args.kwargs.get("campaign_mode"))
+
+            # Admin Referer hit after send -> ignored
+            auth_client.get(
+                f"/api/v1/marketing/track/open/{tok}.gif",
+                headers={"Referer": "https://www.hwbcleaning.com/admin/operations?view=marketing"},
+            ).close()
+            with conn.cursor() as cur:
+                cur.execute('SELECT open_count FROM "CampaignRecipients" WHERE id = %s;', (cr_id,))
+                self.assertEqual(int(cur.fetchone()["open_count"] or 0), 0)
+
+            # Real external customer open -> counted (1 open / 1 sent = 100%)
+            auth_client.get(f"/api/v1/marketing/track/open/{tok}.gif").close()
+            with conn.cursor() as cur:
+                cur.execute('SELECT sent_count, opened_count FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                mc_fin = cur.fetchone()
+                self.assertEqual(int(mc_fin["sent_count"]), 1)
+                self.assertEqual(int(mc_fin["opened_count"]), 1)
+        finally:
+            conn.rollback()
+            with conn.cursor() as cur:
+                if camp_id:
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE campaign_id = %s;', (camp_id,))
+                    cur.execute('DELETE FROM "CampaignRecipients" WHERE campaign_id = %s;', (camp_id,))
+                    cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+                if lead_id:
+                    cur.execute('DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = %s;', (lead_id,))
+                    cur.execute('DELETE FROM "Leads" WHERE id = %s;', (lead_id,))
+            conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

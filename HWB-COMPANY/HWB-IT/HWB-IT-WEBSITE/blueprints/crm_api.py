@@ -8966,7 +8966,7 @@ COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES = (
 )
 
 
-def get_email_compliance_where_clauses() -> list:
+def get_email_compliance_where_clauses(parameterized: bool = False) -> list:
     """
     Returns standard multi-jurisdictional SQL WHERE clauses enforcing:
     1. CAN-SPAM / Texas Ch. 321 & TDPSA opt-out suppression (EmailSuppressionList, is_dnc, status, email_hygiene_status)
@@ -8981,8 +8981,9 @@ def get_email_compliance_where_clauses() -> list:
         "(state IS NULL OR UPPER(TRIM(state)) NOT IN ('CA', 'WA'))",
         "NOT EXISTS (SELECT 1 FROM \"EmailSuppressionList\" esl WHERE esl.email_lower = LOWER(TRIM(email)))"
     ]
+    pct = '%%' if parameterized else '%'
     for suffix in COMPLIANCE_BLOCKED_DOMAIN_SUFFIXES:
-        clauses.append(f"LOWER(TRIM(email)) NOT LIKE '%{suffix}'")
+        clauses.append(f"LOWER(TRIM(email)) NOT LIKE '{pct}{suffix}'")
     return clauses
 
 
@@ -9106,7 +9107,7 @@ def api_marketing_leads_preview_count():
         "POSITION('@' IN email) > 1",
         "COALESCE(is_converted, FALSE) = FALSE",
         "COALESCE(is_duplicate, FALSE) = FALSE",
-    ] + get_email_compliance_where_clauses()
+    ] + get_email_compliance_where_clauses(parameterized=True)
     params = []
 
     if sector in ['child care', 'childcare', 'daycare', 'licensed childcare']:
@@ -9234,7 +9235,7 @@ def api_marketing_campaign_create():
                     "POSITION('@' IN email) > 1",
                     "COALESCE(is_converted, FALSE) = FALSE",
                     "COALESCE(is_duplicate, FALSE) = FALSE",
-                ] + get_email_compliance_where_clauses()
+                ] + get_email_compliance_where_clauses(parameterized=True)
                 params = []
                 if 'child' in target_sector.lower() or 'daycare' in target_sector.lower():
                     where_clauses.append("(industry ILIKE %s OR facility_type ILIKE %s)")
@@ -9338,17 +9339,17 @@ def api_marketing_campaign_create():
 def sync_campaign_telemetry_counts(cur, campaign_id: int) -> None:
     """
     Synchronizes total_targets, staged_count, sent_count, opened_count, and walkthroughs_booked
-    on MarketingCampaigns from live CampaignRecipients records.
+    on MarketingCampaigns from live CampaignRecipients records (sent_at IS NOT NULL gated - BUG-188).
     """
     if not campaign_id:
         return
     cur.execute('''
         UPDATE "MarketingCampaigns"
-        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s),
-            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND status = 'STAGED'),
-            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (sent_at IS NOT NULL OR status IN ('SENT', 'OPENED', 'ENGAGED', 'UNSUBSCRIBED'))),
-            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
-            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
+        SET total_targets = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND COALESCE(status, '') NOT IN ('CANCELLED', 'REJECTED')),
+            staged_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NULL AND status IN ('STAGED', 'AWAITING_APPROVAL')),
+            sent_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL),
+            opened_count = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(open_count, 0) > 0 OR status IN ('OPENED', 'ENGAGED'))),
+            walkthroughs_booked = (SELECT COUNT(*) FROM "CampaignRecipients" WHERE campaign_id = %s AND sent_at IS NOT NULL AND (COALESCE(click_count, 0) > 0 OR status = 'ENGAGED')),
             updated_at = CURRENT_TIMESTAMP
         WHERE id = %s;
     ''', (campaign_id, campaign_id, campaign_id, campaign_id, campaign_id, campaign_id))
@@ -10951,7 +10952,12 @@ def api_marketing_outbox_batch():
                         suppressed_count += 1
                         continue
 
-                    ok, reason = transmit_email(msg['recipient'], msg['subject'], msg['body'])
+                    ok, reason = transmit_email(
+                        msg['recipient'],
+                        msg['subject'],
+                        msg['body'],
+                        campaign_mode=bool(msg.get('campaign_id')),
+                    )
                     if ok:
                         cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT' WHERE id = %s", (eid,))
                         cur.execute('''

@@ -2890,8 +2890,8 @@
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #0284c7; background: #ffffff;">
                     <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Enrolled Businesses</div>
-                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_mkt.staged_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Facilities</span></div>
-                    <div style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-school"></i> Texas Business Leads</div>
+                    <div style="font-size: 1.6rem; font-weight: 900; color: var(--slate-900); margin-top: 0.25rem;">{{ ns_mkt.total_targets }} <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-400);">Facilities</span></div>
+                    <div style="font-size: 0.7rem; color: #0284c7; font-weight: 700; margin-top: 0.35rem;"><i class="fas fa-paper-plane"></i> {{ ns_mkt.sent_targets }} Sent · {{ ns_mkt.staged_targets }} Queued</div>
                 </div>
                 <div class="isc-card" style="padding: 1.15rem; border-left: 4px solid #6366f1; background: #ffffff;">
                     <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--slate-500); letter-spacing: 0.05em;">Estimated Yearly Value</div>
@@ -3042,15 +3042,16 @@
                                     </div>
                                     <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">
                                         {% if c.sent_count and c.sent_count > 0 %}
-                                            {{ "{:.1f}%".format((c.opened_count / c.sent_count) * 100) }} Open Rate
+                                            {% set raw_rate = ((c.opened_count or 0) / c.sent_count) * 100 %}
+                                            {{ "{:.1f}%".format(100.0 if raw_rate > 100.0 else raw_rate) }} Open Rate ({{ c.sent_count }} Sent)
                                         {% else %}
-                                            0.0% Open Rate
+                                            0.0% Open Rate (0 Sent)
                                         {% endif %}
                                     </div>
                                 </td>
                                 <td style="padding: 0.85rem 1rem; vertical-align: top;">
-                                    <div style="font-weight: 800; color: var(--slate-900);">{{ c.staged_count }} / {{ c.total_targets }} Targets</div>
-                                    <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">Max {{ c.daily_throttle_limit or 50 }} / day</div>
+                                    <div style="font-weight: 800; color: var(--slate-900);">{{ c.sent_count or 0 }} Sent / {{ c.total_targets or 0 }} Targets</div>
+                                    <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">{{ c.staged_count or 0 }} in Outbox · Max {{ c.daily_throttle_limit or 50 }}/day</div>
                                 </td>
                                 <td style="padding: 0.85rem 1rem; vertical-align: top;">
                                     {% if c.status|lower == 'active' %}
