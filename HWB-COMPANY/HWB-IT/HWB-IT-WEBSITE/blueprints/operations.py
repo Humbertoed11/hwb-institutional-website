@@ -2526,6 +2526,7 @@ def admin_master():
                         (request.form.get('name'), request.form.get('product_id'), request.form.get('hazard_level'), request.form.get('sds_link'), request.form.get('intended_use'))
                     )
                     conn.commit()
+                    invalidate_operations_caches()
                     flash("Chemical Record Added.")
                 return redirect(url_for('admin_master'))
 
@@ -2564,13 +2565,27 @@ def sigma_executive():
                         force_pwd = True if request.form.get('force_pwd_reset') == 'true' else False
                         telegram_cid = (request.form.get('telegram_chat_id') or '').strip() or None
                         
+                        managed_modules = ['leads', 'accounts', 'campaigns', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']
+                        has_explicit_perm_inputs = (
+                            request.form.get('perms_matrix_present') == 'true'
+                            or any(k.startswith('perm_') for k in request.form.keys())
+                        )
+                        role_preset = ROLE_MODULE_PRESETS.get(role, ROLE_MODULE_PRESETS.get('Custom', {}))
                         custom_perms = {}
-                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
-                            custom_perms[module] = {
-                                'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
-                                'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
-                                'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
-                            }
+                        for module in managed_modules:
+                            if has_explicit_perm_inputs:
+                                custom_perms[module] = {
+                                    'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
+                                    'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
+                                    'delete': True if request.form.get(f'perm_{module}_delete') == 'true' else False,
+                                }
+                            else:
+                                mod_def = role_preset.get(module, {})
+                                custom_perms[module] = {
+                                    'view': bool(mod_def.get('view', False)),
+                                    'edit': bool(mod_def.get('edit', False)),
+                                    'delete': bool(mod_def.get('delete', False)),
+                                }
                         
                         custom_perms['telegram'] = {
                             'enabled': True if request.form.get('tg_enabled') == 'true' else False,
@@ -2653,7 +2668,7 @@ def sigma_executive():
                         except Exception:
                             custom_perms = {}
 
-                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
+                        for module in ['leads', 'accounts', 'campaigns', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             custom_perms[module] = {
                                 'view': True if request.form.get(f'perm_{module}_view') == 'true' else False,
                                 'edit': True if request.form.get(f'perm_{module}_edit') == 'true' else False,
@@ -2776,7 +2791,7 @@ def sigma_executive():
                         )
                     elif action == 'update_role_permissions':
                         perm_role = request.form.get('target_role')
-                        for module in ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
+                        for module in ['leads', 'accounts', 'campaigns', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools']:
                             can_v = True if request.form.get(f'perm_{module}_view') == 'true' else False
                             can_e = True if request.form.get(f'perm_{module}_edit') == 'true' else False
                             can_d = True if request.form.get(f'perm_{module}_delete') == 'true' else False
@@ -2908,6 +2923,7 @@ def sigma_executive():
                         flash("Queued email rejected.", "warning")
                     
                     conn.commit()
+                    invalidate_operations_caches()
                 except Exception as e:
                     conn.rollback()
                     current_app.logger.error(f"[EXECUTIVE_ACTION_ERROR] Action '{action}' failed: {e}")
@@ -3986,6 +4002,116 @@ def api_leads_search_suggest():
         'locations': locations_out,
         'buildings': buildings_out
     }), 200
+
+
+@operations_bp.route('/api/v1/it/security-audit/export-csv', methods=['GET'])
+@login_required
+def api_export_security_audit_csv():
+    """Exports WORM SecurityAuditLogs rows (including Form Bot and Login Bot events) for SOC 2 Type II evidence."""
+    role_val = (getattr(current_user, 'role', '') or '').strip()
+    if role_val not in ('Executive', 'Admin') and not getattr(current_user, 'has_permission', lambda _m, _a='view': False)('it_telemetry', 'view'):
+        log_security_event(
+            event_category='RBAC',
+            event_action='ROUTE_BLOCKED',
+            severity='WARNING',
+            endpoint='/api/v1/it/security-audit/export-csv',
+            http_method='GET',
+            status_code=403,
+            details={'required_roles': 'Executive or Admin'},
+        )
+        return jsonify({'status': 'error', 'message': 'Executive or Admin access required.'}), 403
+
+    try:
+        days = max(1, min(365, int(request.args.get('days', 30))))
+    except (ValueError, TypeError):
+        days = 30
+    category_filter = (request.args.get('category') or '').strip().upper()
+
+    import csv
+    import io
+    from core.services.security_logger import synthesize_audit_event_context
+
+    db_url = current_app.config['DATABASE_URL']
+    conn = get_db(db_url)
+    rows_out = []
+    try:
+        with conn.cursor() as cur:
+            if category_filter:
+                cur.execute('''
+                    SELECT id, timestamp, event_category, event_action, username, user_role,
+                           ip_address, endpoint, http_method, status_code, severity, details
+                    FROM "SecurityAuditLogs"
+                    WHERE timestamp >= NOW() - (%s || ' days')::interval
+                      AND UPPER(event_category) = %s
+                    ORDER BY timestamp DESC
+                    LIMIT 5000;
+                ''', (str(days), category_filter))
+            else:
+                cur.execute('''
+                    SELECT id, timestamp, event_category, event_action, username, user_role,
+                           ip_address, endpoint, http_method, status_code, severity, details
+                    FROM "SecurityAuditLogs"
+                    WHERE timestamp >= NOW() - (%s || ' days')::interval
+                    ORDER BY timestamp DESC
+                    LIMIT 5000;
+                ''', (str(days),))
+            for r in cur.fetchall():
+                rd = dict(r) if isinstance(r, dict) else {
+                    'id': r[0], 'timestamp': r[1], 'event_category': r[2], 'event_action': r[3],
+                    'username': r[4], 'user_role': r[5], 'ip_address': r[6], 'endpoint': r[7],
+                    'http_method': r[8], 'status_code': r[9], 'severity': r[10], 'details': r[11],
+                }
+                rd = synthesize_audit_event_context(rd)
+                rows_out.append(rd)
+    finally:
+        conn.close()
+
+    log_security_event(
+        event_category='SECURITY_AUDIT',
+        event_action='BULK_DATA_EXPORT',
+        severity='INFO',
+        endpoint='/api/v1/it/security-audit/export-csv',
+        http_method='GET',
+        status_code=200,
+        details={'resource': 'SecurityAuditLogs', 'days': days, 'count': len(rows_out)},
+    )
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        'Event ID', 'UTC Timestamp', 'Category', 'Action', 'Severity',
+        'Username', 'Role', 'Client IP', 'HTTP Method', 'Endpoint',
+        'HTTP Status', 'Description', 'System Action Taken',
+    ])
+    for ev in rows_out:
+        ts_val = ev.get('timestamp')
+        ts_str = ts_val.isoformat() if hasattr(ts_val, 'isoformat') else str(ts_val or '')
+        writer.writerow([
+            ev.get('id'),
+            ts_str,
+            ev.get('event_category') or '',
+            ev.get('event_action') or '',
+            ev.get('severity') or '',
+            ev.get('username') or 'Anonymous',
+            ev.get('user_role') or 'Visitor',
+            ev.get('ip_address') or '',
+            ev.get('http_method') or '',
+            ev.get('endpoint') or '',
+            ev.get('status_code') or 200,
+            ev.get('description') or '',
+            ev.get('action_taken') or '',
+        ])
+
+    today_file = datetime.date.today().strftime('%m-%d-%Y')
+    from flask import Response
+    return Response(
+        buf.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': f'attachment; filename="HWB_Security_Audit_Log_{days}d_{today_file}.csv"',
+            'Cache-Control': 'no-store',
+        },
+    )
 
 
 

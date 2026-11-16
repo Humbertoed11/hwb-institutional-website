@@ -140,6 +140,84 @@ def parse_recovery_table(markdown_content):
             parsed[key] = val
     return parsed
 
+def _resolve_archive_path(filename: str) -> str:
+    """Returns host backups/ archive path when available, else local docs/archive/."""
+    candidates = [
+        os.path.abspath(os.path.join(os.getcwd(), "backups", filename)),
+        os.path.abspath(os.path.join(os.getcwd(), "..", "..", "..", "backups", filename)),
+    ]
+    for cand in candidates:
+        parent = os.path.dirname(cand)
+        if os.path.isdir(parent):
+            return cand
+    fallback_dir = os.path.abspath(os.path.join(os.getcwd(), "docs", "archive"))
+    os.makedirs(fallback_dir, exist_ok=True)
+    return os.path.join(fallback_dir, filename)
+
+
+def _mirror_paired_workspace_file(rel_path: str, new_content: str) -> None:
+    """Keeps root workspace and HWB-IT-WEBSITE copies identical when both exist."""
+    candidates = [
+        os.path.abspath(os.path.join(os.getcwd(), rel_path)),
+        os.path.abspath(os.path.join(os.getcwd(), "HWB-COMPANY", "HWB-IT", "HWB-IT-WEBSITE", rel_path)),
+        os.path.abspath(os.path.join(os.getcwd(), "..", "..", "..", rel_path)),
+    ]
+    seen = set()
+    for target in candidates:
+        if target in seen:
+            continue
+        seen.add(target)
+        if os.path.exists(target):
+            with open(target, "w", encoding="utf-8") as wf:
+                wf.write(new_content)
+
+
+def _trim_session_recovery_markdown(recovery_file: str, content: str, max_actions: int = 3) -> None:
+    """Rotates older <br>-delimited items in Last Action to cold archive after DB sync."""
+    lines = content.split("\n")
+    updated = False
+    archived_blocks = []
+
+    for idx, line in enumerate(lines):
+        if line.startswith("| **Last Action** |"):
+            parts = line.split("|")
+            if len(parts) >= 4:
+                cell = parts[2].strip()
+                blocks = re.split(r"<br>(?=(?:0+|\d+)\.\s*\*\*)", cell)
+                if len(blocks) > max_actions:
+                    kept = blocks[:max_actions]
+                    archived_blocks = blocks[max_actions:]
+                    parts[2] = " " + "<br>".join(kept) + " "
+                    lines[idx] = "|".join(parts)
+                    updated = True
+            break
+
+    if not updated or not archived_blocks:
+        return
+
+    archive_path = _resolve_archive_path("HWB_HISTORICAL_SESSIONS_ARCHIVE.md")
+    existing_archive = ""
+    if os.path.exists(archive_path):
+        with open(archive_path, "r", encoding="utf-8") as af:
+            existing_archive = af.read()
+
+    new_archive_entries = []
+    for blk in archived_blocks:
+        sig = blk[:90].strip()
+        if sig and sig not in existing_archive:
+            new_archive_entries.append(f"- {blk.strip()}")
+
+    if new_archive_entries:
+        header = "# SigmaFidelity™ Historical Sessions Cold Archive\n\n" if not existing_archive else "\n"
+        stamp = f"\n### Cold-Archived via sigma_sync.py ({datetime.now().strftime('%m/%d/%Y %I:%M %p')})\n"
+        with open(archive_path, "a", encoding="utf-8") as af:
+            af.write(header + stamp + "\n".join(new_archive_entries) + "\n")
+
+    new_content = "\n".join(lines)
+    _mirror_paired_workspace_file("HWB-SESSION-RECOVERY.md", new_content)
+    print(f"[SYNC] Auto-trimmed HWB-SESSION-RECOVERY.md (archived {len(archived_blocks)} older action blocks -> {archive_path}).")
+
+
 def sync_system_state():
     recovery_file = "HWB-SESSION-RECOVERY.md"
     if not os.path.exists(recovery_file): return
@@ -165,6 +243,7 @@ def sync_system_state():
             """, ("ACTIVE-SESSION", Json(state_json)))
         conn.commit()
         conn.close()
+        _trim_session_recovery_markdown(recovery_file, content, max_actions=3)
     except Exception as e:
         print(f"Error syncing state: {e}")
 
@@ -232,8 +311,10 @@ def parse_problems_to_solve(markdown_content):
     impact_mapping = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
     cat_map = {"BUG": "System Integrity", "MIG": "Migration", "SYS": "System Operations"}
     results = []
+    seen_ids = set()
     for row in rows:
         iid = row["issue_id"]
+        seen_ids.add(iid)
         sec = sections.get(iid, {})
         
         impact_str = row["impact"].upper()
@@ -251,6 +332,22 @@ def parse_problems_to_solve(markdown_content):
             "preventative_rule": sec.get("preventative", sec.get("preventative_rule", "")),
             "detected_date": row["date"]
         })
+
+    for sid, sec in sections.items():
+        if sid not in seen_ids:
+            category = cat_map.get(sid.split("-")[0], "General")
+            det_match = re.search(r"(\d{2}/\d{2}/\d{4})", sec.get("detected", ""))
+            results.append({
+                "issue_id": sid,
+                "description": sec.get("title", sid),
+                "category": category,
+                "status": "RESOLVED",
+                "impact_level": 3,
+                "root_cause": sec.get("root_cause", ""),
+                "implemented_fix": sec.get("solution", sec.get("implemented_fix", "")),
+                "preventative_rule": sec.get("preventative", sec.get("preventative_rule", "")),
+                "detected_date": det_match.group(1) if det_match else ""
+            })
     return results
 
 try:
@@ -267,6 +364,169 @@ except ImportError:
             val = (byte_val - 128) / 128.0
             embedding[i] = round(val, 6)
         return embedding
+
+
+def _trim_problems_markdown(problems_file: str, content: str, max_closed: int = 5) -> None:
+    """Losslessly moves older closed bug entries to cold archive once verified in SigmaKnowledgeScars."""
+    lines = content.split("\n")
+    first_sec_idx = len(lines)
+    sec_header_re = re.compile(r"^##\s+([A-Z]+-[0-9]+(?:\.[0-9]+)?):")
+    for idx, line in enumerate(lines):
+        if sec_header_re.match(line):
+            first_sec_idx = idx
+            break
+
+    top_lines = lines[:first_sec_idx]
+    sec_lines = lines[first_sec_idx:]
+
+    # Parse table rows vs preamble/header lines
+    preamble_lines = []
+    data_rows = []
+    for line in top_lines:
+        stripped = line.strip()
+        if stripped.startswith("|") and "|" in stripped:
+            parts = [p.strip() for p in stripped.split("|")]
+            if len(parts) >= 6:
+                iid = parts[2]
+                if iid and iid not in ("Issue ID", "Date") and not iid.startswith("---") and not iid.startswith(":"):
+                    status_clean = parts[4].replace("**", "").strip().upper()
+                    data_rows.append((iid, status_clean, line))
+                    continue
+        if not data_rows:
+            preamble_lines.append(line)
+
+    # Split open/staged vs closed rows
+    open_statuses = {"OPEN", "STAGED", "PENDING"}
+    open_rows = [r for r in data_rows if r[1] in open_statuses]
+    closed_rows = [r for r in data_rows if r[1] not in open_statuses]
+
+    if len(closed_rows) <= max_closed:
+        return
+
+    kept_closed = closed_rows[-max_closed:]
+    archived_rows = closed_rows[:-max_closed]
+    kept_ids = {r[0] for r in (open_rows + kept_closed)}
+
+    # Partition ## <ID>: detailed blocks
+    sec_blocks = []
+    cur_id = None
+    cur_lines = []
+    for line in sec_lines:
+        m = sec_header_re.match(line)
+        if m:
+            if cur_id is not None:
+                sec_blocks.append((cur_id, "\n".join(cur_lines).rstrip()))
+            cur_id = m.group(1)
+            cur_lines = [line]
+        else:
+            if cur_id is not None:
+                cur_lines.append(line)
+    if cur_id is not None:
+        sec_blocks.append((cur_id, "\n".join(cur_lines).rstrip()))
+
+    kept_sections = [blk for sid, blk in sec_blocks if sid in kept_ids]
+    archived_sections = [(sid, blk) for sid, blk in sec_blocks if sid not in kept_ids]
+
+    archive_path = _resolve_archive_path("PROBLEMS_TO_SOLVE_ARCHIVE.md")
+    existing_archive = ""
+    if os.path.exists(archive_path):
+        with open(archive_path, "r", encoding="utf-8") as af:
+            existing_archive = af.read()
+
+    arch_chunks = []
+    new_rows = [r[2] for r in archived_rows if f"| {r[0]} |" not in existing_archive]
+    if new_rows:
+        arch_chunks.append("### Archived Table Rows\n| Date | Issue ID | Description | Status | Impact |\n| :--- | :--- | :--- | :--- | :--- |\n" + "\n".join(new_rows))
+    new_secs = [blk for sid, blk in archived_sections if f"## {sid}:" not in existing_archive]
+    if new_secs:
+        arch_chunks.append("\n\n".join(new_secs))
+
+    if arch_chunks:
+        hdr = "# SigmaFidelity™ Institutional Error Log — Cold Archive\nAll entries below are permanently indexed in PostgreSQL `\"SigmaKnowledgeScars\"`.\n\n" if not existing_archive else "\n\n"
+        stamp = f"<!-- Archived via sigma_sync.py on {datetime.now().strftime('%m/%d/%Y %I:%M %p')} -->\n"
+        with open(archive_path, "a", encoding="utf-8") as af:
+            af.write(hdr + stamp + "\n\n".join(arch_chunks) + "\n")
+
+    # Preserve original chronological order among kept rows
+    ordered_kept_rows = [r[2] for r in data_rows if r[0] in kept_ids]
+    clean_preamble = "\n".join(preamble_lines).rstrip()
+    archive_note = (
+        "\n> **Note:** Full historical bug records (`BUG-001`+) are stored in PostgreSQL `\"SigmaKnowledgeScars\"` "
+        "and cold-archived in `backups/PROBLEMS_TO_SOLVE_ARCHIVE.md`. This rolling file retains open items plus the latest 5 resolved entries.\n"
+    )
+    if "**Note:** Full historical bug records" in clean_preamble:
+        archive_note = "\n"
+
+    new_doc = clean_preamble + "\n" + "\n".join(ordered_kept_rows) + "\n" + archive_note + "\n" + "\n\n".join(kept_sections).rstrip() + "\n"
+    _mirror_paired_workspace_file("docs/PROBLEMS-TO-SOLVE.md", new_doc)
+    print(f"[SYNC] Auto-trimmed docs/PROBLEMS-TO-SOLVE.md (archived {len(archived_rows)} resolved entries -> {archive_path}).")
+
+
+def _export_knowledge_scars_seed(conn, has_vector: bool) -> None:
+    """Backfills any missing embeddings/tsvectors and exports sigma_knowledge_scars_seed.json for Azure boot parity."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            UPDATE "SigmaKnowledgeScars"
+            SET search_vector = to_tsvector(
+                'english',
+                COALESCE(description, '') || ' ' || COALESCE(root_cause, '') || ' ' ||
+                COALESCE(implemented_fix, '') || ' ' || COALESCE(preventative_rule, '')
+            )
+            WHERE search_vector IS NULL;
+        """)
+        if has_vector:
+            cur.execute("""
+                SELECT id, COALESCE(description, ''), COALESCE(root_cause, ''),
+                       COALESCE(implemented_fix, ''), COALESCE(preventative_rule, '')
+                FROM "SigmaKnowledgeScars"
+                WHERE embedding IS NULL;
+            """)
+            missing_vecs = cur.fetchall()
+            for mid, desc_s, rc_s, fix_s, prev_s in missing_vecs:
+                vec = calculate_local_embedding(f"{desc_s} {rc_s} {fix_s} {prev_s}")
+                cur.execute('UPDATE "SigmaKnowledgeScars" SET embedding = %s WHERE id = %s;', (vec, mid))
+
+        cur.execute("""
+            SELECT id, description, category, status, impact_level,
+                   COALESCE(root_cause, ''), COALESCE(implemented_fix, ''), COALESCE(preventative_rule, ''),
+                   created_at, resolved_at, resolution_notes
+            FROM "SigmaKnowledgeScars"
+            ORDER BY id ASC;
+        """)
+        scars_rows = [
+            [
+                r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7],
+                r[8].isoformat() if r[8] else None,
+                r[9].isoformat() if r[9] else None,
+                r[10],
+            ]
+            for r in cur.fetchall()
+        ]
+
+        incidents_rows = []
+        try:
+            cur.execute('SELECT id, date, description, category, severity FROM "Incidents" ORDER BY id ASC;')
+            incidents_rows = [
+                [r[0], r[1].isoformat() if r[1] else None, r[2], r[3], r[4]]
+                for r in cur.fetchall()
+            ]
+        except Exception:
+            conn.rollback()
+
+    conn.commit()
+
+    seed_candidates = [
+        os.path.abspath(os.path.join(os.getcwd(), "database", "sigma_knowledge_scars_seed.json")),
+        os.path.abspath(os.path.join(os.getcwd(), "HWB-COMPANY", "HWB-IT", "HWB-IT-WEBSITE", "database", "sigma_knowledge_scars_seed.json")),
+    ]
+    for seed_path in seed_candidates:
+        if os.path.isdir(os.path.dirname(seed_path)):
+            tmp_path = seed_path + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as sf:
+                json.dump({"scars": scars_rows, "incidents": incidents_rows}, sf, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, seed_path)
+            print(f"[SYNC] Exported {len(scars_rows)} SigmaKnowledgeScars rows -> {seed_path}.")
+            break
 
 
 def sync_problems_to_solve():
@@ -373,7 +633,9 @@ def sync_problems_to_solve():
                             created_dt or datetime.now(), resolved_dt, full_text
                         ))
         conn.commit()
+        _export_knowledge_scars_seed(conn, has_vector)
         conn.close()
+        _trim_problems_markdown(problems_file, content, max_closed=5)
     except Exception as e:
         print(f"Error syncing problems: {e}")
 

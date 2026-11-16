@@ -53,10 +53,16 @@ limiter = SlidingWindowRateLimiter()
 
 
 def get_client_ip() -> str:
-    """Extracts client IP, respecting proxy forwarding headers."""
-    if request.headers.get('X-Forwarded-For'):
-        return request.headers['X-Forwarded-For'].split(',')[0].strip()
-    return request.remote_addr or 'unknown'
+    """Extracts verified client IP prioritizing Cloudflare CF-Connecting-IP (SOC 2 CC6.6)."""
+    try:
+        from core.services.security_logger import extract_client_ip
+        return extract_client_ip()
+    except Exception:
+        if request.headers.get('CF-Connecting-IP'):
+            return request.headers['CF-Connecting-IP'].strip()
+        if request.headers.get('X-Forwarded-For'):
+            return request.headers['X-Forwarded-For'].split(',')[0].strip()
+        return request.remote_addr or 'unknown'
 
 
 def rate_limit(limit: int = 5, period_seconds: int = 60, scope: str = None):

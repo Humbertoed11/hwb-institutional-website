@@ -52,6 +52,36 @@ def clean_phone(raw_phone: Optional[Union[str, int]]) -> Optional[str]:
 
     return None
 
+
+def is_valid_nanp_phone(raw_phone: Optional[Union[str, int]]) -> bool:
+    """
+    Validates strict 10-digit North American Numbering Plan (NANP) rules:
+    - Area code (NPA) must start with 2-9 and not end in 11 (blocks 0xx, 1xx like 147, and N11).
+    - Central office prefix (NXX) must start with 2-9 and not end in 11.
+    - Blocks single-digit repetition (e.g. 222-222-2222) and 555-5555 placeholder suffix.
+    """
+    if not raw_phone:
+        return False
+    raw_str = str(raw_phone).strip()
+    ext_match = re.search(r'(?i)(?:ext|x|extension)[.\s:]*(\d+)', raw_str)
+    main_part = raw_str[:ext_match.start()] if ext_match else raw_str
+    digits = re.sub(r'\D', '', main_part)
+    if len(digits) == 11 and digits.startswith('1'):
+        digits = digits[1:]
+    if len(digits) != 10:
+        return False
+    npa = digits[:3]
+    nxx = digits[3:6]
+    if npa[0] in ('0', '1') or npa[1:] == '11':
+        return False
+    if nxx[0] in ('0', '1') or nxx[1:] == '11':
+        return False
+    if len(set(digits)) == 1:
+        return False
+    if digits[3:] == '5555555':
+        return False
+    return True
+
 def clean_currency(raw_val: Optional[Union[str, int, float]]) -> float:
     """
     Safely sanitizes currency strings ('$12,450.00', '12450') into a pure float.

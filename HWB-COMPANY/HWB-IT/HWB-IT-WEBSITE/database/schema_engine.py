@@ -1404,6 +1404,48 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
                     except Exception as adb_err:
                         print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 054 sync skipped: {adb_err}", flush=True)
 
+            # Migration 055: BUG-186 Walkthrough Calendar Lifecycle Columns (Event ID & Conductor Mailbox)
+            if "055_walkthrough_calendar_lifecycle_columns_bug_186" not in applied:
+                print("[MIGRATION] Applying 055_walkthrough_calendar_lifecycle_columns_bug_186...", flush=True)
+                apply_migration_055_walkthrough_calendar_lifecycle(conn)
+                cur.execute("""
+                    INSERT INTO "schema_migrations" (version, description)
+                    VALUES (
+                        '055_walkthrough_calendar_lifecycle_columns_bug_186',
+                        'Add walkthrough_event_id and walkthrough_conductor_email columns to Leads for Outlook reschedule and cancel lifecycle parity (BUG-186)'
+                    )
+                    ON CONFLICT (version) DO NOTHING;
+                """)
+                conn.commit()
+                applied.add("055_walkthrough_calendar_lifecycle_columns_bug_186")
+                print("[MIGRATION] 055_walkthrough_calendar_lifecycle_columns_bug_186 successfully applied and recorded.", flush=True)
+
+                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                    try:
+                        import psycopg2
+                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                        try:
+                            apply_migration_055_walkthrough_calendar_lifecycle(adb_conn)
+                        finally:
+                            adb_conn.close()
+                    except Exception as adb_err:
+                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 055 sync skipped: {adb_err}", flush=True)
+
+            # Continuous Neural Scar & Vector Parity Gate (Local + Azure sigmajan-db / sigmajan-adb)
+            ensure_sigma_knowledge_scars_parity(conn)
+            if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
+                try:
+                    import psycopg2
+                    adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
+                    adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
+                    try:
+                        ensure_sigma_knowledge_scars_parity(adb_conn)
+                    finally:
+                        adb_conn.close()
+                except Exception as adb_err:
+                    print(f"[MIGRATION NOTICE] Sibling sigmajan-adb scar parity skipped: {adb_err}", flush=True)
+
             for v_tag, mod_path, v_desc in modular_migrations:
                 if v_tag not in applied:
                     print(f"[MIGRATION] Applying modular migration {v_tag} ({mod_path})...", flush=True)
@@ -3852,6 +3894,156 @@ def apply_migration_054_workforce_dedup_and_tin_hmac(conn: Any) -> dict:
 
     conn.commit()
     return summary
+
+
+def apply_migration_055_walkthrough_calendar_lifecycle(conn: Any) -> None:
+    """Adds Outlook event lifecycle tracking columns to Leads and Customers (BUG-186)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            'ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS walkthrough_event_id VARCHAR(255);'
+        )
+        cur.execute(
+            'ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS walkthrough_conductor_email VARCHAR(160);'
+        )
+        cur.execute(
+            'ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_date VARCHAR(20);'
+        )
+        cur.execute(
+            'ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_time VARCHAR(32);'
+        )
+        cur.execute(
+            'ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_event_id VARCHAR(255);'
+        )
+        cur.execute(
+            'ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_conductor_email VARCHAR(160);'
+        )
+    conn.commit()
+
+
+def _deterministic_scar_embedding(text: str) -> list:
+    """Computes deterministic 1536-dim SHA-256 embedding matching sigma_sync.py / crm_api.py."""
+    import hashlib
+    embedding = [0.0] * 1536
+    if not text:
+        return embedding
+    sha = hashlib.sha256(text.encode("utf-8")).digest()
+    for i in range(1536):
+        embedding[i] = round((sha[i % len(sha)] - 128) / 128.0, 6)
+    return embedding
+
+
+def ensure_sigma_knowledge_scars_parity(conn: Any) -> None:
+    """Guarantees SigmaKnowledgeScars vector/tsvector columns and full seed parity across Local & Azure."""
+    seed_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "sigma_knowledge_scars_seed.json",
+    )
+    has_vector = False
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS "SigmaKnowledgeScars" (
+                id SERIAL PRIMARY KEY,
+                description TEXT NOT NULL,
+                category TEXT DEFAULT 'System Integrity',
+                status TEXT DEFAULT 'RESOLVED',
+                impact_level INTEGER DEFAULT 3,
+                root_cause TEXT DEFAULT '',
+                implemented_fix TEXT DEFAULT '',
+                preventative_rule TEXT DEFAULT '',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                resolution_notes TEXT,
+                search_vector tsvector
+            );
+            ALTER TABLE "SigmaKnowledgeScars" ADD COLUMN IF NOT EXISTS search_vector tsvector;
+            """
+        )
+        cur.execute("SAVEPOINT sp_scar_pgvector;")
+        try:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            cur.execute(
+                'ALTER TABLE "SigmaKnowledgeScars" ADD COLUMN IF NOT EXISTS embedding vector(1536);'
+            )
+            cur.execute("RELEASE SAVEPOINT sp_scar_pgvector;")
+            has_vector = True
+        except Exception:
+            cur.execute("ROLLBACK TO SAVEPOINT sp_scar_pgvector;")
+            has_vector = False
+
+        if os.path.exists(seed_path):
+            with open(seed_path, "r", encoding="utf-8") as sf:
+                seed_data = json.load(sf)
+            seed_scars = seed_data.get("scars") or []
+            seed_max_id = max((int(r[0]) for r in seed_scars), default=0)
+            cur.execute('SELECT COUNT(*), COALESCE(MAX(id), 0) FROM "SigmaKnowledgeScars";')
+            db_count, db_max_id = cur.fetchone()
+
+            if seed_scars and (db_count < len(seed_scars) or db_max_id < seed_max_id):
+                for srow in seed_scars:
+                    cur.execute(
+                        """
+                        INSERT INTO "SigmaKnowledgeScars" (
+                            id, description, category, status, impact_level,
+                            root_cause, implemented_fix, preventative_rule,
+                            created_at, resolved_at, resolution_notes
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s,
+                            COALESCE(%s::timestamp, NOW()),
+                            COALESCE(%s::timestamp, NOW()),
+                            %s
+                        )
+                        ON CONFLICT (id) DO UPDATE SET
+                            description = EXCLUDED.description,
+                            category = EXCLUDED.category,
+                            status = EXCLUDED.status,
+                            impact_level = EXCLUDED.impact_level,
+                            root_cause = EXCLUDED.root_cause,
+                            implemented_fix = EXCLUDED.implemented_fix,
+                            preventative_rule = EXCLUDED.preventative_rule,
+                            resolved_at = COALESCE("SigmaKnowledgeScars".resolved_at, EXCLUDED.resolved_at),
+                            resolution_notes = COALESCE(EXCLUDED.resolution_notes, "SigmaKnowledgeScars".resolution_notes);
+                        """,
+                        tuple(srow),
+                    )
+                cur.execute(
+                    """
+                    SELECT setval(
+                        pg_get_serial_sequence('"SigmaKnowledgeScars"', 'id'),
+                        GREATEST(COALESCE((SELECT MAX(id) FROM "SigmaKnowledgeScars"), 1), 1)
+                    );
+                    """
+                )
+
+        cur.execute(
+            """
+            UPDATE "SigmaKnowledgeScars"
+            SET search_vector = to_tsvector(
+                'english',
+                COALESCE(description, '') || ' ' || COALESCE(root_cause, '') || ' ' ||
+                COALESCE(implemented_fix, '') || ' ' || COALESCE(preventative_rule, '')
+            )
+            WHERE search_vector IS NULL;
+            """
+        )
+
+        if has_vector:
+            cur.execute(
+                """
+                SELECT id, COALESCE(description, ''), COALESCE(root_cause, ''),
+                       COALESCE(implemented_fix, ''), COALESCE(preventative_rule, '')
+                FROM "SigmaKnowledgeScars"
+                WHERE embedding IS NULL;
+                """
+            )
+            for mid, desc_s, rc_s, fix_s, prev_s in cur.fetchall():
+                vec = _deterministic_scar_embedding(f"{desc_s} {rc_s} {fix_s} {prev_s}")
+                cur.execute(
+                    'UPDATE "SigmaKnowledgeScars" SET embedding = %s::vector WHERE id = %s;',
+                    (f"[{','.join(map(str, vec))}]", mid),
+                )
+    conn.commit()
+
 
 
 

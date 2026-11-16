@@ -15,9 +15,13 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 from flask_login import login_required, current_user
 from core.services.database import get_db
-from core.services.sanitizer import clean_phone, clean_email, clean_city, extract_phone_digits
+from core.services.sanitizer import clean_phone, clean_email, clean_city, extract_phone_digits, is_valid_nanp_phone
 from core.services.rate_limiter import rate_limit
-from core.services.bot_defense import evaluate_bot_defense
+from core.services.bot_defense import (
+    evaluate_bot_defense,
+    generate_lead_update_token,
+    validate_lead_update_token,
+)
 from core.services.task_queue import task_queue
 from core.services.notification_service import dispatch_lead_notifications
 from core.services.security_logger import log_security_event, extract_client_ip
@@ -1793,6 +1797,22 @@ def get_quote():
                 return render_template('quote_success.html', data=data_dict)
 
             raw_phone = (data.get('phone') or '').strip()
+            if raw_phone and not is_valid_nanp_phone(raw_phone):
+                log_security_event(
+                    event_category='BOT_DEFENSE',
+                    event_action='BOT_DROPPED',
+                    severity='WARNING',
+                    endpoint='/get-quote',
+                    http_method='POST',
+                    status_code=200,
+                    details={
+                        'form_name': 'Client Quote Form',
+                        'reason': f"Invalid US phone format rejected ('{raw_phone[:24]}')",
+                        'target_company': company,
+                        'target_email': email,
+                    },
+                )
+                return render_template('quote_success.html', data=data_dict)
             clean_p = clean_phone(raw_phone) if raw_phone else ''
             clean_e = clean_email(data.get('email')) or (data.get('email') or '').strip()
 
@@ -1931,6 +1951,7 @@ def get_quote():
 
                     ref_code = f"LEAD-#{int(lead_id or 0):05d}"
                     data_dict['lead_id'] = lead_id
+                    data_dict['lead_update_token'] = generate_lead_update_token(int(lead_id)) if lead_id else ''
                     data_dict['already_registered'] = is_repeat_lead
                     data_dict['reference_code'] = ref_code
                     
@@ -2034,14 +2055,34 @@ def get_quote():
 
 @public_bp.route('/update-quote-details', methods=['POST'], endpoint='update_quote_details')
 @public_bp.route('/update-quote-sqft', methods=['POST'], endpoint='update_quote_sqft')
+@rate_limit(limit=15, period_seconds=60, scope="public_quote_step2")
 def update_quote_details():
     """Optional post-submission pricing calibration updater (Option B: Mobile Express Enrichment)."""
     lead_id = request.form.get('lead_id')
+    lead_update_token = request.form.get('lead_update_token')
     sqft_val = (request.form.get('sqft') or '').strip().replace(',', '')
     city_val = (request.form.get('city') or '').strip()
     freq_val = (request.form.get('frequency') or '').strip()
 
-    if lead_id:
+    if lead_id and str(lead_id).isdigit():
+        enforce_step2_token = (
+            not current_app.config.get('TESTING')
+            or bool(lead_update_token)
+            or request.headers.get('X-Enforce-Bot-Defense') == '1'
+        )
+        if enforce_step2_token:
+            tok_ok, tok_reason = validate_lead_update_token(lead_update_token, int(lead_id))
+            if not tok_ok:
+                log_security_event(
+                    event_category='BOT_DEFENSE',
+                    event_action='BOT_DROPPED',
+                    severity='WARNING',
+                    endpoint=request.path,
+                    http_method='POST',
+                    status_code=403,
+                    details={'form_name': 'Quote Step-2 Box', 'reason': tok_reason, 'target_company': f'Lead #{lead_id}'},
+                )
+                return jsonify({'status': 'error', 'message': 'Session expired. Please submit a new quote request.'}), 403
         try:
             db_url = current_app.config['DATABASE_URL']
             conn = get_db(db_url)

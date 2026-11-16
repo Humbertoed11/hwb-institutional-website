@@ -1758,9 +1758,10 @@
                                     <span style="background: ${isOpened ? '#dcfce7' : '#eff6ff'}; color: ${isOpened ? '#15803d' : '#1d4ed8'}; border: 1px solid ${isOpened ? '#86efac' : '#bfdbfe'}; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.78rem;">
                                         ${isOpened ? `👁️ Opened (${c.open_count}x)` : `📬 ${c.campaign_status}`}
                                     </span>
+                                    ${(typeof CAN_REMOVE_CAMPAIGNS === 'undefined' || CAN_REMOVE_CAMPAIGNS) ? `
                                     <button type="button" onclick="removeLeadFromCampaign(${lead.id}, '${(c.campaign_name || '').replace(/'/g, "\\'")}')" class="sigma-mini-btn" style="background: #ffffff; color: #dc2626; border: 1px solid #fca5a5; font-weight: 800; font-size: 0.72rem; height: 28px; padding: 0 0.65rem; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;" title="Remove this lead from campaign and cancel unsent drafts">
                                         <i class="fas fa-times-circle"></i> Remove from Campaign
-                                    </button>
+                                    </button>` : ''}
                                 </div>
                                 ${c.opened_at ? `<div style="font-size: 0.72rem; color: #15803d; font-weight: 600;">Last view: ${formatDashboardDate(c.opened_at)}</div>` : ''}
                             </div>
@@ -1874,6 +1875,9 @@
             if(mapEl) {
                 const query = encodeURIComponent(`${lead.address || ''} ${lead.city || ''} ${lead.state || ''}`.trim());
                 mapEl.value = query ? `https://www.google.com/maps/search/?api=1&query=${query}` : '';
+            }
+            if (typeof syncLeadActiveWalkthroughBanner === 'function') {
+                syncLeadActiveWalkthroughBanner(lead, data.activities || []);
             }
 
             setVal('lead-action-manager', lead.decision_maker);
@@ -2258,6 +2262,26 @@
                 body: JSON.stringify(payload)
             });
             if (res.ok) {
+                setVal('visit-manager', dm);
+                setVal('visit-phone', phone);
+                setVal('edit-lead-dm', dm);
+                setVal('edit-lead-phone', phone);
+                setVal('edit-lead-email', email);
+                setVal('edit-lead-delivery-model', cm);
+                const setElText = (elId, val) => { const el = document.getElementById(elId); if (el) el.innerText = val || '--'; };
+                const jobTitle = (window.activeLeadDetailData && window.activeLeadDetailData.lead && window.activeLeadDetailData.lead.job_title) || '';
+                setElText('pb-lead-manager', (dm || '') + (jobTitle ? ' (' + jobTitle + ')' : ''));
+                setElText('pb-lead-phone', phone);
+                setElText('pb-lead-email', email);
+                if (window.activeLeadDetailData && window.activeLeadDetailData.lead) {
+                    window.activeLeadDetailData.lead.decision_maker = dm;
+                    window.activeLeadDetailData.lead.phone = phone;
+                    window.activeLeadDetailData.lead.email = email;
+                    window.activeLeadDetailData.lead.cleaning_delivery_model = cm;
+                    if (payload.status) {
+                        window.activeLeadDetailData.lead.status = payload.status;
+                    }
+                }
                 showToast("Contact info & Who Cleans saved.", "success");
                 syncOperationalData();
             } else {
@@ -2506,6 +2530,13 @@
             setVal('acc-action-email', acc.email);
             setVal('visit-manager-acc', acc.contact_person_name);
             setVal('visit-phone-acc', acc.phone);
+            setVal('visit-date-acc', acc.visit_preferred_date ? String(acc.visit_preferred_date).slice(0, 10) : '');
+            setVal('visit-time-acc', acc.visit_preferred_time ? _parseWtTimeTo24h(acc.visit_preferred_time) : '');
+            if (typeof _wtModalState !== 'undefined') {
+                _wtModalState.accountConductor = (acc.visit_conductor_email && !/hdominguez@hwbcleaning\.com/i.test(acc.visit_conductor_email))
+                    ? acc.visit_conductor_email
+                    : 'Humberto Dominguez';
+            }
             const mapAcc = document.getElementById('visit-map-link-acc');
             if(mapAcc) {
                 const query = encodeURIComponent(`${acc.company_address || ''} ${acc.city || ''} ${acc.state || ''}`.trim());
@@ -3553,6 +3584,10 @@
     }
 
     async function removeLeadFromCampaign(leadId, campaignName) {
+        if (typeof CAN_REMOVE_CAMPAIGNS !== 'undefined' && !CAN_REMOVE_CAMPAIGNS) {
+            showToast('Campaign removal access is turned off for this account.', 'error');
+            return;
+        }
         const lid = leadId || currentLeadId;
         if (!lid) return;
         showDecision({
@@ -3629,6 +3664,10 @@
     }
 
     async function removeLeadFromCampaignFromCadence() {
+        if (typeof CAN_REMOVE_CAMPAIGNS !== 'undefined' && !CAN_REMOVE_CAMPAIGNS) {
+            showToast('Campaign removal access is turned off for this account.', 'error');
+            return;
+        }
         if (!activeCadenceLead || !activeCadenceLead.id) return;
         showDecision({
             title: 'Remove from Outreach Campaign?',
@@ -3678,6 +3717,10 @@
         if (payload.capacity === "") payload.capacity = null;
         if (payload.student_enrollment === "") payload.student_enrollment = null;
         if (payload.owner_id === "") payload.owner_id = null;
+        const visitCondEl = document.getElementById('visit-conductor');
+        if (visitCondEl && visitCondEl.value) {
+            payload.conductor = visitCondEl.value;
+        }
         
         showToast("Synchronizing lead data...", "success");
 
@@ -3691,12 +3734,18 @@
             const result = await res.json().catch(() => ({status: 'error', message: `Server returned status ${res.status}`}));
 
             if (res.ok) { 
-                showToast("Lead updated successfully.", "success"); 
+                const calSuffix = result.calendar_rescheduled
+                    ? " (Outlook calendar invite updated!)"
+                    : (result.calendar_created ? " (Outlook calendar invite sent!)" : "");
+                showToast(`Lead updated successfully.${calSuffix}`, "success"); 
                 syncOperationalData();
                 await openLeadCommand(id, 'overview');
             } else {
                 const errData = result || {message: "Update failed"};
-                showToast("System Error: " + (errData.message || "Update failed"), "error");
+                showToast(
+                    res.status === 409 ? (errData.message || "Walkthrough slot conflict.") : ("System Error: " + (errData.message || "Update failed")),
+                    res.status === 409 ? "warning" : "error"
+                );
             }
         } catch (err) {
             console.error("Save Error:", err);
@@ -4726,17 +4775,781 @@
         showToast("Generating account export...", "success");
     }
 
+    // --- Unified Popup Walkthrough Calendar Availability, 1-Hour Buffer & Booking Engine (BUG-186) ---
+    const _wtModalState = {
+        mode: 'lead_pick',
+        startDate: '',
+        selectedDate: '',
+        selectedTime24: '',
+        selectedTime12: '',
+        selectedDayLabel: '',
+        leadId: null,
+        city: '',
+        facilityName: '',
+        data: null,
+    };
+
+    function _escWtHtml(raw) {
+        return String(raw || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function _parseWtTimeTo24h(rawTime) {
+        const val = String(rawTime || '').trim().toUpperCase();
+        if (!val) return '';
+        const m12 = val.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+        if (m12) {
+            let hr = parseInt(m12[1], 10);
+            const mn = m12[2];
+            if (m12[3] === 'PM' && hr !== 12) hr += 12;
+            if (m12[3] === 'AM' && hr === 12) hr = 0;
+            return `${String(hr).padStart(2, '0')}:${mn}`;
+        }
+        const m24 = val.match(/^(\d{1,2}):(\d{2})/);
+        if (m24) {
+            return `${String(parseInt(m24[1], 10)).padStart(2, '0')}:${m24[2]}`;
+        }
+        return '';
+    }
+
+    function _formatWtTimeTo12h(rawTime) {
+        const val = String(rawTime || '').trim();
+        if (!val) return '10:00 AM';
+        if (/AM|PM/i.test(val)) {
+            const m12 = val.trim().toUpperCase().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+            if (m12) return `${String(parseInt(m12[1], 10)).padStart(2, '0')}:${m12[2]} ${m12[3]}`;
+            return val.toUpperCase();
+        }
+        const m24 = val.match(/^(\d{1,2}):(\d{2})/);
+        if (!m24) return '10:00 AM';
+        let hr = parseInt(m24[1], 10);
+        const mn = m24[2];
+        const ampm = hr >= 12 ? 'PM' : 'AM';
+        hr = hr % 12 || 12;
+        return `${String(hr).padStart(2, '0')}:${mn} ${ampm}`;
+    }
+
+    const _leadInitialWalkthroughState = {
+        leadId: null,
+        savedDate: '',
+        savedTime12: '',
+        savedTime24: '',
+        savedConductor: 'Humberto Dominguez',
+    };
+
+    function _setSelectValueSafe(selectEl, val) {
+        if (!selectEl || !val) return;
+        let hasOpt = Array.from(selectEl.options).some(o => o.value === val);
+        if (!hasOpt) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.text = val;
+            selectEl.appendChild(opt);
+        }
+        selectEl.value = val;
+    }
+
+    function _resolveSavedLeadConductor(lead, activities) {
+        if (Array.isArray(activities)) {
+            const wtAct = activities.find(a =>
+                String(a.activity_type || '') === 'Walkthrough Booked' ||
+                /Walkthrough Booked/i.test(String(a.description || ''))
+            );
+            if (wtAct && wtAct.description) {
+                const m = String(wtAct.description).match(/\[Conductor:\s*([^\]]+)\]/i);
+                if (m && m[1] && m[1].trim()) {
+                    return m[1].trim();
+                }
+                return 'Humberto Dominguez';
+            }
+        }
+        const mb = String((lead && lead.walkthrough_conductor_email) || '').trim();
+        if (mb && !/hdominguez@hwbcleaning\.com/i.test(mb)) {
+            return mb;
+        }
+        return 'Humberto Dominguez';
+    }
+
+    function _syncLeadWtSourceBadge(conductorVal) {
+        const badge = document.getElementById('lead-wt-source-badge');
+        if (!badge) return;
+        const c = String(conductorVal || 'Humberto Dominguez').trim().toLowerCase();
+        const isM365 = (!c || c.includes('humberto') || c.includes('@hwbcleaning.com') || c === 'ceo');
+        if (isM365) {
+            badge.innerText = 'Live Outlook · 1h Drive Buffer';
+            badge.style.background = '#dcfce7';
+            badge.style.color = '#166534';
+        } else {
+            badge.innerText = 'Rep Schedule · 1h Drive Buffer';
+            badge.style.background = '#dbeafe';
+            badge.style.color = '#1d4ed8';
+        }
+    }
+
+    function syncLeadWalkthroughCardUI() {
+        const banner = document.getElementById('lead-wt-active-banner');
+        const bannerTextWrap = document.getElementById('lead-wt-active-banner-text');
+        const bannerIcon = document.getElementById('lead-wt-active-icon');
+        const summary = document.getElementById('lead-wt-active-summary');
+        const resetBtn = document.getElementById('btn-reset-lead-wt-draft');
+        const cancelBtn = document.getElementById('btn-cancel-lead-wt');
+        const submitBtn = document.getElementById('btn-submit-lead-walkthrough');
+        const previewEl = document.getElementById('lead-wt-slot-preview');
+        const dateEl = document.getElementById('visit-date');
+        const timeEl = document.getElementById('visit-time');
+        const condEl = document.getElementById('visit-conductor');
+
+        const curDate = (dateEl && dateEl.value) ? String(dateEl.value).trim() : '';
+        const curTimeRaw = (timeEl && timeEl.value) ? String(timeEl.value).trim() : '';
+        const curTime24 = curTimeRaw ? _parseWtTimeTo24h(curTimeRaw) : '';
+        const curTime12 = curTimeRaw ? _formatWtTimeTo12h(curTimeRaw) : '10:00 AM';
+        const curConductor = (condEl && condEl.value) ? String(condEl.value).trim() : 'Humberto Dominguez';
+
+        _syncLeadWtSourceBadge(curConductor);
+
+        const savedDate = _leadInitialWalkthroughState.savedDate || '';
+        const savedTime24 = _leadInitialWalkthroughState.savedTime24 || '';
+        const savedTime12 = _leadInitialWalkthroughState.savedTime12 || '10:00 AM';
+        const savedConductor = _leadInitialWalkthroughState.savedConductor || 'Humberto Dominguez';
+
+        const effectiveCurTime24 = curDate ? (curTime24 || '10:00') : '';
+        const hasPendingChange = Boolean(curDate) && (
+            curDate !== savedDate ||
+            effectiveCurTime24 !== savedTime24 ||
+            (savedDate && curConductor !== savedConductor)
+        );
+
+        if (savedDate && !hasPendingChange) {
+            if (banner) {
+                banner.style.display = 'flex';
+                banner.style.background = '#ecfdf5';
+                banner.style.borderColor = '#86efac';
+            }
+            if (bannerTextWrap) bannerTextWrap.style.color = '#065f46';
+            if (bannerIcon) bannerIcon.className = 'fas fa-calendar-check';
+            if (summary) {
+                summary.innerText = `Scheduled: ${formatDashboardDate(savedDate)} at ${savedTime12} (${savedConductor}) — Open calendar below to reschedule`;
+            }
+            if (resetBtn) resetBtn.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+            if (submitBtn) {
+                submitBtn.innerText = 'Reschedule Walkthrough';
+                submitBtn.style.boxShadow = 'none';
+            }
+            if (previewEl) {
+                previewEl.style.background = '#ecfdf5';
+                previewEl.style.borderStyle = 'solid';
+                previewEl.style.borderColor = '#86efac';
+                previewEl.style.color = '#065f46';
+                previewEl.innerHTML = `✓ <strong>Confirmed Slot:</strong> ${_escWtHtml(formatDashboardDate(savedDate))} at <strong>${_escWtHtml(savedTime12)}</strong> (${_escWtHtml(savedConductor)})`;
+            }
+        } else if (curDate && hasPendingChange) {
+            if (banner) {
+                banner.style.display = 'flex';
+                banner.style.background = '#fffbeb';
+                banner.style.borderColor = '#f59e0b';
+            }
+            if (bannerTextWrap) bannerTextWrap.style.color = '#92400e';
+            if (bannerIcon) bannerIcon.className = 'fas fa-clock';
+            const btnLabel = savedDate ? 'Confirm & Reschedule Walkthrough' : 'Confirm & Schedule Walkthrough';
+            if (summary) {
+                summary.innerText = savedDate
+                    ? `Unsaved Change: ${formatDashboardDate(savedDate)} (${savedTime12}) ➔ ${formatDashboardDate(curDate)} at ${curTime12} (${curConductor}) — Click "${btnLabel}" below to save`
+                    : `Unsaved Slot Selected: ${formatDashboardDate(curDate)} at ${curTime12} (${curConductor}) — Review details below and click "${btnLabel}" to save`;
+            }
+            if (resetBtn) {
+                resetBtn.style.display = 'inline-flex';
+                resetBtn.innerText = savedDate ? 'Revert' : 'Clear';
+            }
+            if (cancelBtn) cancelBtn.style.display = savedDate ? 'inline-flex' : 'none';
+            if (submitBtn) {
+                submitBtn.innerText = btnLabel;
+                submitBtn.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.32)';
+            }
+            if (previewEl) {
+                previewEl.style.background = '#fffbeb';
+                previewEl.style.borderStyle = 'solid';
+                previewEl.style.borderColor = '#f59e0b';
+                previewEl.style.color = '#92400e';
+                previewEl.innerHTML = `⏳ <strong>Pending Selection (Not Saved Yet):</strong> ${_escWtHtml(formatDashboardDate(curDate))} at <strong>${_escWtHtml(curTime12)}</strong> (${_escWtHtml(curConductor)}) — Click <strong>${_escWtHtml(btnLabel)}</strong> below`;
+            }
+        } else {
+            if (banner) banner.style.display = 'none';
+            if (resetBtn) resetBtn.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = savedDate ? 'inline-flex' : 'none';
+            if (submitBtn) {
+                submitBtn.innerText = savedDate ? 'Reschedule Walkthrough' : 'Schedule Walkthrough';
+                submitBtn.style.boxShadow = 'none';
+            }
+            if (previewEl) {
+                previewEl.style.background = '#f8fafc';
+                previewEl.style.borderStyle = 'dashed';
+                previewEl.style.borderColor = '#cbd5e1';
+                previewEl.style.color = 'var(--slate-600)';
+                const canBook = (typeof CAN_EDIT_LEADS === 'undefined' || CAN_EDIT_LEADS);
+                previewEl.innerHTML = `Click <strong>${canBook ? 'Check Calendar &amp; Pick Time' : 'View CEO Calendar Availability'}</strong> to open the 5-day Outlook schedule (Mon–Fri, 9:00 AM – 4:00 PM CT · 1h travel buffer).`;
+            }
+        }
+    }
+
+    function handleLeadVisitConductorChange() {
+        syncLeadWalkthroughCardUI();
+    }
+
+    function resetLeadWalkthroughDraft() {
+        const dateEl = document.getElementById('visit-date');
+        const timeEl = document.getElementById('visit-time');
+        const condEl = document.getElementById('visit-conductor');
+        if (dateEl) dateEl.value = _leadInitialWalkthroughState.savedDate || '';
+        if (timeEl) timeEl.value = _leadInitialWalkthroughState.savedTime24 || '';
+        if (condEl) _setSelectValueSafe(condEl, _leadInitialWalkthroughState.savedConductor || 'Humberto Dominguez');
+        syncLeadWalkthroughCardUI();
+    }
+
+    function syncLeadActiveWalkthroughBanner(lead, activities = []) {
+        const dateEl = document.getElementById('visit-date');
+        const timeEl = document.getElementById('visit-time');
+        const condEl = document.getElementById('visit-conductor');
+        const notesEl = document.getElementById('visit-instructions');
+        if (notesEl) notesEl.value = '';
+
+        const closedStatuses = ['Walkthrough Completed', 'Converted', 'Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED'];
+        const rawPrefDate = (lead && lead.preferred_date) ? String(lead.preferred_date).slice(0, 10) : '';
+        const isActiveScheduled = Boolean(rawPrefDate) && !closedStatuses.includes(String((lead && lead.status) || ''));
+        const prefDate = isActiveScheduled ? rawPrefDate : '';
+        const prefTime12 = isActiveScheduled ? _formatWtTimeTo12h((lead && lead.preferred_time) || '10:00 AM') : '';
+        const prefTime24 = isActiveScheduled ? _parseWtTimeTo24h(prefTime12) : '';
+        const resolvedCond = isActiveScheduled ? _resolveSavedLeadConductor(lead, activities) : 'Humberto Dominguez';
+
+        _leadInitialWalkthroughState.leadId = lead ? lead.id : null;
+        _leadInitialWalkthroughState.savedDate = prefDate;
+        _leadInitialWalkthroughState.savedTime12 = prefTime12;
+        _leadInitialWalkthroughState.savedTime24 = prefTime24;
+        _leadInitialWalkthroughState.savedConductor = resolvedCond;
+
+        if (condEl) _setSelectValueSafe(condEl, resolvedCond);
+        if (dateEl) dateEl.value = prefDate;
+        if (timeEl) timeEl.value = prefTime24;
+
+        syncLeadWalkthroughCardUI();
+    }
+
+    function openWalkthroughCalendarModal(mode = 'lead_pick') {
+        const modal = document.getElementById('modal-walkthrough-calendar');
+        if (!modal) return;
+
+        _wtModalState.mode = mode;
+        _wtModalState.data = null;
+        _wtModalState.selectedDayLabel = '';
+        _wtModalState.accountId = null;
+
+        const titleEl = document.getElementById('wt-cal-modal-title');
+        const subEl = document.getElementById('wt-cal-modal-subtitle');
+        const condEl = document.getElementById('wt-cal-conductor');
+        const directSection = document.getElementById('wt-cal-direct-book-section');
+        const pickerSection = document.getElementById('wt-cal-picker-section');
+        const useSlotBtn = document.getElementById('btn-wt-use-selected-slot');
+
+        let initDate = '';
+        let initTime = '';
+        let conductorVal = 'Humberto Dominguez';
+
+        if (mode === 'cadence_book' || mode === 'cadence_pick') {
+            if (typeof switchLeadScriptTab === 'function') switchLeadScriptTab('walkthrough-close');
+            const lead = activeCadenceLead || {};
+            _wtModalState.leadId = lead.id || null;
+            _wtModalState.city = String(lead.city || '').trim();
+            _wtModalState.facilityName = lead.center_name || 'Active Lead';
+
+            const dm = (document.getElementById('cadence-lead-dm') && document.getElementById('cadence-lead-dm').value.trim()) || lead.decision_maker || '';
+            const phone = (document.getElementById('cadence-lead-phone') && document.getElementById('cadence-lead-phone').value.trim()) || lead.phone || '';
+            const email = (document.getElementById('cadence-lead-email') && document.getElementById('cadence-lead-email').value.trim()) || lead.email || '';
+            const repEmailSaved = localStorage.getItem('hwb_cadence_rep_email') || (typeof CURRENT_CALLER_EMAIL !== 'undefined' ? CURRENT_CALLER_EMAIL : '');
+            conductorVal = (document.getElementById('cadence-wt-conductor') && document.getElementById('cadence-wt-conductor').value)
+                || localStorage.getItem('hwb_cadence_rep_conductor')
+                || 'Humberto Dominguez';
+
+            setVal('wt-cal-host', dm);
+            setVal('wt-cal-phone', phone);
+            setVal('wt-cal-email', email);
+            setVal('wt-cal-rep-email', repEmailSaved);
+
+            initDate = (document.getElementById('cadence-wt-date') && document.getElementById('cadence-wt-date').value)
+                || (lead.preferred_date ? String(lead.preferred_date).slice(0, 10) : '');
+            initTime = (document.getElementById('cadence-wt-time') && document.getElementById('cadence-wt-time').value)
+                || lead.preferred_time || '';
+        } else if (mode === 'edit_lead_pick') {
+            const lead = (window.activeLeadDetailData && window.activeLeadDetailData.lead) || {};
+            _wtModalState.leadId = currentLeadId || lead.id || null;
+            _wtModalState.city = (document.getElementById('edit-lead-city') && document.getElementById('edit-lead-city').value.trim()) || String(lead.city || '').trim();
+            _wtModalState.facilityName = lead.center_name || 'Lead Profile';
+            conductorVal = (document.getElementById('visit-conductor') && document.getElementById('visit-conductor').value) || 'Humberto Dominguez';
+            initDate = (document.getElementById('edit-lead-pref-date') && document.getElementById('edit-lead-pref-date').value) || '';
+            initTime = (document.getElementById('edit-lead-pref-time') && document.getElementById('edit-lead-pref-time').value) || '';
+        } else if (mode === 'account_pick') {
+            _wtModalState.leadId = null;
+            _wtModalState.accountId = currentAccountId || null;
+            const addrTxt = (document.getElementById('pb-acc-address') && document.getElementById('pb-acc-address').innerText) || '';
+            const addrParts = addrTxt.split(',');
+            _wtModalState.city = addrParts.length > 1 ? addrParts[1].replace(/\bTX\b|\d+/g, '').trim() : '';
+            _wtModalState.facilityName = (document.getElementById('pb-acc-company') && document.getElementById('pb-acc-company').innerText) || 'Client Account';
+            conductorVal = _wtModalState.accountConductor || 'Humberto Dominguez';
+            initDate = (document.getElementById('visit-date-acc') && document.getElementById('visit-date-acc').value) || '';
+            initTime = (document.getElementById('visit-time-acc') && document.getElementById('visit-time-acc').value) || '';
+        } else {
+            const lead = (window.activeLeadDetailData && window.activeLeadDetailData.lead) || {};
+            _wtModalState.leadId = currentLeadId || lead.id || null;
+            _wtModalState.city = String(lead.city || '').trim();
+            _wtModalState.facilityName = lead.center_name || 'Commercial Lead';
+            conductorVal = (document.getElementById('visit-conductor') && document.getElementById('visit-conductor').value) || 'Humberto Dominguez';
+            initDate = (document.getElementById('visit-date') && document.getElementById('visit-date').value) || '';
+            initTime = (document.getElementById('visit-time') && document.getElementById('visit-time').value) || '';
+        }
+
+        const nowLocal = new Date();
+        const localTodayIso = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, '0')}-${String(nowLocal.getDate()).padStart(2, '0')}`;
+        if (initDate && initDate < localTodayIso) {
+            initDate = '';
+            initTime = '';
+        }
+
+        if (condEl) _setSelectValueSafe(condEl, conductorVal);
+        _wtModalState.selectedDate = initDate;
+        _wtModalState.selectedTime24 = _parseWtTimeTo24h(initTime);
+        _wtModalState.selectedTime12 = (initDate && initTime) ? _formatWtTimeTo12h(initTime) : '';
+        _wtModalState.startDate = initDate || '';
+
+        const cityLabel = _wtModalState.city ? ` · ${_wtModalState.city}, TX` : '';
+        if (titleEl) {
+            titleEl.innerText = mode === 'cadence_book'
+                ? `📅 Book Building Walkthrough — ${_wtModalState.facilityName}`
+                : `📅 Live Walkthrough Calendar — ${_wtModalState.facilityName}`;
+        }
+        if (subEl) {
+            subEl.innerText = `${_wtModalState.facilityName}${cityLabel} · Mon–Fri, 9:00 AM – 4:00 PM CT (45-Minute Visit + 1-Hour Travel Buffer)`;
+        }
+
+        const isReadOnlyLeadView = (mode !== 'account_pick' && typeof CAN_EDIT_LEADS !== 'undefined' && !CAN_EDIT_LEADS);
+        if (mode === 'cadence_book') {
+            if (directSection) directSection.style.display = 'flex';
+            if (pickerSection) pickerSection.style.display = 'none';
+        } else {
+            if (directSection) directSection.style.display = 'none';
+            if (pickerSection) pickerSection.style.display = 'flex';
+            if (useSlotBtn) useSlotBtn.style.display = isReadOnlyLeadView ? 'none' : 'inline-flex';
+        }
+
+        _updateWtModalSelectionBanner();
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        loadWalkthroughModalAvailability(false);
+    }
+
+    function closeWalkthroughCalendarModal() {
+        const modal = document.getElementById('modal-walkthrough-calendar');
+        if (modal) modal.style.display = 'none';
+        const anyOpen = Array.from(document.querySelectorAll('.isc-modal-overlay')).some(
+            el => el.id !== 'modal-walkthrough-calendar' && (el.style.display === 'flex' || el.style.display === 'block')
+        );
+        if (!anyOpen) document.body.style.overflow = 'auto';
+    }
+
+    function handleWtModalConductorChange() {
+        const condEl = document.getElementById('wt-cal-conductor');
+        if (condEl) {
+            localStorage.setItem('hwb_cadence_rep_conductor', condEl.value);
+            if (_wtModalState.mode === 'lead_pick' || _wtModalState.mode === 'edit_lead_pick') {
+                const visitCond = document.getElementById('visit-conductor');
+                if (visitCond) _setSelectValueSafe(visitCond, condEl.value);
+                syncLeadWalkthroughCardUI();
+            } else if (_wtModalState.mode === 'cadence_book' || _wtModalState.mode === 'cadence_pick') {
+                const cadCond = document.getElementById('cadence-wt-conductor');
+                if (cadCond) _setSelectValueSafe(cadCond, condEl.value);
+            }
+        }
+        loadWalkthroughModalAvailability(false);
+    }
+
+    function _updateWtModalSelectionBanner() {
+        const summaryEl = document.getElementById('wt-cal-selected-summary');
+        const bookLabelEl = document.getElementById('wt-cal-book-selected-label');
+        const isReadOnlyLeadView = (_wtModalState.mode !== 'account_pick' && typeof CAN_EDIT_LEADS !== 'undefined' && !CAN_EDIT_LEADS);
+
+        if (_wtModalState.selectedDate && _wtModalState.selectedTime12) {
+            const dispDay = _wtModalState.selectedDayLabel || formatDashboardDate(_wtModalState.selectedDate);
+            const txt = `✓ Selected Slot: ${dispDay} at ${_wtModalState.selectedTime12} (45m visit + 1h travel buffer)`;
+            if (summaryEl) {
+                summaryEl.style.color = '#065f46';
+                summaryEl.innerText = isReadOnlyLeadView ? `${txt} · Read-Only Training Mode` : txt;
+            }
+            if (bookLabelEl) {
+                bookLabelEl.style.background = '#dcfce7';
+                bookLabelEl.style.color = '#065f46';
+                bookLabelEl.innerText = `✓ ${dispDay} at ${_wtModalState.selectedTime12}`;
+            }
+        } else {
+            if (summaryEl) {
+                summaryEl.style.color = '#334155';
+                summaryEl.innerText = isReadOnlyLeadView
+                    ? 'Live CEO availability view (Lead Edit access is required to book slots).'
+                    : 'Click any open green or blue time slot above to select it.';
+            }
+            if (bookLabelEl) {
+                bookLabelEl.style.background = '#fef3c7';
+                bookLabelEl.style.color = '#92400e';
+                bookLabelEl.innerText = 'Click an open green or blue slot above to choose time';
+            }
+        }
+    }
+
+    function renderWalkthroughModalGrid() {
+        const panel = document.getElementById('wt-cal-grid-panel');
+        const badge = document.getElementById('wt-cal-source-badge');
+        const prevBtn = document.getElementById('wt-cal-prev-btn');
+        const data = _wtModalState.data;
+        if (!panel || !data) return;
+
+        if (badge) {
+            if (data.calendar_source === 'microsoft_graph_live') {
+                badge.innerText = 'Live Outlook · 1h Travel Buffer';
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#166534';
+            } else if (data.calendar_source === 'crm_schedule_only') {
+                badge.innerText = 'Rep Schedule · 1h Travel Buffer';
+                badge.style.background = '#dbeafe';
+                badge.style.color = '#1d4ed8';
+            } else {
+                badge.innerText = 'CRM Schedule · 1h Travel Buffer';
+                badge.style.background = '#fef3c7';
+                badge.style.color = '#92400e';
+            }
+        }
+        if (prevBtn) {
+            prevBtn.disabled = !data.can_go_prev;
+            prevBtn.style.opacity = data.can_go_prev ? '1' : '0.45';
+        }
+
+        const days = Array.isArray(data.days) ? data.days : [];
+        if (days.length === 0) {
+            panel.innerHTML = '<div style="padding:1.5rem; text-align:center; color:#64748b; font-weight:700;">No business days found in this range.</div>';
+            return;
+        }
+
+        const colsHtml = days.map(day => {
+            const visibleSlots = (day.slots || []).filter(s => s.status !== 'past');
+            const dayHeaderLabel = `${day.weekday_short}, ${day.month_day}`;
+            const cityNote = day.route_match_city
+                ? `<div style="font-size:0.68rem; font-weight:800; color:#1d4ed8; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Already visiting ${_escWtHtml(day.route_match_city)} nearby">📍 Near ${_escWtHtml(day.route_match_city)}</div>`
+                : ((day.day_cities && day.day_cities.length > 0)
+                    ? `<div style="font-size:0.68rem; font-weight:700; color:#475569; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="Scheduled in ${_escWtHtml(day.day_cities.join(', '))}">📍 ${_escWtHtml(day.day_cities.join(', '))}</div>`
+                    : `<div style="font-size:0.66rem; font-weight:600; color:#94a3b8; margin-top:3px;">Open Territory</div>`);
+
+            let slotsHtml = '';
+            if (visibleSlots.length === 0) {
+                slotsHtml = '<div style="height:76px; display:flex; align-items:center; justify-content:center; font-size:0.74rem; color:#94a3b8; font-weight:700; text-align:center; padding:0.5rem;">Bookable hours ended for today</div>';
+            } else {
+                slotsHtml = visibleSlots.map(s => {
+                    const isSelected = (day.date === _wtModalState.selectedDate && s.time_24h === _wtModalState.selectedTime24);
+                    if (s.available) {
+                        let bg = '#f0fdf4', fg = '#166534', bd = '#86efac', rightTag = 'Open';
+                        if (isSelected) {
+                            bg = '#047857'; fg = '#ffffff'; bd = '#065f46'; rightTag = 'Selected';
+                        } else if (s.route_match) {
+                            bg = '#eff6ff'; fg = '#1d4ed8'; bd = '#60a5fa'; rightTag = 'Nearby';
+                        }
+                        return `<button type="button" onclick="selectWalkthroughModalSlot('${day.date}', '${_escWtHtml(dayHeaderLabel)}', '${s.time_24h}', '${s.time_12h}')" style="width:100%; height:36px; min-height:36px; max-height:36px; flex-shrink:0; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:6px; padding:0 0.6rem; border-radius:6px; background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.76rem; font-weight:800; line-height:1.15; cursor:pointer;" title="Select ${dayHeaderLabel} at ${s.time_12h} (${s.time_12h}–${s.end_12h})"><span>${isSelected ? '✓ ' : ''}${_escWtHtml(s.time_12h)}</span><span style="font-size:0.65rem; font-weight:800; opacity:0.92;">${_escWtHtml(rightTag)}</span></button>`;
+                    }
+                    let bg = '#f8fafc', fg = '#64748b', bd = '#e2e8f0', rightTag = 'Busy';
+                    if (s.status === 'travel_buffer') {
+                        bg = '#fffbeb'; fg = '#92400e'; bd = '#fcd34d'; rightTag = '1h Buffer';
+                    } else if (s.status === 'walkthrough') {
+                        bg = '#f1f5f9'; fg = '#334155'; bd = '#cbd5e1';
+                        rightTag = String(s.label || 'Booked').replace('Walkthrough · ', '');
+                    }
+                    return `<div style="width:100%; height:36px; min-height:36px; max-height:36px; flex-shrink:0; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:6px; padding:0 0.6rem; border-radius:6px; background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.73rem; font-weight:700; line-height:1.15; cursor:not-allowed;" title="${_escWtHtml(s.time_12h + ' — ' + (s.label || 'Unavailable'))}"><span>${_escWtHtml(s.time_12h)}</span><span style="font-size:0.64rem; font-weight:800; max-width:76px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${_escWtHtml(rightTag)}</span></div>`;
+                }).join('');
+            }
+
+            return `
+                <div style="border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; display:flex; flex-direction:column; min-width:0; overflow:hidden;">
+                    <div style="padding:0.55rem 0.65rem; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
+                            <span style="font-size:0.8rem; font-weight:800; color:#0f172a;">${_escWtHtml(day.weekday_short)} · ${_escWtHtml(day.month_day)}</span>
+                            <span style="font-size:0.66rem; font-weight:800; padding:2px 6px; border-radius:999px; background:${day.open_count > 0 ? '#dcfce7' : '#f1f5f9'}; color:${day.open_count > 0 ? '#166534' : '#64748b'};">${day.open_count} open</span>
+                        </div>
+                        ${cityNote}
+                    </div>
+                    <div style="display:grid; grid-auto-rows:36px; gap:6px; padding:0.55rem;">
+                        ${slotsHtml}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        panel.innerHTML = `<div style="display:grid; grid-template-columns:repeat(5, minmax(162px, 1fr)); gap:0.65rem; min-width:850px;">${colsHtml}</div>`;
+    }
+
+    async function loadWalkthroughModalAvailability(forceRefresh = false) {
+        const panel = document.getElementById('wt-cal-grid-panel');
+        if (!panel) return;
+
+        const condEl = document.getElementById('wt-cal-conductor');
+        const conductor = (condEl && condEl.value) ? condEl.value : 'Humberto Dominguez';
+
+        panel.innerHTML = '<div style="padding:2rem; text-align:center; font-size:0.82rem; color:#475569; font-weight:700;"><i class="fas fa-sync fa-spin" style="margin-right:0.45rem;"></i>Loading live Microsoft 365 availability (45-min visit + 1-hour travel buffer)...</div>';
+
+        const qs = new URLSearchParams({
+            days: '5',
+            conductor: conductor,
+        });
+        if (_wtModalState.leadId) qs.set('lead_id', String(_wtModalState.leadId));
+        if (_wtModalState.accountId) qs.set('account_id', String(_wtModalState.accountId));
+        if (_wtModalState.city) qs.set('city', _wtModalState.city);
+        if (_wtModalState.startDate) qs.set('start_date', _wtModalState.startDate);
+        if (forceRefresh) qs.set('refresh', '1');
+
+        try {
+            const res = await fetch(`/api/v1/calendar/availability?${qs.toString()}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            _wtModalState.data = data;
+            renderWalkthroughModalGrid();
+        } catch (err) {
+            console.error('Walkthrough Modal Availability Error:', err);
+            panel.innerHTML = '<div style="padding:1.5rem; text-align:center; font-size:0.8rem; color:#b45309; font-weight:700;">Unable to load live calendar slots right now. Please click Refresh (↻) or enter a weekday time between 9:00 AM and 4:00 PM.</div>';
+        }
+    }
+
+    function shiftWalkthroughModalWeek(direction) {
+        const cur = _wtModalState.data;
+        if (direction === 0) {
+            _wtModalState.startDate = '';
+        } else if (direction < 0 && cur && cur.prev_start_date) {
+            _wtModalState.startDate = cur.prev_start_date;
+        } else if (direction > 0 && cur && cur.next_start_date) {
+            _wtModalState.startDate = cur.next_start_date;
+        }
+        loadWalkthroughModalAvailability(false);
+    }
+
+    function selectWalkthroughModalSlot(dateIso, dayLabel, time24h, time12h) {
+        _wtModalState.selectedDate = dateIso;
+        _wtModalState.selectedDayLabel = dayLabel;
+        _wtModalState.selectedTime24 = time24h;
+        _wtModalState.selectedTime12 = time12h;
+        _updateWtModalSelectionBanner();
+        renderWalkthroughModalGrid();
+    }
+
+    function applySelectedWalkthroughModalSlot() {
+        if (!_wtModalState.selectedDate || !_wtModalState.selectedTime24) {
+            showToast("Please click an open green or blue time slot first.", "warning");
+            return;
+        }
+        const condEl = document.getElementById('wt-cal-conductor');
+        const condVal = (condEl && condEl.value) ? condEl.value : 'Humberto Dominguez';
+        const dispDay = _wtModalState.selectedDayLabel || formatDashboardDate(_wtModalState.selectedDate);
+
+        if (_wtModalState.mode === 'cadence_pick') {
+            const dateEl = document.getElementById('cadence-wt-date');
+            const timeEl = document.getElementById('cadence-wt-time');
+            const cadCond = document.getElementById('cadence-wt-conductor');
+            const previewEl = document.getElementById('cadence-wt-slot-preview');
+            if (dateEl) dateEl.value = _wtModalState.selectedDate;
+            if (timeEl) _setSelectValueSafe(timeEl, _wtModalState.selectedTime12);
+            if (cadCond) _setSelectValueSafe(cadCond, condVal);
+            if (previewEl) previewEl.innerText = `Pending Slot: ${dispDay} at ${_wtModalState.selectedTime12} (${condVal})`;
+        } else if (_wtModalState.mode === 'edit_lead_pick') {
+            setVal('edit-lead-pref-date', _wtModalState.selectedDate);
+            setVal('edit-lead-pref-time', _wtModalState.selectedTime12);
+            const visitCond = document.getElementById('visit-conductor');
+            if (visitCond) _setSelectValueSafe(visitCond, condVal);
+        } else if (_wtModalState.mode === 'account_pick') {
+            setVal('visit-date-acc', _wtModalState.selectedDate);
+            setVal('visit-time-acc', _wtModalState.selectedTime24);
+            _wtModalState.accountConductor = condVal;
+        } else {
+            setVal('visit-date', _wtModalState.selectedDate);
+            setVal('visit-time', _wtModalState.selectedTime24);
+            const visitCond = document.getElementById('visit-conductor');
+            if (visitCond) _setSelectValueSafe(visitCond, condVal);
+            syncLeadWalkthroughCardUI();
+        }
+
+        closeWalkthroughCalendarModal();
+        if (_wtModalState.mode === 'lead_pick') {
+            showToast(`Slot applied: ${dispDay} at ${_wtModalState.selectedTime12} — click Confirm below to save.`, "info");
+        } else {
+            showToast(`Slot applied: ${dispDay} at ${_wtModalState.selectedTime12}`, "success");
+        }
+    }
+
+    async function submitWalkthroughModalBooking(autoAdvance = true) {
+        if (!activeCadenceLead) return;
+        if (typeof CAN_EDIT_LEADS !== 'undefined' && !CAN_EDIT_LEADS) {
+            showToast("Lead Edit access is required to book walkthroughs.", "warning");
+            return;
+        }
+        if (!_wtModalState.selectedDate || !_wtModalState.selectedTime12) {
+            showToast("Please click an open green or blue time slot on the calendar first.", "warning");
+            return;
+        }
+
+        const wtDate = _wtModalState.selectedDate;
+        const wtTime = _wtModalState.selectedTime12;
+        const host = (document.getElementById('wt-cal-host') && document.getElementById('wt-cal-host').value.trim()) || activeCadenceLead.decision_maker || '';
+        const phone = (document.getElementById('wt-cal-phone') && document.getElementById('wt-cal-phone').value.trim()) || activeCadenceLead.phone || '';
+        const email = (document.getElementById('wt-cal-email') && document.getElementById('wt-cal-email').value.trim()) || activeCadenceLead.email || '';
+        const repEmail = (document.getElementById('wt-cal-rep-email') && document.getElementById('wt-cal-rep-email').value.trim()) || (typeof CURRENT_CALLER_EMAIL !== 'undefined' ? CURRENT_CALLER_EMAIL : '');
+        const conductor = (document.getElementById('wt-cal-conductor') && document.getElementById('wt-cal-conductor').value) || 'Humberto Dominguez';
+        const syncCal = document.getElementById('wt-cal-sync-cal') ? document.getElementById('wt-cal-sync-cal').checked : true;
+        const notes = (document.getElementById('cadence-lead-notes') && document.getElementById('cadence-lead-notes').value.trim()) || '';
+        const repName = localStorage.getItem('hwb_cadence_rep_name') || (typeof CURRENT_CALLER_NAME !== 'undefined' ? CURRENT_CALLER_NAME : '');
+
+        if (repEmail) localStorage.setItem('hwb_cadence_rep_email', repEmail);
+        localStorage.setItem('hwb_cadence_rep_conductor', conductor);
+
+        const payload = {
+            decision_maker: host,
+            phone: phone,
+            email: email,
+            status: 'Qualified',
+            priority_level: 'CRITICAL',
+            preferred_date: wtDate,
+            preferred_time: wtTime,
+            activity_type: 'Walkthrough Booked',
+            sync_calendar: syncCal,
+            conductor: conductor,
+            rep_name: repName,
+            rep_email: repEmail,
+            note: notes ? `Walkthrough confirmed for ${wtDate} at ${wtTime}. Notes: ${notes}` : `Walkthrough confirmed for ${wtDate} at ${wtTime}.`
+        };
+
+        try {
+            const res = await fetch(`/api/v1/leads/${activeCadenceLead.id}/cadence-save`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok && data.status === 'success') {
+                const calMsg = data.calendar_rescheduled
+                    ? " (Outlook invite updated!)"
+                    : (data.calendar_created ? " (Outlook calendar invite sent!)" : "");
+                showToast(`🎉 Walkthrough scheduled for ${wtDate} at ${wtTime}${calMsg}`, "success");
+
+                const row = document.querySelector(`.leads-row[data-id="${activeCadenceLead.id}"]`);
+                if (row) {
+                    const statusSelect = row.querySelector('select.sigma-pill-select');
+                    if (statusSelect) statusSelect.value = 'Qualified';
+                }
+
+                closeWalkthroughCalendarModal();
+                closeCadenceWalkthroughDrawer();
+
+                if (autoAdvance && cadenceQueueIndex < cadenceLeadQueue.length - 1) {
+                    navigateLeadCadence(1);
+                } else if (autoAdvance) {
+                    showToast("Session complete! Walkthrough scheduled.", "success");
+                    closeModal('modal-lead-cadence');
+                    if (typeof syncOperationalData === 'function') syncOperationalData();
+                } else {
+                    const nEl = document.getElementById('cadence-lead-notes');
+                    if (nEl) nEl.value = '';
+                    const refreshRes = await fetch(`/api/v1/leads/${activeCadenceLead.id}`);
+                    const refreshData = await refreshRes.json();
+                    if (refreshData.lead) {
+                        activeCadenceLead = refreshData.lead;
+                        if (Array.isArray(cadenceLeadQueue) && cadenceLeadQueue[cadenceQueueIndex]) {
+                            cadenceLeadQueue[cadenceQueueIndex] = refreshData.lead;
+                        }
+                        setVal('cadence-lead-dm', refreshData.lead.decision_maker);
+                        setVal('cadence-lead-phone', refreshData.lead.phone);
+                        setVal('cadence-lead-email', refreshData.lead.email);
+                        setVal('cadence-wt-host', refreshData.lead.decision_maker);
+                        setVal('cadence-wt-phone', refreshData.lead.phone);
+                        setVal('cadence-wt-email', refreshData.lead.email);
+                        setVal('cadence-wt-date', wtDate);
+                        const cadTimeEl = document.getElementById('cadence-wt-time');
+                        if (cadTimeEl) _setSelectValueSafe(cadTimeEl, wtTime);
+                        const cadCondEl = document.getElementById('cadence-wt-conductor');
+                        if (cadCondEl) _setSelectValueSafe(cadCondEl, conductor);
+                        const cadPreview = document.getElementById('cadence-wt-slot-preview');
+                        if (cadPreview) cadPreview.innerText = `Scheduled: ${formatDashboardDate(wtDate)} at ${wtTime} (${conductor})`;
+                        const statusPill = document.getElementById('cadence-lead-status-pill');
+                        if (statusPill) statusPill.innerText = refreshData.lead.status || 'Qualified';
+                        if (currentLeadId && String(currentLeadId) === String(activeCadenceLead.id)) {
+                            window.activeLeadDetailData = refreshData;
+                            syncLeadActiveWalkthroughBanner(refreshData.lead, refreshData.activities || []);
+                        }
+                    }
+                    if (refreshData.activities) renderLeadCadenceHistory(refreshData.activities);
+                    if (typeof syncOperationalData === 'function') syncOperationalData({ silent: true });
+                }
+            } else {
+                showToast(data.message || "Unable to schedule walkthrough.", res.status === 409 ? "warning" : "error");
+                loadWalkthroughModalAvailability(true);
+            }
+        } catch (err) {
+            console.error("Walkthrough Modal Booking Error:", err);
+            showToast("Network error scheduling walkthrough.", "error");
+        }
+    }
+
+    async function cancelScheduledWalkthrough() {
+        if (!currentLeadId) return;
+        if (typeof CAN_EDIT_LEADS !== 'undefined' && !CAN_EDIT_LEADS) {
+            showToast("Lead Edit permission is required to cancel walkthroughs.", "warning");
+            return;
+        }
+        if (!confirm("Cancel this scheduled walkthrough and remove the Outlook calendar invite?")) {
+            return;
+        }
+        try {
+            const res = await fetch(`/api/v1/leads/${currentLeadId}/walkthrough-cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: 'Walkthrough cancelled from Lead Record Activities.' })
+            });
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                showToast("Walkthrough cancelled and calendar slot reopened.", "success");
+                await openLeadCommand(currentLeadId, 'activities');
+                if (typeof syncOperationalData === 'function') syncOperationalData();
+            } else {
+                showToast(data.message || "Failed to cancel walkthrough.", "error");
+            }
+        } catch (err) {
+            console.error("Walkthrough Cancel Error:", err);
+            showToast("Network error while cancelling walkthrough.", "error");
+        }
+    }
+
     async function saveVisitRequest(e) {
         e.preventDefault();
+        if (typeof CAN_EDIT_LEADS !== 'undefined' && !CAN_EDIT_LEADS) {
+            showToast("Lead Edit access is required to book walkthroughs.", "warning");
+            return;
+        }
         const id = currentLeadId;
         if (!id) { showToast("Error: No Lead identified", "error"); return; }
         
         const date = document.getElementById('visit-date').value;
-        const time = document.getElementById('visit-time').value || '10:00 AM';
+        const rawTime = document.getElementById('visit-time').value || '10:00';
+        const time = _formatWtTimeTo12h(rawTime);
         const manager = document.getElementById('visit-manager').value || '--';
         const phone = document.getElementById('visit-phone').value || '--';
         const instructions = document.getElementById('visit-instructions').value;
         const syncCal = document.getElementById('visit-sync-cal') ? document.getElementById('visit-sync-cal').checked : true;
+        const conductorEl = document.getElementById('visit-conductor');
+        const conductor = (conductorEl && conductorEl.value) ? conductorEl.value : 'Humberto Dominguez';
+        const liveActionEmail = (document.getElementById('lead-action-email') && document.getElementById('lead-action-email').value.trim()) || '';
+        const leadEmail = liveActionEmail || (window.activeLeadDetailData && window.activeLeadDetailData.lead && window.activeLeadDetailData.lead.email) || undefined;
         
         try {
             const res = await fetch(`/api/v1/leads/${id}/cadence-save`, { 
@@ -4745,31 +5558,45 @@
                 body: JSON.stringify({ 
                     decision_maker: manager !== '--' ? manager : undefined,
                     phone: phone !== '--' ? phone : undefined,
+                    email: leadEmail,
                     status: 'Qualified',
                     preferred_date: date,
                     preferred_time: time,
                     next_action_date: date,
                     activity_type: 'Walkthrough Booked',
                     sync_calendar: syncCal,
+                    conductor: conductor,
+                    rep_name: typeof CURRENT_CALLER_NAME !== 'undefined' ? CURRENT_CALLER_NAME : undefined,
+                    rep_email: typeof CURRENT_CALLER_EMAIL !== 'undefined' ? CURRENT_CALLER_EMAIL : undefined,
                     note: `Walkthrough scheduled for ${date} at ${time}. Manager: ${manager}. ${instructions || ''}`.trim()
                 }) 
             });
+            const respData = await res.json().catch(() => ({}));
             
-            if (res.ok) {
-                // Populate Confirmation Pane (Receipt)
-                const setElText = (id, val) => { const el = document.getElementById(id); if(el) el.innerText = val; };
+            if (res.ok && respData.status === 'success') {
+                const setElText = (elId, val) => { const el = document.getElementById(elId); if (el) el.innerText = val; };
                 setElText('confirm-visit-date', formatDashboardDate(date));
                 setElText('confirm-visit-time', time);
                 setElText('confirm-visit-manager', manager);
                 setElText('confirm-visit-phone', phone);
+
+                const row = document.querySelector(`.leads-row[data-id="${id}"]`);
+                if (row) {
+                    const statusSelect = row.querySelector('select.sigma-pill-select');
+                    if (statusSelect) statusSelect.value = 'Qualified';
+                    updateLeadRowNextActionDateDOM(id, date);
+                }
                 
-                showToast(`Walkthrough scheduled for ${formatDashboardDate(date)}.`, "success");
+                const msg = respData.calendar_rescheduled
+                    ? `Walkthrough rescheduled for ${formatDashboardDate(date)} at ${time} (Outlook invite updated).`
+                    : `Walkthrough scheduled for ${formatDashboardDate(date)} at ${time}.`;
+                showToast(msg, "success");
                 
-                // Background Sync: Refresh history/timeline without closing modal
-                openLeadCommand(id, 'visit-confirm'); 
-                syncOperationalData();
+                // Refresh Lead Overview, Record Activities banner/fields, and Timeline before showing confirmation
+                await openLeadCommand(id, 'visit-confirm'); 
+                syncOperationalData({ silent: true });
             } else {
-                showToast("System Error: Failed to schedule walkthrough.", "error");
+                showToast(respData.message || "Unable to schedule walkthrough.", res.status === 409 ? "warning" : "error");
             }
         } catch (err) {
             console.error("Visit Error:", err);
@@ -4783,20 +5610,31 @@
         if (!id) { showToast("Error: No Account identified", "error"); return; }
         
         const date = document.getElementById('visit-date-acc').value;
-        const time = document.getElementById('visit-time-acc').value || 'Not specified';
+        const rawTime = document.getElementById('visit-time-acc').value || '10:00';
+        const time = _formatWtTimeTo12h(rawTime);
         const manager = document.getElementById('visit-manager-acc').value || '--';
         const phone = document.getElementById('visit-phone-acc').value || '--';
         const instructions = document.getElementById('visit-instructions-acc').value;
+        const accConductor = (_wtModalState && _wtModalState.accountConductor) ? _wtModalState.accountConductor : 'Humberto Dominguez';
         
         try {
             const res = await fetch(`/api/v1/accounts/${id}`, { 
                 method: 'PUT', 
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ 
+                    schedule_visit: true,
+                    visit_date: date,
+                    visit_time: time,
+                    visit_manager: manager,
+                    visit_phone: phone,
+                    visit_instructions: instructions,
+                    sync_calendar: true,
+                    conductor: accConductor,
                     next_action_date: date, 
-                    notes: `[VISIT SCHEDULED] Manager: ${manager} | ${instructions}` 
+                    notes: `[VISIT SCHEDULED] ${date} at ${time} | Manager: ${manager} | ${instructions || ''}`.trim()
                 }) 
             });
+            const respData = await res.json().catch(() => ({}));
             
             if (res.ok) {
                 // Populate Confirmation Pane
@@ -4806,12 +5644,18 @@
                 setElText('confirm-visit-manager-acc', manager);
                 setElText('confirm-visit-phone-acc', phone);
                 
-                showToast(`Visit scheduled for ${formatDashboardDate(date)}.`, "success");
+                const calMsg = respData.calendar_rescheduled
+                    ? " (Outlook invite updated)"
+                    : (respData.calendar_created ? " (Outlook calendar invite sent)" : "");
+                showToast(`Visit scheduled for ${formatDashboardDate(date)} at ${time}${calMsg}.`, "success");
                 
                 // Background Sync: Refresh history/timeline while showing receipt
                 openAccountCommand(id, 'visit-confirm'); 
             } else {
-                showToast("System Error: Failed to schedule visit.", "error");
+                showToast(
+                    respData.message || "Unable to schedule site visit.",
+                    res.status === 409 ? "warning" : "error"
+                );
             }
         } catch (err) {
             console.error("Visit Error:", err);
@@ -7026,10 +7870,10 @@
         const emailEl = document.getElementById('cadence-wt-email');
         if (emailEl) emailEl.value = email;
 
-        // Restore remote sales rep preferences from localStorage if available, defaulting to logged-in user
+        // Restore remote sales rep preferences from localStorage if available, defaulting conductor to CEO Humberto Dominguez
         const repNameSaved = localStorage.getItem('hwb_cadence_rep_name') || CURRENT_CALLER_NAME;
         const repEmailSaved = localStorage.getItem('hwb_cadence_rep_email') || CURRENT_CALLER_EMAIL;
-        const repConductorSaved = localStorage.getItem('hwb_cadence_rep_conductor') || CURRENT_CALLER_NAME;
+        const repConductorSaved = localStorage.getItem('hwb_cadence_rep_conductor') || 'Humberto Dominguez';
 
         const repNameEl = document.getElementById('cadence-wt-rep-name');
         if (repNameEl && !repNameEl.value) repNameEl.value = repNameSaved;
@@ -7042,7 +7886,7 @@
         const dateEl = document.getElementById('cadence-wt-date');
         if (dateEl && !dateEl.value) {
             if (activeCadenceLead && activeCadenceLead.preferred_date) {
-                dateEl.value = activeCadenceLead.preferred_date;
+                dateEl.value = String(activeCadenceLead.preferred_date).slice(0, 10);
             } else {
                 setCadenceWalkthroughDateOffset(1);
             }
@@ -7050,7 +7894,7 @@
 
         const timeEl = document.getElementById('cadence-wt-time');
         if (timeEl && activeCadenceLead && activeCadenceLead.preferred_time) {
-            timeEl.value = activeCadenceLead.preferred_time;
+            timeEl.value = _formatWtTimeTo12h(activeCadenceLead.preferred_time);
         }
 
         drawer.style.display = 'block';
@@ -7187,7 +8031,7 @@
                 }
             } else {
                 if (typeof showToast === 'function') {
-                    showToast("Error scheduling walkthrough: " + (data.message || 'Unknown error'), "error");
+                    showToast(data.message || "Unable to schedule walkthrough.", res.status === 409 ? "warning" : "error");
                 }
             }
         } catch (err) {
@@ -9818,6 +10662,10 @@
     };
 
     function openEnrollSelectedLeadsModal() {
+        if (typeof CAN_SEND_CAMPAIGNS !== 'undefined' && !CAN_SEND_CAMPAIGNS) {
+            showToast('Campaign enrollment access is turned off for this account.', 'error');
+            return;
+        }
         const ids = typeof getSelectedLeadIds === 'function' ? getSelectedLeadIds() : [];
         const isAllMatching = (typeof _selectAllMatchingFilterLeads !== 'undefined' && _selectAllMatchingFilterLeads);
         const bulkControls = document.getElementById('leads-bulk-controls');

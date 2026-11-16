@@ -359,6 +359,11 @@
                 </div>
 
                 <form id="form-tech-application" onsubmit="submitTechnicianApp(event)">
+                    <input type="hidden" name="form_security_token" value="{{ get_form_security_token() }}">
+                    <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
+                        <label for="hp_tech_org_url">Leave this field blank</label>
+                        <input type="text" name="hp_organization_url" id="hp_tech_org_url" tabindex="-1" autocomplete="off">
+                    </div>
                     <input type="hidden" name="job_position_id" id="tech-job-position-id" value="{% if job_positions %}{{ job_positions[0].id }}{% else %}1{% endif %}">
                     
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
@@ -368,7 +373,7 @@
                         </div>
                         <div>
                             <label for="tech-phone" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Phone Number (Mobile for SMS) *</label>
-                            <input type="tel" id="tech-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0123" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="tel" id="tech-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0123" maxlength="20" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                     </div>
 
@@ -582,6 +587,11 @@
                 </div>
 
                 <form id="form-sub-application" onsubmit="submitSubcontractorApp(event)">
+                    <input type="hidden" name="form_security_token" value="{{ get_form_security_token() }}">
+                    <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
+                        <label for="hp_sub_org_url">Leave this field blank</label>
+                        <input type="text" name="hp_organization_url" id="hp_sub_org_url" tabindex="-1" autocomplete="off">
+                    </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label for="sub-company-name" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business / Company Name *</label>
@@ -596,7 +606,7 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-bottom: 1.25rem;">
                         <div>
                             <label for="sub-phone" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Phone *</label>
-                            <input type="tel" id="sub-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0199" maxlength="14" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
+                            <input type="tel" id="sub-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0199" maxlength="20" oninput="maskPhone(this)" class="sigma-input" style="width: 100%; height: 42px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 0.85rem; font-size: 0.9rem;">
                         </div>
                         <div>
                             <label for="sub-email" style="display: block; font-size: 0.8rem; font-weight: 700; color: #334155; margin-bottom: 0.4rem;">Business Email *</label>
@@ -813,6 +823,17 @@ function switchWorkforceTab(tab) {
     } catch(e) {}
 }
 
+function isValidUsPhone(rawVal) {
+    let d = String(rawVal || '').replace(/\D/g, '');
+    if (d.length === 11 && d.startsWith('1')) d = d.substring(1);
+    if (d.length !== 10) return false;
+    if (d[0] === '0' || d[0] === '1' || d.substring(1, 3) === '11') return false;
+    if (d[3] === '0' || d[3] === '1' || d.substring(4, 6) === '11') return false;
+    if (new Set(d.split('')).size === 1) return false;
+    if (d.substring(3) === '5555555') return false;
+    return true;
+}
+
 async function submitTechnicianApp(e) {
     e.preventDefault();
     clearFormError('tech');
@@ -822,10 +843,9 @@ async function submitTechnicianApp(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    // Validate 10-digit phone
-    const digits = (data.phone || '').replace(/\D/g, '');
-    if (digits.length !== 10) {
-        showFormError('tech', 'Please enter a complete 10-digit mobile phone number with area code.');
+    // Validate 10-digit US phone (NANP 2-9 area code & prefix)
+    if (!isValidUsPhone(data.phone)) {
+        showFormError('tech', 'Please enter a valid 10-digit US mobile phone number (area code and prefix must begin with digits 2 through 9).');
         const phoneEl = document.getElementById('tech-phone');
         if (phoneEl) {
             phoneEl.classList.add('has-error');
@@ -886,10 +906,9 @@ async function submitSubcontractorApp(e) {
     const data = Object.fromEntries(formData.entries());
     data.specialties = specialties;
 
-    // Validate 10-digit phone
-    const digits = (data.phone || '').replace(/\D/g, '');
-    if (digits.length !== 10) {
-        showFormError('sub', 'Please enter a complete 10-digit business phone number with area code.');
+    // Validate 10-digit US phone (NANP 2-9 area code & prefix)
+    if (!isValidUsPhone(data.phone)) {
+        showFormError('sub', 'Please enter a valid 10-digit US business phone number (area code and prefix must begin with digits 2 through 9).');
         const phoneEl = document.getElementById('sub-phone');
         if (phoneEl) {
             phoneEl.classList.add('has-error');

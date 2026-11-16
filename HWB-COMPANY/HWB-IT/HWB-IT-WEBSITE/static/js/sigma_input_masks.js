@@ -382,7 +382,7 @@
         const input = resolveInput(elOrEvent);
         if (!input) return;
         input.setAttribute("inputmode", "tel");
-        input.setAttribute("maxlength", "14");
+        input.setAttribute("maxlength", "20");
 
         let digits = (input.value || "").replace(/\D/g, "");
         if (digits.length === 11 && digits.charAt(0) === "1") {

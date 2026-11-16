@@ -101,6 +101,7 @@
 
                     <form id="optional-calibration-form" action="{{ url_for('update_quote_details') }}" method="POST">
                         <input type="hidden" name="lead_id" value="{{ data.get('lead_id', '') }}">
+                        <input type="hidden" name="lead_update_token" value="{{ data.get('lead_update_token', '') }}">
                         <input type="hidden" name="city" id="calib_city" value="{{ data.get('city') if data.get('city') != 'Pending Walkthrough / Discovery' else '' }}">
                         <input type="hidden" name="frequency" id="calib_frequency" value="">
 

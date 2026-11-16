@@ -28,10 +28,33 @@ def login():
         u = (request.form.get('username') or '').strip()
         p = (request.form.get('password') or '').strip()
         db_url = current_app.config['DATABASE_URL']
+        client_ip = extract_client_ip()
+
+        from core.services.bot_defense import check_honeypots, check_origin, SCANNER_PROBE_USERNAMES, evaluate_login_bot_attempt
+        hp_ok, hp_reason = check_honeypots(request.form.to_dict())
+        u_lower = u.lower()
+        enforce_origin = not current_app.config.get('TESTING') or request.headers.get('X-Enforce-Bot-Defense') == '1'
+        origin_ok, origin_reason = check_origin(request) if enforce_origin else (True, 'OK')
+        if not hp_ok or u_lower in SCANNER_PROBE_USERNAMES or not origin_ok:
+            bot_reason = hp_reason if not hp_ok else (
+                f"Automated scanner username probe ('{u_lower}')" if u_lower in SCANNER_PROBE_USERNAMES else origin_reason
+            )
+            log_security_event(
+                event_category='BOT_DEFENSE',
+                event_action='LOGIN_BOT_BLOCKED',
+                severity='WARNING',
+                username=u[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/login',
+                http_method='POST',
+                status_code=401,
+                details={'attempted_username': u[:80], 'reason': bot_reason},
+            )
+            flash('Invalid credentials.')
+            return render_template('login.html')
+
         conn = None
         user = None
-
-        u_lower = u.lower()
         ceo_identifiers = {
             'hdominguez', 'humberto', 'humbertoed', 'humberto dominguez',
             'humbertoed@gmail.com', 'hdominguez@hwbcleaning.com',
@@ -173,14 +196,31 @@ def login():
                 return redirect(next_page)
             return redirect(u_obj.get_default_landing_url())
 
-        log_security_event(
-            event_category='AUTH',
-            event_action='LOGIN_FAIL',
-            severity='WARNING',
-            username=u,
-            status_code=401,
-            details={'attempted_username': u, 'reason': 'Invalid credentials'}
+        is_burst_bot, burst_reason = evaluate_login_bot_attempt(
+            request, identifier=u, db_url=db_url, client_ip=client_ip
         )
+        if is_burst_bot:
+            log_security_event(
+                event_category='BOT_DEFENSE',
+                event_action='LOGIN_BOT_BLOCKED',
+                severity='WARNING',
+                username=u[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/login',
+                http_method='POST',
+                status_code=401,
+                details={'attempted_username': u[:80], 'reason': burst_reason},
+            )
+        else:
+            log_security_event(
+                event_category='AUTH',
+                event_action='LOGIN_FAIL',
+                severity='WARNING',
+                username=u,
+                ip_address=client_ip,
+                status_code=401,
+                details={'attempted_username': u, 'reason': 'Invalid credentials'}
+            )
         flash('Invalid credentials.')
     if request.method == 'GET' and request.args.get('reason') == 'inactivity':
         flash('Your session expired due to inactivity. Please log in again to continue.')
@@ -324,8 +364,26 @@ def forgot_password():
     if request.method == 'POST':
         identifier = (request.form.get('identifier') or '').strip().lower()
         client_ip = extract_client_ip()
-
         db_url = current_app.config['DATABASE_URL']
+
+        from core.services.bot_defense import evaluate_login_bot_attempt
+        is_reset_bot, reset_bot_reason = evaluate_login_bot_attempt(
+            request, identifier=identifier, db_url=db_url, client_ip=client_ip
+        )
+        if is_reset_bot:
+            log_security_event(
+                event_category='BOT_DEFENSE',
+                event_action='LOGIN_BOT_BLOCKED',
+                severity='WARNING',
+                username=identifier[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/forgot-password',
+                http_method='POST',
+                status_code=200,
+                details={'attempted_username': identifier[:80], 'reason': reset_bot_reason},
+            )
+            return render_template('forgot_password.html', submitted=True)
+
         user = None
 
         if identifier:

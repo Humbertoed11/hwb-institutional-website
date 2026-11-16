@@ -735,7 +735,21 @@
                                     {% if lead.phone %}
                                         <a href="tel:{{ lead.phone }}" class="btn-icon-action" title="Call {{ lead.phone|format_phone }}"><i class="fas fa-phone"></i></a>
                                     {% endif %}
-                                    <a href="https://maps.google.com/?q={{ lead.address|urlencode }}+{{ lead.city|urlencode }}+Texas" target="_blank" class="btn-icon-action" title="Directions"><i class="fas fa-directions"></i></a>
+                                    <a href="https://maps.google.com/?q={{ lead.address|urlencode }}+{{ lead.city|urlencode }}+Texas" target="_blank" rel="noopener noreferrer" class="btn-icon-action" title="Directions"><i class="fas fa-directions"></i></a>
+                                    <button type="button"
+                                        data-lead-id="{{ lead.id }}"
+                                        data-name="{{ lead.center_name|e }}"
+                                        data-city="{{ (lead.city or '')|e }}"
+                                        data-dm="{{ (lead.decision_maker or lead.director or '')|e }}"
+                                        data-phone="{{ (lead.phone or '')|e }}"
+                                        data-email="{{ (lead.email or '')|e }}"
+                                        onclick="openSalesDeskWalkthroughBtn(this)"
+                                        class="btn-icon-action"
+                                        style="color: #047857; border-color: #86efac; background: #f0fdf4;"
+                                        aria-label="Schedule Building Walkthrough"
+                                        title="Check Live Calendar &amp; Schedule Walkthrough">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
                                     <button type="button" onclick="openNoteModal({{ lead.id }}, '{{ lead.center_name|e }}')" class="btn-icon-action" title="Log Field Note"><i class="fas fa-sticky-note"></i></button>
                                 </div>
                             </td>
@@ -834,6 +848,69 @@
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeModal('noteModal')">Cancel</button>
                 <button type="button" class="btn-confirm" style="background: var(--brand-blue);" onclick="submitFieldNote()">Save Note</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unified Walkthrough Calendar & Booking Modal (/sales-desk, BUG-186) -->
+    <div id="salesDeskWalkthroughModal" class="custom-modal" style="z-index: 4500; padding: 1rem;">
+        <div style="background: #ffffff; border-radius: 14px; border: 1px solid #cbd5e1; max-width: 960px; width: 100%; max-height: 92dvh; box-shadow: 0 25px 50px -12px rgba(15,23,42,0.35); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <div>
+                    <h3 id="sd-wt-title" style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;">📅 Schedule Building Walkthrough</h3>
+                    <div id="sd-wt-subtitle" style="font-size: 0.75rem; color: #475569; font-weight: 600; margin-top: 2px;">Mon–Fri, 9:00 AM – 4:00 PM CT · 45-Minute Visit + 1-Hour Travel Buffer</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.55rem;">
+                    <span id="sd-wt-source-badge" style="font-size: 0.68rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 999px; background: #dcfce7; color: #166534;">Live Outlook · 1h Buffer</span>
+                    <button type="button" onclick="closeModal('salesDeskWalkthroughModal')" style="background: #ffffff; border: 1px solid #cbd5e1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; color: #475569;" aria-label="Close Walkthrough Calendar Modal">✕</button>
+                </div>
+            </div>
+            <div style="padding: 0.65rem 1.25rem; border-bottom: 1px solid #e2e8f0; background: #ffffff; display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.45rem;">
+                    <label for="sd-wt-conductor" style="font-size: 0.7rem; font-weight: 800; color: #475569; text-transform: uppercase;">Calendar:</label>
+                    <select id="sd-wt-conductor" onchange="loadSdWalkthroughAvailability(false)" class="calc-select" style="height: 32px; padding: 0 0.6rem; font-size: 0.78rem; font-weight: 700; width: auto; min-width: 210px;">
+                        <option value="Humberto Dominguez" selected>Humberto Dominguez (CEO)</option>
+                        <option value="Remote Sales Rep">Remote Rep / Local Estimator</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                    <button type="button" id="sd-wt-prev-btn" onclick="shiftSdWalkthroughWeek(-1)" class="btn-cancel" style="height: 32px; padding: 0 0.65rem; font-size: 0.72rem;" aria-label="Previous 5 Business Days">◀ Prev</button>
+                    <button type="button" onclick="shiftSdWalkthroughWeek(0)" class="btn-cancel" style="height: 32px; padding: 0 0.65rem; font-size: 0.72rem;" aria-label="Current Week Availability">This Week</button>
+                    <button type="button" onclick="shiftSdWalkthroughWeek(1)" class="btn-cancel" style="height: 32px; padding: 0 0.65rem; font-size: 0.72rem;" aria-label="Next 5 Business Days">Next ▶</button>
+                    <button type="button" onclick="loadSdWalkthroughAvailability(true)" class="btn-cancel" style="height: 32px; padding: 0 0.65rem; font-size: 0.74rem;" aria-label="Refresh Calendar Slots">↻</button>
+                </div>
+            </div>
+            <div style="padding: 0.85rem 1.25rem; overflow-y: auto; flex: 1; background: #f8fafc;">
+                <div style="overflow-x: auto;">
+                    <div id="sd-wt-grid-panel" style="min-height: 260px;">Loading live calendar availability...</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #e2e8f0; background: #ffffff; padding: 0.85rem 1.25rem; display: flex; flex-direction: column; gap: 0.6rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.6rem;">
+                    <div>
+                        <label for="sd-wt-host" style="font-size: 0.66rem; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 3px;">On-site Host / Director</label>
+                        <input type="text" id="sd-wt-host" class="calc-input" style="height: 34px; font-size: 0.8rem;" placeholder="Director Full Name">
+                    </div>
+                    <div>
+                        <label for="sd-wt-phone" style="font-size: 0.66rem; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 3px;">Host Phone</label>
+                        <input type="text" id="sd-wt-phone" class="calc-input" style="height: 34px; font-size: 0.8rem;" placeholder="(000)-000-0000">
+                    </div>
+                    <div>
+                        <label for="sd-wt-email" style="font-size: 0.66rem; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 3px;">Client Invite Email</label>
+                        <input type="email" id="sd-wt-email" class="calc-input" style="height: 34px; font-size: 0.8rem;" placeholder="director@facility.com">
+                    </div>
+                    <div>
+                        <label for="sd-wt-notes" style="font-size: 0.66rem; font-weight: 800; color: #475569; text-transform: uppercase; display: block; margin-bottom: 3px;">Walkthrough Notes</label>
+                        <input type="text" id="sd-wt-notes" class="calc-input" style="height: 34px; font-size: 0.8rem;" placeholder="Gate code or check-in desk...">
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <span id="sd-wt-selected-label" style="font-size: 0.78rem; font-weight: 800; color: #92400e; background: #fef3c7; padding: 0.3rem 0.65rem; border-radius: 6px;">Click an open green or blue slot above</span>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="button" class="btn-cancel" onclick="closeModal('salesDeskWalkthroughModal')">Cancel</button>
+                        <button type="button" class="btn-confirm" style="background: #047857;" onclick="submitSdWalkthroughBooking()">✓ Confirm Walkthrough</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -950,6 +1027,129 @@
             const sqft = document.getElementById('calc-sqft').value;
             const monthly = document.getElementById('calc-monthly').innerText;
             showToast(`Proposal generated for ${sqft} SF at ${monthly}. Formal capability binder staged.`, 'success');
+        }
+
+        const _sdWtState = { leadId: null, city: '', startDate: '', selectedDate: '', selectedTime12: '', selectedTime24: '', data: null };
+        function _escSd(s) {
+            return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function openSalesDeskWalkthroughBtn(btn) {
+            if (!btn) return;
+            _sdWtState.leadId = btn.getAttribute('data-lead-id');
+            _sdWtState.city = btn.getAttribute('data-city') || '';
+            _sdWtState.startDate = '';
+            _sdWtState.selectedDate = '';
+            _sdWtState.selectedTime12 = '';
+            _sdWtState.selectedTime24 = '';
+            const name = btn.getAttribute('data-name') || 'Facility';
+            document.getElementById('sd-wt-title').innerText = `📅 Schedule Building Walkthrough — ${name}`;
+            document.getElementById('sd-wt-subtitle').innerText = `${name}${_sdWtState.city ? ' · ' + _sdWtState.city + ', TX' : ''} · Mon–Fri, 9:00 AM – 4:00 PM CT (45m Visit + 1h Travel Buffer)`;
+            document.getElementById('sd-wt-host').value = btn.getAttribute('data-dm') || '';
+            document.getElementById('sd-wt-phone').value = btn.getAttribute('data-phone') || '';
+            document.getElementById('sd-wt-email').value = btn.getAttribute('data-email') || '';
+            document.getElementById('sd-wt-notes').value = '';
+            document.getElementById('sd-wt-selected-label').innerText = 'Click an open green or blue slot above';
+            document.getElementById('salesDeskWalkthroughModal').style.display = 'flex';
+            loadSdWalkthroughAvailability(false);
+        }
+        async function loadSdWalkthroughAvailability(forceRefresh) {
+            const panel = document.getElementById('sd-wt-grid-panel');
+            const cond = document.getElementById('sd-wt-conductor').value || 'Humberto Dominguez';
+            panel.innerHTML = '<div style="padding:2rem; text-align:center; color:#475569; font-weight:700;">Loading live calendar availability...</div>';
+            const qs = new URLSearchParams({ days: '5', conductor: cond });
+            if (_sdWtState.leadId) qs.set('lead_id', _sdWtState.leadId);
+            if (_sdWtState.city) qs.set('city', _sdWtState.city);
+            if (_sdWtState.startDate) qs.set('start_date', _sdWtState.startDate);
+            if (forceRefresh) qs.set('refresh', '1');
+            try {
+                const res = await fetch(`/api/v1/calendar/availability?${qs.toString()}`);
+                const data = await res.json();
+                _sdWtState.data = data;
+                renderSdWalkthroughGrid();
+            } catch (err) {
+                panel.innerHTML = '<div style="padding:1.5rem; text-align:center; color:#b45309; font-weight:700;">Unable to load live slots right now.</div>';
+            }
+        }
+        function shiftSdWalkthroughWeek(dir) {
+            const cur = _sdWtState.data;
+            if (dir === 0) _sdWtState.startDate = '';
+            else if (dir < 0 && cur && cur.prev_start_date) _sdWtState.startDate = cur.prev_start_date;
+            else if (dir > 0 && cur && cur.next_start_date) _sdWtState.startDate = cur.next_start_date;
+            loadSdWalkthroughAvailability(false);
+        }
+        function selectSdWalkthroughSlot(dateIso, dayLabel, time24, time12) {
+            _sdWtState.selectedDate = dateIso;
+            _sdWtState.selectedTime24 = time24;
+            _sdWtState.selectedTime12 = time12;
+            const lbl = document.getElementById('sd-wt-selected-label');
+            lbl.style.background = '#dcfce7';
+            lbl.style.color = '#065f46';
+            lbl.innerText = `✓ Selected: ${dayLabel} at ${time12}`;
+            renderSdWalkthroughGrid();
+        }
+        function renderSdWalkthroughGrid() {
+            const panel = document.getElementById('sd-wt-grid-panel');
+            const data = _sdWtState.data;
+            if (!panel || !data) return;
+            const prevBtn = document.getElementById('sd-wt-prev-btn');
+            if (prevBtn) prevBtn.disabled = !data.can_go_prev;
+            const cols = (data.days || []).map(day => {
+                const vis = (day.slots || []).filter(s => s.status !== 'past');
+                const dayLbl = `${day.weekday_short}, ${day.month_day}`;
+                const rows = vis.length === 0
+                    ? '<div style="height:64px; display:flex; align-items:center; justify-content:center; font-size:0.72rem; color:#94a3b8; font-weight:700;">Hours ended today</div>'
+                    : vis.map(s => {
+                        const sel = (day.date === _sdWtState.selectedDate && s.time_24h === _sdWtState.selectedTime24);
+                        if (s.available) {
+                            const bg = sel ? '#047857' : (s.route_match ? '#eff6ff' : '#f0fdf4');
+                            const fg = sel ? '#ffffff' : (s.route_match ? '#1d4ed8' : '#166534');
+                            const bd = sel ? '#065f46' : (s.route_match ? '#60a5fa' : '#86efac');
+                            const tag = sel ? 'Selected' : (s.route_match ? 'Nearby' : 'Open');
+                            return `<button type="button" onclick="selectSdWalkthroughSlot('${day.date}', '${_escSd(dayLbl)}', '${s.time_24h}', '${s.time_12h}')" style="width:100%; height:36px; min-height:36px; max-height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 0.6rem; border-radius:6px; background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.75rem; font-weight:800; cursor:pointer;"><span>${sel ? '✓ ' : ''}${_escSd(s.time_12h)}</span><span style="font-size:0.64rem;">${tag}</span></button>`;
+                        }
+                        const bg = s.status === 'travel_buffer' ? '#fffbeb' : '#f8fafc';
+                        const fg = s.status === 'travel_buffer' ? '#92400e' : '#64748b';
+                        const bd = s.status === 'travel_buffer' ? '#fcd34d' : '#e2e8f0';
+                        const tag = s.status === 'travel_buffer' ? '1h Buffer' : (s.status === 'walkthrough' ? String(s.label || 'Booked').replace('Walkthrough · ', '') : 'Busy');
+                        return `<div style="width:100%; height:36px; min-height:36px; max-height:36px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 0.6rem; border-radius:6px; background:${bg}; color:${fg}; border:1px solid ${bd}; font-size:0.72rem; font-weight:700; cursor:not-allowed;"><span>${_escSd(s.time_12h)}</span><span style="font-size:0.63rem; max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${_escSd(tag)}</span></div>`;
+                    }).join('');
+                return `<div style="border:1px solid #cbd5e1; border-radius:8px; background:#ffffff; overflow:hidden;"><div style="padding:0.5rem 0.6rem; border-bottom:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;"><strong style="font-size:0.78rem;">${_escSd(day.weekday_short)} · ${_escSd(day.month_day)}</strong><span style="font-size:0.65rem; font-weight:800; color:#166534;">${day.open_count} open</span></div><div style="display:grid; grid-auto-rows:36px; gap:6px; padding:0.5rem;">${rows}</div></div>`;
+            }).join('');
+            panel.innerHTML = `<div style="display:grid; grid-template-columns:repeat(5, minmax(160px, 1fr)); gap:0.65rem; min-width:840px;">${cols}</div>`;
+        }
+        async function submitSdWalkthroughBooking() {
+            if (!_sdWtState.leadId || !_sdWtState.selectedDate || !_sdWtState.selectedTime12) {
+                showToast('Please select an open green or blue time slot first.', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`/api/v1/leads/${_sdWtState.leadId}/cadence-save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        decision_maker: document.getElementById('sd-wt-host').value.trim(),
+                        phone: document.getElementById('sd-wt-phone').value.trim(),
+                        email: document.getElementById('sd-wt-email').value.trim(),
+                        status: 'Qualified',
+                        preferred_date: _sdWtState.selectedDate,
+                        preferred_time: _sdWtState.selectedTime12,
+                        activity_type: 'Walkthrough Booked',
+                        sync_calendar: true,
+                        conductor: document.getElementById('sd-wt-conductor').value || 'Humberto Dominguez',
+                        note: document.getElementById('sd-wt-notes').value.trim() || `Walkthrough scheduled from Field Sales Desk for ${_sdWtState.selectedDate} at ${_sdWtState.selectedTime12}.`
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.status === 'success') {
+                    closeModal('salesDeskWalkthroughModal');
+                    showToast(`Walkthrough scheduled for ${_sdWtState.selectedDate} at ${_sdWtState.selectedTime12}!`, 'success');
+                } else {
+                    showToast(data.message || 'Unable to schedule walkthrough.', 'error');
+                    loadSdWalkthroughAvailability(true);
+                }
+            } catch (err) {
+                showToast(`Network error: ${err}`, 'error');
+            }
         }
 
         function showToast(message, type = 'success') {

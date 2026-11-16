@@ -262,7 +262,7 @@
                 <h2 style="font-weight: 800; font-size: 1.1rem; color: var(--slate-900); margin-bottom: 0.25rem;">User Accounts & Access Governance</h2>
                 <p style="color: var(--slate-500); font-size: 0.875rem;">Search team members, manage access roles, edit user credentials, and suspend accounts.</p>
             </div>
-            <button type="button" onclick="openModal('modal-add-user')" class="isc-btn isc-btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
+            <button type="button" onclick="openAddUserModal()" class="isc-btn isc-btn-primary" style="display: flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-user-plus"></i> Add New User
             </button>
         </div>
@@ -495,11 +495,12 @@
         
         <form action="{{ url_for('sigma_executive') }}" method="POST" onsubmit="return validateAddUserForm(event)" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
             <input type="hidden" name="action" value="add_user">
+            <input type="hidden" name="perms_matrix_present" value="true">
             
             <div style="overflow-y: auto; flex: 1; min-height: 0; padding-right: 0.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; align-content: start;">
                 <div>
-                    <label style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">User Role</label>
-                    <select name="user_role" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
+                    <label for="add_user_role" style="display: block; font-size: 0.75rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.4rem;">User Role</label>
+                    <select id="add_user_role" name="user_role" onchange="updateAddModalPermsFromRole(this.value)" required style="width: 100%; height: 38px; padding: 0 0.75rem; border-radius: 6px; border: 1px solid var(--slate-200); background: white; font-weight: 600; font-size: 0.875rem;">
                         <option value="Operator">Operator (Standard Access)</option>
                         <option value="Sales">Sales (Leads & Marketing)</option>
                         <option value="Estimator">Estimator (GC Bids & Takeoff)</option>
@@ -558,6 +559,46 @@
                             <i id="add_eye_2" class="fas fa-eye"></i>
                         </button>
                     </div>
+                </div>
+
+                <!-- Integrated Module Access Rights & Permissions Panel in Add Modal -->
+                <div style="grid-column: span 2; border-top: 1px solid var(--slate-200); padding-top: 1rem; margin-top: 0.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <h4 style="font-size: 0.85rem; font-weight: 800; color: var(--slate-900); margin: 0;">Module Access Rights &amp; Permissions</h4>
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                            <span style="font-size: 0.75rem; color: var(--slate-500); font-weight: 600;">Pre-filled by role defaults (customizable)</span>
+                            <button type="button" onclick="resetAddPermsToRoleDefaults()" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.6rem; font-size: 0.72rem; color: #2563eb; border-color: #bfdbfe; background: #eff6ff; font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem;" title="Reset all checkboxes to match the selected role's standard defaults">
+                                <i class="fas fa-undo-alt"></i> Reset to Role Defaults
+                            </button>
+                        </div>
+                    </div>
+                    <table class="isc-grid" style="width: 100%; font-size: 0.8rem;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 0.5rem; text-align: left; background: #f8fafc; border-bottom: 1px solid var(--slate-200);">System Module</th>
+                                <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">View Access</th>
+                                <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">Edit Access</th>
+                                <th style="padding: 0.5rem; text-align: center; background: #f8fafc; border-bottom: 1px solid var(--slate-200); width: 100px;">Delete Access</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set add_module_labels = {'leads': 'Leads & Opportunities (CRM)', 'accounts': 'Accounts & Clients (CRM)', 'campaigns': 'Email Campaigns (Send & Remove)', 'sales_desk': 'Field Sales Desk (Outside Sales)', 'bids': 'GC Bids & Construction Estimating', 'workforce': 'Human Resources (HR)', 'monitor': 'Work Monitor (Operations)', 'qms': 'QMS Manual & SOP Library', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
+                            {% for mod_key, mod_name in add_module_labels.items() %}
+                            <tr>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ mod_name }}</strong></td>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                    <input type="checkbox" id="add_perm_{{ mod_key }}_v" name="perm_{{ mod_key }}_view" value="true" aria-label="{{ mod_name }} View Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                </td>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                    <input type="checkbox" id="add_perm_{{ mod_key }}_e" name="perm_{{ mod_key }}_edit" value="true" aria-label="{{ mod_name }} Edit Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                </td>
+                                <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
+                                    <input type="checkbox" id="add_perm_{{ mod_key }}_d" name="perm_{{ mod_key }}_delete" value="true" aria-label="{{ mod_name }} Delete Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- Telegram Gateway Access Section -->
@@ -737,18 +778,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% set module_labels = {'leads': 'Leads & Opportunities (CRM)', 'accounts': 'Accounts & Clients (CRM)', 'sales_desk': 'Field Sales Desk (Outside Sales)', 'bids': 'GC Bids & Construction Estimating', 'workforce': 'Human Resources (HR)', 'monitor': 'Work Monitor (Operations)', 'qms': 'QMS Manual & SOP Library', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
+                            {% set module_labels = {'leads': 'Leads & Opportunities (CRM)', 'accounts': 'Accounts & Clients (CRM)', 'campaigns': 'Email Campaigns (Send & Remove)', 'sales_desk': 'Field Sales Desk (Outside Sales)', 'bids': 'GC Bids & Construction Estimating', 'workforce': 'Human Resources (HR)', 'monitor': 'Work Monitor (Operations)', 'qms': 'QMS Manual & SOP Library', 'social': 'Social Posts Approval', 'outbox': 'Email Outbox', 'users': 'User Management', 'tools': 'Settings & Goals'} %}
                             {% for mod_key, mod_name in module_labels.items() %}
                             <tr>
                                 <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100);"><strong>{{ mod_name }}</strong></td>
                                 <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
-                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_v" name="perm_{{ mod_key }}_view" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_v" name="perm_{{ mod_key }}_view" value="true" aria-label="{{ mod_name }} View Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
                                 </td>
                                 <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
-                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_e" name="perm_{{ mod_key }}_edit" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_e" name="perm_{{ mod_key }}_edit" value="true" aria-label="{{ mod_name }} Edit Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
                                 </td>
                                 <td style="padding: 0.5rem; border-bottom: 1px solid var(--slate-100); text-align: center;">
-                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_d" name="perm_{{ mod_key }}_delete" value="true" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
+                                    <input type="checkbox" id="edit_perm_{{ mod_key }}_d" name="perm_{{ mod_key }}_delete" value="true" aria-label="{{ mod_name }} Delete Access" style="accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer;">
                                 </td>
                             </tr>
                             {% endfor %}
@@ -1114,10 +1155,64 @@ function openExecutiveTab(tabId) {
 const rolePresets = {{ (role_presets or {}) | tojson }};
 const rolePermissionsData = {{ (role_permissions or []) | tojson }};
 
-function updateModalPermsFromRole(roleName) {
-    const modules = ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools'];
+const MANAGED_USER_MODULES = ['leads', 'accounts', 'campaigns', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools'];
+
+function resolveRoleModulePreset(roleName, mod) {
     if (roleName === 'Custom') {
-        modules.forEach(mod => {
+        return { view: false, edit: false, delete: false };
+    }
+    const preset = rolePresets[roleName] || {};
+    if (preset[mod]) {
+        return {
+            view: Boolean(preset[mod].view),
+            edit: Boolean(preset[mod].edit),
+            delete: Boolean(preset[mod].delete)
+        };
+    }
+    if (rolePermissionsData && rolePermissionsData.length > 0) {
+        const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
+        if (perm) {
+            return {
+                view: perm.can_view === true || perm.can_view === 'true' || perm.can_view === 1,
+                edit: perm.can_edit === true || perm.can_edit === 'true' || perm.can_edit === 1,
+                delete: perm.can_delete === true || perm.can_delete === 'true' || perm.can_delete === 1
+            };
+        }
+    }
+    return { view: false, edit: false, delete: false };
+}
+
+function updateAddModalPermsFromRole(roleName) {
+    MANAGED_USER_MODULES.forEach(mod => {
+        const resolved = resolveRoleModulePreset(roleName, mod);
+        const vCheck = document.getElementById(`add_perm_${mod}_v`);
+        const eCheck = document.getElementById(`add_perm_${mod}_e`);
+        const dCheck = document.getElementById(`add_perm_${mod}_d`);
+        if (vCheck) vCheck.checked = resolved.view;
+        if (eCheck) eCheck.checked = resolved.edit;
+        if (dCheck) dCheck.checked = resolved.delete;
+    });
+}
+
+function resetAddPermsToRoleDefaults() {
+    const roleSelect = document.getElementById('add_user_role');
+    const roleName = roleSelect ? roleSelect.value : 'Operator';
+    updateAddModalPermsFromRole(roleName);
+    if (typeof showToast === 'function') {
+        showToast(`Permissions reset to standard ${roleName} defaults.`, 'info');
+    }
+}
+
+function openAddUserModal() {
+    const roleSelect = document.getElementById('add_user_role');
+    const roleName = roleSelect ? roleSelect.value : 'Operator';
+    updateAddModalPermsFromRole(roleName);
+    openModal('modal-add-user');
+}
+
+function updateModalPermsFromRole(roleName) {
+    if (roleName === 'Custom') {
+        MANAGED_USER_MODULES.forEach(mod => {
             const vCheck = document.getElementById(`edit_perm_${mod}_v`);
             const eCheck = document.getElementById(`edit_perm_${mod}_e`);
             const dCheck = document.getElementById(`edit_perm_${mod}_d`);
@@ -1143,29 +1238,14 @@ function updateModalPermsFromRole(roleName) {
         if (tgBriefing) tgBriefing.checked = false;
         return;
     }
-    const preset = rolePresets[roleName] || {};
-    modules.forEach(mod => {
-        const modPreset = preset[mod];
-        let canV = false, canE = false, canD = false;
-        if (modPreset) {
-            canV = Boolean(modPreset.view);
-            canE = Boolean(modPreset.edit);
-            canD = Boolean(modPreset.delete);
-        } else if (rolePermissionsData && rolePermissionsData.length > 0) {
-            const perm = rolePermissionsData.find(p => p.role === roleName && p.module === mod);
-            if (perm) {
-                canV = perm.can_view === true || perm.can_view === 'true' || perm.can_view === 1;
-                canE = perm.can_edit === true || perm.can_edit === 'true' || perm.can_edit === 1;
-                canD = perm.can_delete === true || perm.can_delete === 'true' || perm.can_delete === 1;
-            }
-        }
+    MANAGED_USER_MODULES.forEach(mod => {
+        const resolved = resolveRoleModulePreset(roleName, mod);
         const vCheck = document.getElementById(`edit_perm_${mod}_v`);
         const eCheck = document.getElementById(`edit_perm_${mod}_e`);
         const dCheck = document.getElementById(`edit_perm_${mod}_d`);
-        
-        if (vCheck) vCheck.checked = canV;
-        if (eCheck) eCheck.checked = canE;
-        if (dCheck) dCheck.checked = canD;
+        if (vCheck) vCheck.checked = resolved.view;
+        if (eCheck) eCheck.checked = resolved.edit;
+        if (dCheck) dCheck.checked = resolved.delete;
     });
     applyRoleTgDefaults(roleName);
 }
@@ -1198,15 +1278,19 @@ function openEditUserModalFromRow(btn) {
     if (row.dataset.perms && row.dataset.perms.trim() !== '') {
         try {
             const customPerms = JSON.parse(row.dataset.perms);
-            const modules = ['leads', 'accounts', 'sales_desk', 'bids', 'workforce', 'monitor', 'qms', 'social', 'outbox', 'users', 'tools'];
-            modules.forEach(mod => {
+            MANAGED_USER_MODULES.forEach(mod => {
+                const vCheck = document.getElementById(`edit_perm_${mod}_v`);
+                const eCheck = document.getElementById(`edit_perm_${mod}_e`);
+                const dCheck = document.getElementById(`edit_perm_${mod}_d`);
                 if (customPerms[mod]) {
-                    const vCheck = document.getElementById(`edit_perm_${mod}_v`);
-                    const eCheck = document.getElementById(`edit_perm_${mod}_e`);
-                    const dCheck = document.getElementById(`edit_perm_${mod}_d`);
                     if (vCheck) vCheck.checked = customPerms[mod].view === true;
                     if (eCheck) eCheck.checked = customPerms[mod].edit === true;
                     if (dCheck) dCheck.checked = customPerms[mod].delete === true;
+                } else {
+                    const fallback = resolveRoleModulePreset(urole, mod);
+                    if (vCheck) vCheck.checked = fallback.view;
+                    if (eCheck) eCheck.checked = fallback.edit;
+                    if (dCheck) dCheck.checked = fallback.delete;
                 }
             });
             loadedCustom = true;
@@ -1234,6 +1318,13 @@ function openEditUserModalFromRow(btn) {
     
     openModal('modal-edit-user');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const addRoleSelect = document.getElementById('add_user_role');
+    if (addRoleSelect) {
+        updateAddModalPermsFromRole(addRoleSelect.value || 'Operator');
+    }
+});
 
 window.onload = function() {
     if (window.location.hash) {

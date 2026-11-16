@@ -60,8 +60,49 @@ def render_bar(score: float, width: int = 24) -> str:
     return bar
 
 
+def check_workspace_file_hygiene() -> Dict[str, Any]:
+    """Checks GEMINI.md, HWB-SESSION-RECOVERY.md, and docs/PROBLEMS-TO-SOLVE.md against size caps."""
+    roots = [
+        "/home/humbertoed/gemini_projects",
+        os.getcwd(),
+        os.path.abspath(os.path.join(os.getcwd(), "..", "..", "..")),
+    ]
+    ws_root = next((r for r in roots if os.path.exists(os.path.join(r, "GEMINI.md"))), os.getcwd())
+
+    gemini_p = os.path.join(ws_root, "GEMINI.md")
+    recovery_p = os.path.join(ws_root, "HWB-SESSION-RECOVERY.md")
+    problems_p = os.path.join(ws_root, "docs", "PROBLEMS-TO-SOLVE.md")
+
+    gemini_kb = round(os.path.getsize(gemini_p) / 1024.0, 1) if os.path.exists(gemini_p) else 0.0
+    recovery_kb = round(os.path.getsize(recovery_p) / 1024.0, 1) if os.path.exists(recovery_p) else 0.0
+    problems_kb = round(os.path.getsize(problems_p) / 1024.0, 1) if os.path.exists(problems_p) else 0.0
+
+    warnings = []
+    penalty = 0.0
+    if gemini_kb > 20.0:
+        warnings.append(f"GEMINI.md={gemini_kb}KB (>20KB cap; CLI truncates >23.7KB)")
+        penalty += 35.0 if gemini_kb <= 23.7 else 60.0
+    if recovery_kb > 16.0:
+        warnings.append(f"HWB-SESSION-RECOVERY.md={recovery_kb}KB (>16KB cap; run sigma_sync.py)")
+        penalty += 15.0
+    if problems_kb > 35.0:
+        warnings.append(f"PROBLEMS-TO-SOLVE.md={problems_kb}KB (>35KB cap; run sigma_sync.py)")
+        penalty += 25.0
+
+    return {
+        "gemini_kb": gemini_kb,
+        "recovery_kb": recovery_kb,
+        "problems_kb": problems_kb,
+        "warnings": warnings,
+        "penalty": min(75.0, penalty),
+    }
+
+
 def analyze_transcript(transcript_path: str) -> Dict[str, Any]:
-    """Parses transcript.jsonl and calculates memory health metrics."""
+    """Parses transcript_full.jsonl (or transcript.jsonl) and calculates memory health metrics."""
+    full_candidate = os.path.join(os.path.dirname(transcript_path), "transcript_full.jsonl")
+    if os.path.exists(full_candidate):
+        transcript_path = full_candidate
     if not os.path.exists(transcript_path):
         raise FileNotFoundError(f"Transcript log not found at: {transcript_path}")
 
@@ -106,16 +147,17 @@ def analyze_transcript(transcript_path: str) -> Dict[str, Any]:
         return {"error": "Transcript is empty"}
 
     # 1. CONTEXT BLOAT SCORE (0 - 100)
-    # Calibrated against industrial saturation: 2MB ~ 30%, 10MB ~ 70%, 20MB+ ~ 95%
-    size_factor = min(100.0, (file_size_mb / 20.0) * 100.0)
-    steps_factor = min(100.0, (total_steps / 10000.0) * 100.0)
+    # Calibrated for real CLI sessions: 1.0MB / 120 steps ~ moderate; 3.0MB / 350 steps ~ critical
+    size_factor = min(100.0, (file_size_mb / 3.0) * 100.0)
+    steps_factor = min(100.0, (total_steps / 350.0) * 100.0)
     
     # Noise ratio (tool outputs vs meaningful conversational text)
     meaningful_bytes = model_content_bytes + user_content_bytes
-    noise_ratio = (tool_output_bytes / (tool_output_bytes + meaningful_bytes)) if (tool_output_bytes + meaningful_bytes) > 0 else 0.5
-    noise_factor = noise_ratio * 100.0
+    noise_ratio = (tool_output_bytes / (tool_output_bytes + meaningful_bytes)) if (tool_output_bytes + meaningful_bytes) > 0 else 0.0
+    noise_factor = noise_ratio * 100.0 if total_steps > 10 else 0.0
 
-    bloat_score = (0.45 * size_factor) + (0.35 * steps_factor) + (0.20 * noise_factor)
+    hygiene = check_workspace_file_hygiene()
+    bloat_score = (0.45 * size_factor) + (0.35 * steps_factor) + (0.20 * noise_factor) + hygiene["penalty"]
     bloat_score = min(100.0, max(0.0, bloat_score))
 
     # 2. ATTENTION DILUTION SCORE (0 - 100)
@@ -192,6 +234,9 @@ def analyze_transcript(transcript_path: str) -> Dict[str, Any]:
         status_badge = "🔴 RED ALERT"
         recommendation = "Working memory has exceeded optimal cognitive bounds. Memory flush and session restart recommended immediately to reclaim maximum reasoning velocity."
 
+    if hygiene["warnings"]:
+        recommendation = "FILE BLOAT ALERT: " + "; ".join(hygiene["warnings"]) + " | " + recommendation
+
     return {
         "rot_index": round(rot_index, 1),
         "status_label": status_label,
@@ -203,7 +248,11 @@ def analyze_transcript(transcript_path: str) -> Dict[str, Any]:
                 "file_size_mb": round(file_size_mb, 2),
                 "total_steps": total_steps,
                 "tool_calls": tool_calls_count,
-                "noise_ratio_pct": round(noise_ratio * 100, 1)
+                "noise_ratio_pct": round(noise_ratio * 100, 1),
+                "gemini_kb": hygiene["gemini_kb"],
+                "recovery_kb": hygiene["recovery_kb"],
+                "problems_kb": hygiene["problems_kb"],
+                "hygiene_warnings": hygiene["warnings"],
             },
             "dilution": {
                 "score": round(dilution_score, 1),
@@ -243,6 +292,7 @@ def print_dashboard(data: Dict[str, Any], conv_id: str):
     print(f" 1. Context Bloat       : {render_bar(m['bloat']['score'])}")
     print(f"    └─ Transcript Size  : {m['bloat']['file_size_mb']} MB across {m['bloat']['total_steps']:,} steps")
     print(f"    └─ Tool Executions  : {m['bloat']['tool_calls']:,} calls ({m['bloat']['noise_ratio_pct']}% raw tool output volume)")
+    print(f"    └─ Rule & Log Caps  : GEMINI.md={m['bloat']['gemini_kb']}KB (<20KB) | Recovery={m['bloat']['recovery_kb']}KB | Bugs={m['bloat']['problems_kb']}KB")
     print()
     print(f" 2. Attention Dilution  : {render_bar(m['dilution']['score'])}")
     print(f"    └─ Attention Spread : Focus spread across {m['dilution']['steps']:,} steps")

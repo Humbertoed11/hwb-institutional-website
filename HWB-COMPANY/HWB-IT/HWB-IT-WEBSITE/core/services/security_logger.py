@@ -29,6 +29,28 @@ def extract_client_ip() -> str:
     return '127.0.0.1'
 
 
+_SENSITIVE_DETAIL_KEYS = {
+    'password', 'passwd', 'pwd', 'raw_password', 'new_password',
+    'client_secret', 'api_key', 'raw_token', 'reset_token',
+    'ssn', 'raw_ssn', 'raw_ein', 'raw_tin', 'cvv', 'card_number',
+}
+
+
+def _scrub_sensitive_details(value: Any) -> Any:
+    """Recursively strips credentials and raw tax IDs before WORM persistence (SOC 2 CC6.1)."""
+    if isinstance(value, dict):
+        cleaned: Dict[str, Any] = {}
+        for k, v in value.items():
+            if str(k).strip().lower() in _SENSITIVE_DETAIL_KEYS:
+                cleaned[k] = '[REDACTED]'
+            else:
+                cleaned[k] = _scrub_sensitive_details(v)
+        return cleaned
+    if isinstance(value, list):
+        return [_scrub_sensitive_details(item) for item in value]
+    return value
+
+
 def log_security_event(
     event_category: str,
     event_action: str,
@@ -96,7 +118,7 @@ def log_security_event(
                 http_method,
                 status_code,
                 severity,
-                Json(details) if details else None
+                Json(_scrub_sensitive_details(details)) if details else None
             ))
         conn.commit()
 
@@ -145,11 +167,28 @@ def synthesize_audit_event_context(rd: Dict[str, Any]) -> Dict[str, Any]:
     playbook_status = "NOMINAL"
 
     if action == 'BOT_DROPPED':
-        reason = details.get('reason', 'Automated anomaly detected')
-        target = details.get('target_company') or details.get('target_email') or 'Unknown Target'
-        description = f"Bot submission dropped on {endpoint}: {reason}. Target: {target}"
-        action_taken = "Silent Blackhole: Discarded payload, returned HTTP 200 decoy, 0 database writes."
-        action_to_be_taken = "None Required: Automated defense successfully neutralized threat."
+        reason = details.get('reason', 'Automated script pattern detected')
+        target = details.get('target_company') or details.get('target_email') or details.get('target_name') or 'Unknown Target'
+        form_label = details.get('form_name') or (
+            '1099 Subcontractor Form' if 'subcontractor' in endpoint
+            else ('W-2 Job Application Form' if 'workforce/apply' in endpoint
+                  else ('Quote Step-2 Box' if 'update-quote' in endpoint else 'Client Quote Form'))
+        )
+        description = f"Form bot blocked on {form_label} ({endpoint}) from IP {ip}: {reason}. Target: {target}"
+        action_taken = "Silent Drop: Discarded bot payload, sent 0 emails/alerts, and wrote 0 database records."
+        action_to_be_taken = "None Required: Automated form shield blocked the bot."
+        playbook_status = "RESOLVED"
+
+    elif action == 'LOGIN_BOT_BLOCKED':
+        reason = details.get('reason', 'Automated login probe detected')
+        attempted = details.get('attempted_username') or user
+        gate_label = (
+            'Bosanna Partner Login' if 'bosanna' in endpoint
+            else ('Password Reset Screen' if 'forgot-password' in endpoint else 'Staff Login Screen')
+        )
+        description = f"Login bot blocked on {gate_label} ({endpoint}) from IP {ip} targeting '{attempted}': {reason}."
+        action_taken = "Access Blocked: Stopped automated login probe before session issue and recorded IP."
+        action_to_be_taken = "Monitor IP: Repeated bursts are rate-limited automatically with HTTP 429."
         playbook_status = "RESOLVED"
 
     elif action == 'LOGIN_SUCCESS':
@@ -328,12 +367,25 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
         "threat_badge": "🟢 NOMINAL",
         "total_events_24h": 0,
         "auth_success_24h": 0,
+        "auth_success_30d": 0,
         "auth_failures_24h": 0,
+        "auth_failures_30d": 0,
         "session_timeouts_24h": 0,
         "rbac_violations_24h": 0,
         "pii_reveals_24h": 0,
         "bot_blocks_24h": 0,
+        "bot_blocks_30d": 0,
+        "form_bots_24h": 0,
+        "form_bots_30d": 0,
+        "login_bots_24h": 0,
+        "login_bots_30d": 0,
+        "form_bot_breakdown": {
+            "quote_24h": 0, "quote_30d": 0,
+            "sub_1099_24h": 0, "sub_1099_30d": 0,
+            "w2_apply_24h": 0, "w2_apply_30d": 0,
+        },
         "rate_limit_hits_24h": 0,
+        "rate_limit_hits_30d": 0,
         "metrics": {
             "total_security_events_24h": 0,
             "auth_failures_24h": 0,
@@ -374,40 +426,77 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
     try:
         conn = get_db(target_url)
         with conn.cursor() as cur:
-            # 1. Total counts in last 24h
+            # 1. Total counts in last 24h AND 30d in a single indexed pass
             cur.execute('''
-                SELECT 
-                    COUNT(*) as total_events,
-                    COUNT(*) FILTER (WHERE event_action = 'LOGIN_SUCCESS') as auth_success,
-                    COUNT(*) FILTER (WHERE event_action = 'LOGIN_FAIL') as auth_fail,
-                    COUNT(*) FILTER (WHERE event_action = 'SESSION_TIMEOUT') as session_timeout,
-                    COUNT(*) FILTER (WHERE event_category = 'RBAC') as rbac_violations,
-                    COUNT(*) FILTER (WHERE event_category = 'PII_ACCESS') as pii_reveals,
-                    COUNT(*) FILTER (WHERE event_category = 'BOT_DEFENSE') as bot_blocks,
-                    COUNT(*) FILTER (WHERE event_category = 'RATE_LIMIT') as rate_limit_hits,
-                    COUNT(*) FILTER (WHERE event_action = 'BULK_DATA_EXPORT') as data_exports,
-                    COUNT(*) FILTER (WHERE event_category = 'USER_ADMIN') as user_admin_events,
-                    COUNT(*) FILTER (WHERE event_action = 'TAKEOFF_COMMITTED') as takeoffs_committed,
-                    COUNT(*) FILTER (WHERE event_action = 'AUDIT_LOG_INSPECTED') as audit_inspections,
-                    COUNT(*) FILTER (WHERE severity IN ('SUSPICIOUS', 'CRITICAL')) as high_severity_hits
+                SELECT
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours') AS total_events,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'LOGIN_SUCCESS') AS auth_success_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'LOGIN_SUCCESS') AS auth_success_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'LOGIN_FAIL') AS auth_fail_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'LOGIN_FAIL') AS auth_fail_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'SESSION_TIMEOUT') AS session_timeout_24h,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_category = 'RBAC') AS rbac_violations_24h,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_category = 'PII_ACCESS') AS pii_reveals_24h,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'BOT_DROPPED') AS form_bots_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'BOT_DROPPED') AS form_bots_30d,
+                    COUNT(*) FILTER (
+                        WHERE timestamp >= NOW() - INTERVAL '24 hours'
+                          AND (
+                              event_action = 'LOGIN_BOT_BLOCKED'
+                              OR (event_action = 'RATE_LIMIT_BLOCKED' AND (endpoint LIKE '/login%%' OR endpoint LIKE '/portal/bosanna/login%%' OR endpoint LIKE '/forgot-password%%'))
+                          )
+                    ) AS login_bots_24h,
+                    COUNT(*) FILTER (
+                        WHERE event_action = 'LOGIN_BOT_BLOCKED'
+                           OR (event_action = 'RATE_LIMIT_BLOCKED' AND (endpoint LIKE '/login%%' OR endpoint LIKE '/portal/bosanna/login%%' OR endpoint LIKE '/forgot-password%%'))
+                    ) AS login_bots_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'BOT_DROPPED' AND (endpoint LIKE '/get-quote%%' OR endpoint LIKE '/update-quote%%')) AS quote_bots_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'BOT_DROPPED' AND (endpoint LIKE '/get-quote%%' OR endpoint LIKE '/update-quote%%')) AS quote_bots_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'BOT_DROPPED' AND endpoint LIKE '%%/workforce/subcontractor%%') AS sub_1099_bots_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'BOT_DROPPED' AND endpoint LIKE '%%/workforce/subcontractor%%') AS sub_1099_bots_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'BOT_DROPPED' AND endpoint LIKE '%%/workforce/apply%%') AS w2_apply_bots_24h,
+                    COUNT(*) FILTER (WHERE event_action = 'BOT_DROPPED' AND endpoint LIKE '%%/workforce/apply%%') AS w2_apply_bots_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_category = 'RATE_LIMIT') AS rate_limit_hits_24h,
+                    COUNT(*) FILTER (WHERE event_category = 'RATE_LIMIT') AS rate_limit_hits_30d,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'BULK_DATA_EXPORT') AS data_exports,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_category = 'USER_ADMIN') AS user_admin_events,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'TAKEOFF_COMMITTED') AS takeoffs_committed,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND event_action = 'AUDIT_LOG_INSPECTED') AS audit_inspections,
+                    COUNT(*) FILTER (WHERE timestamp >= NOW() - INTERVAL '24 hours' AND severity IN ('SUSPICIOUS', 'CRITICAL')) AS high_severity_hits
                 FROM "SecurityAuditLogs"
-                WHERE timestamp >= NOW() - INTERVAL '24 hours';
+                WHERE timestamp >= NOW() - INTERVAL '30 days';
             ''')
             row = cur.fetchone()
-            
-            total_events = row['total_events'] if isinstance(row, dict) else row[0]
-            auth_success = row['auth_success'] if isinstance(row, dict) else row[1]
-            auth_fail = row['auth_fail'] if isinstance(row, dict) else row[2]
-            session_timeout = row['session_timeout'] if isinstance(row, dict) else row[3]
-            rbac_violations = row['rbac_violations'] if isinstance(row, dict) else row[4]
-            pii_reveals = row['pii_reveals'] if isinstance(row, dict) else row[5]
-            bot_blocks = row['bot_blocks'] if isinstance(row, dict) else row[6]
-            rate_limit_hits = row['rate_limit_hits'] if isinstance(row, dict) else row[7]
-            data_exports = row['data_exports'] if isinstance(row, dict) else row[8]
-            user_admin = row['user_admin_events'] if isinstance(row, dict) else row[9]
-            takeoffs_comm = row['takeoffs_committed'] if isinstance(row, dict) else row[10]
-            audit_insp = row['audit_inspections'] if isinstance(row, dict) else row[11]
-            high_sev = row['high_severity_hits'] if isinstance(row, dict) else row[12]
+            def _rv(k: str, idx: int) -> int:
+                return int((row[k] if isinstance(row, dict) else row[idx]) or 0)
+
+            total_events = _rv('total_events', 0)
+            auth_success = _rv('auth_success_24h', 1)
+            auth_success_30d = _rv('auth_success_30d', 2)
+            auth_fail = _rv('auth_fail_24h', 3)
+            auth_fail_30d = _rv('auth_fail_30d', 4)
+            session_timeout = _rv('session_timeout_24h', 5)
+            rbac_violations = _rv('rbac_violations_24h', 6)
+            pii_reveals = _rv('pii_reveals_24h', 7)
+            form_bots_24h = _rv('form_bots_24h', 8)
+            form_bots_30d = _rv('form_bots_30d', 9)
+            login_bots_24h = _rv('login_bots_24h', 10)
+            login_bots_30d = _rv('login_bots_30d', 11)
+            quote_bots_24h = _rv('quote_bots_24h', 12)
+            quote_bots_30d = _rv('quote_bots_30d', 13)
+            sub_1099_bots_24h = _rv('sub_1099_bots_24h', 14)
+            sub_1099_bots_30d = _rv('sub_1099_bots_30d', 15)
+            w2_apply_bots_24h = _rv('w2_apply_bots_24h', 16)
+            w2_apply_bots_30d = _rv('w2_apply_bots_30d', 17)
+            rate_limit_hits = _rv('rate_limit_hits_24h', 18)
+            rate_limit_hits_30d = _rv('rate_limit_hits_30d', 19)
+            data_exports = _rv('data_exports', 20)
+            user_admin = _rv('user_admin_events', 21)
+            takeoffs_comm = _rv('takeoffs_committed', 22)
+            audit_insp = _rv('audit_inspections', 23)
+            high_sev = _rv('high_severity_hits', 24)
+            bot_blocks = form_bots_24h + login_bots_24h
+            bot_blocks_30d = form_bots_30d + login_bots_30d
 
             # 2. Fetch latest 15 security log rows
             cur.execute('''
@@ -441,7 +530,7 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 SELECT 
                     EXTRACT(HOUR FROM timestamp)::int as hr,
                     COUNT(*) as total_events,
-                    COUNT(*) FILTER (WHERE event_action IN ('PROMPT_INJECTION_BLOCKED', 'PROMPT_INJECTION_DETECTED', 'BOT_DROPPED', 'ROUTE_BLOCKED', 'LOGIN_FAIL', 'INJECTION_QUARANTINED') OR severity IN ('WARNING', 'CRITICAL')) as threats_blocked,
+                    COUNT(*) FILTER (WHERE event_action IN ('PROMPT_INJECTION_BLOCKED', 'PROMPT_INJECTION_DETECTED', 'BOT_DROPPED', 'LOGIN_BOT_BLOCKED', 'RATE_LIMIT_BLOCKED', 'ROUTE_BLOCKED', 'LOGIN_FAIL', 'INJECTION_QUARANTINED') OR severity IN ('WARNING', 'CRITICAL')) as threats_blocked,
                     COUNT(*) FILTER (WHERE event_action = 'LOGIN_SUCCESS') as verified_logins,
                     COUNT(*) FILTER (WHERE event_action = 'SESSION_TIMEOUT') as session_timeouts
                 FROM "SecurityAuditLogs"
@@ -510,12 +599,25 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 "threat_badge": badge,
                 "total_events_24h": total_events,
                 "auth_success_24h": auth_success,
+                "auth_success_30d": auth_success_30d,
                 "auth_failures_24h": auth_fail,
+                "auth_failures_30d": auth_fail_30d,
                 "session_timeouts_24h": session_timeout,
                 "rbac_violations_24h": rbac_violations,
                 "pii_reveals_24h": pii_reveals,
                 "bot_blocks_24h": bot_blocks,
+                "bot_blocks_30d": bot_blocks_30d,
+                "form_bots_24h": form_bots_24h,
+                "form_bots_30d": form_bots_30d,
+                "login_bots_24h": login_bots_24h,
+                "login_bots_30d": login_bots_30d,
+                "form_bot_breakdown": {
+                    "quote_24h": quote_bots_24h, "quote_30d": quote_bots_30d,
+                    "sub_1099_24h": sub_1099_bots_24h, "sub_1099_30d": sub_1099_bots_30d,
+                    "w2_apply_24h": w2_apply_bots_24h, "w2_apply_30d": w2_apply_bots_30d,
+                },
                 "rate_limit_hits_24h": rate_limit_hits,
+                "rate_limit_hits_30d": rate_limit_hits_30d,
                 "data_exports_24h": data_exports,
                 "user_admin_events_24h": user_admin,
                 "takeoffs_committed_24h": takeoffs_comm,
@@ -523,8 +625,15 @@ def get_site_security_telemetry(db_url: Optional[str] = None) -> Dict[str, Any]:
                 "metrics": {
                     "total_security_events_24h": total_events,
                     "auth_failures_24h": auth_fail,
+                    "auth_failures_30d": auth_fail_30d,
                     "rate_limit_blocks_24h": rate_limit_hits,
+                    "rate_limit_blocks_30d": rate_limit_hits_30d,
                     "bot_drops_24h": bot_blocks,
+                    "bot_drops_30d": bot_blocks_30d,
+                    "form_bots_24h": form_bots_24h,
+                    "form_bots_30d": form_bots_30d,
+                    "login_bots_24h": login_bots_24h,
+                    "login_bots_30d": login_bots_30d,
                     "dormant_sessions_cleared": session_timeout,
                     "rbac_violations_24h": rbac_violations,
                     "pii_reveals_24h": pii_reveals,

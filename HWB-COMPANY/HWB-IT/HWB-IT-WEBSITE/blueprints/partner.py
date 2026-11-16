@@ -293,8 +293,33 @@ def bosanna_login():
     if request.method == 'POST':
         identifier = (request.form.get('username') or '').strip()
         password = (request.form.get('password') or '').strip()
-
         db_url = current_app.config['DATABASE_URL']
+        from core.services.security_logger import log_security_event, extract_client_ip
+        from core.services.bot_defense import check_honeypots, check_origin, SCANNER_PROBE_USERNAMES, evaluate_login_bot_attempt
+        client_ip = extract_client_ip()
+
+        hp_ok, hp_reason = check_honeypots(request.form.to_dict())
+        ident_lower = identifier.lower()
+        enforce_origin = not current_app.config.get('TESTING') or request.headers.get('X-Enforce-Bot-Defense') == '1'
+        origin_ok, origin_reason = check_origin(request) if enforce_origin else (True, 'OK')
+        if not hp_ok or ident_lower in SCANNER_PROBE_USERNAMES or not origin_ok:
+            bot_reason = hp_reason if not hp_ok else (
+                f"Automated scanner username probe ('{ident_lower}')" if ident_lower in SCANNER_PROBE_USERNAMES else origin_reason
+            )
+            log_security_event(
+                event_category='BOT_DEFENSE',
+                event_action='LOGIN_BOT_BLOCKED',
+                severity='WARNING',
+                username=identifier[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/portal/bosanna/login',
+                http_method='POST',
+                status_code=401,
+                details={'attempted_username': identifier[:80], 'reason': bot_reason},
+            )
+            flash('Invalid credentials. Please verify your email and password.')
+            return render_template('bosanna_login.html')
+
         conn = None
         user = None
         try:
@@ -341,8 +366,48 @@ def bosanna_login():
 
             session.permanent = True
             login_user(User(user['id'], user['username'], user_role, user.get('full_name'), user.get('custom_permissions')))
+            log_security_event(
+                event_category='AUTH',
+                event_action='LOGIN_SUCCESS',
+                severity='INFO',
+                user_id=user['id'],
+                username=user['username'],
+                user_role=user_role,
+                ip_address=client_ip,
+                endpoint='/portal/bosanna/login',
+                http_method='POST',
+                status_code=200,
+                details={'auth_method': 'bosanna_partner_portal', 'role': user_role},
+            )
             return redirect(url_for('partner.bosanna_portal'))
 
+        is_burst_bot, burst_reason = evaluate_login_bot_attempt(
+            request, identifier=identifier, db_url=db_url, client_ip=client_ip
+        )
+        if is_burst_bot:
+            log_security_event(
+                event_category='BOT_DEFENSE',
+                event_action='LOGIN_BOT_BLOCKED',
+                severity='WARNING',
+                username=identifier[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/portal/bosanna/login',
+                http_method='POST',
+                status_code=401,
+                details={'attempted_username': identifier[:80], 'reason': burst_reason},
+            )
+        else:
+            log_security_event(
+                event_category='AUTH',
+                event_action='LOGIN_FAIL',
+                severity='WARNING',
+                username=identifier[:80] or 'Anonymous',
+                ip_address=client_ip,
+                endpoint='/portal/bosanna/login',
+                http_method='POST',
+                status_code=401,
+                details={'attempted_username': identifier[:80], 'reason': 'Invalid credentials'},
+            )
         flash('Invalid credentials. Please verify your email and password.')
 
     return render_template('bosanna_login.html')

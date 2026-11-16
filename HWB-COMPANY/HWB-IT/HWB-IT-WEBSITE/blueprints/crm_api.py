@@ -24,8 +24,10 @@ from core.services.search import parse_advanced_search
 from core.services.sanitizer import (
     clean_phone, clean_currency, clean_sqft, clean_zip, clean_email, clean_city,
     extract_phone_digits, normalize_business_name, merge_comma_list,
-    clean_state, clean_website, split_address_lines
+    clean_state, clean_website, split_address_lines, is_valid_nanp_phone
 )
+from core.services.rate_limiter import rate_limit
+from core.services.bot_defense import evaluate_bot_defense
 from core.security import (
     encrypt_pii,
     decrypt_pii,
@@ -324,6 +326,244 @@ def api_restore_deleted_crm_record():
 
 
 
+# --- Shared Walkthrough & Site Visit Outlook Lifecycle Helpers (BUG-186) ---
+
+def _format_time_12h_label(raw_time: str) -> str:
+    """Normalizes '14:00' or '2:00 pm' into '02:00 PM' (defaults to '10:00 AM')."""
+    if not raw_time or not str(raw_time).strip():
+        return '10:00 AM'
+    pt = str(raw_time).strip().upper()
+    for fmt in ('%I:%M %p', '%I:%M%p', '%H:%M', '%H:%M:%S'):
+        try:
+            return datetime.datetime.strptime(pt, fmt).strftime('%I:%M %p')
+        except ValueError:
+            continue
+    return '10:00 AM'
+
+
+def _sync_facility_outlook_invite(
+    facility_name: str,
+    location_text: str,
+    pref_date: str,
+    pref_time: str,
+    conductor: str = 'Humberto Dominguez',
+    host_name: str = '',
+    host_phone: str = '',
+    host_email: str = '',
+    sqf_val: int = 0,
+    notes_text: str = '',
+    existing_event_id: str = '',
+    existing_conductor_email: str = '',
+    subject_prefix: str = 'Facility Walkthrough & Scope Assessment',
+    actor_name: str = '',
+    actor_email: str = '',
+) -> tuple:
+    """
+    Creates or updates (PATCH) a Microsoft 365 Outlook calendar invite with 45-minute duration.
+    Returns (saved_event_id, saved_conductor_email, created_bool, rescheduled_bool).
+    """
+    saved_ev_id = (existing_event_id or '').strip() or None
+    saved_cond_mb = (existing_conductor_email or '').strip() or None
+    cal_created = False
+    cal_rescheduled = False
+    try:
+        from core.services.calendar_service import (
+            create_calendar_event,
+            update_calendar_event,
+            delete_calendar_event,
+            resolve_conductor_mailbox,
+            invalidate_calendar_availability_cache,
+        )
+        invalidate_calendar_availability_cache()
+        conductor_clean = (conductor or 'Humberto Dominguez').strip()
+        conductor_mailbox, _, _ = resolve_conductor_mailbox(conductor_clean)
+        time_12 = _format_time_12h_label(pref_time)
+        parsed_t = datetime.datetime.strptime(time_12, '%I:%M %p').time()
+        start_dt = datetime.datetime.strptime(str(pref_date).strip()[:10], '%Y-%m-%d').replace(
+            hour=parsed_t.hour, minute=parsed_t.minute, second=0
+        )
+        end_dt = start_dt + datetime.timedelta(minutes=45)
+        start_iso = start_dt.strftime('%Y-%m-%dT%H:%M:%S')
+        end_iso = end_dt.strftime('%Y-%m-%dT%H:%M:%S')
+
+        is_rep_conductor = (conductor_clean != 'Humberto Dominguez')
+        conductor_name_label = (
+            conductor_clean if conductor_clean == 'Remote Sales Rep'
+            else (conductor_clean or actor_name or 'Local Sales Representative')
+        )
+        conductor_display = (
+            f"{conductor_name_label} (HWB Cleaning Services)"
+            if is_rep_conductor
+            else "Humberto Dominguez (CEO - HWB Cleaning Services)"
+        )
+        subject_tag = f" [Conductor: {conductor_name_label}]" if is_rep_conductor else ""
+        subject = f"{subject_prefix} - {facility_name}{subject_tag}"
+
+        notes_block = (
+            f'<div style="background: #f8fafc; border-left: 3px solid #2563eb; padding: 8px 12px; margin: 12px 0;"><strong>Visit Notes:</strong> {notes_text}</div>'
+            if (notes_text or '').strip()
+            else ''
+        )
+        body_html = f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1e293b; line-height: 1.5;">
+            <h2 style="color: #0f172a; margin-bottom: 12px; border-bottom: 2px solid #2563eb; padding-bottom: 6px;">{subject_prefix}</h2>
+            <p><strong>Facility:</strong> {facility_name}</p>
+            <p><strong>Address:</strong> {location_text}</p>
+            <p><strong>Host / Contact:</strong> {host_name or 'Facility Manager'}</p>
+            <p><strong>Direct Phone:</strong> {host_phone or 'Not listed'}</p>
+            <p><strong>Email:</strong> {host_email or 'Not listed'}</p>
+            <p><strong>Cleanable SF:</strong> {int(sqf_val or 0):,} SF</p>
+            <p><strong>Walkthrough Conductor:</strong> {conductor_display}</p>
+            {notes_block}
+        </div>
+        """
+        additional_atts = []
+        if actor_email and '@' in actor_email:
+            additional_atts.append({
+                'email': actor_email,
+                'name': actor_name or 'Sales Representative',
+                'type': 'required',
+            })
+
+        cur_ev_id = (existing_event_id or '').strip()
+        cur_ev_mb = (existing_conductor_email or '').strip()
+        ok = False
+        msg = ''
+        ev_data = None
+        if cur_ev_id:
+            if cur_ev_mb and cur_ev_mb.lower() != conductor_mailbox.lower():
+                delete_calendar_event(cur_ev_id, user_id=cur_ev_mb)
+                cur_ev_id = ''
+            else:
+                ok, msg, ev_data = update_calendar_event(
+                    event_id=cur_ev_id,
+                    subject=subject,
+                    start_iso=start_iso,
+                    end_iso=end_iso,
+                    body_html=body_html,
+                    location_text=location_text,
+                    attendee_email=host_email if (host_email and '@' in host_email) else None,
+                    attendee_name=host_name,
+                    user_id=conductor_mailbox,
+                    additional_attendees=additional_atts,
+                )
+                if ok:
+                    cal_rescheduled = True
+                elif msg == 'EVENT_NOT_FOUND':
+                    cur_ev_id = ''
+
+        if not cur_ev_id:
+            ok, msg, ev_data = create_calendar_event(
+                subject=subject,
+                start_iso=start_iso,
+                end_iso=end_iso,
+                body_html=body_html,
+                location_text=location_text,
+                attendee_email=host_email if (host_email and '@' in host_email) else None,
+                attendee_name=host_name,
+                user_id=conductor_mailbox,
+                additional_attendees=additional_atts,
+            )
+
+        cal_created = bool(ok)
+        if ok and isinstance(ev_data, dict) and ev_data.get('id'):
+            saved_ev_id = ev_data.get('id')
+            saved_cond_mb = conductor_mailbox
+        elif ok and saved_ev_id:
+            saved_cond_mb = conductor_mailbox
+    except Exception:
+        pass
+    return saved_ev_id, saved_cond_mb, cal_created, cal_rescheduled
+
+
+def _cancel_lead_outlook_walkthroughs(
+    cur,
+    lead_ids: list,
+    actor_id: int = None,
+    actor_name: str = 'Operator',
+    reason: str = 'Lead moved to closed stage',
+) -> int:
+    """
+    Deletes any linked Microsoft 365 Outlook walkthrough invites for the target leads,
+    clears preferred_date / preferred_time / walkthrough_event_id, and records audit entries.
+    """
+    clean_ids = [int(x) for x in (lead_ids or []) if str(x).isdigit()]
+    if not clean_ids:
+        return 0
+    cur.execute(
+        '''
+        SELECT id, preferred_date, preferred_time, walkthrough_event_id, walkthrough_conductor_email
+        FROM "Leads"
+        WHERE id = ANY(%s)
+          AND (
+              (preferred_date IS NOT NULL AND BTRIM(CAST(preferred_date AS TEXT)) != '')
+              OR (walkthrough_event_id IS NOT NULL AND BTRIM(walkthrough_event_id) != '')
+          );
+        ''',
+        (clean_ids,),
+    )
+    active_rows = cur.fetchall()
+    if not active_rows:
+        return 0
+
+    try:
+        from core.services.calendar_service import delete_calendar_event, invalidate_calendar_availability_cache
+    except Exception:
+        delete_calendar_event = None
+        invalidate_calendar_availability_cache = None
+
+    cancelled_ids = []
+    for r in active_rows:
+        lid = r['id'] if isinstance(r, dict) else r[0]
+        p_date = (r['preferred_date'] if isinstance(r, dict) else r[1]) or ''
+        p_time = (r['preferred_time'] if isinstance(r, dict) else r[2]) or ''
+        ev_id = ((r['walkthrough_event_id'] if isinstance(r, dict) else r[3]) or '').strip()
+        ev_mb = ((r['walkthrough_conductor_email'] if isinstance(r, dict) else r[4]) or '').strip() or None
+        outlook_removed = False
+        if ev_id and delete_calendar_event is not None:
+            try:
+                outlook_removed, _ = delete_calendar_event(ev_id, user_id=ev_mb)
+            except Exception:
+                outlook_removed = False
+        cancelled_ids.append(lid)
+        slot_txt = f"{str(p_date).strip()[:10]} {p_time}".strip() or "scheduled slot"
+        out_note = " (Outlook invite removed)" if outlook_removed else ""
+        cur.execute(
+            '''
+            INSERT INTO "GlobalActivities" (
+                parent_id, parent_type, activity_type, outcome, description,
+                created_by_user_id, created_by_name, task_status, completed_at
+            )
+            VALUES (%s, 'Lead', 'WALKTHROUGH_CANCELLED', 'Cancelled', %s, %s, %s, 'CLOSED', CURRENT_TIMESTAMP);
+            ''',
+            (
+                lid,
+                f"Walkthrough ({slot_txt}) auto-cancelled by {actor_name}: {reason}{out_note}.",
+                actor_id,
+                actor_name,
+            ),
+        )
+
+    cur.execute(
+        '''
+        UPDATE "Leads"
+        SET preferred_date = NULL,
+            preferred_time = NULL,
+            walkthrough_event_id = NULL,
+            walkthrough_conductor_email = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ANY(%s);
+        ''',
+        (cancelled_ids,),
+    )
+    if invalidate_calendar_availability_cache is not None:
+        try:
+            invalidate_calendar_availability_cache()
+        except Exception:
+            pass
+    return len(cancelled_ids)
+
+
 # --- Accounts REST Endpoints ---
 
 @crm_api_bp.route('/api/v1/accounts/<int:id>', methods=['GET', 'PUT', 'PATCH', 'DELETE'])
@@ -451,6 +691,10 @@ def api_account_hub(id):
                 cur.execute('''
                     ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(100);
                     ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS website TEXT;
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_date VARCHAR(20);
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_time VARCHAR(32);
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_event_id VARCHAR(255);
+                    ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_conductor_email VARCHAR(160);
                 ''')
                 raw_acc_addr = resolve('company_address', current_acc.get('company_address'))
                 raw_acc_line2 = resolve('address_line_2', current_acc.get('address_line_2'))
@@ -458,6 +702,78 @@ def api_account_hub(id):
                 resolved_acc_email = clean_email(resolve('email', current_acc['email'])) or resolve('email', current_acc['email'])
                 resolved_acc_state = clean_state(resolve('state', current_acc['state']), default='TX')
                 resolved_acc_web = clean_website(resolve('website', current_acc.get('website')), fallback_email=resolved_acc_email)
+
+                resolved_company_name = resolve('company_name', current_acc['company_name'])
+                resolved_contact_name = resolve('contact_person_name', current_acc['contact_person_name'])
+                resolved_acc_phone = clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone'])
+                resolved_acc_city = clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city'])
+                resolved_acc_zip = clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip'])
+
+                visit_pref_date = current_acc.get('visit_preferred_date')
+                visit_pref_time = current_acc.get('visit_preferred_time')
+                visit_ev_id = current_acc.get('visit_event_id')
+                visit_cond_mb = current_acc.get('visit_conductor_email')
+                acc_cal_created = False
+                acc_cal_rescheduled = False
+
+                if new_status in ['Terminated', 'Canceled'] and (visit_ev_id or visit_pref_date):
+                    try:
+                        from core.services.calendar_service import delete_calendar_event, invalidate_calendar_availability_cache
+                        if visit_ev_id:
+                            delete_calendar_event(visit_ev_id, user_id=visit_cond_mb or None)
+                        invalidate_calendar_availability_cache()
+                    except Exception:
+                        pass
+                    visit_pref_date = None
+                    visit_pref_time = None
+                    visit_ev_id = None
+                    visit_cond_mb = None
+                elif data.get('schedule_visit') and str(data.get('visit_date') or data.get('next_action_date') or '').strip():
+                    req_v_date = str(data.get('visit_date') or data.get('next_action_date')).strip()[:10]
+                    req_v_time = str(data.get('visit_time') or '10:00 AM').strip()
+                    if req_v_time.lower() in ('not specified', ''):
+                        req_v_time = '10:00 AM'
+                    req_conductor = str(data.get('conductor') or 'Humberto Dominguez').strip()
+
+                    from core.services.calendar_service import check_walkthrough_slot_conflict
+                    slot_ok, conflict_reason = check_walkthrough_slot_conflict(
+                        conn=conn,
+                        preferred_date=req_v_date,
+                        preferred_time=req_v_time,
+                        conductor=req_conductor,
+                        exclude_account_id=id,
+                    )
+                    if not slot_ok:
+                        return jsonify({
+                            'status': 'error',
+                            'code': 'CALENDAR_SLOT_CONFLICT',
+                            'message': conflict_reason or 'Selected site visit slot is unavailable.',
+                        }), 409
+
+                    visit_pref_date = req_v_date
+                    visit_pref_time = _format_time_12h_label(req_v_time)
+                    if data.get('sync_calendar', True):
+                        v_mgr = str(data.get('visit_manager') or resolved_contact_name or '').strip()
+                        v_ph = str(data.get('visit_phone') or resolved_acc_phone or '').strip()
+                        v_inst = str(data.get('visit_instructions') or '').strip()
+                        loc_txt = f"{acc_addr_1 or ''}, {resolved_acc_city or ''}, {resolved_acc_state or 'TX'} {resolved_acc_zip or ''}".strip(', ') or "DFW Metroplex"
+                        visit_ev_id, visit_cond_mb, acc_cal_created, acc_cal_rescheduled = _sync_facility_outlook_invite(
+                            facility_name=resolved_company_name or 'Client Facility',
+                            location_text=loc_txt,
+                            pref_date=visit_pref_date,
+                            pref_time=visit_pref_time,
+                            conductor=req_conductor,
+                            host_name=v_mgr if v_mgr != '--' else (resolved_contact_name or 'Facility Manager'),
+                            host_phone=v_ph if v_ph != '--' else (resolved_acc_phone or ''),
+                            host_email=resolved_acc_email,
+                            sqf_val=sqf_val,
+                            notes_text=v_inst,
+                            existing_event_id=visit_ev_id,
+                            existing_conductor_email=visit_cond_mb,
+                            subject_prefix="Client Site Visit & Account Review",
+                            actor_name=getattr(current_user, 'full_name', None) or getattr(current_user, 'username', None) or 'Sales Representative',
+                            actor_email=getattr(current_user, 'email', None) or '',
+                        )
 
                 cur.execute('''
                     UPDATE "Customers" SET 
@@ -473,18 +789,20 @@ def api_account_hub(id):
                         service_shift_window = %s, frequency = %s, traffic_cycle = %s, quote_number = %s,
                         target_quality_level = %s, umbrella_name = %s, cleaning_delivery_model = %s,
                         status = %s, termination_date = %s, termination_reason = %s,
-                        billing_address = %s, start_date = %s, assigned_rep_id = %s, notes = %s
+                        billing_address = %s, start_date = %s, assigned_rep_id = %s, notes = %s,
+                        visit_preferred_date = %s, visit_preferred_time = %s,
+                        visit_event_id = %s, visit_conductor_email = %s
                     WHERE customer_id = %s;
                 ''', (
-                    resolve('company_name', current_acc['company_name']), 
-                    resolve('contact_person_name', current_acc['contact_person_name']), 
+                    resolved_company_name, 
+                    resolved_contact_name, 
                     resolved_acc_email, 
-                    clean_phone(resolve('phone', current_acc['phone'])) or resolve('phone', current_acc['phone']),
+                    resolved_acc_phone,
                     acc_addr_1,
                     acc_addr_2,
-                    clean_city(resolve('city', current_acc['city'])) or resolve('city', current_acc['city']), 
+                    resolved_acc_city, 
                     resolved_acc_state, 
-                    clean_zip(resolve('zip', current_acc['zip'])) or resolve('zip', current_acc['zip']), 
+                    resolved_acc_zip, 
                     resolved_acc_web, 
                     sqf_val, cleanable_sqft, revenue_val,
                     monthly_billing_rate, overtime_billing_rate, payment_terms,
@@ -500,12 +818,16 @@ def api_account_hub(id):
                     new_status, termination_date, termination_reason,
                     resolve('billing_address', current_acc['billing_address']), 
                     resolve('next_action_date', current_acc['start_date']),
-                    rep_id, resolve('notes', current_acc['notes']), id
+                    rep_id, resolve('notes', current_acc['notes']),
+                    visit_pref_date, visit_pref_time, visit_ev_id, visit_cond_mb,
+                    id
                 ))
 
-                if 'next_action_date' in data or 'notes' in data:
-                    activity_type = 'SITE_VISIT' if 'VISIT SCHEDULED' in (data.get('notes') or '') else 'NOTE'
+                if 'next_action_date' in data or 'notes' in data or data.get('schedule_visit'):
+                    activity_type = 'SITE_VISIT' if (data.get('schedule_visit') or 'VISIT SCHEDULED' in (data.get('notes') or '')) else 'NOTE'
                     description = data.get('notes') or "Strategic profile update."
+                    if data.get('schedule_visit') and acc_cal_created:
+                        description = f"{description} (Outlook Calendar Event Confirmed)".strip()
                     cur.execute('''
                         INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                         VALUES (%s, %s, %s, %s)
@@ -523,6 +845,8 @@ def api_account_hub(id):
                     'customer_id': id,
                     'account_status': new_status,
                     'work_orders_paused': work_orders_paused,
+                    'calendar_created': acc_cal_created,
+                    'calendar_rescheduled': acc_cal_rescheduled,
                     'message': f'Account #{id} ({current_acc["company_name"]}) master dossier updated.'
                 })
 
@@ -925,6 +1249,12 @@ def _ensure_lead_notes_enterprise_columns(cur) -> None:
         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_at TIMESTAMP WITH TIME ZONE;
         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_updated_by VARCHAR(120);
         ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS notes_revision_history JSONB DEFAULT '[]'::jsonb;
+        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS walkthrough_event_id VARCHAR(255);
+        ALTER TABLE "Leads" ADD COLUMN IF NOT EXISTS walkthrough_conductor_email VARCHAR(160);
+        ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_date VARCHAR(20);
+        ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_preferred_time VARCHAR(32);
+        ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_event_id VARCHAR(255);
+        ALTER TABLE "Customers" ADD COLUMN IF NOT EXISTS visit_conductor_email VARCHAR(160);
     ''')
     # Backfill open worked leads that have logged notes/touchpoints or active stages but missing/past next_action_date (BUG-165)
     try:
@@ -1419,6 +1749,85 @@ def api_lead_hub(id):
 
                 _ensure_lead_notes_enterprise_columns(cur)
 
+                lead_cal_created = False
+                lead_cal_rescheduled = False
+                lead_wt_booked_log = None
+                saved_wt_event_id = current_lead.get('walkthrough_event_id')
+                saved_wt_conductor_mb = current_lead.get('walkthrough_conductor_email')
+
+                # Auto-cancel Outlook walkthrough on terminal status or explicit date clear (BUG-186)
+                if resolved_status in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED'):
+                    _cancel_lead_outlook_walkthroughs(
+                        cur, [id], actor_id=actor_id, actor_name=actor_name, reason=f"Lead marked {resolved_status}"
+                    )
+                    pref_date_val = None
+                    pref_time_val = None
+                    saved_wt_event_id = None
+                    saved_wt_conductor_mb = None
+                elif 'preferred_date' in data and not pref_date_val and (
+                    current_lead.get('preferred_date') or current_lead.get('walkthrough_event_id')
+                ):
+                    _cancel_lead_outlook_walkthroughs(
+                        cur, [id], actor_id=actor_id, actor_name=actor_name, reason="Walkthrough date cleared in Lead Profile"
+                    )
+                    pref_time_val = None
+                    saved_wt_event_id = None
+                    saved_wt_conductor_mb = None
+                elif ('preferred_date' in data or 'preferred_time' in data) and pref_date_val and resolved_status != 'Walkthrough Completed':
+                    old_d_clean = str(current_lead.get('preferred_date') or '').strip()[:10]
+                    new_d_clean = str(pref_date_val or '').strip()[:10]
+                    old_t_norm = _format_time_12h_label(current_lead.get('preferred_time')) if old_d_clean else ''
+                    new_t_norm = _format_time_12h_label(pref_time_val)
+                    slot_changed = (new_d_clean != old_d_clean) or (new_t_norm != old_t_norm)
+                    if new_d_clean and slot_changed:
+                        req_cond = str(data.get('conductor') or 'Humberto Dominguez').strip()
+                        from core.services.calendar_service import check_walkthrough_slot_conflict
+                        slot_ok, conflict_reason = check_walkthrough_slot_conflict(
+                            conn=conn,
+                            preferred_date=new_d_clean,
+                            preferred_time=new_t_norm,
+                            conductor=req_cond,
+                            exclude_lead_id=id,
+                        )
+                        if not slot_ok:
+                            return jsonify({
+                                'status': 'error',
+                                'code': 'CALENDAR_SLOT_CONFLICT',
+                                'message': conflict_reason or 'Selected walkthrough slot is unavailable.',
+                            }), 409
+
+                        pref_date_val = new_d_clean
+                        pref_time_val = new_t_norm
+                        if resolved_status in ('New', 'In Campaign', 'Engaged', 'Contacted'):
+                            resolved_status = 'Qualified'
+                        if not resolved_next_action:
+                            resolved_next_action = new_d_clean
+
+                        if data.get('sync_calendar', True):
+                            loc_txt = f"{resolved_address or ''}, {resolved_city or ''}, {resolved_state or 'TX'} {clean_zip(resolve('zipcode', current_lead.get('zipcode'))) or ''}".strip(', ') or "DFW Metroplex"
+                            saved_wt_event_id, saved_wt_conductor_mb, lead_cal_created, lead_cal_rescheduled = _sync_facility_outlook_invite(
+                                facility_name=resolved_center_name or 'Commercial Facility',
+                                location_text=loc_txt,
+                                pref_date=pref_date_val,
+                                pref_time=pref_time_val,
+                                conductor=req_cond,
+                                host_name=resolve('decision_maker', current_lead.get('decision_maker')) or 'Center Director',
+                                host_phone=clean_phone(resolve('phone', current_lead.get('phone'))) or resolve('phone', current_lead.get('phone')) or '',
+                                host_email=resolved_email or '',
+                                sqf_val=sqf_val,
+                                notes_text=resolved_notes or '',
+                                existing_event_id=saved_wt_event_id,
+                                existing_conductor_email=saved_wt_conductor_mb,
+                                subject_prefix="Facility Walkthrough & Scope Assessment",
+                                actor_name=actor_name,
+                                actor_email=getattr(current_user, 'email', None) or '',
+                            )
+                        cond_tag = f" [Conductor: {req_cond}]" if req_cond != 'Humberto Dominguez' else ""
+                        out_tag = " (Outlook Calendar Event Confirmed)" if lead_cal_created else ""
+                        lead_wt_booked_log = (
+                            f"🎉 Walkthrough Booked for {pref_date_val} at {pref_time_val} via Edit Lead Profile{cond_tag}.{out_tag}"
+                        )
+
                 # Mandatory Follow-Up Rule on PUT/PATCH (BUG-165):
                 # 1. Terminal statuses clear next_action_date and close open GlobalActivities tasks.
                 # 2. Saving a new note on an open lead guarantees a valid today/future next_action_date.
@@ -1470,6 +1879,7 @@ def api_lead_hub(id):
                         acquisition_tier = %s, ownership_type = %s, owner_id = %s,
                         website = %s, county = %s, student_enrollment = %s,
                         owner_verification_status = %s, preferred_date = %s, preferred_time = %s,
+                        walkthrough_event_id = %s, walkthrough_conductor_email = %s,
                         budget_range = %s, is_dnc = %s, campaign_ready = %s, email_hygiene_status = %s,
                         last_contacted_by = COALESCE(%s, last_contacted_by),
                         updated_at = CURRENT_TIMESTAMP
@@ -1500,8 +1910,18 @@ def api_lead_hub(id):
                       acquisition_tier_val, ownership_type_val, owner_id_val,
                       website_val, county_val, enrollment_val,
                       verification_val, pref_date_val, pref_time_val,
+                      saved_wt_event_id, saved_wt_conductor_mb,
                       budget_val, is_dnc_val, campaign_ready_val, email_hygiene_val,
                       actor_name, id))
+
+                if lead_wt_booked_log:
+                    cur.execute('''
+                        INSERT INTO "GlobalActivities" (
+                            parent_id, parent_type, activity_type, outcome, description,
+                            created_by_user_id, created_by_name, follow_up_date, follow_up_action, task_status
+                        )
+                        VALUES (%s, 'Lead', 'Walkthrough Booked', 'Walkthrough Booked', %s, %s, %s, %s, 'Walkthrough Follow-Up', 'OPEN');
+                    ''', (id, lead_wt_booked_log, actor_id, actor_name, pref_date_val))
 
                 _sync_email_suppression_if_needed(cur, resolved_email, resolved_status, actor_name)
                 _record_lead_stage_and_model_history(
@@ -1556,6 +1976,8 @@ def api_lead_hub(id):
                     'status': 'success',
                     'resolved_status': resolved_status,
                     'cleaning_delivery_model': cleaning_model_val,
+                    'calendar_created': lead_cal_created,
+                    'calendar_rescheduled': lead_cal_rescheduled,
                 })
 
             elif request.method == 'DELETE':
@@ -1694,8 +2116,40 @@ def api_lead_cadence_save(id):
                 is_dnc_val = False
 
             # Walkthrough specific fields
-            pref_date = data.get('preferred_date') or data.get('walkthrough_date') or current_lead['preferred_date']
+            explicit_wt_date = str(data.get('preferred_date') or data.get('walkthrough_date') or '').strip()
+            pref_date = explicit_wt_date or current_lead['preferred_date']
             pref_time = data.get('preferred_time') or data.get('walkthrough_time') or current_lead['preferred_time']
+            conductor_early = (data.get('conductor') or 'Humberto Dominguez').strip()
+
+            # Authoritative Double-Booking & 1-Hour Travel Buffer Gate (BUG-186)
+            is_booking_walkthrough = bool(explicit_wt_date) and bool(
+                data.get('sync_calendar') or activity_type == 'Walkthrough Booked'
+            )
+            if is_booking_walkthrough:
+                from core.services.calendar_service import check_walkthrough_slot_conflict
+                slot_ok, conflict_reason = check_walkthrough_slot_conflict(
+                    conn=conn,
+                    preferred_date=explicit_wt_date,
+                    preferred_time=pref_time,
+                    conductor=conductor_early,
+                    exclude_lead_id=id,
+                )
+                if not slot_ok:
+                    return jsonify({
+                        'status': 'error',
+                        'code': 'CALENDAR_SLOT_CONFLICT',
+                        'message': conflict_reason or 'Selected walkthrough slot is unavailable.',
+                    }), 409
+            elif status in ('Not Interested', 'Unsubscribed', 'Do Not Call (DNC)', 'ARCHIVED'):
+                _cancel_lead_outlook_walkthroughs(
+                    cur,
+                    [id],
+                    actor_id=getattr(current_user, 'id', None),
+                    actor_name=getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator'),
+                    reason=f"Lead marked {status}",
+                )
+                pref_date = None
+                pref_time = None
 
             # Mandatory Follow-Up & Task Engine (BUG-165):
             # Guarantees a valid today/future business date for open leads and clears next_action_date on terminal stages.
@@ -1797,12 +2251,23 @@ def api_lead_cadence_save(id):
                 ''', (cleaning_model_val, current_lead.get('umbrella_name'), id))
 
             calendar_created = False
+            calendar_rescheduled = False
             calendar_message = None
+            saved_event_id = current_lead.get('walkthrough_event_id')
+            saved_conductor_email = current_lead.get('walkthrough_conductor_email')
 
-            # Schedule on Microsoft Outlook Calendar if requested
+            # Schedule or Reschedule on Microsoft Outlook Calendar if requested (BUG-186 Full Lifecycle)
             if data.get('sync_calendar') and pref_date:
                 try:
-                    from core.services.calendar_service import create_calendar_event
+                    from core.services.calendar_service import (
+                        create_calendar_event,
+                        update_calendar_event,
+                        delete_calendar_event,
+                        resolve_conductor_mailbox,
+                        invalidate_calendar_availability_cache,
+                    )
+                    invalidate_calendar_availability_cache()
+                    conductor_mailbox, _, uses_m365 = resolve_conductor_mailbox(conductor)
                     t_hour, t_min = 10, 0
                     if pref_time:
                         pt = str(pref_time).strip().upper()
@@ -1831,9 +2296,10 @@ def api_lead_cadence_save(id):
                         cap_val = current_lead['capacity'] or 0
 
                         is_rep_conductor = (conductor != 'Humberto Dominguez')
-                        conductor_display = f"{rep_name or 'Local Sales Representative'} (HWB Cleaning Services)" if is_rep_conductor else "Humberto Dominguez (CEO - HWB Cleaning Services)"
+                        conductor_name_label = conductor if conductor == 'Remote Sales Rep' else (conductor or rep_name or 'Local Sales Representative')
+                        conductor_display = f"{conductor_name_label} (HWB Cleaning Services)" if is_rep_conductor else "Humberto Dominguez (CEO - HWB Cleaning Services)"
 
-                        subject_tag = f" [Conductor: {rep_name or 'Rep'}]" if is_rep_conductor else ""
+                        subject_tag = f" [Conductor: {conductor_name_label}]" if is_rep_conductor else ""
                         subject = f"Facility Walkthrough & Scope Assessment - {center_name}{subject_tag}"
                         
                         standing_brief_html = ""
@@ -1866,18 +2332,56 @@ def api_lead_cadence_save(id):
                                 "type": "required"
                             })
 
-                        ok, msg, _ = create_calendar_event(
-                            subject=subject,
-                            start_iso=start_iso,
-                            end_iso=end_iso,
-                            body_html=body_html,
-                            location_text=location_text,
-                            attendee_email=email if (email and '@' in email) else None,
-                            attendee_name=dm,
-                            additional_attendees=additional_atts
-                        )
+                        existing_ev_id = (current_lead.get('walkthrough_event_id') or '').strip()
+                        existing_ev_mb = (current_lead.get('walkthrough_conductor_email') or '').strip()
+                        ok = False
+                        msg = ""
+                        ev_data = None
+
+                        if existing_ev_id:
+                            if existing_ev_mb and existing_ev_mb.lower() != conductor_mailbox.lower():
+                                delete_calendar_event(existing_ev_id, user_id=existing_ev_mb)
+                                existing_ev_id = ""
+                            else:
+                                ok, msg, ev_data = update_calendar_event(
+                                    event_id=existing_ev_id,
+                                    subject=subject,
+                                    start_iso=start_iso,
+                                    end_iso=end_iso,
+                                    body_html=body_html,
+                                    location_text=location_text,
+                                    attendee_email=email if (email and '@' in email) else None,
+                                    attendee_name=dm,
+                                    user_id=conductor_mailbox,
+                                    additional_attendees=additional_atts,
+                                )
+                                if ok:
+                                    calendar_rescheduled = True
+                                elif msg == "EVENT_NOT_FOUND":
+                                    existing_ev_id = ""
+
+                        if not existing_ev_id:
+                            ok, msg, ev_data = create_calendar_event(
+                                subject=subject,
+                                start_iso=start_iso,
+                                end_iso=end_iso,
+                                body_html=body_html,
+                                location_text=location_text,
+                                attendee_email=email if (email and '@' in email) else None,
+                                attendee_name=dm,
+                                user_id=conductor_mailbox,
+                                additional_attendees=additional_atts,
+                            )
+
                         calendar_created = ok
                         calendar_message = msg
+                        if ok and isinstance(ev_data, dict) and ev_data.get('id'):
+                            saved_event_id = ev_data.get('id')
+                            saved_conductor_email = conductor_mailbox
+                            cur.execute(
+                                'UPDATE "Leads" SET walkthrough_event_id = %s, walkthrough_conductor_email = %s WHERE id = %s;',
+                                (saved_event_id, saved_conductor_email, id),
+                            )
                     except Exception as cal_parse_err:
                         calendar_message = f"Date parsing error: {cal_parse_err}"
                 except Exception as cal_err:
@@ -1887,7 +2391,8 @@ def api_lead_cadence_save(id):
             if note_text or activity_type:
                 cal_suffix = " (Outlook Calendar Event Confirmed)" if calendar_created else ""
                 is_rep_cond = (conductor != 'Humberto Dominguez')
-                rep_tag = f" [Conductor: {rep_name or 'Rep'}]" if is_rep_cond else (f" [Rep: {rep_name or rep_email}]" if rep_email else "")
+                cond_log_label = conductor if conductor == 'Remote Sales Rep' else (conductor or rep_name or 'Rep')
+                rep_tag = f" [Conductor: {cond_log_label}]" if is_rep_cond else (f" [Rep: {rep_name or rep_email}]" if rep_email else "")
                 if activity_type == 'Walkthrough Booked' and pref_date:
                     log_desc = f"🎉 Walkthrough Booked for {pref_date} at {pref_time or '10:00 AM'} with {dm or 'Director'}{rep_tag}. {note_text}{cal_suffix}".strip()
                 else:
@@ -1946,7 +2451,9 @@ def api_lead_cadence_save(id):
                 'cleaning_delivery_model': cleaning_model_val,
                 'is_dnc': is_dnc_val,
                 'calendar_created': calendar_created,
+                'calendar_rescheduled': calendar_rescheduled,
                 'calendar_message': calendar_message,
+                'walkthrough_event_id': saved_event_id,
                 'preferred_date': pref_date,
                 'preferred_time': pref_time,
                 'applied_extracted': applied_extracted,
@@ -1959,6 +2466,146 @@ def api_lead_cadence_save(id):
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if 'conn' in locals() and conn: conn.close()
+
+
+@crm_api_bp.route('/api/v1/calendar/availability', methods=['GET'])
+@login_required
+def api_calendar_walkthrough_availability():
+    """
+    Returns a privacy-safe 5-business-day walkthrough availability grid for the selected conductor,
+    enforcing the 45-minute walkthrough duration + 1-hour DFW travel buffer with zero private Outlook exposure.
+    """
+    if not (
+        current_user.has_permission('leads', 'view')
+        or current_user.has_permission('accounts', 'view')
+        or current_user.has_permission('sales_desk', 'view')
+    ):
+        return log_and_abort_abac('leads', 'view')
+
+    start_date_str = (request.args.get('start_date') or '').strip() or None
+    days_count = max(1, min(int(request.args.get('days', 5) or 5), 10))
+    conductor = (request.args.get('conductor') or 'Humberto Dominguez').strip()
+    lead_id = request.args.get('lead_id', type=int)
+    account_id = request.args.get('account_id', type=int)
+    target_city = (request.args.get('city') or '').strip()
+    force_refresh = str(request.args.get('refresh') or '').lower() in ('1', 'true', 'yes')
+
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            if lead_id and not target_city:
+                cur.execute('SELECT city FROM "Leads" WHERE id = %s;', (lead_id,))
+                lrow = cur.fetchone()
+                if lrow:
+                    target_city = (lrow['city'] if isinstance(lrow, dict) else lrow[0]) or ''
+            elif account_id and not target_city:
+                cur.execute('SELECT city FROM "Customers" WHERE customer_id = %s;', (account_id,))
+                arow = cur.fetchone()
+                if arow:
+                    target_city = (arow['city'] if isinstance(arow, dict) else arow[0]) or ''
+        conn.commit()
+
+        from core.services.calendar_service import get_walkthrough_availability
+        payload = get_walkthrough_availability(
+            conn=conn,
+            start_date_str=start_date_str,
+            days_count=days_count,
+            conductor=conductor,
+            target_city=target_city,
+            exclude_lead_id=lead_id,
+            exclude_account_id=account_id,
+            bypass_cache=force_refresh,
+        )
+        return jsonify(payload)
+    except Exception as exc:
+        return jsonify({'status': 'error', 'message': str(exc)}), 500
+    finally:
+        if conn:
+            conn.close()
+
+
+@crm_api_bp.route('/api/v1/leads/<int:id>/walkthrough-cancel', methods=['POST'])
+@login_required
+def api_lead_walkthrough_cancel(id):
+    """
+    Cancels a scheduled building walkthrough, deletes the linked Microsoft Outlook calendar invite,
+    clears preferred_date/preferred_time on Leads, and immediately frees the calendar slot.
+    """
+    if not current_user.has_permission('leads', 'edit'):
+        return log_and_abort_abac('leads', 'edit')
+
+    data = request.get_json() or {}
+    reason = (data.get('reason') or 'Walkthrough cancelled or awaiting reschedule.').strip()
+    conn = get_db(current_app.config['DATABASE_URL'])
+    try:
+        with conn.cursor() as cur:
+            _ensure_lead_notes_enterprise_columns(cur)
+            cur.execute('SELECT * FROM "Leads" WHERE id = %s;', (id,))
+            lead = cur.fetchone()
+            if not lead:
+                return jsonify({'status': 'error', 'message': 'Lead not found.'}), 404
+            if getattr(current_user, 'role', '') == 'Sales' and lead.get('owner_id') != current_user.id:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Access restricted: Sales representatives may only manage leads assigned to their profile.',
+                }), 403
+
+            old_date = lead.get('preferred_date')
+            old_time = lead.get('preferred_time')
+            ev_id = (lead.get('walkthrough_event_id') or '').strip()
+            ev_mb = (lead.get('walkthrough_conductor_email') or '').strip() or None
+
+            outlook_removed = False
+            from core.services.calendar_service import delete_calendar_event, invalidate_calendar_availability_cache
+            if ev_id:
+                outlook_removed, _ = delete_calendar_event(ev_id, user_id=ev_mb)
+            else:
+                invalidate_calendar_availability_cache(ev_mb)
+
+            next_bday = compute_next_business_day_iso(1)
+            cur.execute('''
+                UPDATE "Leads"
+                SET preferred_date = NULL,
+                    preferred_time = NULL,
+                    walkthrough_event_id = NULL,
+                    walkthrough_conductor_email = NULL,
+                    next_action_date = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (next_bday, id))
+
+            actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
+            actor_id = getattr(current_user, 'id', None)
+            desc = f"Walkthrough previously set for {old_date or 'TBD'} {old_time or ''} cancelled by {actor_name}. {reason}".strip()
+            if outlook_removed:
+                desc += " (Outlook calendar invite removed.)"
+
+            cur.execute('''
+                INSERT INTO "GlobalActivities" (
+                    parent_id, parent_type, activity_type, outcome, description,
+                    created_by_user_id, created_by_name, follow_up_date, follow_up_action, task_status
+                ) VALUES (%s, 'Lead', 'Walkthrough Cancelled', 'Reschedule Needed', %s, %s, %s, %s, 'Follow-Up Call to Reschedule', 'OPEN');
+            ''', (id, desc, actor_id, actor_name, next_bday))
+
+        conn.commit()
+        try:
+            from blueprints.operations import invalidate_operations_caches
+            invalidate_operations_caches()
+        except Exception:
+            pass
+        return jsonify({
+            'status': 'success',
+            'outlook_removed': outlook_removed,
+            'message': 'Scheduled walkthrough cancelled and calendar slot reopened.',
+        })
+    except Exception as exc:
+        if conn:
+            conn.rollback()
+        return jsonify({'status': 'error', 'message': str(exc)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 
 @crm_api_bp.route('/api/v1/admin/leads/forensic-recovery-1026', methods=['GET', 'POST'])
@@ -2306,6 +2953,10 @@ def api_batch_lead_action():
             if is_sales_user and action in ('delete', 'assign_owner', 'undo_assign_owner', 'auto_merge', 'dismiss_duplicates'):
                 return jsonify({'status': 'error', 'message': 'This bulk action is restricted for Sales personnel.'}), 403
 
+            if action == 'remove_from_campaign':
+                if not (current_user.has_permission('campaigns', 'delete') or current_user.has_permission('outbox', 'edit')):
+                    return log_and_abort_abac('campaigns', 'delete')
+
             # Resolve 'select_all_matching' across all pages using the active filter criteria
             if select_all_matching:
                 lead_ids = _resolve_bulk_selected_lead_ids(cur, lead_ids, select_all_matching, filter_params)
@@ -2321,7 +2972,7 @@ def api_batch_lead_action():
                 if not current_user.has_permission('leads', 'delete'):
                     return log_and_abort_abac('leads', 'delete')
                 restore_token = _delete_leads_atomic(cur, lead_ids)
-            elif action in ['update_status', 'update_cleaning_model', 'mark_dnc', 'assign_owner', 'undo_assign_owner', 'dismiss_duplicates', 'auto_merge', 'remove_from_campaign']:
+            elif action in ['update_status', 'update_cleaning_model', 'mark_dnc', 'assign_owner', 'undo_assign_owner']:
                 if not current_user.has_permission('leads', 'edit'):
                     return log_and_abort_abac('leads', 'edit')
                 actor_name = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Operator')
@@ -2335,6 +2986,14 @@ def api_batch_lead_action():
                             (inferred_model, lead_ids),
                         )
                     else:
+                        if norm_status in ('Do Not Call (DNC)', 'Unsubscribed', 'Not Interested', 'ARCHIVED'):
+                            _cancel_lead_outlook_walkthroughs(
+                                cur,
+                                lead_ids,
+                                actor_id=actor_id,
+                                actor_name=actor_name,
+                                reason=f"Bulk status changed to {norm_status}",
+                            )
                         if norm_status == 'Do Not Call (DNC)':
                             cur.execute(
                                 'UPDATE "Leads" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = \'DO_NOT_EMAIL\', status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
@@ -2382,6 +3041,13 @@ def api_batch_lead_action():
                             VALUES (%s, 'cleaning_delivery_model', NULL, %s, %s, %s, 0);
                         ''', (lid, norm_model, actor_id, actor_name))
                 elif action == 'mark_dnc':
+                    _cancel_lead_outlook_walkthroughs(
+                        cur,
+                        lead_ids,
+                        actor_id=actor_id,
+                        actor_name=actor_name,
+                        reason="Bulk marked Do Not Call (DNC)",
+                    )
                     cur.execute(
                         'UPDATE "Leads" SET status = %s, is_dnc = TRUE, campaign_ready = FALSE, email_hygiene_status = \'DO_NOT_EMAIL\', status_changed_at = CURRENT_TIMESTAMP, disqualified_at = CURRENT_TIMESTAMP, disqualified_reason = %s, updated_at = CURRENT_TIMESTAMP WHERE id = ANY(%s);',
                         ('Do Not Call (DNC)', 'Do Not Call (DNC)', lead_ids),
@@ -2542,8 +3208,12 @@ def api_batch_lead_action():
                     conn.commit()
                     return jsonify({'status': 'success', 'affected_count': restored})
             elif action == 'dismiss_duplicates':
+                if not current_user.has_permission('leads', 'edit'):
+                    return log_and_abort_abac('leads', 'edit')
                 cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = ANY(%s);', (lead_ids,))
             elif action == 'auto_merge':
+                if not current_user.has_permission('leads', 'edit'):
+                    return log_and_abort_abac('leads', 'edit')
                 cur.execute('''
                     SELECT duplicate_group_id, MIN(id) as primary_id
                     FROM "Leads"
@@ -2557,6 +3227,8 @@ def api_batch_lead_action():
                     cur.execute('DELETE FROM "Leads" WHERE duplicate_group_id = %s AND id != %s AND id = ANY(%s);', (gid, pri_id, lead_ids))
                     cur.execute('UPDATE "Leads" SET is_duplicate = FALSE, duplicate_group_id = NULL WHERE id = %s;', (pri_id,))
             elif action == 'remove_from_campaign':
+                if not (current_user.has_permission('campaigns', 'delete') or current_user.has_permission('outbox', 'edit')):
+                    return log_and_abort_abac('campaigns', 'delete')
                 _ensure_campaign_recipients_reversible_columns(cur)
                 resolved_lead_ids = [int(x) for x in lead_ids if x is not None]
                 raw_recip_ids = [int(x) for x in recipient_ids if x is not None]
@@ -2571,16 +3243,30 @@ def api_batch_lead_action():
                     target_recips.extend(cur.fetchall())
 
                 if raw_recip_ids:
-                    cur.execute('''
-                        SELECT id, campaign_id, lead_id, previous_lead_status
-                        FROM "CampaignRecipients"
-                        WHERE id = ANY(%s);
-                    ''', (raw_recip_ids,))
+                    if is_sales_user:
+                        cur.execute('''
+                            SELECT cr.id, cr.campaign_id, cr.lead_id, cr.previous_lead_status
+                            FROM "CampaignRecipients" cr
+                            JOIN "Leads" l ON l.id = cr.lead_id
+                            WHERE cr.id = ANY(%s) AND l.owner_id = %s;
+                        ''', (raw_recip_ids, current_user.id))
+                    else:
+                        cur.execute('''
+                            SELECT id, campaign_id, lead_id, previous_lead_status
+                            FROM "CampaignRecipients"
+                            WHERE id = ANY(%s);
+                        ''', (raw_recip_ids,))
                     for r in cur.fetchall():
                         target_recips.append(r)
                         lid = r[2] if isinstance(r, tuple) else r.get('lead_id')
                         if lid and lid not in resolved_lead_ids:
                             resolved_lead_ids.append(lid)
+
+                if is_sales_user and not resolved_lead_ids and not target_recips:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Access restricted: Sales personnel may only remove leads assigned to their profile.'
+                    }), 403
 
                 recip_ids = list(set([r[0] if isinstance(r, tuple) else r.get('id') for r in target_recips]))
                 affected_cids = list(set([r[1] if isinstance(r, tuple) else r.get('campaign_id') for r in target_recips if (r[1] if isinstance(r, tuple) else r.get('campaign_id'))]))
@@ -2630,6 +3316,11 @@ def api_batch_lead_action():
                     ''', (lid, f"Removed from marketing sequence by {user_label}. Unsent email drafts canceled; status restored to '{restored_stat}'."))
 
                 conn.commit()
+                try:
+                    from blueprints.operations import invalidate_operations_caches
+                    invalidate_operations_caches()
+                except Exception:
+                    pass
                 count_done = len(resolved_lead_ids) or len(recip_ids)
                 return jsonify({
                     'status': 'success',
@@ -3937,37 +4628,56 @@ def hybrid_kb_search():
     conn = get_db(current_app.config['DATABASE_URL'])
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                WITH vector_matches AS (
-                    SELECT id, RANK() OVER (ORDER BY embedding <=> %s::vector) AS v_rank
-                    FROM "SigmaKnowledgeScars"
-                    WHERE embedding IS NOT NULL
-                    ORDER BY embedding <=> %s::vector LIMIT 10
-                ),
-                lexical_matches AS (
-                    SELECT id, RANK() OVER (ORDER BY ts_rank(search_vector, plainto_tsquery('english', %s)) DESC) AS l_rank
-                    FROM "SigmaKnowledgeScars"
+            try:
+                cur.execute("""
+                    WITH vector_matches AS (
+                        SELECT id, RANK() OVER (ORDER BY embedding <=> %s::vector) AS v_rank
+                        FROM "SigmaKnowledgeScars"
+                        WHERE embedding IS NOT NULL
+                        ORDER BY embedding <=> %s::vector LIMIT 10
+                    ),
+                    lexical_matches AS (
+                        SELECT id, RANK() OVER (ORDER BY ts_rank(search_vector, plainto_tsquery('english', %s)) DESC) AS l_rank
+                        FROM "SigmaKnowledgeScars"
+                        WHERE search_vector @@ plainto_tsquery('english', %s)
+                        LIMIT 10
+                    )
+                    SELECT 
+                        s.id,
+                        s.description,
+                        s.category,
+                        s.status,
+                        s.impact_level,
+                        s.root_cause,
+                        s.implemented_fix,
+                        s.preventative_rule,
+                        COALESCE(1.0 / (60 + v.v_rank), 0.0) + COALESCE(1.0 / (60 + l.l_rank), 0.0) AS rrf_score
+                    FROM "SigmaKnowledgeScars" s
+                    LEFT JOIN vector_matches v ON s.id = v.id
+                    LEFT JOIN lexical_matches l ON s.id = l.id
+                    WHERE v.id IS NOT NULL OR l.id IS NOT NULL
+                    ORDER BY rrf_score DESC LIMIT 5;
+                """, (embed_str, embed_str, query_str, query_str))
+                rows = cur.fetchall()
+            except Exception:
+                conn.rollback()
+                cur.execute("""
+                    SELECT 
+                        s.id,
+                        s.description,
+                        s.category,
+                        s.status,
+                        s.impact_level,
+                        s.root_cause,
+                        s.implemented_fix,
+                        s.preventative_rule,
+                        ts_rank(search_vector, plainto_tsquery('english', %s)) AS rrf_score
+                    FROM "SigmaKnowledgeScars" s
                     WHERE search_vector @@ plainto_tsquery('english', %s)
-                    LIMIT 10
-                )
-                SELECT 
-                    s.id,
-                    s.description,
-                    s.category,
-                    s.status,
-                    s.impact_level,
-                    s.root_cause,
-                    s.implemented_fix,
-                    s.preventative_rule,
-                    COALESCE(1.0 / (60 + v.v_rank), 0.0) + COALESCE(1.0 / (60 + l.l_rank), 0.0) AS rrf_score
-                FROM "SigmaKnowledgeScars" s
-                LEFT JOIN vector_matches v ON s.id = v.id
-                LEFT JOIN lexical_matches l ON s.id = l.id
-                WHERE v.id IS NOT NULL OR l.id IS NOT NULL
-                ORDER BY rrf_score DESC LIMIT 5;
-            """, (embed_str, embed_str, query_str, query_str))
-            
-            rows = cur.fetchall()
+                       OR description ILIKE %s
+                    ORDER BY rrf_score DESC, s.id DESC LIMIT 5;
+                """, (query_str, query_str, f"%{query_str}%"))
+                rows = cur.fetchall()
             results = []
             for r in rows:
                 results.append({
@@ -4260,9 +4970,10 @@ def api_dismiss_duplicates():
 # ==============================================================================
 
 @crm_api_bp.route('/api/v1/workforce/apply', methods=['POST'])
+@rate_limit(limit=10, period_seconds=60, scope="workforce_apply")
 def api_workforce_apply():
     """Public submission gate for cleaning technician job applicants."""
-    data = request.get_json() or request.form.to_dict() or {}
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
     full_name = (data.get('full_name') or '').strip()
     if not full_name:
         fn = (data.get('first_name') or '').strip()
@@ -4270,8 +4981,51 @@ def api_workforce_apply():
         full_name = f"{fn} {ln}".strip()
     raw_phone = (data.get('phone') or '').strip()
 
+    is_bot, bot_reason = evaluate_bot_defense(request)
+    if is_bot:
+        log_security_event(
+            event_category='BOT_DEFENSE',
+            event_action='BOT_DROPPED',
+            severity='WARNING',
+            endpoint='/api/v1/workforce/apply',
+            http_method='POST',
+            status_code=200,
+            details={
+                'form_name': 'W-2 Job Application Form',
+                'reason': bot_reason,
+                'target_name': full_name[:120],
+                'target_email': str(data.get('email') or '')[:120],
+            },
+        )
+        return jsonify({
+            'status': 'success',
+            'reference_code': 'APP-#0000',
+            'message': 'Job application received.',
+        }), 200
+
     if not full_name or not raw_phone:
         return jsonify({'status': 'error', 'message': 'Full name and phone number are required.'}), 400
+
+    if not is_valid_nanp_phone(raw_phone):
+        log_security_event(
+            event_category='BOT_DEFENSE',
+            event_action='BOT_DROPPED',
+            severity='WARNING',
+            endpoint='/api/v1/workforce/apply',
+            http_method='POST',
+            status_code=400,
+            details={
+                'form_name': 'W-2 Job Application Form',
+                'reason': f"Invalid US phone format rejected ('{raw_phone[:24]}')",
+                'target_name': full_name[:120],
+                'target_email': str(data.get('email') or '')[:120],
+            },
+        )
+        return jsonify({
+            'status': 'error',
+            'code': 'INVALID_PHONE_NUMBER',
+            'message': 'Please enter a valid 10-digit US phone number (area code and prefix must begin with digits 2 through 9).',
+        }), 400
 
     phone = clean_phone(raw_phone) or raw_phone
     email = clean_email(data.get('email')) or data.get('email')
@@ -4622,15 +5376,59 @@ def api_workforce_apply():
 
 
 @crm_api_bp.route('/api/v1/workforce/subcontractor', methods=['POST'])
+@rate_limit(limit=10, period_seconds=60, scope="workforce_subcontractor")
 def api_workforce_subcontractor():
     """Public submission gate for 1099 cleaning crew subcontractor registration."""
-    data = request.get_json() or request.form.to_dict() or {}
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
     company_name = (data.get('company_name') or '').strip()
     contact_name = (data.get('contact_name') or '').strip()
     raw_phone = (data.get('phone') or '').strip()
 
+    is_bot, bot_reason = evaluate_bot_defense(request)
+    if is_bot:
+        log_security_event(
+            event_category='BOT_DEFENSE',
+            event_action='BOT_DROPPED',
+            severity='WARNING',
+            endpoint='/api/v1/workforce/subcontractor',
+            http_method='POST',
+            status_code=200,
+            details={
+                'form_name': '1099 Subcontractor Form',
+                'reason': bot_reason,
+                'target_company': company_name[:120],
+                'target_email': str(data.get('email') or '')[:120],
+            },
+        )
+        return jsonify({
+            'status': 'success',
+            'reference_code': 'SUB-#0000',
+            'message': 'Subcontractor partner registered.',
+        }), 200
+
     if not company_name or not contact_name or not raw_phone:
         return jsonify({'status': 'error', 'message': 'Company name, contact name, and phone number are required.'}), 400
+
+    if not is_valid_nanp_phone(raw_phone):
+        log_security_event(
+            event_category='BOT_DEFENSE',
+            event_action='BOT_DROPPED',
+            severity='WARNING',
+            endpoint='/api/v1/workforce/subcontractor',
+            http_method='POST',
+            status_code=400,
+            details={
+                'form_name': '1099 Subcontractor Form',
+                'reason': f"Invalid US phone format rejected ('{raw_phone[:24]}')",
+                'target_company': company_name[:120],
+                'target_email': str(data.get('email') or '')[:120],
+            },
+        )
+        return jsonify({
+            'status': 'error',
+            'code': 'INVALID_PHONE_NUMBER',
+            'message': 'Please enter a valid 10-digit US phone number (area code and prefix must begin with digits 2 through 9).',
+        }), 400
 
     phone = clean_phone(raw_phone) or raw_phone
     email = clean_email(data.get('email')) or data.get('email')
@@ -8294,6 +9092,8 @@ def api_marketing_leads_preview_count():
     Returns live count of verified campaign-ready commercial leads matching target filter criteria,
     deduplicated by email address so multi-site owners receive one email per campaign batch.
     """
+    if not (current_user.has_permission('outbox', 'view') or current_user.has_permission('campaigns', 'view')):
+        return log_and_abort_abac('outbox', 'view')
     sector = (request.args.get('sector') or 'all').strip().lower()
     geo = (request.args.get('geo') or 'north_texas').strip().lower()
     min_capacity = request.args.get('min_capacity', type=int) or 0
@@ -8383,6 +9183,8 @@ def api_marketing_campaign_create():
     """
     Creates a new marketing campaign and stages deduplicated campaign-ready commercial leads.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     data = request.get_json() or request.form
     name = (data.get('name') or '').strip()
     campaign_code = (data.get('campaign_code') or '').strip().upper()
@@ -8771,6 +9573,12 @@ def api_marketing_campaigns_list():
     """
     Returns active and paused marketing campaigns plus playbook presets for the Enroll Selected Leads modal.
     """
+    if not (
+        current_user.has_permission('campaigns', 'view')
+        or current_user.has_permission('campaigns', 'edit')
+        or current_user.has_permission('outbox', 'view')
+    ):
+        return log_and_abort_abac('campaigns', 'view')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -8869,6 +9677,8 @@ def api_marketing_campaign_preflight_check():
       - duplicate_leads (already enrolled in the selected campaign_id or duplicate inbox in selection)
       - detected_playbook & playbooks dictionary
     """
+    if not current_user.has_permission('campaigns', 'edit'):
+        return log_and_abort_abac('campaigns', 'edit')
     data = request.get_json() or {}
     raw_lead_ids = data.get('lead_ids') or []
     select_all_matching = bool(data.get('select_all_matching', False))
@@ -8884,6 +9694,14 @@ def api_marketing_campaign_preflight_check():
             lead_ids = _resolve_bulk_selected_lead_ids(cur, raw_lead_ids, select_all_matching, filter_params)
             if not lead_ids:
                 return jsonify({'status': 'error', 'message': 'No leads selected for pre-flight check.'}), 400
+            if getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT id FROM "Leads" WHERE id = ANY(%s) AND owner_id = %s;', (lead_ids, current_user.id))
+                lead_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
+                if not lead_ids:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Access restricted: Sales personnel may only check leads assigned to their profile.'
+                    }), 403
             cur.execute('''
                 SELECT id, center_name, director, email, phone, city, county, state,
                        capacity, sqf, is_dnc, status, email_hygiene_status,
@@ -9028,6 +9846,8 @@ def api_marketing_campaign_enroll_leads():
       4. Updates Leads.status to 'In Campaign' ('In Email Outreach') across all non-converted stages.
       5. Logs a cryptographic WORM SHA-256 enrollment receipt in SecurityAuditLogs.
     """
+    if not current_user.has_permission('campaigns', 'edit'):
+        return log_and_abort_abac('campaigns', 'edit')
     data = request.get_json() or {}
     raw_lead_ids = data.get('lead_ids') or []
     select_all_matching = bool(data.get('select_all_matching', False))
@@ -9050,6 +9870,14 @@ def api_marketing_campaign_enroll_leads():
             lead_ids = _resolve_bulk_selected_lead_ids(cur, raw_lead_ids, select_all_matching, filter_params)
             if not lead_ids:
                 return jsonify({'status': 'error', 'message': 'Please select at least one lead to enroll.'}), 400
+            if getattr(current_user, 'role', '') == 'Sales':
+                cur.execute('SELECT id FROM "Leads" WHERE id = ANY(%s) AND owner_id = %s;', (lead_ids, current_user.id))
+                lead_ids = [r[0] if isinstance(r, tuple) else r['id'] for r in cur.fetchall()]
+                if not lead_ids:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Access restricted: Sales personnel may only enroll leads assigned to their profile.'
+                    }), 403
             user_label = getattr(current_user, 'full_name', None) or getattr(current_user, 'username', 'Executive')
 
             cur.execute('''
@@ -9332,6 +10160,8 @@ def api_marketing_campaign_complete(campaign_id):
     4. Preserves all leads who already advanced to 'Engaged' (opened), 'Qualified' (clicked), or 'Unsubscribed'.
     5. Marks MarketingCampaigns.status = 'Completed' and synchronizes all counters.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9449,6 +10279,8 @@ def api_marketing_campaign_toggle_status(campaign_id):
     """
     Toggles marketing campaign status between Active and Paused.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9488,6 +10320,8 @@ def api_marketing_campaign_delete(campaign_id):
     Deletes a marketing campaign, removes associated unsent drafts, and restores
     enrolled leads with status 'In Campaign' back to their exact previous_lead_status (or 'New').
     """
+    if not current_user.has_permission('outbox', 'delete'):
+        return log_and_abort_abac('outbox', 'delete')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9565,6 +10399,8 @@ def api_marketing_campaign_reset_all():
     Deletes all marketing campaigns, purges all campaign drafts, and restores all
     enrolled leads back to their exact previous_lead_status (or 'New') for a clean slate.
     """
+    if not current_user.has_permission('outbox', 'delete'):
+        return log_and_abort_abac('outbox', 'delete')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9633,6 +10469,8 @@ def api_marketing_get_campaign_template(campaign_id):
     """
     Retrieves campaign copy templates, sender persona, and authenticated user email.
     """
+    if not (current_user.has_permission('outbox', 'view') or current_user.has_permission('campaigns', 'edit')):
+        return log_and_abort_abac('outbox', 'view')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9672,6 +10510,8 @@ def api_marketing_save_campaign_template(campaign_id):
     """
     Saves campaign subject and body copy, with optional mass-recalibration of queued drafts.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     data = request.get_json() or request.form
     subject_tmpl = (data.get('email_subject_template') or '').strip()
     body_tmpl = (data.get('email_body_template') or '').strip()
@@ -9761,6 +10601,8 @@ def api_marketing_test_send_proof(campaign_id):
     """
     Sends an immediate live test proof via Microsoft Graph API to whoever is logged in (or specified).
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     data = request.get_json() or request.form
     target_email = (data.get('recipient_email') or '').strip()
     subject_tmpl = (data.get('email_subject_template') or '').strip()
@@ -9823,6 +10665,8 @@ def api_marketing_generate_drafts(campaign_id):
     Generates personalized HWB-COM-001 drafts into PendingOutbox for staged recipients,
     using the campaign's saved template or its sector-matched Playbook (never defaulting to daycare copy for non-daycare sectors).
     """
+    if not (current_user.has_permission('outbox', 'edit') or current_user.has_permission('campaigns', 'edit')):
+        return log_and_abort_abac('outbox', 'edit')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9923,6 +10767,8 @@ def api_marketing_get_outbox(email_id):
     """
     Returns full email draft content and recipient metadata for inspection and editing.
     """
+    if not current_user.has_permission('outbox', 'view'):
+        return log_and_abort_abac('outbox', 'view')
     db_url = current_app.config.get('DATABASE_URL')
     conn = None
     try:
@@ -9953,6 +10799,8 @@ def api_marketing_update_outbox(email_id):
     """
     Allows the CEO to edit the subject line or email body before releasing.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     data = request.get_json() or request.form
     new_subject = data.get('subject')
     new_body = data.get('body') if data.get('body') is not None else data.get('body_text')
@@ -10002,6 +10850,8 @@ def api_marketing_outbox_batch():
       4. Reversible previous_lead_status restoration on reject/cancel.
       5. Cryptographic WORM SHA-256 dispatch receipt in SecurityAuditLogs.
     """
+    if not current_user.has_permission('outbox', 'edit'):
+        return log_and_abort_abac('outbox', 'edit')
     data = request.get_json() or request.form
     action = data.get('action')  # 'approve' or 'reject'
     email_ids = data.get('email_ids', [])

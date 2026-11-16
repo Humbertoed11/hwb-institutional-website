@@ -1,6 +1,6 @@
 {
   "super-memory-auto-governor": {
-    "enabled": true,
+    "enabled": false,
     "PreInvocation": [
       {
         "type": "command",

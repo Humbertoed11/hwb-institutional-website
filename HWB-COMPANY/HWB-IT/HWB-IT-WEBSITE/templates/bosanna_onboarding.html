@@ -996,6 +996,11 @@
             </div>
 
             <form id="form-step-1" onsubmit="handleStep1(event)">
+                <input type="hidden" id="bosanna_security_token" value="{{ get_form_security_token() }}">
+                <div style="opacity: 0; position: absolute; top: 0; left: -5000px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
+                    <label for="hp_bosanna_org_url">Leave this field blank</label>
+                    <input type="text" id="hp_bosanna_org_url" name="hp_organization_url" tabindex="-1" autocomplete="off">
+                </div>
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="full_name" class="form-label" id="t-f-fullname">Full Legal Name *</label>
@@ -1004,7 +1009,7 @@
                     
                     <div class="form-group">
                         <label for="phone" class="form-label" id="t-f-phone">Mobile Phone (SMS Notifications) *</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="(214)-555-0199" maxlength="14" inputmode="numeric" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
+                        <input type="tel" class="form-input" id="phone" placeholder="(214)-555-0199" maxlength="20" inputmode="numeric" oninput="maskPhone(this)" required aria-label="Mobile Phone Number">
                     </div>
 
                     <div class="form-group">
@@ -1595,6 +1600,8 @@
 
             try {
                 const payload = {
+                    form_security_token: (document.getElementById('bosanna_security_token') || {}).value || '',
+                    hp_organization_url: (document.getElementById('hp_bosanna_org_url') || {}).value || '',
                     full_name: applicantData.full_name,
                     phone: applicantData.phone,
                     email: applicantData.email,

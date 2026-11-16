@@ -58,12 +58,12 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn.close()
 
     def test_02_version_service_in_memory_lru_cache(self):
-        """Part I Pillar 4: Verifies get_version_info() is cached in memory with lru_cache and reports v5.4.x / v5.5.x."""
+        """Part I Pillar 4: Verifies get_version_info() is cached in memory with lru_cache and reports v5.4+."""
         clear_version_cache()
-        self.assertTrue(APP_SEMANTIC_VERSION.startswith(("v5.4.", "v5.5.")))
+        self.assertTrue(APP_SEMANTIC_VERSION.startswith(("v5.4.", "v5.5.", "v5.6.", "v5.7.")))
         info_1 = get_version_info()
         info_2 = get_version_info()
-        self.assertTrue(str(info_1.get("app_version", "")).startswith(("v5.4.", "v5.5.")))
+        self.assertTrue(str(info_1.get("app_version", "")).startswith(("v5.4.", "v5.5.", "v5.6.", "v5.7.")))
         self.assertIs(info_1, info_2)
         cache_info = get_version_info.cache_info()
         self.assertGreaterEqual(cache_info.hits, 1)
@@ -1379,17 +1379,17 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         self.assertIn("window.Telegram.WebApp.initData", tma_html)
         self.assertNotIn("alert(`Takeoff Saved:", tma_html)
 
-        # 4. Homepage (/) & Full Quote Form (/get-quote)
+        # 4. Homepage (/) & Full Quote Form (/get-quote) — maxlength="20" allows +1 autofill before maskPhoneInput formats to 14 chars
         r_home = self.client.get("/")
         self.assertEqual(r_home.status_code, 200)
         home_html = r_home.get_data(as_text=True)
-        self.assertIn('id="phone_home" maxlength="14" oninput="maskPhoneInput(this)"', home_html)
+        self.assertIn('id="phone_home" maxlength="20" oninput="maskPhoneInput(this)"', home_html)
         self.assertIn('placeholder="(214)-000-0000"', home_html)
 
         r_quote = self.client.get("/get-quote")
         self.assertEqual(r_quote.status_code, 200)
         quote_html = r_quote.get_data(as_text=True)
-        self.assertIn('id="phone_page" maxlength="14" oninput="maskPhoneInput(this)"', quote_html)
+        self.assertIn('id="phone_page" maxlength="20" oninput="maskPhoneInput(this)"', quote_html)
         self.assertIn('placeholder="(214)-000-0000"', quote_html)
 
         # 5. Backoffice Operations Forms (backoffice_operations.html)
@@ -6953,6 +6953,1125 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                     )
             conn.commit()
             conn.close()
+
+    def test_57_campaigns_module_permissions_and_add_user_preset_bug_185(self) -> None:
+        """
+        BUG-185:
+        1. Verifies 'campaigns' ('Email Campaigns (Send & Remove)') is a dedicated System Module in
+           ROLE_MODULE_PRESETS, defaulting to Off (False/False/False) for Sales/Operator/Estimator/Technician/Custom
+           and On (True/True/True) for Executive/Admin/Manager.
+        2. Verifies /admin/executive renders the Module Access Rights & Permissions table (including
+           'Email Campaigns (Send & Remove)') in BOTH #modal-add-user and #modal-edit-user, and POST add_user
+           saves Sales users with campaigns Off by default.
+        3. Verifies a View-Only Sales trainee (Mylin Kennedy setup: leads.view=True, leads.edit=False, legacy JSON
+           without 'campaigns' key) sees zero campaign/mutation buttons on /admin/operations?view=leads and receives
+           HTTP 403 across campaigns/list, preflight-check, enroll-leads, remove_from_campaign, and outbox/batch-action.
+        4. Verifies a standard Sales user (leads.edit=True, campaigns=Off) still cannot Send to Campaign or Remove from
+           Campaign until CEO explicitly grants campaigns permissions; once granted, enrollment and removal work ONLY on
+           their own owner_id leads while CEO Outbox release (outbox/batch-action) remains HTTP 403.
+        """
+        import json
+        import uuid
+        from core.models.user import ROLE_MODULE_PRESETS
+        from core.services.database import get_db
+
+        self.assertEqual(
+            ROLE_MODULE_PRESETS["Sales"]["campaigns"],
+            {"view": False, "edit": False, "delete": False},
+        )
+        self.assertEqual(
+            ROLE_MODULE_PRESETS["Executive"]["campaigns"],
+            {"view": True, "edit": True, "delete": True},
+        )
+        self.assertEqual(
+            ROLE_MODULE_PRESETS["Manager"]["campaigns"],
+            {"view": True, "edit": True, "delete": True},
+        )
+
+        exec_client = self.get_auth_client()
+        r_exec = exec_client.get("/admin/executive")
+        self.assertEqual(r_exec.status_code, 200)
+        exec_html = r_exec.get_data(as_text=True)
+        self.assertIn("Email Campaigns (Send &amp; Remove)", exec_html)
+        self.assertIn('id="add_perm_campaigns_v"', exec_html)
+        self.assertIn('id="add_perm_campaigns_e"', exec_html)
+        self.assertIn('id="add_perm_campaigns_d"', exec_html)
+        self.assertIn('id="edit_perm_campaigns_v"', exec_html)
+        self.assertIn('id="edit_perm_campaigns_e"', exec_html)
+        self.assertIn('id="edit_perm_campaigns_d"', exec_html)
+
+        uid = uuid.uuid4().hex[:8]
+        created_user_ids: list[int] = []
+        created_lead_ids: list[int] = []
+        created_campaign_ids: list[int] = []
+
+        try:
+            # 1. Add New User (Sales) via /admin/executive -> defaults campaigns to Off
+            sales_uname = f"test_sales_std_{uid}"
+            r_add = exec_client.post(
+                "/admin/executive",
+                data={
+                    "action": "add_user",
+                    "new_username": sales_uname,
+                    "full_name": f"Standard Sales {uid}",
+                    "user_email": f"sales.std.{uid}@hwbtest.org",
+                    "new_password": "TestSales2026!",
+                    "user_role": "Sales",
+                    "status": "Active",
+                },
+            )
+            self.assertIn(r_add.status_code, (200, 302))
+
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT id, custom_permissions FROM "Users" WHERE username = %s;',
+                        (sales_uname,),
+                    )
+                    urow = cur.fetchone()
+                    self.assertIsNotNone(urow)
+                    sales_std_id = urow["id"] if isinstance(urow, dict) else urow[0]
+                    raw_perms = urow["custom_permissions"] if isinstance(urow, dict) else urow[1]
+                    created_user_ids.append(sales_std_id)
+                    parsed_perms = json.loads(raw_perms) if isinstance(raw_perms, str) else raw_perms
+                    self.assertEqual(
+                        parsed_perms.get("campaigns"),
+                        {"view": False, "edit": False, "delete": False},
+                    )
+                    self.assertEqual(
+                        parsed_perms.get("leads"),
+                        {"view": True, "edit": True, "delete": False},
+                    )
+
+                    # Insert a View-Only Sales trainee mimicking Mylin Kennedy's pre-existing JSON (no 'campaigns' key)
+                    trainee_uname = f"test_trainee_{uid}"
+                    legacy_trainee_perms = json.dumps(
+                        {
+                            "leads": {"view": True, "edit": False, "delete": False},
+                            "accounts": {"view": False, "edit": False, "delete": False},
+                            "sales_desk": {"view": False, "edit": False, "delete": False},
+                            "outbox": {"view": False, "edit": False, "delete": False},
+                        }
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO "Users" (username, password_hash, full_name, email, role, status, force_pwd_reset, custom_permissions)
+                        VALUES (%s, 'pbkdf2:sha256:test', %s, %s, 'Sales', 'Active', FALSE, %s)
+                        RETURNING id;
+                        """,
+                        (
+                            trainee_uname,
+                            f"Trainee Sales {uid}",
+                            f"sales.trainee.{uid}@hwbtest.org",
+                            legacy_trainee_perms,
+                        ),
+                    )
+                    trow = cur.fetchone()
+                    trainee_id = trow["id"] if isinstance(trow, dict) else trow[0]
+                    created_user_ids.append(trainee_id)
+
+                    # Insert two TX commercial leads: one owned by sales_std_id, one owned by CEO (1)
+                    cur.execute(
+                        """
+                        INSERT INTO "Leads" (
+                            center_name, director, email, phone, city, county, state,
+                            industry, facility_type, status, is_commercial, is_converted,
+                            is_dnc, campaign_ready, owner_id
+                        ) VALUES
+                        (%s, 'Director Own', %s, '(214) 555-0191', 'McKinney', 'Collin', 'TX',
+                         'Commercial Office', 'Corporate Office', 'New', TRUE, FALSE, FALSE, TRUE, %s),
+                        (%s, 'Director CEO', %s, '(214) 555-0192', 'Plano', 'Collin', 'TX',
+                         'Commercial Office', 'Corporate Office', 'New', TRUE, FALSE, FALSE, TRUE, 1)
+                        RETURNING id;
+                        """,
+                        (
+                            f"BUG185 Owned Facility {uid}",
+                            f"owned.{uid}@hwbtest.org",
+                            sales_std_id,
+                            f"BUG185 CEO Facility {uid}",
+                            f"ceo.{uid}@hwbtest.org",
+                        ),
+                    )
+                    lrows = cur.fetchall()
+                    owned_lead_id = lrows[0]["id"] if isinstance(lrows[0], dict) else lrows[0][0]
+                    ceo_lead_id = lrows[1]["id"] if isinstance(lrows[1], dict) else lrows[1][0]
+                    created_lead_ids.extend([owned_lead_id, ceo_lead_id])
+                conn.commit()
+            finally:
+                conn.close()
+
+            # CEO enrolls ceo_lead_id into a test campaign so we also have a CEO recipient_id to test ownership isolation
+            r_ceo_enroll = exec_client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={
+                    "lead_ids": [ceo_lead_id],
+                    "campaign_name": f"BUG185 Verification {uid}",
+                    "stage_drafts": True,
+                },
+            )
+            self.assertEqual(r_ceo_enroll.status_code, 200, r_ceo_enroll.get_data(as_text=True))
+            ceo_camp_id = r_ceo_enroll.get_json()["campaign_id"]
+            created_campaign_ids.append(ceo_camp_id)
+
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT id FROM "CampaignRecipients" WHERE campaign_id = %s AND lead_id = %s;',
+                        (ceo_camp_id, ceo_lead_id),
+                    )
+                    rrec = cur.fetchone()
+                    ceo_recip_id = rrec["id"] if isinstance(rrec, dict) else rrec[0]
+            finally:
+                conn.close()
+
+            # 2. Trainee Sales User (View-Only Leads + Campaigns Off)
+            trainee_client = app.test_client()
+            with trainee_client.session_transaction() as sess:
+                sess["_user_id"] = str(trainee_id)
+                sess["role"] = "Sales"
+                sess["_fresh"] = True
+
+            r_trainee_ops = trainee_client.get("/admin/operations?view=leads")
+            self.assertEqual(r_trainee_ops.status_code, 200)
+            trainee_html = r_trainee_ops.get_data(as_text=True)
+            self.assertNotIn("openEnrollSelectedLeadsModal()", trainee_html)
+            self.assertNotIn("remove_from_campaign", trainee_html)
+            self.assertNotIn("startLeadCallingQueue()", trainee_html)
+            self.assertNotIn("CAN_SEND_CAMPAIGNS = true", trainee_html)
+            self.assertIn("CAN_SEND_CAMPAIGNS = false", trainee_html)
+            self.assertIn("CAN_REMOVE_CAMPAIGNS = false", trainee_html)
+
+            self.assertEqual(trainee_client.get("/api/v1/marketing/campaigns/list").status_code, 403)
+            self.assertEqual(
+                trainee_client.post(
+                    "/api/v1/marketing/campaign/preflight-check",
+                    json={"lead_ids": [owned_lead_id]},
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                trainee_client.post(
+                    "/api/v1/marketing/campaign/enroll-leads",
+                    json={"lead_ids": [owned_lead_id], "campaign_id": ceo_camp_id},
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                trainee_client.post(
+                    "/api/v1/leads/batch-action",
+                    json={"action": "remove_from_campaign", "lead_ids": [ceo_lead_id]},
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                trainee_client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "campaign_id": ceo_camp_id},
+                ).status_code,
+                403,
+            )
+
+            # 3. Standard Sales User (leads.edit=True, campaigns=Off by default)
+            std_client = app.test_client()
+            with std_client.session_transaction() as sess:
+                sess["_user_id"] = str(sales_std_id)
+                sess["role"] = "Sales"
+                sess["_fresh"] = True
+
+            r_std_ops = std_client.get("/admin/operations?view=leads")
+            self.assertEqual(r_std_ops.status_code, 200)
+            std_html = r_std_ops.get_data(as_text=True)
+            self.assertIn("startLeadCallingQueue()", std_html)
+            self.assertNotIn("openEnrollSelectedLeadsModal()", std_html)
+            self.assertIn("CAN_SEND_CAMPAIGNS = false", std_html)
+            self.assertIn("CAN_REMOVE_CAMPAIGNS = false", std_html)
+
+            self.assertEqual(
+                std_client.post(
+                    "/api/v1/marketing/campaign/enroll-leads",
+                    json={"lead_ids": [owned_lead_id], "campaign_id": ceo_camp_id},
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                std_client.post(
+                    "/api/v1/leads/batch-action",
+                    json={"action": "remove_from_campaign", "lead_ids": [owned_lead_id]},
+                ).status_code,
+                403,
+            )
+
+            # 4. CEO turns ON Email Campaigns (View + Edit + Delete) for sales_std_id via edit_user
+            r_grant = exec_client.post(
+                "/admin/executive",
+                data={
+                    "action": "edit_user",
+                    "user_id": str(sales_std_id),
+                    "full_name": f"Standard Sales {uid}",
+                    "user_email": f"sales.std.{uid}@hwbtest.org",
+                    "user_role": "Sales",
+                    "status": "Active",
+                    "perm_leads_view": "true",
+                    "perm_leads_edit": "true",
+                    "perm_campaigns_view": "true",
+                    "perm_campaigns_edit": "true",
+                    "perm_campaigns_delete": "true",
+                },
+            )
+            self.assertIn(r_grant.status_code, (200, 302))
+
+            r_granted_ops = std_client.get("/admin/operations?view=leads")
+            self.assertEqual(r_granted_ops.status_code, 200)
+            granted_html = r_granted_ops.get_data(as_text=True)
+            self.assertIn("openEnrollSelectedLeadsModal()", granted_html)
+            self.assertIn("CAN_SEND_CAMPAIGNS = true", granted_html)
+            self.assertIn("CAN_REMOVE_CAMPAIGNS = true", granted_html)
+            self.assertNotIn('id="btn-enroll-hub-release-now"', granted_html)
+
+            # Ownership isolation: cannot enroll or remove CEO's lead/recipient
+            self.assertEqual(
+                std_client.post(
+                    "/api/v1/marketing/campaign/enroll-leads",
+                    json={"lead_ids": [ceo_lead_id], "campaign_id": ceo_camp_id},
+                ).status_code,
+                403,
+            )
+            self.assertEqual(
+                std_client.post(
+                    "/api/v1/leads/batch-action",
+                    json={"action": "remove_from_campaign", "recipient_ids": [ceo_recip_id]},
+                ).status_code,
+                403,
+            )
+
+            # Can list campaigns & enroll their OWN assigned lead (draft staged for CEO review)
+            self.assertEqual(std_client.get("/api/v1/marketing/campaigns/list").status_code, 200)
+            r_own_enroll = std_client.post(
+                "/api/v1/marketing/campaign/enroll-leads",
+                json={"lead_ids": [owned_lead_id], "campaign_id": ceo_camp_id, "stage_drafts": True},
+            )
+            self.assertEqual(r_own_enroll.status_code, 200, r_own_enroll.get_data(as_text=True))
+            self.assertEqual(r_own_enroll.get_json().get("enrolled_count"), 1)
+
+            # Outbox approval gate STILL blocks Sales user from releasing emails
+            self.assertEqual(
+                std_client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "campaign_id": ceo_camp_id},
+                ).status_code,
+                403,
+            )
+
+            # Can remove their OWN assigned lead from campaign & restore status to 'New'
+            r_own_remove = std_client.post(
+                "/api/v1/leads/batch-action",
+                json={"action": "remove_from_campaign", "lead_ids": [owned_lead_id]},
+            )
+            self.assertEqual(r_own_remove.status_code, 200, r_own_remove.get_data(as_text=True))
+            self.assertEqual(r_own_remove.get_json().get("affected_count"), 1)
+
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT status FROM "Leads" WHERE id = %s;', (owned_lead_id,))
+                    srow = cur.fetchone()
+                    restored_status = srow["status"] if isinstance(srow, dict) else srow[0]
+                    self.assertEqual(restored_status, "New")
+                    cur.execute(
+                        'SELECT COUNT(*) AS cnt FROM "CampaignRecipients" WHERE lead_id = %s;',
+                        (owned_lead_id,),
+                    )
+                    crow = cur.fetchone()
+                    rem_cnt = crow["cnt"] if isinstance(crow, dict) else crow[0]
+                    self.assertEqual(int(rem_cnt), 0)
+            finally:
+                conn.close()
+        finally:
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    if created_campaign_ids:
+                        cur.execute(
+                            'DELETE FROM "PendingOutbox" WHERE campaign_id = ANY(%s);',
+                            (created_campaign_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "CampaignRecipients" WHERE campaign_id = ANY(%s);',
+                            (created_campaign_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "MarketingCampaigns" WHERE id = ANY(%s);',
+                            (created_campaign_ids,),
+                        )
+                    if created_lead_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "LeadStageHistory" WHERE lead_id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "CampaignRecipients" WHERE lead_id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "Leads" WHERE id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                    if created_user_ids:
+                        cur.execute(
+                            'DELETE FROM "Users" WHERE id = ANY(%s);',
+                            (created_user_ids,),
+                        )
+                conn.commit()
+            finally:
+                conn.close()
+
+    def test_58_enterprise_walkthrough_availability_1h_buffer_and_lifecycle_bug_186(self):
+        """
+        BUG-186: Verifies the 5-Pillar Enterprise Walkthrough Calendar Availability & 1-Hour Travel Buffer System:
+        1. Zero-Leakage Microsoft Exchange getSchedule Free/Busy masking (private event titles/locations never leave server).
+        2. 45-minute walkthrough duration + 60-minute (1-hour) DFW travel buffer before & after walkthroughs / off-site visits.
+        3. Territory hint ('Walkthrough · McKinney') & same-corridor route clustering ('Nearby Route' for Frisco).
+        4. Trainee Read-Only Safety (Leads View-Only can view live availability; Schedule Walkthrough button hidden; POST blocked).
+        5. Double-booking HTTP 409 gate, in-place Outlook PATCH reschedule, DELETE cancel lifecycle, and Graph 503 fallback.
+        """
+        import json as _json
+        import uuid
+        from datetime import date, timedelta
+        from unittest.mock import MagicMock, patch
+        from werkzeug.security import generate_password_hash
+        from core.services.calendar_service import (
+            WALKTHROUGH_DURATION_MINUTES,
+            WALKTHROUGH_TRAVEL_BUFFER_MINUTES,
+            invalidate_calendar_availability_cache,
+        )
+
+        self.assertEqual(WALKTHROUGH_DURATION_MINUTES, 45)
+        self.assertEqual(WALKTHROUGH_TRAVEL_BUFFER_MINUTES, 60)
+
+        uid = uuid.uuid4().hex[:8]
+        # Pick a deterministic future Monday >= 35 days out so zero empirical leads overlap
+        target_day = date.today() + timedelta(days=35)
+        while target_day.weekday() != 0:
+            target_day += timedelta(days=1)
+        target_date_str = target_day.strftime("%Y-%m-%d")
+
+        created_user_ids = []
+        created_lead_ids = []
+        created_customer_ids = []
+
+        from database.schema_engine import apply_migration_055_walkthrough_calendar_lifecycle
+        conn = get_db(self.db_url)
+        try:
+            apply_migration_055_walkthrough_calendar_lifecycle(conn)
+            with conn.cursor() as cur:
+                trainee_perms = {
+                    "leads": {"view": True, "edit": False, "delete": False},
+                    "accounts": {"view": True, "edit": False, "delete": False},
+                    "campaigns": {"view": False, "edit": False, "delete": False},
+                }
+                booker_perms = {
+                    "leads": {"view": True, "edit": True, "delete": False},
+                    "accounts": {"view": True, "edit": False, "delete": False},
+                    "campaigns": {"view": False, "edit": False, "delete": False},
+                }
+                cur.execute(
+                    '''
+                    INSERT INTO "Users" (username, email, password_hash, role, full_name, status, force_pwd_reset, custom_permissions)
+                    VALUES (%s, %s, %s, 'Sales', %s, 'Active', FALSE, %s)
+                    RETURNING id;
+                    ''',
+                    (
+                        f"trainee_wt_{uid}",
+                        f"trainee.wt.{uid}@hwbtest.org",
+                        generate_password_hash("TestPass!2026"),
+                        f"Trainee Rep {uid}",
+                        _json.dumps(trainee_perms),
+                    ),
+                )
+                r1 = cur.fetchone()
+                trainee_id = r1["id"] if isinstance(r1, dict) else r1[0]
+                created_user_ids.append(trainee_id)
+
+                cur.execute(
+                    '''
+                    INSERT INTO "Users" (username, email, password_hash, role, full_name, status, force_pwd_reset, custom_permissions)
+                    VALUES (%s, %s, %s, 'Sales', %s, 'Active', FALSE, %s)
+                    RETURNING id;
+                    ''',
+                    (
+                        f"booker_wt_{uid}",
+                        f"booker.wt.{uid}@hwbtest.org",
+                        generate_password_hash("TestPass!2026"),
+                        f"Booker Rep {uid}",
+                        _json.dumps(booker_perms),
+                    ),
+                )
+                r2 = cur.fetchone()
+                booker_id = r2["id"] if isinstance(r2, dict) else r2[0]
+                created_user_ids.append(booker_id)
+
+                cur.execute(
+                    '''
+                    INSERT INTO "Leads" (center_name, decision_maker, email, phone, address, city, state, zipcode, status, owner_id, sqf, capacity)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'TX', '75070', 'New', %s, 11500, 140)
+                    RETURNING id;
+                    ''',
+                    (
+                        f"McKinney Early Learning {uid}",
+                        "Rachel Voss",
+                        f"rvoss.{uid}@hwbtest.org",
+                        "214-555-0186",
+                        "4100 Eldorado Pkwy",
+                        "McKinney",
+                        booker_id,
+                    ),
+                )
+                l1 = cur.fetchone()
+                lead_mckinney_id = l1["id"] if isinstance(l1, dict) else l1[0]
+                created_lead_ids.append(lead_mckinney_id)
+
+                cur.execute(
+                    '''
+                    INSERT INTO "Leads" (center_name, decision_maker, email, phone, address, city, state, zipcode, status, owner_id, sqf, capacity)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'TX', '75034', 'New', %s, 9800, 120)
+                    RETURNING id;
+                    ''',
+                    (
+                        f"Frisco Montessori Academy {uid}",
+                        "Devon Grant",
+                        f"dgrant.{uid}@hwbtest.org",
+                        "972-555-0187",
+                        "8200 Legacy Dr",
+                        "Frisco",
+                        booker_id,
+                    ),
+                )
+                l2 = cur.fetchone()
+                lead_frisco_id = l2["id"] if isinstance(l2, dict) else l2[0]
+                created_lead_ids.append(lead_frisco_id)
+
+                cur.execute(
+                    '''
+                    INSERT INTO "Customers" (company_name, contact_person_name, email, phone, company_address, city, state, zip, status, assigned_rep_id, sqf)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'TX', '75024', 'Active', %s, 14500)
+                    RETURNING customer_id;
+                    ''',
+                    (
+                        f"Plano Corporate Campus {uid}",
+                        "Rachel Kim",
+                        f"rkim.{uid}@hwbtest.org",
+                        "469-555-0192",
+                        "5800 Granite Pkwy",
+                        "Plano",
+                        booker_id,
+                    ),
+                )
+                c1 = cur.fetchone()
+                acc_plano_id = c1["customer_id"] if isinstance(c1, dict) else c1[0]
+                created_customer_ids.append(acc_plano_id)
+            conn.commit()
+        finally:
+            conn.close()
+
+        try:
+            invalidate_calendar_availability_cache()
+            post_calls = []
+            patch_calls = []
+            delete_calls = []
+
+            def fake_requests_post(url, headers=None, json=None, timeout=12):
+                resp = MagicMock()
+                if url.endswith("/calendar/getSchedule"):
+                    resp.status_code = 200
+                    resp.json.return_value = {
+                        "value": [
+                            {
+                                "scheduleId": "hdominguez@hwbcleaning.com",
+                                "scheduleItems": [
+                                    {
+                                        "status": "busy",
+                                        "subject": "Private Medical Appointment — Confidential",
+                                        "location": "500 Medical Center Blvd, Plano, TX",
+                                        "isPrivate": True,
+                                        "start": {
+                                            "dateTime": f"{target_date_str}T14:00:00.0000000",
+                                            "timeZone": "Central Standard Time",
+                                        },
+                                        "end": {
+                                            "dateTime": f"{target_date_str}T15:00:00.0000000",
+                                            "timeZone": "Central Standard Time",
+                                        },
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                    return resp
+                if url.endswith("/events"):
+                    post_calls.append({"url": url, "json": json})
+                    resp.status_code = 201
+                    resp.json.return_value = {"id": f"evt-mock-{uid}"}
+                    return resp
+                resp.status_code = 200
+                resp.json.return_value = {}
+                return resp
+
+            def fake_requests_patch(url, headers=None, json=None, timeout=12):
+                patch_calls.append({"url": url, "json": json})
+                resp = MagicMock()
+                resp.status_code = 200
+                resp.json.return_value = {"id": f"evt-mock-{uid}"}
+                return resp
+
+            def fake_requests_delete(url, headers=None, timeout=12):
+                delete_calls.append(url)
+                resp = MagicMock()
+                resp.status_code = 204
+                return resp
+
+            trainee_client = app.test_client()
+            with trainee_client.session_transaction() as sess:
+                sess["_user_id"] = str(trainee_id)
+                sess["user_id"] = trainee_id
+                sess["role"] = "Sales"
+                sess["_fresh"] = True
+
+            booker_client = app.test_client()
+            with booker_client.session_transaction() as sess:
+                sess["_user_id"] = str(booker_id)
+                sess["user_id"] = booker_id
+                sess["role"] = "Sales"
+                sess["_fresh"] = True
+
+            with (
+                patch("core.services.calendar_service.get_calendar_graph_token", return_value="mock-graph-token"),
+                patch("core.services.calendar_service.requests.post", side_effect=fake_requests_post),
+                patch("core.services.calendar_service.requests.patch", side_effect=fake_requests_patch),
+                patch("core.services.calendar_service.requests.delete", side_effect=fake_requests_delete),
+            ):
+                # 1. Trainee with Leads View-Only can open unified popup calendar; zero private Outlook details leaked!
+                r_tr_ops = trainee_client.get("/admin/operations?view=leads")
+                self.assertEqual(r_tr_ops.status_code, 200)
+                tr_html = r_tr_ops.get_data(as_text=True)
+                self.assertIn('id="modal-walkthrough-calendar"', tr_html)
+                self.assertIn('id="wt-cal-grid-panel"', tr_html)
+                for expected_hook in (
+                    "openWalkthroughCalendarModal('lead_pick')",
+                    "openWalkthroughCalendarModal('cadence_book')",
+                    "openWalkthroughCalendarModal('cadence_pick')",
+                    "openWalkthroughCalendarModal('edit_lead_pick')",
+                ):
+                    self.assertIn(expected_hook, tr_html)
+                r_tr_acc = trainee_client.get("/admin/operations?view=accounts")
+                self.assertEqual(r_tr_acc.status_code, 200)
+                self.assertIn("openWalkthroughCalendarModal('account_pick')", r_tr_acc.get_data(as_text=True))
+                self.assertIn("View CEO Calendar Availability", tr_html)
+                self.assertIn("CAN_EDIT_LEADS = false", tr_html)
+                self.assertNotIn('id="btn-submit-lead-walkthrough"', tr_html)
+                self.assertNotIn('id="btn-wt-modal-book-next"', tr_html)
+
+                # Verify JS renders rigid 36px CSS Grid rows with flex-shrink:0 (zero vertical slot overlap) + Choice 1A Pending/Saved sync
+                r_js = trainee_client.get("/static/js/backoffice_operations_core.js")
+                self.assertEqual(r_js.status_code, 200)
+                js_src = r_js.get_data(as_text=True)
+                self.assertIn("grid-auto-rows:36px", js_src)
+                self.assertIn("flex-shrink:0", js_src)
+                self.assertIn("syncLeadWalkthroughCardUI", js_src)
+                self.assertIn("Pending Selection (Not Saved Yet)", js_src)
+                self.assertIn("handleLeadVisitConductorChange", js_src)
+
+                r_bk_ops = booker_client.get("/admin/operations?view=leads")
+                self.assertEqual(r_bk_ops.status_code, 200)
+                bk_html = r_bk_ops.get_data(as_text=True)
+                self.assertIn('id="btn-reset-lead-wt-draft"', bk_html)
+                self.assertIn("Booker Rep", bk_html)
+
+                # Verify /sales-desk also embeds the unified Walkthrough Calendar modal for authorized users
+                exec_sd_client = self.get_auth_client()
+                r_sd = exec_sd_client.get("/sales-desk")
+                self.assertEqual(r_sd.status_code, 200)
+                self.assertIn('id="salesDeskWalkthroughModal"', r_sd.get_data(as_text=True))
+
+                r_avail_1 = trainee_client.get(
+                    f"/api/v1/calendar/availability?start_date={target_date_str}&days=5&refresh=1"
+                )
+                self.assertEqual(r_avail_1.status_code, 200)
+                raw_avail_txt = r_avail_1.get_data(as_text=True)
+                self.assertNotIn("Private Medical", raw_avail_txt)
+                self.assertNotIn("Confidential", raw_avail_txt)
+                self.assertNotIn("Medical Center Blvd", raw_avail_txt)
+
+                avail_1 = r_avail_1.get_json()
+                self.assertEqual(avail_1["calendar_source"], "microsoft_graph_live")
+                self.assertEqual(avail_1["travel_buffer_minutes"], 60)
+                self.assertEqual(len(avail_1["days"]), 5)
+                day0_slots = {s["time_12h"]: s for s in avail_1["days"][0]["slots"]}
+                # 2:00 PM - 3:00 PM private off-site item -> 2:00 PM is Busy, 1:00 PM & 3:30 PM are 1h Drive Buffer, 9:00 AM is Open
+                self.assertTrue(day0_slots["09:00 AM"]["available"])
+                self.assertFalse(day0_slots["02:00 PM"]["available"])
+                self.assertEqual(day0_slots["02:00 PM"]["label"], "Busy")
+                self.assertFalse(day0_slots["01:00 PM"]["available"])
+                self.assertEqual(day0_slots["01:00 PM"]["status"], "travel_buffer")
+                self.assertFalse(day0_slots["03:30 PM"]["available"])
+                self.assertEqual(day0_slots["03:30 PM"]["status"], "travel_buffer")
+
+                # View-Only trainee cannot book a walkthrough via POST
+                self.assertEqual(
+                    trainee_client.post(
+                        f"/api/v1/leads/{lead_mckinney_id}/cadence-save",
+                        json={
+                            "preferred_date": target_date_str,
+                            "preferred_time": "09:00 AM",
+                            "activity_type": "Walkthrough Booked",
+                            "sync_calendar": True,
+                        },
+                    ).status_code,
+                    403,
+                )
+
+                # 2. Authorized Sales rep books McKinney walkthrough at 09:00 AM
+                r_book = booker_client.post(
+                    f"/api/v1/leads/{lead_mckinney_id}/cadence-save",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "09:00 AM",
+                        "activity_type": "Walkthrough Booked",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                        "rep_name": f"Booker Rep {uid}",
+                        "rep_email": f"booker.wt.{uid}@hwbtest.org",
+                    },
+                )
+                self.assertEqual(r_book.status_code, 200, r_book.get_data(as_text=True))
+                book_json = r_book.get_json()
+                self.assertTrue(book_json["calendar_created"])
+                self.assertFalse(book_json["calendar_rescheduled"])
+                self.assertEqual(book_json["walkthrough_event_id"], f"evt-mock-{uid}")
+                self.assertEqual(len(post_calls), 1)
+
+                # 3. Check availability for Frisco lead: 9:00 AM & 9:30 AM overlap the 45-min McKinney walkthrough (9:00–9:45);
+                #    10:00 AM & 10:30 AM are blocked by the 1-hour travel buffer (9:45–10:45); 11:00 AM is Open & Nearby Route!
+                r_avail_2 = booker_client.get(
+                    f"/api/v1/calendar/availability?start_date={target_date_str}&days=1&lead_id={lead_frisco_id}&refresh=1"
+                )
+                self.assertEqual(r_avail_2.status_code, 200)
+                avail_2 = r_avail_2.get_json()
+                frisco_slots = {s["time_12h"]: s for s in avail_2["days"][0]["slots"]}
+                self.assertEqual(avail_2["days"][0]["route_match_city"], "McKinney")
+                for wt_slot in ("09:00 AM", "09:30 AM"):
+                    self.assertFalse(frisco_slots[wt_slot]["available"])
+                    self.assertEqual(frisco_slots[wt_slot]["status"], "walkthrough")
+                    self.assertEqual(frisco_slots[wt_slot]["label"], "Walkthrough · McKinney")
+                for buffered_slot in ("10:00 AM", "10:30 AM"):
+                    self.assertFalse(frisco_slots[buffered_slot]["available"], f"{buffered_slot} must be buffered")
+                    self.assertEqual(frisco_slots[buffered_slot]["status"], "travel_buffer")
+                self.assertTrue(frisco_slots["11:00 AM"]["available"])
+                self.assertTrue(frisco_slots["11:00 AM"]["route_match"])
+                self.assertEqual(frisco_slots["11:00 AM"]["label"], "Nearby Route")
+
+                # 4. Double-booking inside the 1-hour travel buffer (10:00 AM) returns HTTP 409 CALENDAR_SLOT_CONFLICT
+                r_conflict = booker_client.post(
+                    f"/api/v1/leads/{lead_frisco_id}/cadence-save",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "10:00 AM",
+                        "activity_type": "Walkthrough Booked",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_conflict.status_code, 409)
+                self.assertEqual(r_conflict.get_json().get("code"), "CALENDAR_SLOT_CONFLICT")
+                self.assertIn("1-hour travel buffer", r_conflict.get_json().get("message", ""))
+
+                # 5. Rescheduling McKinney lead from 09:00 AM -> 11:00 AM updates Outlook event in place via PATCH (zero duplicate POST)
+                r_resched = booker_client.post(
+                    f"/api/v1/leads/{lead_mckinney_id}/cadence-save",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "11:00 AM",
+                        "activity_type": "Walkthrough Booked",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_resched.status_code, 200, r_resched.get_data(as_text=True))
+                resched_json = r_resched.get_json()
+                self.assertTrue(resched_json["calendar_rescheduled"])
+                self.assertEqual(len(post_calls), 1, "Rescheduling must PATCH existing event, not POST a duplicate")
+                self.assertEqual(len(patch_calls), 1)
+
+                # Verify 09:00 AM reopened after reschedule to 11:00 AM
+                r_avail_3 = booker_client.get(
+                    f"/api/v1/calendar/availability?start_date={target_date_str}&days=1&lead_id={lead_frisco_id}&refresh=1"
+                )
+                slots_3 = {s["time_12h"]: s for s in r_avail_3.get_json()["days"][0]["slots"]}
+                self.assertTrue(slots_3["09:00 AM"]["available"])
+                self.assertFalse(slots_3["11:00 AM"]["available"])
+
+                # 6. Cancelling walkthrough deletes Outlook invite and clears preferred_date / walkthrough_event_id
+                r_cancel = booker_client.post(
+                    f"/api/v1/leads/{lead_mckinney_id}/walkthrough-cancel",
+                    json={"reason": "Client requested reschedule next month."},
+                )
+                self.assertEqual(r_cancel.status_code, 200, r_cancel.get_data(as_text=True))
+                self.assertTrue(r_cancel.get_json().get("outlook_removed"))
+                self.assertEqual(len(delete_calls), 1)
+
+                conn = get_db(self.db_url)
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            'SELECT preferred_date, walkthrough_event_id FROM "Leads" WHERE id = %s;',
+                            (lead_mckinney_id,),
+                        )
+                        crow = cur.fetchone()
+                        p_d = crow["preferred_date"] if isinstance(crow, dict) else crow[0]
+                        p_ev = crow["walkthrough_event_id"] if isinstance(crow, dict) else crow[1]
+                        self.assertIsNone(p_d)
+                        self.assertIsNone(p_ev)
+                finally:
+                    conn.close()
+
+                # 6b. Edit Lead Profile (PUT /api/v1/leads/<id>) books Outlook invite, enforces 1h buffer, PATCHes reschedule,
+                #     and Bulk Mark DNC auto-cancels the Outlook invite so zero dead appointments remain on calendar!
+                r_edit_book = booker_client.put(
+                    f"/api/v1/leads/{lead_frisco_id}",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "09:00 AM",
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_edit_book.status_code, 200, r_edit_book.get_data(as_text=True))
+                self.assertTrue(r_edit_book.get_json().get("calendar_created"))
+                self.assertEqual(r_edit_book.get_json().get("resolved_status"), "Qualified")
+                self.assertEqual(len(post_calls), 2)
+
+                # McKinney PUT inside Frisco's 1h travel buffer (10:00 AM) must be blocked with HTTP 409
+                r_edit_conflict = booker_client.put(
+                    f"/api/v1/leads/{lead_mckinney_id}",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "10:00 AM",
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_edit_conflict.status_code, 409)
+                self.assertEqual(r_edit_conflict.get_json().get("code"), "CALENDAR_SLOT_CONFLICT")
+
+                # Rescheduling Frisco via Edit Lead Profile (09:00 AM -> 10:30 AM) PATCHes existing Outlook invite
+                r_edit_resched = booker_client.put(
+                    f"/api/v1/leads/{lead_frisco_id}",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "10:30 AM",
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_edit_resched.status_code, 200, r_edit_resched.get_data(as_text=True))
+                self.assertTrue(r_edit_resched.get_json().get("calendar_rescheduled"))
+                self.assertEqual(len(patch_calls), 2)
+
+                # Bulk Mark DNC auto-deletes Frisco's Outlook invite and clears preferred_date / walkthrough_event_id
+                r_bulk_dnc = booker_client.post(
+                    "/api/v1/leads/batch-action",
+                    json={"action": "mark_dnc", "lead_ids": [lead_frisco_id]},
+                )
+                self.assertEqual(r_bulk_dnc.status_code, 200, r_bulk_dnc.get_data(as_text=True))
+                self.assertEqual(len(delete_calls), 2)
+
+                # 6c. Client Account -> Schedule Next Step (PUT /api/v1/accounts/<id>) creates Outlook invite,
+                #     enforces 1h travel buffer across Leads & Accounts, PATCHes reschedule, and auto-cancels on Canceled!
+                exec_acc_client = self.get_auth_client()
+                r_acc_book = exec_acc_client.put(
+                    f"/api/v1/accounts/{acc_plano_id}",
+                    json={
+                        "schedule_visit": True,
+                        "visit_date": target_date_str,
+                        "visit_time": "09:00 AM",
+                        "visit_manager": "Rachel Kim",
+                        "visit_phone": "469-555-0192",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                        "next_action_date": target_date_str,
+                        "notes": "[VISIT SCHEDULED] Quarterly quality walk",
+                    },
+                )
+                self.assertEqual(r_acc_book.status_code, 200, r_acc_book.get_data(as_text=True))
+                self.assertTrue(r_acc_book.get_json().get("calendar_created"))
+                self.assertEqual(len(post_calls), 3)
+
+                # Lead walkthrough at 10:00 AM falls inside Plano Account's 1-hour travel buffer (9:00-9:45 + 60m -> 10:45)
+                r_lead_vs_acc = booker_client.post(
+                    f"/api/v1/leads/{lead_mckinney_id}/cadence-save",
+                    json={
+                        "preferred_date": target_date_str,
+                        "preferred_time": "10:00 AM",
+                        "activity_type": "Walkthrough Booked",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_lead_vs_acc.status_code, 409)
+                self.assertEqual(r_lead_vs_acc.get_json().get("code"), "CALENDAR_SLOT_CONFLICT")
+
+                # Rescheduling Plano Account visit to 11:00 AM PATCHes in place
+                r_acc_resched = exec_acc_client.put(
+                    f"/api/v1/accounts/{acc_plano_id}",
+                    json={
+                        "schedule_visit": True,
+                        "visit_date": target_date_str,
+                        "visit_time": "11:00 AM",
+                        "sync_calendar": True,
+                        "conductor": "Humberto Dominguez",
+                    },
+                )
+                self.assertEqual(r_acc_resched.status_code, 200, r_acc_resched.get_data(as_text=True))
+                self.assertTrue(r_acc_resched.get_json().get("calendar_rescheduled"))
+                self.assertEqual(len(patch_calls), 3)
+
+                # Canceling the Client Account auto-deletes its Outlook invite
+                r_acc_cancel = exec_acc_client.put(
+                    f"/api/v1/accounts/{acc_plano_id}",
+                    json={"status": "Canceled", "termination_reason": "Test cleanup"},
+                )
+                self.assertEqual(r_acc_cancel.status_code, 200)
+                self.assertEqual(len(delete_calls), 3)
+
+            # 7. Simulate Microsoft Graph 503 outage -> seamless fallback to CRM PostgreSQL blocks
+            invalidate_calendar_availability_cache()
+            outage_resp = MagicMock()
+            outage_resp.status_code = 503
+            outage_resp.text = "Service Unavailable"
+            with (
+                patch("core.services.calendar_service.get_calendar_graph_token", return_value="mock-graph-token"),
+                patch("core.services.calendar_service.requests.post", return_value=outage_resp),
+            ):
+                r_fb = booker_client.get(
+                    f"/api/v1/calendar/availability?start_date={target_date_str}&days=1&refresh=1"
+                )
+                self.assertEqual(r_fb.status_code, 200)
+                self.assertEqual(r_fb.get_json().get("calendar_source"), "crm_fallback")
+        finally:
+            invalidate_calendar_availability_cache()
+            conn = get_db(self.db_url)
+            try:
+                with conn.cursor() as cur:
+                    if created_lead_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Lead\' AND parent_id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "LeadStageHistory" WHERE lead_id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "Leads" WHERE id = ANY(%s);',
+                            (created_lead_ids,),
+                        )
+                    if created_customer_ids:
+                        cur.execute(
+                            'DELETE FROM "GlobalActivities" WHERE parent_type = \'Account\' AND parent_id = ANY(%s);',
+                            (created_customer_ids,),
+                        )
+                        cur.execute(
+                            'DELETE FROM "Customers" WHERE customer_id = ANY(%s);',
+                            (created_customer_ids,),
+                        )
+                    if created_user_ids:
+                        cur.execute(
+                            'DELETE FROM "Users" WHERE id = ANY(%s);',
+                            (created_user_ids,),
+                        )
+                conn.commit()
+            finally:
+                conn.close()
+
+    def test_59_workforce_form_bot_shield_nanp_phone_and_rack9_login_bot_metrics_bug_187(self) -> None:
+        """
+        BUG-187 Certification:
+        1. Public /work-with-us & /onboard/bosanna embed form_security_token + honeypot + maxlength="20" (+1 autofill safe).
+        2. 1099 & W-2 endpoints drop honeypot/sub-3s/missing-token bot requests (0 DB rows, BOT_DROPPED logged).
+        3. Invalid US area codes like (147)-534-3242 and 555-5555 are rejected (HTTP 400), while +1 682-241-4940 normalizes cleanly.
+        4. Login bot attacks (honeypot / scanner username / no-Origin script) log LOGIN_BOT_BLOCKED across /login, /portal/bosanna/login, /forgot-password.
+        5. SOC 2 CC6.1 secret scrubber redacts 'password' / 'raw_ssn' in SecurityAuditLogs, Rack 9 tracks 24h/30d Form & Login Bots, and CSV export works.
+        """
+        import time as _time
+        import uuid
+        from unittest.mock import patch
+        from core.services.sanitizer import is_valid_nanp_phone, clean_phone
+        from core.services.bot_defense import get_serializer
+        from core.services.security_logger import get_site_security_telemetry, log_security_event
+        from core.services.rate_limiter import limiter
+
+        limiter.clear()
+        uid = uuid.uuid4().hex[:8]
+        created_sub_ids: list[int] = []
+
+        # 1. Unit verify NANP validator + +1 11-digit normalization
+        self.assertFalse(is_valid_nanp_phone("(147)-534-3242"))
+        self.assertFalse(is_valid_nanp_phone("(012)-555-1234"))
+        self.assertFalse(is_valid_nanp_phone("(214)-123-4567"))
+        self.assertFalse(is_valid_nanp_phone("(214)-555-5555"))
+        self.assertFalse(is_valid_nanp_phone("(222)-222-2222"))
+        self.assertTrue(is_valid_nanp_phone("+1 (682) 241-4940"))
+        self.assertEqual(clean_phone("+1 (682) 241-4940"), "(682)-241-4940")
+
+        # 2. Verify public templates include honeypots, tokens, and maxlength="20"
+        wwu_html = self.client.get("/work-with-us").get_data(as_text=True)
+        self.assertIn('name="form_security_token"', wwu_html)
+        self.assertIn('id="hp_sub_org_url"', wwu_html)
+        self.assertIn('id="hp_tech_org_url"', wwu_html)
+        self.assertIn('id="sub-phone" name="phone" required autocomplete="tel" placeholder="(214)-555-0199" maxlength="20"', wwu_html)
+
+        baseline = get_site_security_telemetry()
+        base_form_bots = int(baseline.get("form_bots_24h", 0))
+        base_login_bots = int(baseline.get("login_bots_24h", 0))
+
+        anon = app.test_client()
+        try:
+            # 3A. Honeypot filled on 1099 subcontractor -> decoy 200 SUB-#0000, 0 DB rows
+            bot_co = f"Bot Burner {uid} Shop"
+            r_hp = anon.post(
+                "/api/v1/workforce/subcontractor",
+                json={
+                    "company_name": bot_co,
+                    "contact_name": "Bot Script",
+                    "phone": "(682)-241-4940",
+                    "email": f"bot.{uid}@marcservices.shop",
+                    "city": "New Haven",
+                    "hp_organization_url": "https://spam-burner.shop",
+                },
+            )
+            self.assertEqual(r_hp.status_code, 200)
+            self.assertEqual(r_hp.get_json().get("reference_code"), "SUB-#0000")
+
+            # 3B. Strict production mode (missing token / sub-3s speed) -> dropped
+            r_notok = anon.post(
+                "/api/v1/workforce/subcontractor",
+                json={
+                    "company_name": bot_co,
+                    "contact_name": "Raw Curl Bot",
+                    "phone": "(682)-241-4940",
+                    "email": f"curl.{uid}@marcservices.shop",
+                },
+                headers={"X-Enforce-Bot-Defense": "1", "Origin": "https://www.hwbcleaning.com"},
+            )
+            self.assertEqual(r_notok.status_code, 200)
+            self.assertEqual(r_notok.get_json().get("reference_code"), "SUB-#0000")
+
+            # 3C. Invalid area code (147)-534-3242 -> HTTP 400 INVALID_PHONE_NUMBER
+            with app.app_context():
+                aged_tok = get_serializer().dumps({"rendered_at": _time.time() - 8.0, "scope": "quote_form"})
+            r_bad_phone = anon.post(
+                "/api/v1/workforce/subcontractor",
+                json={
+                    "form_security_token": aged_tok,
+                    "company_name": bot_co,
+                    "contact_name": "Richard Bot",
+                    "phone": "(147)-534-3242",
+                    "email": f"badphone.{uid}@marcservices.shop",
+                    "city": "New Haven",
+                },
+                headers={"Origin": "https://www.hwbcleaning.com"},
+            )
+            self.assertEqual(r_bad_phone.status_code, 400)
+            self.assertEqual(r_bad_phone.get_json().get("code"), "INVALID_PHONE_NUMBER")
+
+            conn = get_db(app.config["DATABASE_URL"])
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT COUNT(*) AS c FROM "SubcontractorPartners" WHERE company_name = %s;', (bot_co,))
+                    r_cnt = cur.fetchone()
+                    cnt_val = r_cnt["c"] if isinstance(r_cnt, dict) else r_cnt[0]
+                    self.assertEqual(int(cnt_val), 0, "Zero bot rows may be inserted into SubcontractorPartners")
+            finally:
+                conn.close()
+
+            # 3D. Legitimate aged token + +1 11-digit phone -> 201 Created with normalized (###)-###-####
+            with (
+                patch("core.services.notification_service.dispatch_subcontractor_notifications", return_value={}),
+                patch("core.services.task_queue.task_queue.enqueue", return_value=True),
+            ):
+                r_legit = anon.post(
+                    "/api/v1/workforce/subcontractor",
+                    json={
+                        "form_security_token": aged_tok,
+                        "company_name": f"Legit Denton Crew {uid} LLC",
+                        "contact_name": "Evelyn Real",
+                        "phone": "+1 (682) 555-4901",
+                        "email": f"legit.{uid}@example.com",
+                        "city": "Denton",
+                        "dwc83_agreed": "true",
+                        "sub_no_guarantee_agreed": "true",
+                    },
+                    headers={"Origin": "https://www.hwbcleaning.com"},
+                )
+            self.assertEqual(r_legit.status_code, 201, r_legit.get_data(as_text=True))
+            legit_id = int(r_legit.get_json()["partner_id"])
+            created_sub_ids.append(legit_id)
+
+            # 4. Login bot attempts across /login, /portal/bosanna/login, and /forgot-password
+            anon.post("/login", data={"username": "wp-admin", "password": "123"})
+            anon.post("/portal/bosanna/login", data={"username": "ahudgins", "password": "x", "hp_login_url": "http://bot.ru"})
+            anon.post("/forgot-password", data={"identifier": "root"})
+
+            # 5. SOC 2 secret redaction + Rack 9 24h/30d counters + CSV export
+            log_security_event(
+                event_category="AUTH",
+                event_action="SOC2_SCRUB_TEST",
+                severity="INFO",
+                details={"attempted_username": f"scrub_{uid}", "password": "SuperSecretPlaintextPassword123!"},
+            )
+            after = get_site_security_telemetry()
+            self.assertGreaterEqual(int(after["form_bots_24h"]), base_form_bots + 3)
+            self.assertGreaterEqual(int(after["login_bots_24h"]), base_login_bots + 3)
+            self.assertGreaterEqual(int(after["form_bots_30d"]), int(after["form_bots_24h"]))
+            self.assertGreaterEqual(int(after["login_bots_30d"]), int(after["login_bots_24h"]))
+
+            conn = get_db(app.config["DATABASE_URL"])
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        'SELECT details FROM "SecurityAuditLogs" WHERE event_action = \'SOC2_SCRUB_TEST\' ORDER BY id DESC LIMIT 1;'
+                    )
+                    d_row = cur.fetchone()
+                    det = d_row["details"] if isinstance(d_row, dict) else d_row[0]
+                    self.assertEqual(det.get("password"), "[REDACTED]")
+            finally:
+                conn.close()
+
+            auth_client = self.get_auth_client()
+            self.assertIsNotNone(auth_client)
+            r_it = auth_client.get("/admin/operations?view=it_telemetry")
+            self.assertEqual(r_it.status_code, 200)
+            it_html = r_it.get_data(as_text=True)
+            self.assertIn("Form Bots Blocked (24h/30d):", it_html)
+            self.assertIn("Login Bot Attempts (24h/30d):", it_html)
+            self.assertIn("/api/v1/it/security-audit/export-csv?days=30", it_html)
+
+            r_csv = auth_client.get("/api/v1/it/security-audit/export-csv?days=30")
+            self.assertEqual(r_csv.status_code, 200)
+            self.assertIn("text/csv", r_csv.content_type)
+            self.assertIn("LOGIN_BOT_BLOCKED", r_csv.get_data(as_text=True))
+        finally:
+            limiter.clear()
+            if created_sub_ids:
+                conn = get_db(app.config["DATABASE_URL"])
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute('DELETE FROM "SubcontractorPartners" WHERE id = ANY(%s);', (created_sub_ids,))
+                    conn.commit()
+                finally:
+                    conn.close()
 
 
 if __name__ == "__main__":
