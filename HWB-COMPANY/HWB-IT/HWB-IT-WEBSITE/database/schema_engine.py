@@ -1348,108 +1348,90 @@ def apply_system_migrations(conn: Any, db_url: Optional[str] = None) -> None:
 
             # Migration 053: BUG-180 & BUG-181 Empirical Data Hygiene — Purge Synthetic Seed & Leftover Test Rows
             if "053_purge_synthetic_seed_and_test_data_bug_180_181" not in applied:
-                print("[MIGRATION] Applying 053_purge_synthetic_seed_and_test_data_bug_180_181...", flush=True)
-                apply_migration_053_purge_synthetic_seed_and_test_data(conn)
-                cur.execute("""
-                    INSERT INTO "schema_migrations" (version, description)
-                    VALUES (
-                        '053_purge_synthetic_seed_and_test_data_bug_180_181',
-                        'Purge synthetic seed records, Bosanna/sample demo rows, internal draft quote bids, duplicate BidDocuments, and uncleaned test rows across Leads, Employees, JobApplicants, WorkOrders, AcademyEnrollments, AcademyTenants, InstitutionalBids, ConstructionBids, PendingOutbox, Analytics, KPIVs, and COPQ (BUG-180 & BUG-181)'
-                    )
-                    ON CONFLICT (version) DO NOTHING;
-                """)
-                conn.commit()
-                applied.add("053_purge_synthetic_seed_and_test_data_bug_180_181")
-                print("[MIGRATION] 053_purge_synthetic_seed_and_test_data_bug_180_181 successfully applied and recorded.", flush=True)
-
-                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
-                    try:
-                        import psycopg2
-                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
-                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
-                        try:
-                            apply_migration_053_purge_synthetic_seed_and_test_data(adb_conn)
-                            print("[MIGRATION] 053 synchronized to sibling Azure database sigmajan-adb.", flush=True)
-                        finally:
-                            adb_conn.close()
-                    except Exception as adb_err:
-                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 053 sync skipped: {adb_err}", flush=True)
+                try:
+                    print("[MIGRATION] Applying 053_purge_synthetic_seed_and_test_data_bug_180_181...", flush=True)
+                    apply_migration_053_purge_synthetic_seed_and_test_data(conn)
+                    cur.execute("""
+                        INSERT INTO "schema_migrations" (version, description)
+                        VALUES (
+                            '053_purge_synthetic_seed_and_test_data_bug_180_181',
+                            'Purge synthetic seed records, Bosanna/sample demo rows, internal draft quote bids, duplicate BidDocuments, and uncleaned test rows across Leads, Employees, JobApplicants, WorkOrders, AcademyEnrollments, AcademyTenants, InstitutionalBids, ConstructionBids, PendingOutbox, Analytics, KPIVs, and COPQ (BUG-180 & BUG-181)'
+                        )
+                        ON CONFLICT (version) DO NOTHING;
+                    """)
+                    conn.commit()
+                    applied.add("053_purge_synthetic_seed_and_test_data_bug_180_181")
+                    print("[MIGRATION] 053_purge_synthetic_seed_and_test_data_bug_180_181 successfully applied and recorded.", flush=True)
+                except Exception as m053_err:
+                    conn.rollback()
+                    print(f"[MIGRATION ERROR] 053 failed and rolled back cleanly: {m053_err}", flush=True)
 
             # Migration 054: BUG-182 Workforce Anti-Duplicate Unique Indexes, Salted Tax-ID HMAC & Cross-Track Gate
             if "054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182" not in applied:
-                print("[MIGRATION] Applying 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182...", flush=True)
-                apply_migration_054_workforce_dedup_and_tin_hmac(conn)
-                cur.execute("""
-                    INSERT INTO "schema_migrations" (version, description)
-                    VALUES (
-                        '054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182',
-                        'Add partial UNIQUE normalized phone and lowercase email indexes across JobApplicants, Employees, and SubcontractorPartners, backfill salted HMAC-SHA256 Tax-ID blind hashes (ssn_hmac / ein_hmac), merge existing Candidate Pool duplicates, and stamp cross-track 1099 overlaps (BUG-182)'
-                    )
-                    ON CONFLICT (version) DO NOTHING;
-                """)
-                conn.commit()
-                applied.add("054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182")
-                print("[MIGRATION] 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182 successfully applied and recorded.", flush=True)
-
-                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
-                    try:
-                        import psycopg2
-                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
-                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
-                        try:
-                            apply_migration_054_workforce_dedup_and_tin_hmac(adb_conn)
-                            print("[MIGRATION] 054 synchronized to sibling Azure database sigmajan-adb.", flush=True)
-                        finally:
-                            adb_conn.close()
-                    except Exception as adb_err:
-                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 054 sync skipped: {adb_err}", flush=True)
+                try:
+                    print("[MIGRATION] Applying 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182...", flush=True)
+                    apply_migration_054_workforce_dedup_and_tin_hmac(conn)
+                    cur.execute("""
+                        INSERT INTO "schema_migrations" (version, description)
+                        VALUES (
+                            '054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182',
+                            'Add partial UNIQUE normalized phone and lowercase email indexes across JobApplicants, Employees, and SubcontractorPartners, backfill salted HMAC-SHA256 Tax-ID blind hashes (ssn_hmac / ein_hmac), merge existing Candidate Pool duplicates, and stamp cross-track 1099 overlaps (BUG-182)'
+                        )
+                        ON CONFLICT (version) DO NOTHING;
+                    """)
+                    conn.commit()
+                    applied.add("054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182")
+                    print("[MIGRATION] 054_workforce_dedup_tin_hmac_and_crosstrack_gate_bug_182 successfully applied and recorded.", flush=True)
+                except Exception as m054_err:
+                    conn.rollback()
+                    print(f"[MIGRATION ERROR] 054 failed and rolled back cleanly: {m054_err}", flush=True)
 
             # Migration 055: BUG-186 Walkthrough Calendar Lifecycle Columns (Event ID & Conductor Mailbox)
             if "055_walkthrough_calendar_lifecycle_columns_bug_186" not in applied:
-                print("[MIGRATION] Applying 055_walkthrough_calendar_lifecycle_columns_bug_186...", flush=True)
-                apply_migration_055_walkthrough_calendar_lifecycle(conn)
-                cur.execute("""
-                    INSERT INTO "schema_migrations" (version, description)
-                    VALUES (
-                        '055_walkthrough_calendar_lifecycle_columns_bug_186',
-                        'Add walkthrough_event_id and walkthrough_conductor_email columns to Leads for Outlook reschedule and cancel lifecycle parity (BUG-186)'
-                    )
-                    ON CONFLICT (version) DO NOTHING;
-                """)
-                conn.commit()
-                applied.add("055_walkthrough_calendar_lifecycle_columns_bug_186")
-                print("[MIGRATION] 055_walkthrough_calendar_lifecycle_columns_bug_186 successfully applied and recorded.", flush=True)
-
-                if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
-                    try:
-                        import psycopg2
-                        adb_url = target_db_url.replace("/sigmajan-db", "/sigmajan-adb")
-                        adb_conn = psycopg2.connect(adb_url, connect_timeout=5)
-                        try:
-                            apply_migration_055_walkthrough_calendar_lifecycle(adb_conn)
-                        finally:
-                            adb_conn.close()
-                    except Exception as adb_err:
-                        print(f"[MIGRATION NOTICE] Sibling sigmajan-adb 055 sync skipped: {adb_err}", flush=True)
+                try:
+                    print("[MIGRATION] Applying 055_walkthrough_calendar_lifecycle_columns_bug_186...", flush=True)
+                    apply_migration_055_walkthrough_calendar_lifecycle(conn)
+                    cur.execute("""
+                        INSERT INTO "schema_migrations" (version, description)
+                        VALUES (
+                            '055_walkthrough_calendar_lifecycle_columns_bug_186',
+                            'Add walkthrough_event_id and walkthrough_conductor_email columns to Leads for Outlook reschedule and cancel lifecycle parity (BUG-186)'
+                        )
+                        ON CONFLICT (version) DO NOTHING;
+                    """)
+                    conn.commit()
+                    applied.add("055_walkthrough_calendar_lifecycle_columns_bug_186")
+                    print("[MIGRATION] 055_walkthrough_calendar_lifecycle_columns_bug_186 successfully applied and recorded.", flush=True)
+                except Exception as m055_err:
+                    conn.rollback()
+                    print(f"[MIGRATION ERROR] 055 failed and rolled back cleanly: {m055_err}", flush=True)
 
             # Migration 056: BUG-188 Repair Unsent Campaign Self-Opens & Restore PendingOutbox Drafts (Option A)
             if "056_repair_unsent_campaign_self_opens_bug_188" not in applied:
-                print("[MIGRATION] Applying 056_repair_unsent_campaign_self_opens_bug_188...", flush=True)
-                apply_migration_056_fix_unsent_campaign_self_opens(conn)
-                cur.execute("""
-                    INSERT INTO "schema_migrations" (version, description)
-                    VALUES (
-                        '056_repair_unsent_campaign_self_opens_bug_188',
-                        'Restore unsent CampaignRecipients and PendingOutbox drafts falsely marked OPENED by admin preview pixel and recompute MarketingCampaigns counters (BUG-188 Option A)'
-                    )
-                    ON CONFLICT (version) DO NOTHING;
-                """)
-                conn.commit()
-                applied.add("056_repair_unsent_campaign_self_opens_bug_188")
-                print("[MIGRATION] 056_repair_unsent_campaign_self_opens_bug_188 successfully applied and recorded.", flush=True)
+                try:
+                    print("[MIGRATION] Applying 056_repair_unsent_campaign_self_opens_bug_188...", flush=True)
+                    apply_migration_056_fix_unsent_campaign_self_opens(conn)
+                    cur.execute("""
+                        INSERT INTO "schema_migrations" (version, description)
+                        VALUES (
+                            '056_repair_unsent_campaign_self_opens_bug_188',
+                            'Restore unsent CampaignRecipients and PendingOutbox drafts falsely marked OPENED by admin preview pixel and recompute MarketingCampaigns counters (BUG-188 Option A)'
+                        )
+                        ON CONFLICT (version) DO NOTHING;
+                    """)
+                    conn.commit()
+                    applied.add("056_repair_unsent_campaign_self_opens_bug_188")
+                    print("[MIGRATION] 056_repair_unsent_campaign_self_opens_bug_188 successfully applied and recorded.", flush=True)
+                except Exception as m056_err:
+                    conn.rollback()
+                    print(f"[MIGRATION ERROR] 056 failed and rolled back cleanly: {m056_err}", flush=True)
 
             # Continuous Neural Scar & Vector Parity Gate (Local + Azure sigmajan-db / sigmajan-adb)
-            ensure_sigma_knowledge_scars_parity(conn)
+            try:
+                ensure_sigma_knowledge_scars_parity(conn)
+            except Exception as scar_err:
+                conn.rollback()
+                print(f"[MIGRATION NOTICE] Scar parity sync notice: {scar_err}", flush=True)
             if target_db_url and "sigmajan-server" in target_db_url and "/sigmajan-db" in target_db_url:
                 try:
                     import psycopg2
@@ -3230,8 +3212,9 @@ def apply_migration_053_purge_synthetic_seed_and_test_data(conn: Any) -> dict:
     internal draft quote ingestions, duplicate BidDocuments, and leftover test-suite
     rows across both Local Dev and Azure Production PostgreSQL databases.
     """
+    import psycopg2.extensions
     summary: dict[str, int] = {}
-    with conn.cursor() as cur:
+    with conn.cursor(cursor_factory=psycopg2.extensions.cursor) as cur:
         # 1. Predicate-guarded synthetic & test Leads (protects empirical leads across divergent ID sequences)
         cur.execute("""
             SELECT id FROM "Leads"
@@ -4088,12 +4071,14 @@ def _deterministic_scar_embedding(text: str) -> list:
 
 def ensure_sigma_knowledge_scars_parity(conn: Any) -> None:
     """Guarantees SigmaKnowledgeScars vector/tsvector columns and full seed parity across Local & Azure."""
+    import json
+    import psycopg2.extensions
     seed_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "sigma_knowledge_scars_seed.json",
     )
     has_vector = False
-    with conn.cursor() as cur:
+    with conn.cursor(cursor_factory=psycopg2.extensions.cursor) as cur:
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS "SigmaKnowledgeScars" (
