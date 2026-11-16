@@ -2935,13 +2935,13 @@ def sigma_executive():
                     current_app.logger.error(f"[EXECUTIVE_ACTION_ERROR] Action '{action}' failed: {e}")
                     flash(f"Executive Action Failed: Unable to complete {action}. System error logged.", "error")
 
+                ref = request.referrer or ""
+                if "operations" in ref or "marketing" in ref:
+                    return redirect(url_for("admin_operations", view="marketing"))
+
                 redirect_tab = ""
                 if action and "social" in action: redirect_tab = "#social"
-                elif action and "email" in action:
-                    ref = request.referrer or ""
-                    if "operations" in ref or "marketing" in ref:
-                        return redirect(url_for("admin_operations", view="marketing"))
-                    redirect_tab = "#outbox"
+                elif action and "email" in action: redirect_tab = "#outbox"
                 elif action and "user" in action: redirect_tab = "#users"
                 elif action and "kpiv" in action: redirect_tab = "#tools"
                 return redirect(url_for("sigma_executive") + redirect_tab)

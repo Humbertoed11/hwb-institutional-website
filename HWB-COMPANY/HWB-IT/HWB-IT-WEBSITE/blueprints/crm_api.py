@@ -3282,7 +3282,7 @@ def api_batch_lead_action():
                     cur.execute('''
                         DELETE FROM "PendingOutbox"
                         WHERE recipient_id = ANY(%s) 
-                          AND UPPER(status) IN ('PENDING', 'AWAITING_APPROVAL', 'STAGED', 'QUEUED');
+                          AND UPPER(status) IN ('PENDING', 'AWAITING_APPROVAL', 'STAGED', 'QUEUED', 'REJECTED', 'CANCELLED');
                     ''', (recip_ids,))
 
                 # 2. Delete recipient enrollment records
@@ -10905,6 +10905,7 @@ def api_marketing_outbox_batch():
 
             affected_campaigns = set()
             success_count, error_count, throttled_count, suppressed_count = 0, 0, 0, 0
+            last_error_reason = ""
             dispatched_ids = []
 
             for msg in pending_msgs:
@@ -10975,6 +10976,7 @@ def api_marketing_outbox_batch():
                         dispatched_ids.append(eid)
                     else:
                         error_count += 1
+                        last_error_reason = str(reason or "Microsoft Graph transmission error")
                 elif action in ('reject', 'cancel'):
                     cur.execute("UPDATE \"PendingOutbox\" SET status = 'CANCELLED' WHERE id = %s", (eid,))
                     cur.execute('''
@@ -11013,15 +11015,22 @@ def api_marketing_outbox_batch():
             })
 
             conn.commit()
+            try:
+                from blueprints.operations import invalidate_operations_caches
+                invalidate_operations_caches()
+            except Exception:
+                pass
             action_desc = "cancelled" if action in ('reject', 'cancel') else "released"
             extra_notes = []
             if throttled_count:
                 extra_notes.append(f"{throttled_count} held by daily throttle limit")
             if suppressed_count:
                 extra_notes.append(f"{suppressed_count} blocked by DNC/Suppression")
+            if error_count and last_error_reason:
+                extra_notes.append(f"{error_count} failed: {last_error_reason[:120]}")
             note_suffix = f" ({', '.join(extra_notes)})" if extra_notes else ""
             return jsonify({
-                'status': 'success',
+                'status': 'success' if (success_count > 0 or error_count == 0) else 'error',
                 'action': action,
                 'processed': len(pending_msgs),
                 'successful': success_count,

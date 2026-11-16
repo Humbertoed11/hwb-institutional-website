@@ -10549,21 +10549,110 @@
         .catch(err => showToast('Error saving edits: ' + err, 'error'));
     }
 
+    function _applySingleOutboxDomUpdate(emailId, wasSent) {
+        const row = document.getElementById('outbox-row-' + emailId);
+        if (row) {
+            row.style.transition = 'opacity 0.25s ease';
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+            }, 240);
+        }
+
+        const badge = document.getElementById('outbox-queued-badge');
+        if (badge) {
+            const curQ = Math.max(0, parseInt(badge.dataset.queued || '1', 10) - 1);
+            badge.dataset.queued = String(curQ);
+            badge.innerText = curQ + ' Messages Queued';
+        }
+
+        const kpi = document.getElementById('mkt-kpi-sent-queued');
+        if (kpi) {
+            let sentCnt = parseInt(kpi.dataset.sent || '0', 10);
+            let queuedCnt = Math.max(0, parseInt(kpi.dataset.queued || '1', 10) - 1);
+            if (wasSent) sentCnt += 1;
+            kpi.dataset.sent = String(sentCnt);
+            kpi.dataset.queued = String(queuedCnt);
+            kpi.innerHTML = `<i class="fas fa-paper-plane"></i> ${sentCnt} Sent · ${queuedCnt} Queued`;
+        }
+
+        document.querySelectorAll(`.recipient-status-cell[data-outbox-id="${emailId}"]`).forEach(cell => {
+            if (wasSent) {
+                cell.innerHTML = `<span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;"><i class="fas fa-paper-plane"></i> Sent (Awaiting Open)</span>`;
+            } else {
+                const tr = cell.closest('tr');
+                if (tr) tr.remove();
+            }
+        });
+    }
+
+    function releaseSingleOutboxEmail(emailId, btn) {
+        if (!emailId) return;
+        const row = document.getElementById('outbox-row-' + emailId);
+        const recipLabel = (row && row.dataset && row.dataset.recipient) ? row.dataset.recipient : ('#' + emailId);
+        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Sending...');
+
+        fetch('/api/v1/marketing/outbox/batch-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({action: 'approve', email_ids: [parseInt(emailId, 10)]})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            if (data.status === 'success' && (data.successful || 0) > 0) {
+                _applySingleOutboxDomUpdate(emailId, true);
+                showToast('Email #' + emailId + ' sent to ' + recipLabel + '!', 'success');
+            } else {
+                showToast(data.message || 'Could not send email #' + emailId + '.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            showToast('Error releasing email: ' + err, 'error');
+        });
+    }
+
+    function rejectSingleOutboxEmail(emailId, btn) {
+        if (!emailId) return;
+        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Removing...');
+
+        fetch('/api/v1/marketing/outbox/batch-action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
+            body: JSON.stringify({action: 'reject', email_ids: [parseInt(emailId, 10)]})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            if (data.status === 'success' && (data.successful || 0) > 0) {
+                _applySingleOutboxDomUpdate(emailId, false);
+                showToast('Queued email #' + emailId + ' removed from outbox.', 'info');
+            } else {
+                showToast(data.message || 'Could not reject email #' + emailId + '.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            showToast('Error rejecting email: ' + err, 'error');
+        });
+    }
+
     function releaseEmailFromReview() {
         const emailId = parseInt(document.getElementById('edit-outbox-id').value);
         if (!emailId) return;
 
         fetch('/api/v1/marketing/outbox/batch-action', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
             body: JSON.stringify({action: 'approve', email_ids: [emailId]})
         })
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') {
-                showToast('Email released via Microsoft Graph API!', 'success');
+            if (data.status === 'success' && (data.successful || 0) > 0) {
+                showToast('Email #' + emailId + ' released via Microsoft Graph API!', 'success');
                 closeModal('modal-review-email');
-                setTimeout(() => { location.reload(); }, 800);
+                _applySingleOutboxDomUpdate(emailId, true);
             } else {
                 showToast(data.message || 'Release failed.', 'error');
             }

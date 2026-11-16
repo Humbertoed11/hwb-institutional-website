@@ -8223,6 +8223,92 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             conn.commit()
             conn.close()
 
+    def test_61_outbox_single_release_in_place_and_button_lock_submitter_preservation_bug_189(self):
+        """
+        BUG-189 Regression Gate:
+        1. sigma_button_lock.js preserves submitter name/value as a hidden input before disabling the button.
+        2. /admin/operations?view=marketing renders in-place releaseSingleOutboxEmail() / rejectSingleOutboxEmail() buttons
+           instead of a full-page POST to /admin/executive that throws the user out of the view.
+        3. /admin/executive POST fallback keeps Referer=/admin/operations?view=marketing on view=marketing even if action is absent.
+        """
+        import uuid
+        from unittest.mock import patch
+
+        # 1. Verify sigma_button_lock.js preserves submitBtn.name before spinAndLock() disables it
+        r_lock = self.client.get("/static/js/sigma_button_lock.js")
+        lock_js = r_lock.get_data(as_text=True)
+        r_lock.close()
+        self.assertIn("data-sigma-submitter-clone", lock_js)
+        self.assertLess(
+            lock_js.index("data-sigma-submitter-clone"),
+            lock_js.rindex("spinAndLock(submitBtn);"),
+        )
+
+        # 2. Verify JS handlers exist in backoffice_operations_core.js
+        r_core = self.client.get("/static/js/backoffice_operations_core.js")
+        core_js = r_core.get_data(as_text=True)
+        r_core.close()
+        self.assertIn("function releaseSingleOutboxEmail(", core_js)
+        self.assertIn("function rejectSingleOutboxEmail(", core_js)
+        self.assertIn("function _applySingleOutboxDomUpdate(", core_js)
+
+        # 3. Verify live Outbox card in /admin/operations?view=marketing uses in-place buttons and batch-action sends cleanly
+        conn = get_db(app.config["DATABASE_URL"])
+        outbox_id = None
+        try:
+            tok = f"bug189_{uuid.uuid4().hex[:10]}"
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''
+                    INSERT INTO "PendingOutbox" (recipient, subject, body, created_at, status, tracking_token)
+                    VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s)
+                    RETURNING id;
+                    ''',
+                    ("bug189-audit@example.com", "BUG-189 Audit", "<p>Hi Director,</p>", tok),
+                )
+                outbox_id = cur.fetchone()["id"]
+            conn.commit()
+
+            auth_client = app.test_client()
+            with auth_client.session_transaction() as sess:
+                sess["_user_id"] = "1"
+                sess["_fresh"] = True
+
+            r_mkt = auth_client.get("/admin/operations?view=marketing")
+            mkt_html = r_mkt.get_data(as_text=True)
+            r_mkt.close()
+            self.assertEqual(r_mkt.status_code, 200)
+            self.assertIn(f"releaseSingleOutboxEmail({outbox_id}, this)", mkt_html)
+            self.assertIn(f"rejectSingleOutboxEmail({outbox_id}, this)", mkt_html)
+
+            # Fallback guard on /admin/executive when action is missing
+            r_exec = auth_client.post(
+                "/admin/executive",
+                data={"email_id": str(outbox_id)},
+                headers={"Referer": "https://www.hwbcleaning.com/admin/operations?view=marketing"},
+            )
+            r_exec.close()
+            self.assertEqual(r_exec.status_code, 302)
+            self.assertIn("/admin/operations?view=marketing", r_exec.headers.get("Location", ""))
+
+            # Single-item AJAX release via batch-action
+            with patch("blueprints.crm_api.transmit_email", return_value=(True, "mocked")):
+                r_send = auth_client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "email_ids": [outbox_id]},
+                )
+                send_data = r_send.get_json()
+                r_send.close()
+                self.assertEqual(r_send.status_code, 200)
+                self.assertEqual(send_data["successful"], 1)
+        finally:
+            conn.rollback()
+            if outbox_id:
+                with conn.cursor() as cur:
+                    cur.execute('DELETE FROM "PendingOutbox" WHERE id = %s;', (outbox_id,))
+                conn.commit()
+            conn.close()
+
 
 if __name__ == "__main__":
     unittest.main()

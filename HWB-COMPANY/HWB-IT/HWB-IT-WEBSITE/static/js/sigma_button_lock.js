@@ -36,6 +36,7 @@
         if (rawText.includes('export') || rawText.includes('download')) return 'Exporting...';
         if (rawText.includes('log in') || rawText.includes('login') || rawText.includes('sign in')) return 'Logging In...';
         if (rawText.includes('approve')) return 'Approving...';
+        if (rawText.includes('release')) return 'Releasing...';
         if (rawText.includes('reject')) return 'Rejecting...';
         if (rawText.includes('clock in')) return 'Clocking In...';
         if (rawText.includes('clock out')) return 'Clocking Out...';
@@ -101,6 +102,10 @@
         btn.disabled = false;
         btn.removeAttribute('aria-busy');
         btn.removeAttribute('aria-disabled');
+
+        if (btn.form) {
+            btn.form.querySelectorAll('input[data-sigma-submitter-clone="1"]').forEach(el => el.remove());
+        }
 
         if (btn.dataset.originalHtml) {
             btn.innerHTML = btn.dataset.originalHtml;
@@ -237,6 +242,17 @@
         }
 
         // Standard full-page form submission:
+        // Preserve submitter name/value BEFORE spinAndLock sets btn.disabled = true
+        // (HTML5 excludes disabled submit buttons from FormData — BUG-189).
+        if (submitBtn.name) {
+            form.querySelectorAll('input[data-sigma-submitter-clone="1"]').forEach(el => el.remove());
+            const hiddenAction = document.createElement('input');
+            hiddenAction.type = 'hidden';
+            hiddenAction.name = submitBtn.name;
+            hiddenAction.value = submitBtn.value || '';
+            hiddenAction.setAttribute('data-sigma-submitter-clone', '1');
+            form.appendChild(hiddenAction);
+        }
         spinAndLock(submitBtn);
 
         // Special handling for file exports and downloads (where page does not reload)
