@@ -2900,24 +2900,41 @@
                 </div>
             </div>
 
-            <!-- Outbox Review and Approval Section -->
+            <!-- Outbox Review and Delivery Status Section -->
             {% if pending_outbox_items %}
-            <div id="outbox-review-card" class="isc-card fluid-data" style="margin-bottom: 2rem; border-left: 4px solid #f59e0b; background: #fffdfa;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+            {% set ns_ob = namespace(pending=0, sent=0, issue=0, rejected=0) %}
+            {% for ob in pending_outbox_items %}
+                {% set ob_st = (ob.status or '')|upper %}
+                {% set cr_st = (ob.cr_status or '')|upper %}
+                {% if ob_st in ['BOUNCED', 'RETURNED', 'FAILED', 'SUPPRESSED'] or cr_st in ['BOUNCED', 'RETURNED', 'FAILED'] %}
+                    {% set ns_ob.issue = ns_ob.issue + 1 %}
+                {% elif ob_st in ['SENT', 'DISPATCHED', 'OPENED'] or cr_st in ['SENT', 'OPENED', 'ENGAGED'] %}
+                    {% set ns_ob.sent = ns_ob.sent + 1 %}
+                {% elif ob_st in ['REJECTED', 'CANCELLED'] %}
+                    {% set ns_ob.rejected = ns_ob.rejected + 1 %}
+                {% else %}
+                    {% set ns_ob.pending = ns_ob.pending + 1 %}
+                {% endif %}
+            {% endfor %}
+            <div id="outbox-review-card" class="isc-card fluid-data" style="margin-bottom: 2rem; border-left: 4px solid #f59e0b; background: #ffffff;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
                     <div>
-                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Outbox Waiting for Review (CEO Approval)
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-shield-alt" style="color: #f59e0b;"></i> Outbox Review &amp; Live Delivery Status
                         </h3>
-                        <p style="margin: 0.2rem 0 0 0; font-size: 0.78rem; color: #78350f; font-weight: 600;">
-                            Review and approve each message before it leaves. No email sends without your sign-off.
+                        <p style="margin: 0.2rem 0 0 0; font-size: 0.78rem; color: var(--slate-600); font-weight: 600;">
+                            Released rows turn green in place; returned bounces turn orange; send errors turn red with one-click retry.
                         </p>
                     </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <span id="outbox-queued-badge" data-queued="{{ pending_outbox_items|length }}" class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
-                            {{ pending_outbox_items|length }} Messages Queued
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <span id="outbox-queued-badge" data-queued="{{ ns_ob.pending }}" class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.75rem; padding: 0.35rem 0.65rem;">
+                            {{ ns_ob.pending }} Waiting Approval
                         </span>
+                        <button type="button" onclick="syncOutboxBounces(this)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem; font-weight: 700; color: #ea580c; border-color: #fdba74; background: #fff7ed; border-radius: 6px;" title="Check Microsoft 365 Inbox for any returned or bounced emails">
+                            <i class="fas fa-undo-alt"></i> Check Returns
+                        </button>
                         <button type="button" onclick="executeOutboxBatch('reject', 500)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; color: #dc2626; border-color: #fca5a5; background: #ffffff; border-radius: 6px;" title="Cancel all queued drafts immediately">
-                            <i class="fas fa-trash-alt"></i> Cancel All Queued
+                            <i class="fas fa-trash-alt"></i> Cancel Queued
                         </button>
                         <button type="button" onclick="executeOutboxBatch('approve', 10)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.85rem; font-size: 0.75rem; font-weight: 800; background: #10b981; border-color: #059669; border-radius: 6px;">
                             <i class="fas fa-paper-plane"></i> Batch Release Next 10
@@ -2925,38 +2942,145 @@
                     </div>
                 </div>
 
-                <div style="overflow-x: auto;">
+                <!-- Color-Coded Status Filter Bar -->
+                <div id="outbox-status-filter-bar" style="display: flex; gap: 0.45rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.9rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--slate-200);">
+                    <button type="button" data-filter="all" onclick="filterOutboxByState('all', this)" class="isc-btn isc-btn-primary outbox-filter-pill" style="height: 32px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px;">
+                        All (<span id="ob-cnt-all">{{ pending_outbox_items|length }}</span>)
+                    </button>
+                    <button type="button" data-filter="pending" onclick="filterOutboxByState('pending', this)" class="isc-btn isc-btn-outline outbox-filter-pill" style="height: 32px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; color: #92400e; border-color: #fde68a; background: #fffbeb;">
+                        Waiting (<span id="ob-cnt-pending">{{ ns_ob.pending }}</span>)
+                    </button>
+                    <button type="button" data-filter="sent" onclick="filterOutboxByState('sent', this)" class="isc-btn isc-btn-outline outbox-filter-pill" style="height: 32px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; color: #065f46; border-color: #86efac; background: #ecfdf5;">
+                        Sent / Opened (<span id="ob-cnt-sent">{{ ns_ob.sent }}</span>)
+                    </button>
+                    <button type="button" data-filter="issue" onclick="filterOutboxByState('issue', this)" class="isc-btn isc-btn-outline outbox-filter-pill" style="height: 32px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; color: #9a3412; border-color: #fdba74; background: #fff7ed;">
+                        Returned / Failed (<span id="ob-cnt-issue">{{ ns_ob.issue }}</span>)
+                    </button>
+                    <button type="button" data-filter="rejected" onclick="filterOutboxByState('rejected', this)" class="isc-btn isc-btn-outline outbox-filter-pill" style="height: 32px; padding: 0 0.75rem; font-size: 0.74rem; font-weight: 800; border-radius: 6px; color: #475569; border-color: #cbd5e1; background: #f8fafc;">
+                        Rejected (<span id="ob-cnt-rejected">{{ ns_ob.rejected }}</span>)
+                    </button>
+                </div>
+
+                <div style="overflow-x: auto; max-height: 540px;">
                     <table class="sigma-table" style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem;">
-                        <thead>
-                            <tr style="background: #fef8ee; border-bottom: 1px solid #fde68a; text-align: left;">
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: #92400e; font-size: 0.72rem; text-transform: uppercase;">ID</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: #92400e; font-size: 0.72rem; text-transform: uppercase;">Recipient</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: #92400e; font-size: 0.72rem; text-transform: uppercase;">Subject Line</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: #92400e; font-size: 0.72rem; text-transform: uppercase;">Preview</th>
-                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: #92400e; font-size: 0.72rem; text-transform: uppercase; text-align: right;">CEO Action</th>
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                            <tr style="background: #f8fafc; border-bottom: 1.5px solid var(--slate-200); text-align: left;">
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">ID</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Facility &amp; Recipient</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Subject Line</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase;">Delivery Status</th>
+                                <th style="padding: 0.65rem 0.85rem; font-weight: 800; color: var(--slate-600); font-size: 0.72rem; text-transform: uppercase; text-align: right;">CEO Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in pending_outbox_items %}
-                            <tr id="outbox-row-{{ item.id }}" data-outbox-id="{{ item.id }}" data-recipient="{{ item.recipient }}" style="border-bottom: 1px solid #fef3c7;">
-                                <td style="padding: 0.75rem 0.85rem; font-weight: 800; color: #92400e;">#{{ item.id }}</td>
-                                <td style="padding: 0.75rem 0.85rem; font-weight: 700; color: var(--slate-800);">{{ item.recipient }}</td>
-                                <td style="padding: 0.75rem 0.85rem; font-weight: 700; color: var(--slate-900); max-width: 280px;">{{ item.subject }}</td>
-                                <td style="padding: 0.75rem 0.85rem; color: var(--slate-500); font-size: 0.75rem; max-width: 320px; line-height: 1.35;">
-                                    {{ item.body_preview|striptags }}...
+                            {% set st_up = (item.status or 'PENDING')|upper %}
+                            {% set cr_up = (item.cr_status or '')|upper %}
+                            {% if cr_up in ['BOUNCED', 'RETURNED'] or st_up in ['BOUNCED', 'RETURNED'] %}
+                                {% set row_group = 'issue' %}
+                                {% set row_bg = '#fff7ed' %}
+                                {% set row_bdr = '#ea580c' %}
+                            {% elif st_up == 'FAILED' or cr_up == 'FAILED' %}
+                                {% set row_group = 'issue' %}
+                                {% set row_bg = '#fef2f2' %}
+                                {% set row_bdr = '#dc2626' %}
+                            {% elif st_up == 'SUPPRESSED' or cr_up == 'UNSUBSCRIBED' %}
+                                {% set row_group = 'issue' %}
+                                {% set row_bg = '#faf5ff' %}
+                                {% set row_bdr = '#9333ea' %}
+                            {% elif (item.click_count and item.click_count > 0) or cr_up == 'ENGAGED' %}
+                                {% set row_group = 'sent' %}
+                                {% set row_bg = '#ccfbf1' %}
+                                {% set row_bdr = '#0d9488' %}
+                            {% elif item.sent_at and ((item.open_count and item.open_count > 0) or item.opened_at or st_up == 'OPENED' or cr_up == 'OPENED') %}
+                                {% set row_group = 'sent' %}
+                                {% set row_bg = '#dcfce7' %}
+                                {% set row_bdr = '#16a34a' %}
+                            {% elif st_up in ['SENT', 'DISPATCHED'] or cr_up == 'SENT' %}
+                                {% set row_group = 'sent' %}
+                                {% set row_bg = '#ecfdf5' %}
+                                {% set row_bdr = '#10b981' %}
+                            {% elif st_up in ['REJECTED', 'CANCELLED'] %}
+                                {% set row_group = 'rejected' %}
+                                {% set row_bg = '#f8fafc' %}
+                                {% set row_bdr = '#94a3b8' %}
+                            {% else %}
+                                {% set row_group = 'pending' %}
+                                {% set row_bg = '#fffdf5' %}
+                                {% set row_bdr = '#f59e0b' %}
+                            {% endif %}
+                            <tr id="outbox-row-{{ item.id }}" class="outbox-item-row" data-outbox-id="{{ item.id }}" data-campaign-id="{{ item.campaign_id or '' }}" data-recipient="{{ item.recipient }}" data-state-group="{{ row_group }}" style="background: {{ row_bg }}; border-bottom: 1px solid var(--slate-200); transition: background 0.25s ease;">
+                                <td class="outbox-id-cell" style="padding: 0.75rem 0.85rem; font-weight: 800; color: var(--slate-800); border-left: 4px solid {{ row_bdr }};">#{{ item.id }}</td>
+                                <td style="padding: 0.75rem 0.85rem;">
+                                    {% if item.facility_name %}
+                                    <div style="font-weight: 800; color: var(--slate-900);">{{ item.facility_name }}{% if item.city %} <span style="font-weight: 600; color: var(--slate-500); font-size: 0.74rem;">({{ item.city }})</span>{% endif %}</div>
+                                    {% endif %}
+                                    <div style="font-weight: 700; color: var(--brand); font-size: 0.78rem;">{{ item.recipient }}</div>
                                 </td>
-                                <td style="padding: 0.75rem 0.85rem; text-align: right; white-space: nowrap;">
-                                    <button type="button" onclick="openEmailReviewModal({{ item.id }})" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; color: #0284c7; border-color: #38bdf8; border-radius: 4px; margin-right: 0.35rem;" title="Inspect full letterhead preview and edit text">
-                                        <i class="fas fa-search-plus"></i> Inspect &amp; Edit
+                                <td style="padding: 0.75rem 0.85rem; font-weight: 700; color: var(--slate-900); max-width: 280px;">
+                                    <div>{{ item.subject }}</div>
+                                    <div style="color: var(--slate-500); font-size: 0.72rem; font-weight: 500; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 270px;">{{ item.body_preview|striptags }}</div>
+                                </td>
+                                <td class="outbox-status-cell" style="padding: 0.75rem 0.85rem; white-space: nowrap;">
+                                    {% if cr_up in ['BOUNCED', 'RETURNED'] or st_up in ['BOUNCED', 'RETURNED'] %}
+                                        <span class="isc-badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-undo-alt"></i> Returned (Bounced)
+                                        </span>
+                                        {% if item.skip_reason %}<div style="font-size: 0.68rem; color: #c2410c; margin-top: 0.15rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ item.skip_reason }}</div>{% endif %}
+                                    {% elif st_up == 'FAILED' or cr_up == 'FAILED' %}
+                                        <span class="isc-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-exclamation-triangle"></i> Send Failed
+                                        </span>
+                                        {% if item.skip_reason %}<div style="font-size: 0.68rem; color: #b91c1c; margin-top: 0.15rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ item.skip_reason }}</div>{% endif %}
+                                    {% elif st_up == 'SUPPRESSED' or cr_up == 'UNSUBSCRIBED' %}
+                                        <span class="isc-badge" style="background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-ban"></i> Blocked (Opt-Out / DNC)
+                                        </span>
+                                    {% elif (item.click_count and item.click_count > 0) or cr_up == 'ENGAGED' %}
+                                        <span class="isc-badge" style="background: #99f6e4; color: #115e59; border: 1px solid #5eead4; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-calendar-check"></i> Clicked Calendar
+                                        </span>
+                                        {% if item.clicked_at %}<div style="font-size: 0.68rem; color: #0f766e; font-weight: 700; margin-top: 0.15rem;">{{ item.clicked_at.strftime('%m/%d %I:%M %p') }}</div>{% endif %}
+                                    {% elif item.sent_at and ((item.open_count and item.open_count > 0) or item.opened_at or st_up == 'OPENED' or cr_up == 'OPENED') %}
+                                        <span class="isc-badge" style="background: #bbf7d0; color: #14532d; border: 1px solid #86efac; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-eye"></i> Opened ({{ item.open_count or 1 }}x)
+                                        </span>
+                                        {% if item.opened_at %}<div style="font-size: 0.68rem; color: #15803d; font-weight: 700; margin-top: 0.15rem;">{{ item.opened_at.strftime('%m/%d %I:%M %p') }}</div>{% endif %}
+                                    {% elif st_up in ['SENT', 'DISPATCHED'] or cr_up == 'SENT' %}
+                                        <span class="isc-badge" style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-check-circle"></i> Sent
+                                        </span>
+                                        {% if item.sent_at %}<div style="font-size: 0.68rem; color: #047857; font-weight: 700; margin-top: 0.15rem;">{{ item.sent_at.strftime('%m/%d %I:%M %p') }}</div>{% endif %}
+                                    {% elif st_up in ['REJECTED', 'CANCELLED'] %}
+                                        <span class="isc-badge" style="background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-times-circle"></i> Rejected
+                                        </span>
+                                    {% else %}
+                                        <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;">
+                                            <i class="fas fa-clock"></i> Waiting Review
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="outbox-action-cell" style="padding: 0.75rem 0.85rem; text-align: right; white-space: nowrap;">
+                                    <button type="button" onclick="openEmailReviewModal({{ item.id }})" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.65rem; font-size: 0.72rem; color: #0284c7; border-color: #38bdf8; background: #ffffff; border-radius: 6px; margin-right: 0.35rem;" title="Inspect full letterhead preview">
+                                        <i class="fas fa-search-plus"></i> Inspect
                                     </button>
-                                    <span style="display: inline-flex; gap: 0.35rem; vertical-align: middle;">
-                                        <button type="button" onclick="releaseSingleOutboxEmail({{ item.id }}, this)" class="isc-btn isc-btn-primary" style="height: 28px; padding: 0 0.65rem; font-size: 0.72rem; background: #10b981; border-color: #10b981; border-radius: 4px;" title="Approve & Send Immediately">
+                                    {% if row_group == 'pending' %}
+                                    <span class="outbox-pending-btns" style="display: inline-flex; gap: 0.35rem; vertical-align: middle;">
+                                        <button type="button" onclick="releaseSingleOutboxEmail({{ item.id }}, this)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.75rem; font-size: 0.72rem; background: #10b981; border-color: #059669; border-radius: 6px;" title="Approve & Send Immediately">
                                             <i class="fas fa-paper-plane"></i> Release
                                         </button>
-                                        <button type="button" onclick="rejectSingleOutboxEmail({{ item.id }}, this)" class="isc-btn isc-btn-outline" style="height: 28px; padding: 0 0.55rem; font-size: 0.72rem; color: #ef4444; border-color: #fca5a5; border-radius: 4px;" title="Reject">
+                                        <button type="button" onclick="rejectSingleOutboxEmail({{ item.id }}, this)" class="isc-btn isc-btn-outline" style="height: 32px; padding: 0 0.6rem; font-size: 0.72rem; color: #ef4444; border-color: #fca5a5; background: #ffffff; border-radius: 6px;" title="Reject">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </span>
+                                    {% elif st_up == 'FAILED' or cr_up == 'FAILED' %}
+                                    <span class="outbox-pending-btns" style="display: inline-flex; gap: 0.35rem; vertical-align: middle;">
+                                        <button type="button" onclick="releaseSingleOutboxEmail({{ item.id }}, this)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.75rem; font-size: 0.72rem; background: #dc2626; border-color: #b91c1c; border-radius: 6px;" title="Retry Sending">
+                                            <i class="fas fa-redo"></i> Retry
+                                        </button>
+                                    </span>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -3035,7 +3159,7 @@
                                 <td style="padding: 0.85rem 1rem; vertical-align: top; font-size: 0.75rem; color: var(--slate-700); font-weight: 600;">
                                     {{ c.sender_persona }}
                                 </td>
-                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                <td id="camp-opens-cell-{{ c.id }}" style="padding: 0.85rem 1rem; vertical-align: top;">
                                     <div style="font-weight: 800; color: #16a34a; font-size: 0.85rem;">
                                         <i class="fas fa-eye"></i> {{ c.opened_count or 0 }} Opens
                                     </div>
@@ -3048,7 +3172,7 @@
                                         {% endif %}
                                     </div>
                                 </td>
-                                <td style="padding: 0.85rem 1rem; vertical-align: top;">
+                                <td id="camp-sent-cell-{{ c.id }}" style="padding: 0.85rem 1rem; vertical-align: top;">
                                     <div style="font-weight: 800; color: var(--slate-900);">{{ c.sent_count or 0 }} Sent / {{ c.total_targets or 0 }} Targets</div>
                                     <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">{{ c.staged_count or 0 }} in Outbox · Max {{ c.daily_throttle_limit or 50 }}/day</div>
                                 </td>
@@ -3152,8 +3276,31 @@
                         </thead>
                         <tbody>
                             {% for r in campaign_recipients %}
-                            <tr class="staged-recipient-row" data-facility="{{ r.facility_name|lower }}" data-director="{{ (r.recipient_name or '')|lower }}" data-email="{{ (r.recipient_email or '')|lower }}" data-city="{{ (r.city or '')|lower }}" style="border-bottom: 1px solid var(--slate-100);">
-                                <td style="padding: 0.7rem 0.5rem; text-align: center;">
+                            {% set r_st = (r.status or '')|upper %}
+                            {% if r_st in ['BOUNCED', 'RETURNED'] %}
+                                {% set rec_bg = '#fff7ed' %}
+                                {% set rec_bdr = '#ea580c' %}
+                            {% elif r_st == 'FAILED' %}
+                                {% set rec_bg = '#fef2f2' %}
+                                {% set rec_bdr = '#dc2626' %}
+                            {% elif r_st == 'UNSUBSCRIBED' %}
+                                {% set rec_bg = '#faf5ff' %}
+                                {% set rec_bdr = '#9333ea' %}
+                            {% elif (r.click_count and r.click_count > 0) or r_st == 'ENGAGED' %}
+                                {% set rec_bg = '#ccfbf1' %}
+                                {% set rec_bdr = '#0d9488' %}
+                            {% elif r.sent_at and (r.opened_at or (r.open_count and r.open_count > 0) or r_st == 'OPENED') %}
+                                {% set rec_bg = '#dcfce7' %}
+                                {% set rec_bdr = '#16a34a' %}
+                            {% elif r_st == 'SENT' or r.sent_at %}
+                                {% set rec_bg = '#ecfdf5' %}
+                                {% set rec_bdr = '#10b981' %}
+                            {% else %}
+                                {% set rec_bg = 'transparent' %}
+                                {% set rec_bdr = 'transparent' %}
+                            {% endif %}
+                            <tr class="staged-recipient-row" data-outbox-id="{{ r.outbox_id or '' }}" data-facility="{{ r.facility_name|lower }}" data-director="{{ (r.recipient_name or '')|lower }}" data-email="{{ (r.recipient_email or '')|lower }}" data-city="{{ (r.city or '')|lower }}" style="background: {{ rec_bg }}; border-bottom: 1px solid var(--slate-100); transition: background 0.25s ease;">
+                                <td class="recipient-check-cell" style="padding: 0.7rem 0.5rem; text-align: center; border-left: 4px solid {{ rec_bdr }};">
                                     <input type="checkbox" class="staged-recipient-check" value="{{ r.id }}" data-lead-id="{{ r.lead_id or '' }}" onchange="updateSelectedRecipientsCount()" style="cursor: pointer;">
                                 </td>
                                 <td style="padding: 0.7rem 0.85rem;">
@@ -3182,18 +3329,38 @@
                                     ${{ "{:,.2f}".format(r.estimated_annual_value) if r.estimated_annual_value else '36,000.00' }}
                                 </td>
                                 <td class="recipient-status-cell" data-outbox-id="{{ r.outbox_id or '' }}" style="padding: 0.7rem 0.85rem;">
-                                    {% if r.sent_at and (r.opened_at or (r.open_count and r.open_count > 0)) %}
-                                        <span class="isc-badge" style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                    {% if r_st in ['BOUNCED', 'RETURNED'] %}
+                                        <span class="isc-badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-undo-alt"></i> Returned (Bounced)
+                                        </span>
+                                        {% if r.skip_reason %}<div style="font-size: 0.68rem; color: #c2410c; margin-top: 0.15rem;">{{ r.skip_reason }}</div>{% endif %}
+                                    {% elif r_st == 'FAILED' %}
+                                        <span class="isc-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-exclamation-triangle"></i> Send Failed
+                                        </span>
+                                        {% if r.skip_reason %}<div style="font-size: 0.68rem; color: #b91c1c; margin-top: 0.15rem;">{{ r.skip_reason }}</div>{% endif %}
+                                    {% elif r_st == 'UNSUBSCRIBED' %}
+                                        <span class="isc-badge" style="background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-ban"></i> Opted Out / Blocked
+                                        </span>
+                                    {% elif (r.click_count and r.click_count > 0) or r_st == 'ENGAGED' %}
+                                        <span class="isc-badge" style="background: #99f6e4; color: #115e59; border: 1px solid #5eead4; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem;">
+                                            <i class="fas fa-calendar-check"></i> Clicked Calendar
+                                        </span>
+                                        {% if r.clicked_at %}<div style="font-size: 0.68rem; color: #0f766e; font-weight: 700; margin-top: 0.15rem;">{{ r.clicked_at.strftime('%m/%d %I:%M %p') }}</div>{% endif %}
+                                    {% elif r.sent_at and (r.opened_at or (r.open_count and r.open_count > 0) or r_st == 'OPENED') %}
+                                        <span class="isc-badge" style="background: #bbf7d0; color: #14532d; border: 1px solid #86efac; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.3rem;">
                                             <i class="fas fa-eye"></i> Opened ({{ r.open_count or 1 }}x)
                                         </span>
-                                        <div style="font-size: 0.68rem; color: #16a34a; font-weight: 600; margin-top: 0.15rem;">
+                                        <div style="font-size: 0.68rem; color: #15803d; font-weight: 700; margin-top: 0.15rem;">
                                             {{ r.opened_at.strftime('%m/%d %I:%M %p') if r.opened_at else 'Verified Read' }}
                                         </div>
-                                    {% elif r.status == 'SENT' %}
-                                        <span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
-                                            <i class="fas fa-paper-plane"></i> Sent (Awaiting Open)
+                                    {% elif r_st == 'SENT' or r.sent_at %}
+                                        <span class="isc-badge" style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
+                                            <i class="fas fa-check-circle"></i> Sent
                                         </span>
-                                    {% elif r.status == 'AWAITING_APPROVAL' %}
+                                        {% if r.sent_at %}<div style="font-size: 0.68rem; color: #047857; font-weight: 700; margin-top: 0.15rem;">{{ r.sent_at.strftime('%m/%d %I:%M %p') }}</div>{% endif %}
+                                    {% elif r_st == 'AWAITING_APPROVAL' %}
                                         <span class="isc-badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;">
                                             <i class="fas fa-clock"></i> In Outbox Queue
                                         </span>

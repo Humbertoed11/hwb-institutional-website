@@ -10549,41 +10549,162 @@
         .catch(err => showToast('Error saving edits: ' + err, 'error'));
     }
 
-    function _applySingleOutboxDomUpdate(emailId, wasSent) {
-        const row = document.getElementById('outbox-row-' + emailId);
-        if (row) {
-            row.style.transition = 'opacity 0.25s ease';
-            row.style.opacity = '0';
-            setTimeout(() => {
-                row.remove();
-            }, 240);
-        }
+    let _activeOutboxStateFilter = 'all';
+
+    function filterOutboxByState(filterKey, btn) {
+        _activeOutboxStateFilter = filterKey || 'all';
+        document.querySelectorAll('.outbox-filter-pill').forEach(p => {
+            const isAct = p.dataset.filter === _activeOutboxStateFilter;
+            p.classList.toggle('isc-btn-primary', isAct);
+            p.classList.toggle('isc-btn-outline', !isAct);
+        });
+        document.querySelectorAll('.outbox-item-row').forEach(row => {
+            const grp = row.dataset.stateGroup || 'pending';
+            row.style.display = (_activeOutboxStateFilter === 'all' || grp === _activeOutboxStateFilter) ? '' : 'none';
+        });
+    }
+
+    function _escapeOutboxHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+    }
+
+    function _recountOutboxFilterPillsAndKpis(campaignSummaries) {
+        const counts = {all: 0, pending: 0, sent: 0, issue: 0, rejected: 0};
+        document.querySelectorAll('.outbox-item-row').forEach(row => {
+            counts.all += 1;
+            const grp = row.dataset.stateGroup || 'pending';
+            if (counts[grp] !== undefined) counts[grp] += 1;
+            row.style.display = (_activeOutboxStateFilter === 'all' || grp === _activeOutboxStateFilter) ? '' : 'none';
+        });
+
+        ['all', 'pending', 'sent', 'issue', 'rejected'].forEach(k => {
+            const el = document.getElementById('ob-cnt-' + k);
+            if (el) el.innerText = String(counts[k]);
+        });
 
         const badge = document.getElementById('outbox-queued-badge');
         if (badge) {
-            const curQ = Math.max(0, parseInt(badge.dataset.queued || '1', 10) - 1);
-            badge.dataset.queued = String(curQ);
-            badge.innerText = curQ + ' Messages Queued';
+            badge.dataset.queued = String(counts.pending);
+            badge.innerText = counts.pending + ' Waiting Approval';
         }
 
-        const kpi = document.getElementById('mkt-kpi-sent-queued');
-        if (kpi) {
-            let sentCnt = parseInt(kpi.dataset.sent || '0', 10);
-            let queuedCnt = Math.max(0, parseInt(kpi.dataset.queued || '1', 10) - 1);
-            if (wasSent) sentCnt += 1;
-            kpi.dataset.sent = String(sentCnt);
-            kpi.dataset.queued = String(queuedCnt);
-            kpi.innerHTML = `<i class="fas fa-paper-plane"></i> ${sentCnt} Sent · ${queuedCnt} Queued`;
+        if (campaignSummaries && typeof campaignSummaries === 'object') {
+            let totalSentDelta = null;
+            let totalStagedDelta = null;
+            Object.values(campaignSummaries).forEach(cs => {
+                if (!cs || !cs.id) return;
+                const openCell = document.getElementById('camp-opens-cell-' + cs.id);
+                if (openCell) {
+                    const rate = cs.sent_count > 0 ? Math.min(100.0, (cs.opened_count / cs.sent_count) * 100).toFixed(1) : '0.0';
+                    openCell.innerHTML = `
+                        <div style="font-weight: 800; color: #16a34a; font-size: 0.85rem;">
+                            <i class="fas fa-eye"></i> ${cs.opened_count} Opens
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">
+                            ${rate}% Open Rate (${cs.sent_count} Sent)
+                        </div>`;
+                }
+                const sentCell = document.getElementById('camp-sent-cell-' + cs.id);
+                if (sentCell) {
+                    sentCell.innerHTML = `
+                        <div style="font-weight: 800; color: var(--slate-900);">${cs.sent_count} Sent / ${cs.total_targets} Targets</div>
+                        <div style="font-size: 0.7rem; color: var(--slate-500); margin-top: 0.15rem;">${cs.staged_count} in Outbox · Max ${cs.daily_throttle_limit || 50}/day</div>`;
+                }
+                totalSentDelta = cs.sent_count;
+                totalStagedDelta = cs.staged_count;
+            });
+            const kpi = document.getElementById('mkt-kpi-sent-queued');
+            if (kpi && totalSentDelta !== null) {
+                kpi.dataset.sent = String(totalSentDelta);
+                kpi.dataset.queued = String(totalStagedDelta);
+                kpi.innerHTML = `<i class="fas fa-paper-plane"></i> ${totalSentDelta} Sent · ${totalStagedDelta} Queued`;
+            }
+        }
+    }
+
+    function _applySingleOutboxDomUpdate(emailId, outcomeInput, campaignSummaries) {
+        let outcome = outcomeInput;
+        if (typeof outcomeInput === 'boolean') {
+            const nowStr = new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'});
+            outcome = outcomeInput ? {state: 'SENT', timestamp: nowStr} : {state: 'REJECTED'};
+        }
+        const st = String((outcome && outcome.state) || 'SENT').toUpperCase();
+        const reasonTxt = _escapeOutboxHtml((outcome && outcome.reason) || '');
+        const tsTxt = _escapeOutboxHtml((outcome && outcome.timestamp) || new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}));
+
+        const themes = {
+            SENT: {
+                group: 'sent', bg: '#ecfdf5', bdr: '#10b981',
+                badgeHtml: `<span class="isc-badge" style="background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-check-circle"></i> Sent</span><div style="font-size: 0.68rem; color: #047857; font-weight: 700; margin-top: 0.15rem;">${tsTxt}</div>`,
+                keepRetry: false
+            },
+            FAILED: {
+                group: 'issue', bg: '#fef2f2', bdr: '#dc2626',
+                badgeHtml: `<span class="isc-badge" style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-exclamation-triangle"></i> Send Failed</span>${reasonTxt ? `<div style="font-size: 0.68rem; color: #b91c1c; margin-top: 0.15rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${reasonTxt}">${reasonTxt}</div>` : ''}`,
+                keepRetry: true
+            },
+            BOUNCED: {
+                group: 'issue', bg: '#fff7ed', bdr: '#ea580c',
+                badgeHtml: `<span class="isc-badge" style="background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-undo-alt"></i> Returned (Bounced)</span>${reasonTxt ? `<div style="font-size: 0.68rem; color: #c2410c; margin-top: 0.15rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${reasonTxt}</div>` : ''}`,
+                keepRetry: false
+            },
+            SUPPRESSED: {
+                group: 'issue', bg: '#faf5ff', bdr: '#9333ea',
+                badgeHtml: `<span class="isc-badge" style="background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-ban"></i> Blocked (Opt-Out / DNC)</span>`,
+                keepRetry: false
+            },
+            THROTTLED: {
+                group: 'pending', bg: '#eff6ff', bdr: '#2563eb',
+                badgeHtml: `<span class="isc-badge" style="background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-hourglass-half"></i> Held (Daily Limit)</span>`,
+                keepRetry: false
+            },
+            REJECTED: {
+                group: 'rejected', bg: '#f8fafc', bdr: '#94a3b8',
+                badgeHtml: `<span class="isc-badge" style="background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; font-size: 0.72rem; font-weight: 800; padding: 0.2rem 0.55rem; border-radius: 4px;"><i class="fas fa-times-circle"></i> Rejected</span>`,
+                keepRetry: false
+            }
+        };
+        const th = themes[st] || themes.SENT;
+
+        const row = document.getElementById('outbox-row-' + emailId);
+        if (row) {
+            row.dataset.stateGroup = th.group;
+            row.style.background = th.bg;
+            const idCell = row.querySelector('.outbox-id-cell');
+            if (idCell) idCell.style.borderLeft = '4px solid ' + th.bdr;
+            const stCell = row.querySelector('.outbox-status-cell');
+            if (stCell) stCell.innerHTML = th.badgeHtml;
+            const actWrap = row.querySelector('.outbox-pending-btns');
+            if (actWrap) {
+                if (th.keepRetry) {
+                    actWrap.innerHTML = `<button type="button" onclick="releaseSingleOutboxEmail(${parseInt(emailId, 10)}, this)" class="isc-btn isc-btn-primary" style="height: 32px; padding: 0 0.75rem; font-size: 0.72rem; background: #dc2626; border-color: #b91c1c; border-radius: 6px;" title="Retry Sending"><i class="fas fa-redo"></i> Retry</button>`;
+                } else if (st !== 'THROTTLED') {
+                    actWrap.remove();
+                }
+            }
         }
 
         document.querySelectorAll(`.recipient-status-cell[data-outbox-id="${emailId}"]`).forEach(cell => {
-            if (wasSent) {
-                cell.innerHTML = `<span class="isc-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.45rem; border-radius: 4px;"><i class="fas fa-paper-plane"></i> Sent (Awaiting Open)</span>`;
+            const tr = cell.closest('tr');
+            if (st === 'REJECTED') {
+                if (tr) {
+                    tr.style.background = '#f8fafc';
+                    tr.style.opacity = '0.65';
+                }
+                cell.innerHTML = th.badgeHtml;
             } else {
-                const tr = cell.closest('tr');
-                if (tr) tr.remove();
+                if (tr) {
+                    tr.style.background = th.bg;
+                    const chkCell = tr.querySelector('.recipient-check-cell');
+                    if (chkCell) chkCell.style.borderLeft = '4px solid ' + th.bdr;
+                }
+                cell.innerHTML = th.badgeHtml;
             }
         });
+
+        _recountOutboxFilterPillsAndKpis(campaignSummaries);
     }
 
     function releaseSingleOutboxEmail(emailId, btn) {
@@ -10600,22 +10721,34 @@
         .then(res => res.json())
         .then(data => {
             if (btn && window.restoreButton) window.restoreButton(btn);
-            if (data.status === 'success' && (data.successful || 0) > 0) {
-                _applySingleOutboxDomUpdate(emailId, true);
+            const itemOut = (data.item_outcomes && data.item_outcomes[String(emailId)]) || null;
+            if (itemOut) {
+                _applySingleOutboxDomUpdate(emailId, itemOut, data.campaign_summaries);
+                if (itemOut.state === 'SENT') {
+                    showToast('Email #' + emailId + ' sent to ' + recipLabel + '!', 'success');
+                } else if (itemOut.state === 'FAILED') {
+                    showToast('Send failed for #' + emailId + ': ' + (itemOut.reason || 'Check mailbox'), 'error');
+                } else {
+                    showToast(itemOut.label + ' (#' + emailId + ')', 'info');
+                }
+            } else if (data.status === 'success' && (data.successful || 0) > 0) {
+                _applySingleOutboxDomUpdate(emailId, true, data.campaign_summaries);
                 showToast('Email #' + emailId + ' sent to ' + recipLabel + '!', 'success');
             } else {
+                _applySingleOutboxDomUpdate(emailId, {state: 'FAILED', reason: data.message || 'Send failed'}, data.campaign_summaries);
                 showToast(data.message || 'Could not send email #' + emailId + '.', 'error');
             }
         })
         .catch(err => {
             if (btn && window.restoreButton) window.restoreButton(btn);
+            _applySingleOutboxDomUpdate(emailId, {state: 'FAILED', reason: String(err)}, null);
             showToast('Error releasing email: ' + err, 'error');
         });
     }
 
     function rejectSingleOutboxEmail(emailId, btn) {
         if (!emailId) return;
-        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Removing...');
+        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Rejecting...');
 
         fetch('/api/v1/marketing/outbox/batch-action', {
             method: 'POST',
@@ -10626,8 +10759,9 @@
         .then(data => {
             if (btn && window.restoreButton) window.restoreButton(btn);
             if (data.status === 'success' && (data.successful || 0) > 0) {
-                _applySingleOutboxDomUpdate(emailId, false);
-                showToast('Queued email #' + emailId + ' removed from outbox.', 'info');
+                const itemOut = (data.item_outcomes && data.item_outcomes[String(emailId)]) || {state: 'REJECTED'};
+                _applySingleOutboxDomUpdate(emailId, itemOut, data.campaign_summaries);
+                showToast('Queued email #' + emailId + ' marked Rejected.', 'info');
             } else {
                 showToast(data.message || 'Could not reject email #' + emailId + '.', 'error');
             }
@@ -10635,6 +10769,38 @@
         .catch(err => {
             if (btn && window.restoreButton) window.restoreButton(btn);
             showToast('Error rejecting email: ' + err, 'error');
+        });
+    }
+
+    function syncOutboxBounces(btn) {
+        if (btn && window.spinAndLock) window.spinAndLock(btn, 'Checking...');
+        fetch('/api/v1/marketing/outbox/sync-bounces', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            if (data.status === 'success') {
+                if ((data.bounced_count || 0) > 0) {
+                    const bouncedSet = new Set((data.bounced_emails || []).map(e => String(e).toLowerCase()));
+                    document.querySelectorAll('.outbox-item-row').forEach(row => {
+                        const rEm = String(row.dataset.recipient || '').toLowerCase();
+                        if (bouncedSet.has(rEm)) {
+                            _applySingleOutboxDomUpdate(row.dataset.outboxId, {state: 'BOUNCED', reason: 'Returned undeliverable'}, null);
+                        }
+                    });
+                    showToast(data.message, 'error');
+                } else {
+                    showToast(data.message || '0 returned or bounced emails found.', 'success');
+                }
+            } else {
+                showToast(data.message || 'Bounce check failed.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn && window.restoreButton) window.restoreButton(btn);
+            showToast('Error checking bounces: ' + err, 'error');
         });
     }
 
@@ -10649,11 +10815,13 @@
         })
         .then(res => res.json())
         .then(data => {
+            const itemOut = (data.item_outcomes && data.item_outcomes[String(emailId)]) || null;
             if (data.status === 'success' && (data.successful || 0) > 0) {
                 showToast('Email #' + emailId + ' released via Microsoft Graph API!', 'success');
                 closeModal('modal-review-email');
-                _applySingleOutboxDomUpdate(emailId, true);
+                _applySingleOutboxDomUpdate(emailId, itemOut || true, data.campaign_summaries);
             } else {
+                if (itemOut) _applySingleOutboxDomUpdate(emailId, itemOut, data.campaign_summaries);
                 showToast(data.message || 'Release failed.', 'error');
             }
         })
@@ -10664,7 +10832,7 @@
         const isCancel = (action === 'cancel' || action === 'delete' || action === 'reject');
         const modalTitle = isCancel ? 'Cancel Queued Outbox Messages' : 'Send Next Batch';
         const modalText = isCancel
-            ? 'Are you sure you want to cancel all queued email drafts? They will be removed from the outbox and will not be sent.'
+            ? 'Are you sure you want to cancel all queued email drafts? They will be marked Rejected and will not be sent.'
             : `Are you sure you want to approve and send the next ${limit} queued emails?`;
         const confirmBtn = isCancel ? 'Yes, Cancel All' : 'Send Emails';
 
@@ -10677,16 +10845,21 @@
             onConfirm: () => {
                 fetch('/api/v1/marketing/outbox/batch-action', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
                     body: JSON.stringify({action: action, limit: limit})
                 })
                 .then(res => res.json())
                 .then(data => {
+                    if (data.item_outcomes && Object.keys(data.item_outcomes).length > 0) {
+                        Object.entries(data.item_outcomes).forEach(([eid, outObj]) => {
+                            _applySingleOutboxDomUpdate(eid, outObj, null);
+                        });
+                        _recountOutboxFilterPillsAndKpis(data.campaign_summaries);
+                    }
                     if (data.status === 'success') {
                         showToast(data.message, 'success');
-                        setTimeout(() => { location.reload(); }, 1000);
                     } else {
-                        showToast(data.message || 'Batch operation failed.', 'error');
+                        showToast(data.message || 'Batch operation encountered errors.', 'error');
                     }
                 })
                 .catch(err => showToast('Batch error: ' + err, 'error'));

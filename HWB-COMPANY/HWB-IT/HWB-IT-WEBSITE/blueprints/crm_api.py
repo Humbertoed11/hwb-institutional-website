@@ -10865,7 +10865,7 @@ def api_marketing_outbox_batch():
                 cur.execute('''
                     SELECT id, recipient, subject, body, tracking_token, campaign_id, recipient_id
                     FROM "PendingOutbox"
-                    WHERE id = ANY(%s) AND UPPER(status) = 'PENDING'
+                    WHERE id = ANY(%s) AND UPPER(status) IN ('PENDING', 'FAILED')
                     ORDER BY id ASC;
                 ''', (email_ids,))
                 pending_msgs = cur.fetchall()
@@ -10907,6 +10907,8 @@ def api_marketing_outbox_batch():
             success_count, error_count, throttled_count, suppressed_count = 0, 0, 0, 0
             last_error_reason = ""
             dispatched_ids = []
+            item_outcomes = {}
+            now_label = datetime.datetime.now().strftime('%I:%M %p').lstrip('0')
 
             for msg in pending_msgs:
                 eid = msg['id']
@@ -10920,6 +10922,12 @@ def api_marketing_outbox_batch():
                         tinfo = campaign_throttle_map[cid]
                         if tinfo['sent_today'] >= tinfo['limit']:
                             throttled_count += 1
+                            item_outcomes[str(eid)] = {
+                                'state': 'THROTTLED',
+                                'label': 'Held (Daily Limit)',
+                                'reason': 'Daily send limit reached for today.',
+                                'campaign_id': cid,
+                            }
                             continue
 
                     # 2. Final pre-send suppression & DNC re-verification
@@ -10938,13 +10946,19 @@ def api_marketing_outbox_batch():
                             is_suppressed = True
 
                     if is_suppressed:
-                        cur.execute("UPDATE \"PendingOutbox\" SET status = 'CANCELLED' WHERE id = %s;", (eid,))
+                        cur.execute("UPDATE \"PendingOutbox\" SET status = 'SUPPRESSED' WHERE id = %s;", (eid,))
                         cur.execute('''
                             UPDATE "CampaignRecipients"
-                            SET status = 'UNSUBSCRIBED', updated_at = CURRENT_TIMESTAMP
+                            SET status = 'UNSUBSCRIBED', skip_reason = 'Blocked by DNC / Opt-Out list', updated_at = CURRENT_TIMESTAMP
                             WHERE outbox_id = %s OR tracking_token = %s;
                         ''', (eid, msg.get('tracking_token')))
                         suppressed_count += 1
+                        item_outcomes[str(eid)] = {
+                            'state': 'SUPPRESSED',
+                            'label': 'Blocked (DNC / Opt-Out)',
+                            'reason': 'Recipient is on Do Not Call or Unsubscribe list.',
+                            'campaign_id': cid,
+                        }
                         continue
 
                     ok, reason = transmit_email(
@@ -10957,7 +10971,7 @@ def api_marketing_outbox_batch():
                         cur.execute("UPDATE \"PendingOutbox\" SET status = 'SENT' WHERE id = %s", (eid,))
                         cur.execute('''
                             UPDATE "CampaignRecipients"
-                            SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+                            SET status = 'SENT', sent_at = CURRENT_TIMESTAMP, skip_reason = NULL, updated_at = CURRENT_TIMESTAMP
                             WHERE outbox_id = %s OR tracking_token = %s
                             RETURNING lead_id, facility_name, campaign_id;
                         ''', (eid, msg.get('tracking_token')))
@@ -10974,11 +10988,30 @@ def api_marketing_outbox_batch():
                             campaign_throttle_map[cid]['sent_today'] += 1
                         success_count += 1
                         dispatched_ids.append(eid)
+                        item_outcomes[str(eid)] = {
+                            'state': 'SENT',
+                            'label': f'Sent · {now_label}',
+                            'timestamp': now_label,
+                            'campaign_id': cid,
+                        }
                     else:
                         error_count += 1
                         last_error_reason = str(reason or "Microsoft Graph transmission error")
+                        short_err = last_error_reason[:120]
+                        cur.execute("UPDATE \"PendingOutbox\" SET status = 'FAILED' WHERE id = %s", (eid,))
+                        cur.execute('''
+                            UPDATE "CampaignRecipients"
+                            SET status = 'FAILED', skip_reason = %s, updated_at = CURRENT_TIMESTAMP
+                            WHERE outbox_id = %s OR tracking_token = %s;
+                        ''', (short_err, eid, msg.get('tracking_token')))
+                        item_outcomes[str(eid)] = {
+                            'state': 'FAILED',
+                            'label': 'Send Failed',
+                            'reason': short_err,
+                            'campaign_id': cid,
+                        }
                 elif action in ('reject', 'cancel'):
-                    cur.execute("UPDATE \"PendingOutbox\" SET status = 'CANCELLED' WHERE id = %s", (eid,))
+                    cur.execute("UPDATE \"PendingOutbox\" SET status = 'REJECTED' WHERE id = %s", (eid,))
                     cur.execute('''
                         UPDATE "CampaignRecipients"
                         SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
@@ -11000,9 +11033,31 @@ def api_marketing_outbox_batch():
                             ''', (prev_stat, ret_cancel['lead_id']))
                     success_count += 1
                     dispatched_ids.append(eid)
+                    item_outcomes[str(eid)] = {
+                        'state': 'REJECTED',
+                        'label': 'Rejected',
+                        'campaign_id': cid,
+                    }
 
+            campaign_summaries = {}
             for cid in affected_campaigns:
                 sync_campaign_telemetry_counts(cur, cid)
+                cur.execute('''
+                    SELECT id, total_targets, staged_count, sent_count, opened_count, walkthroughs_booked, daily_throttle_limit
+                    FROM "MarketingCampaigns"
+                    WHERE id = %s;
+                ''', (cid,))
+                crow = cur.fetchone()
+                if crow:
+                    campaign_summaries[str(cid)] = {
+                        'id': int(crow['id'] if isinstance(crow, dict) else crow[0]),
+                        'total_targets': int((crow['total_targets'] if isinstance(crow, dict) else crow[1]) or 0),
+                        'staged_count': int((crow['staged_count'] if isinstance(crow, dict) else crow[2]) or 0),
+                        'sent_count': int((crow['sent_count'] if isinstance(crow, dict) else crow[3]) or 0),
+                        'opened_count': int((crow['opened_count'] if isinstance(crow, dict) else crow[4]) or 0),
+                        'walkthroughs_booked': int((crow['walkthroughs_booked'] if isinstance(crow, dict) else crow[5]) or 0),
+                        'daily_throttle_limit': int((crow['daily_throttle_limit'] if isinstance(crow, dict) else crow[6]) or 50),
+                    }
 
             worm_hash = _log_campaign_worm_audit(cur, 'CAMPAIGN_DISPATCH_WORM', user_label, {
                 'action': action,
@@ -11037,6 +11092,8 @@ def api_marketing_outbox_batch():
                 'errors': error_count,
                 'throttled': throttled_count,
                 'suppressed': suppressed_count,
+                'item_outcomes': item_outcomes,
+                'campaign_summaries': campaign_summaries,
                 'worm_sha256': worm_hash,
                 'message': f"Batch completed: {success_count} queued message(s) {action_desc} successfully{note_suffix}."
             })
@@ -11045,6 +11102,155 @@ def api_marketing_outbox_batch():
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
         if conn: conn.close()
+
+
+_LAST_BOUNCE_SYNC_TS = 0.0
+
+
+def sync_campaign_bounces_from_graph(conn, force: bool = False) -> dict:
+    """
+    Lightweight Microsoft 365 Inbox NDR / Returned-Mail scanner (throttled to 90s).
+    Marks returned/undeliverable campaign emails as BOUNCED across PendingOutbox &
+    CampaignRecipients and flags Leads.email_hygiene_status = 'DO_NOT_EMAIL'.
+    """
+    global _LAST_BOUNCE_SYNC_TS
+    if current_app and current_app.config.get('TESTING') and not force:
+        return {'bounced_count': 0, 'bounced_emails': []}
+    now_ts = time.time()
+    if not force and (now_ts - _LAST_BOUNCE_SYNC_TS) < 90.0:
+        return {'bounced_count': 0, 'bounced_emails': []}
+    _LAST_BOUNCE_SYNC_TS = now_ts
+
+    cfg = current_app.config if current_app else os.environ
+    client_id = (cfg.get("GRAPH_CLIENT_ID") if hasattr(cfg, 'get') else None) or os.environ.get("GRAPH_CLIENT_ID") or os.environ.get("GRAPH_API_PROD_APPLICATION_ID")
+    client_secret = (cfg.get("GRAPH_CLIENT_SECRET") if hasattr(cfg, 'get') else None) or os.environ.get("GRAPH_CLIENT_SECRET") or os.environ.get("GRAPH_API_PROD_SECRET_VALUE")
+    tenant_id = (cfg.get("GRAPH_TENANT_ID") if hasattr(cfg, 'get') else None) or os.environ.get("GRAPH_TENANT_ID") or os.environ.get("GRAPH_API_PROD_TENANT_ID")
+    user_id = (cfg.get("GRAPH_USER_ID") if hasattr(cfg, 'get') else None) or os.environ.get("GRAPH_USER_ID") or "hdominguez@hwbcleaning.com"
+    if not all([client_id, client_secret, tenant_id]):
+        return {'bounced_count': 0, 'bounced_emails': []}
+
+    try:
+        import msal
+        import requests as _req
+        msal_app = msal.ConfidentialClientApplication(
+            client_id,
+            authority=f"https://login.microsoftonline.com/{tenant_id}",
+            client_credential=client_secret,
+        )
+        tok_res = msal_app.acquire_token_for_client(scopes=["https://graph.microsoft.com/.default"])
+        access_tok = tok_res.get("access_token")
+        if not access_tok:
+            return {'bounced_count': 0, 'bounced_emails': []}
+        inbox_url = (
+            f"https://graph.microsoft.com/v1.0/users/{user_id}/mailFolders/Inbox/messages"
+            "?$top=30&$orderby=receivedDateTime%20desc&$select=receivedDateTime,subject,from,bodyPreview"
+        )
+        resp = _req.get(inbox_url, headers={"Authorization": f"Bearer {access_tok}"}, timeout=5)
+        if resp.status_code != 200:
+            return {'bounced_count': 0, 'bounced_emails': []}
+        msgs = resp.json().get("value") or []
+    except Exception:
+        return {'bounced_count': 0, 'bounced_emails': []}
+
+    ndr_candidates = {}
+    email_pat = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+    for m in msgs:
+        subj = str(m.get("subject") or "")
+        subj_low = subj.lower()
+        sender_addr = str(((m.get("from") or {}).get("emailAddress") or {}).get("address") or "").lower()
+        preview = str(m.get("bodyPreview") or "")
+        is_ndr = (
+            subj_low.startswith("undeliverable:")
+            or "delivery has failed" in subj_low
+            or "delivery status notification" in subj_low
+            or "returned mail" in subj_low
+            or "mail delivery subsystem" in subj_low
+            or "postmaster@" in sender_addr
+            or "mailer-daemon@" in sender_addr
+        )
+        if not is_ndr:
+            continue
+        for found_addr in email_pat.findall(f"{subj} {preview}"):
+            addr_low = found_addr.strip().lower()
+            if not addr_low.endswith("@hwbcleaning.com") and "onmicrosoft.com" not in addr_low:
+                ndr_candidates[addr_low] = subj[:120]
+
+    if not ndr_candidates:
+        return {'bounced_count': 0, 'bounced_emails': []}
+
+    bounced_list = []
+    affected_cids = set()
+    with conn.cursor() as cur:
+        _ensure_campaign_recipients_reversible_columns(cur)
+        cur.execute('''
+            SELECT id, campaign_id, lead_id, outbox_id, LOWER(TRIM(recipient_email)) AS em
+            FROM "CampaignRecipients"
+            WHERE LOWER(TRIM(recipient_email)) = ANY(%s)
+              AND sent_at IS NOT NULL
+              AND COALESCE(status, '') NOT IN ('BOUNCED', 'RETURNED');
+        ''', (list(ndr_candidates.keys()),))
+        matched_rows = cur.fetchall()
+        for r in matched_rows:
+            rid = r['id'] if isinstance(r, dict) else r[0]
+            cid = r['campaign_id'] if isinstance(r, dict) else r[1]
+            lid = r['lead_id'] if isinstance(r, dict) else r[2]
+            oid = r['outbox_id'] if isinstance(r, dict) else r[3]
+            em = r['em'] if isinstance(r, dict) else r[4]
+            reason_txt = ndr_candidates.get(em, "Returned Undeliverable (Bounce)")
+            cur.execute('''
+                UPDATE "CampaignRecipients"
+                SET status = 'BOUNCED', skip_reason = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s;
+            ''', (reason_txt, rid))
+            if oid:
+                cur.execute("UPDATE \"PendingOutbox\" SET status = 'BOUNCED' WHERE id = %s;", (oid,))
+            if lid:
+                cur.execute('''
+                    UPDATE "Leads"
+                    SET email_hygiene_status = 'DO_NOT_EMAIL', updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s;
+                ''', (lid,))
+                cur.execute('''
+                    INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
+                    VALUES (%s, 'Lead', 'Email Bounced', %s);
+                ''', (lid, f"Outbound email to {em} returned undeliverable ({reason_txt}). Marked DO_NOT_EMAIL."))
+            if cid:
+                affected_cids.add(int(cid))
+            bounced_list.append(em)
+
+        for cid in affected_cids:
+            sync_campaign_telemetry_counts(cur, cid)
+    if bounced_list:
+        conn.commit()
+    return {'bounced_count': len(bounced_list), 'bounced_emails': bounced_list}
+
+
+@crm_api_bp.route('/api/v1/marketing/outbox/sync-bounces', methods=['POST'])
+@login_required
+def api_marketing_sync_bounces():
+    """On-demand Microsoft 365 Inbox NDR bounce check for the Outbox status board."""
+    if not (current_user.has_permission('outbox', 'view') or current_user.has_permission('campaigns', 'view')):
+        return log_and_abort_abac('outbox', 'view')
+    conn = None
+    try:
+        conn = get_db(current_app.config.get('DATABASE_URL'))
+        res = sync_campaign_bounces_from_graph(conn, force=True)
+        return jsonify({
+            'status': 'success',
+            **res,
+            'message': (
+                f"Found and marked {res['bounced_count']} returned/bounced email(s)."
+                if res['bounced_count']
+                else "Checked Microsoft 365 Inbox — 0 returned or bounced emails."
+            ),
+        })
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    finally:
+        if conn:
+            conn.close()
 
 
 # --- User Custom Calling Scripts REST API (HWB-SAL-2026-SCRIPTS) ---

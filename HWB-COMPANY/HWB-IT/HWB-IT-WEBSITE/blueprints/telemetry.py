@@ -289,6 +289,30 @@ def track_email_open(tracking_token):
                                 VALUES (%s, 'Lead', 'Status Change', %s);
                             ''', (lead_id, f"Lead status promoted to 'Engaged 🔥' (Customer viewed email {open_count}x). Prioritized for sales follow-up."))
 
+                    if int(open_count or 0) == 1 and not current_app.config.get('TESTING'):
+                        try:
+                            import requests as _req
+                            tg_tok = os.environ.get('TELEGRAM_BOT_TOKEN')
+                            ceo_cid = os.environ.get('TELEGRAM_CHAT_ID', '8564340073').split(',')[0].strip()
+                            if tg_tok and ceo_cid:
+                                _req.post(
+                                    f"https://api.telegram.org/bot{tg_tok}/sendMessage",
+                                    json={
+                                        "chat_id": int(ceo_cid),
+                                        "text": (
+                                            f"👀 *CAMPAIGN EMAIL OPENED*\n"
+                                            f"━━━━━━━━━━━━━━━━━━━━━\n"
+                                            f"• *Facility:* {facility or 'Commercial Facility'}\n"
+                                            f"• *Status:* Promoted to `Engaged` (High Priority)"
+                                        ),
+                                        "parse_mode": "Markdown",
+                                        "disable_web_page_preview": True,
+                                    },
+                                    timeout=3,
+                                )
+                        except Exception:
+                            pass
+
                 # Also track standalone Executive PendingOutbox emails ONLY AFTER SENT (never on PENDING drafts - BUG-188)
                 cur.execute('''
                     UPDATE "PendingOutbox"
@@ -419,6 +443,30 @@ def track_email_click(tracking_token):
                                 INSERT INTO "GlobalActivities" (parent_id, parent_type, activity_type, description)
                                 VALUES (%s, 'Lead', 'Status Change', %s);
                             ''', (c_lead_id, "Lead status promoted to 'Qualified' (Customer clicked walkthrough calendar link in marketing email)."))
+
+                    if not current_app.config.get('TESTING'):
+                        try:
+                            import requests as _req
+                            tg_tok = os.environ.get('TELEGRAM_BOT_TOKEN')
+                            ceo_cid = os.environ.get('TELEGRAM_CHAT_ID', '8564340073').split(',')[0].strip()
+                            if tg_tok and ceo_cid:
+                                _req.post(
+                                    f"https://api.telegram.org/bot{tg_tok}/sendMessage",
+                                    json={
+                                        "chat_id": int(ceo_cid),
+                                        "text": (
+                                            f"📅 *CALENDAR LINK CLICKED*\n"
+                                            f"━━━━━━━━━━━━━━━━━━━━━\n"
+                                            f"• *Facility:* {c_facility or 'Commercial Facility'}\n"
+                                            f"• *Status:* Promoted to `Qualified` (High Priority)"
+                                        ),
+                                        "parse_mode": "Markdown",
+                                        "disable_web_page_preview": True,
+                                    },
+                                    timeout=3,
+                                )
+                        except Exception:
+                            pass
                 conn.commit()
         except Exception as e:
             if conn:

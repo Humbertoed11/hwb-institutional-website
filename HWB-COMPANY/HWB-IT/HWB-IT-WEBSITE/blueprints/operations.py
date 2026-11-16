@@ -1308,6 +1308,12 @@ def admin_operations():
 
         # 4d. MARKETING DEPARTMENT & CAMPAIGNS PIPELINE (CQRS Active-View Gated)
         if active_view == 'marketing' or is_json_export:
+            if active_view == 'marketing':
+                try:
+                    from blueprints.crm_api import sync_campaign_bounces_from_graph
+                    sync_campaign_bounces_from_graph(conn)
+                except Exception:
+                    conn.rollback()
             try:
                 with conn.cursor() as cur:
                     mkt_where_clauses = []
@@ -1335,7 +1341,16 @@ def admin_operations():
                                 FROM "CampaignRecipients" cr
                                 LEFT JOIN "Leads" l ON cr.lead_id = l.id
                                 WHERE cr.campaign_id = %s
-                                ORDER BY cr.capacity DESC NULLS LAST, cr.id ASC
+                                ORDER BY (
+                                    CASE
+                                        WHEN cr.status = 'ENGAGED' OR COALESCE(cr.click_count, 0) > 0 THEN 0
+                                        WHEN cr.sent_at IS NOT NULL AND (cr.status = 'OPENED' OR COALESCE(cr.open_count, 0) > 0) THEN 1
+                                        WHEN cr.status IN ('BOUNCED', 'RETURNED', 'FAILED') THEN 2
+                                        WHEN cr.status = 'SENT' OR cr.sent_at IS NOT NULL THEN 3
+                                        WHEN cr.status = 'AWAITING_APPROVAL' THEN 4
+                                        ELSE 5
+                                    END
+                                ), cr.sent_at DESC NULLS LAST, cr.capacity DESC NULLS LAST, cr.id ASC
                                 LIMIT 150
                             ''', (active_campaign_id,))
                             campaign_recipients = cur.fetchall()
@@ -1345,12 +1360,23 @@ def admin_operations():
 
                     try:
                         cur.execute('''
-                            SELECT id, recipient, subject, left(body, 350) as body_preview, created_at, status, tracking_token, campaign_id, recipient_id
-                            FROM "PendingOutbox"
-                            WHERE UPPER(status) = 'PENDING'
-                            ORDER BY id DESC
-                            LIMIT 100
-                        ''')
+                            SELECT po.id, po.recipient, po.subject, left(po.body, 350) AS body_preview,
+                                   po.created_at, po.status, po.tracking_token, po.campaign_id, po.recipient_id,
+                                   cr.facility_name, cr.city, cr.sent_at, cr.opened_at, cr.open_count,
+                                   cr.clicked_at, cr.click_count, cr.status AS cr_status, cr.skip_reason
+                            FROM "PendingOutbox" po
+                            LEFT JOIN "CampaignRecipients" cr ON po.recipient_id = cr.id OR (po.tracking_token IS NOT NULL AND po.tracking_token = cr.tracking_token)
+                            WHERE UPPER(COALESCE(po.status, '')) IN ('PENDING', 'FAILED', 'BOUNCED', 'RETURNED', 'SUPPRESSED')
+                               OR (
+                                   UPPER(COALESCE(po.status, '')) IN ('SENT', 'OPENED', 'DISPATCHED', 'REJECTED', 'CANCELLED')
+                                   AND (
+                                       (%s IS NOT NULL AND po.campaign_id = %s)
+                                       OR po.created_at >= CURRENT_DATE - INTERVAL '14 days'
+                                   )
+                               )
+                            ORDER BY po.id DESC
+                            LIMIT 120
+                        ''', (active_campaign_id, active_campaign_id))
                         pending_outbox_items = cur.fetchall()
                     except Exception:
                         conn.rollback()

@@ -8291,7 +8291,23 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
             self.assertEqual(r_exec.status_code, 302)
             self.assertIn("/admin/operations?view=marketing", r_exec.headers.get("Location", ""))
 
-            # Single-item AJAX release via batch-action
+            # Single-item failure -> marks FAILED (red row + retryable) -> retry succeeds -> marks SENT (green row)
+            with patch("blueprints.crm_api.transmit_email", return_value=(False, "Graph 503 Temporary")):
+                r_fail = auth_client.post(
+                    "/api/v1/marketing/outbox/batch-action",
+                    json={"action": "approve", "email_ids": [outbox_id]},
+                )
+                fail_data = r_fail.get_json()
+                r_fail.close()
+                self.assertEqual(fail_data["status"], "error")
+                self.assertEqual(fail_data["item_outcomes"][str(outbox_id)]["state"], "FAILED")
+
+            r_mkt_fail = auth_client.get("/admin/operations?view=marketing")
+            fail_html = r_mkt_fail.get_data(as_text=True)
+            r_mkt_fail.close()
+            self.assertIn(f'id="outbox-row-{outbox_id}"', fail_html)
+            self.assertIn("Send Failed", fail_html)
+
             with patch("blueprints.crm_api.transmit_email", return_value=(True, "mocked")):
                 r_send = auth_client.post(
                     "/api/v1/marketing/outbox/batch-action",
@@ -8301,6 +8317,20 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 r_send.close()
                 self.assertEqual(r_send.status_code, 200)
                 self.assertEqual(send_data["successful"], 1)
+                self.assertEqual(send_data["item_outcomes"][str(outbox_id)]["state"], "SENT")
+
+            # Verify SENT row persists visibly in green across page reloads + filter pills & bounce check endpoint exist
+            r_mkt_sent = auth_client.get("/admin/operations?view=marketing")
+            sent_html = r_mkt_sent.get_data(as_text=True)
+            r_mkt_sent.close()
+            self.assertIn(f'id="outbox-row-{outbox_id}"', sent_html)
+            self.assertIn("filterOutboxByState(", sent_html)
+            self.assertIn("syncOutboxBounces(", sent_html)
+
+            with patch("blueprints.crm_api.sync_campaign_bounces_from_graph", return_value={"bounced_count": 0, "bounced_emails": []}):
+                r_bnc = auth_client.post("/api/v1/marketing/outbox/sync-bounces")
+                self.assertEqual(r_bnc.status_code, 200)
+                r_bnc.close()
         finally:
             conn.rollback()
             if outbox_id:
