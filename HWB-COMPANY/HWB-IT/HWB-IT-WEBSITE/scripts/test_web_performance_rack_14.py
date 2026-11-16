@@ -8255,16 +8255,26 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
         # 3. Verify live Outbox card in /admin/operations?view=marketing uses in-place buttons and batch-action sends cleanly
         conn = get_db(app.config["DATABASE_URL"])
         outbox_id = None
+        camp_id = None
         try:
             tok = f"bug189_{uuid.uuid4().hex[:10]}"
             with conn.cursor() as cur:
                 cur.execute(
                     '''
-                    INSERT INTO "PendingOutbox" (recipient, subject, body, created_at, status, tracking_token)
-                    VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s)
+                    INSERT INTO "MarketingCampaigns" (campaign_code, name, target_sector, status)
+                    VALUES (%s, 'BUG-189 Outbox Board Test', 'Licensed Childcare', 'Active')
                     RETURNING id;
                     ''',
-                    ("bug189-audit@example.com", "BUG-189 Audit", "<p>Hi Director,</p>", tok),
+                    (f"CMP-B189-{uuid.uuid4().hex[:4].upper()}",),
+                )
+                camp_id = cur.fetchone()["id"]
+                cur.execute(
+                    '''
+                    INSERT INTO "PendingOutbox" (recipient, subject, body, created_at, status, tracking_token, campaign_id)
+                    VALUES (%s, %s, %s, CURRENT_DATE, 'PENDING', %s, %s)
+                    RETURNING id;
+                    ''',
+                    ("bug189-audit@example.com", "BUG-189 Audit", "<p>Hi Director,</p>", tok, camp_id),
                 )
                 outbox_id = cur.fetchone()["id"]
             conn.commit()
@@ -8274,7 +8284,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 sess["_user_id"] = "1"
                 sess["_fresh"] = True
 
-            r_mkt = auth_client.get("/admin/operations?view=marketing")
+            r_mkt = auth_client.get(f"/admin/operations?view=marketing&campaign_id={camp_id}")
             mkt_html = r_mkt.get_data(as_text=True)
             r_mkt.close()
             self.assertEqual(r_mkt.status_code, 200)
@@ -8302,7 +8312,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertEqual(fail_data["status"], "error")
                 self.assertEqual(fail_data["item_outcomes"][str(outbox_id)]["state"], "FAILED")
 
-            r_mkt_fail = auth_client.get("/admin/operations?view=marketing")
+            r_mkt_fail = auth_client.get(f"/admin/operations?view=marketing&campaign_id={camp_id}")
             fail_html = r_mkt_fail.get_data(as_text=True)
             r_mkt_fail.close()
             self.assertIn(f'id="outbox-row-{outbox_id}"', fail_html)
@@ -8320,7 +8330,7 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 self.assertEqual(send_data["item_outcomes"][str(outbox_id)]["state"], "SENT")
 
             # Verify SENT row persists visibly in green across page reloads + filter pills & bounce check endpoint exist
-            r_mkt_sent = auth_client.get("/admin/operations?view=marketing")
+            r_mkt_sent = auth_client.get(f"/admin/operations?view=marketing&campaign_id={camp_id}")
             sent_html = r_mkt_sent.get_data(as_text=True)
             r_mkt_sent.close()
             self.assertIn(f'id="outbox-row-{outbox_id}"', sent_html)
@@ -8333,10 +8343,12 @@ class EnterpriseWebPerformanceTestSuite(unittest.TestCase):
                 r_bnc.close()
         finally:
             conn.rollback()
-            if outbox_id:
-                with conn.cursor() as cur:
+            with conn.cursor() as cur:
+                if outbox_id:
                     cur.execute('DELETE FROM "PendingOutbox" WHERE id = %s;', (outbox_id,))
-                conn.commit()
+                if camp_id:
+                    cur.execute('DELETE FROM "MarketingCampaigns" WHERE id = %s;', (camp_id,))
+            conn.commit()
             conn.close()
 
 

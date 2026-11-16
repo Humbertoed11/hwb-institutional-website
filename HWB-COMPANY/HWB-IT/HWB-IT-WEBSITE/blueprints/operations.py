@@ -1366,13 +1366,11 @@ def admin_operations():
                                    cr.clicked_at, cr.click_count, cr.status AS cr_status, cr.skip_reason
                             FROM "PendingOutbox" po
                             LEFT JOIN "CampaignRecipients" cr ON po.recipient_id = cr.id OR (po.tracking_token IS NOT NULL AND po.tracking_token = cr.tracking_token)
-                            WHERE UPPER(COALESCE(po.status, '')) IN ('PENDING', 'FAILED', 'BOUNCED', 'RETURNED', 'SUPPRESSED')
+                            WHERE UPPER(COALESCE(po.status, '')) = 'PENDING'
                                OR (
-                                   UPPER(COALESCE(po.status, '')) IN ('SENT', 'OPENED', 'DISPATCHED', 'REJECTED', 'CANCELLED')
-                                   AND (
-                                       (%s IS NOT NULL AND po.campaign_id = %s)
-                                       OR po.created_at >= CURRENT_DATE - INTERVAL '14 days'
-                                   )
+                                   po.campaign_id IS NOT NULL
+                                   AND (%s IS NULL OR po.campaign_id = %s)
+                                   AND UPPER(COALESCE(po.status, '')) IN ('SENT', 'OPENED', 'DISPATCHED', 'FAILED', 'BOUNCED', 'RETURNED', 'SUPPRESSED', 'REJECTED', 'CANCELLED')
                                )
                             ORDER BY po.id DESC
                             LIMIT 120
